@@ -1,7 +1,7 @@
 
 %token identifier  atidentifier string integer float
-%token if and has or not a an is dot then
-%token open close comma colondash semicolon equals
+%token if and has or not a an is dot then find
+%token open close comma colondash semicolon equals notequals questiondash
 
 %%
 
@@ -12,11 +12,13 @@ statement:
     fact
 |   rule
 |   datalog
+|   query
 ;
 
 datalog:
     datalog_predicate dot
 |   datalog_rule dot
+|   questiondash datalog_predicate dot
 ;
 
 datalog_predicate:
@@ -36,6 +38,7 @@ datalog_rule:
 datalog_base_clause:
     datalog_predicate
 |   term equals term
+|   term notequals term
 |   open datalog_clause close
 ;
 
@@ -56,27 +59,49 @@ datalog_clause:
 |   datalog_and_clause
 ;
 
-fact: clause dot;
+query:
+    find clause dot
+|   find predicate dot
+;
 
-rule: if clause then clause | clause if clause;
+fact: baseclause dot;
+
+rule: if clause then baseclause | baseclause if clause;
 
 // ?? factclause
-clause:
+baseclause:
     term is unarypredicate
+|   term is entity
 |   unarypredicate term
-|   term has binarypredicate entity
-|   term has binarypredicate entity andfacts
-// |   clause and clause
-// |   clause or clause
+|   term has binarypredicate term
+|   term has binarypredicate term andfacts
 ;
 
-// person x has name y and surname z
+notclause:
+    baseclause
+|   not baseclause
+;
+
+andclause:
+    notclause
+|   andclause and notclause
+;
+
+orclause:
+    andclause
+|   orclause or andclause
+;
+
+clause: orclause;
+
+// person x has name y, surname z
 
 andfacts:
-    and binarypredicate entity
-|   andfacts and binarypredicate entity
+    comma binarypredicate term
+|   andfacts comma binarypredicate term
 ;
 
+predicate: identifier
 unarypredicate: identifier;
 binarypredicate: identifier;
 variable: identifier;
