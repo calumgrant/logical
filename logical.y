@@ -110,6 +110,7 @@ baseclause:
 |   term has_a binarypredicate arithmetic_term
 |   term has_a binarypredicate arithmetic_term attributes
 |   open clause close
+|   all baseclause in baseclause
 ;
 
 has_a:
@@ -180,7 +181,7 @@ plusterm:
 
 sumterm:
     plusterm
-// |   sum identifier in clause
+|   sum identifier in open clause close
 ;
 
 arithmetic_term: sumterm;
