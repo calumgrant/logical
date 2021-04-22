@@ -21,32 +21,6 @@ statement:
 |   query
 ;
 
-
-/*
-Special predicate names
-
-Quantifiers??
-
-import("fubar").
-
-exit(0).
-
-
-
-import file?
-// ?? commands line exit, clear, reset.
-
-// include file?
-modules?
-
-// join orderer
-person x has name foo
-
-x has name foo and
-x is person
-*/
-
-
 datalog:
     datalog_predicate dot
 |   datalog_rule dot
@@ -107,10 +81,12 @@ baseclause:
     term is_a unarypredicate
 |   term is_a entity
 |   unarypredicate term
+//|   term has_a binarypredicate
 |   term has_a binarypredicate arithmetic_term
 |   term has_a binarypredicate arithmetic_term attributes
 |   open clause close
 |   all baseclause in baseclause
+// |   predicate open close  // conflicts with datalog
 ;
 
 has_a:
