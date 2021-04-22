@@ -1,8 +1,8 @@
 
 %token identifier  atidentifier string integer float
 %token if and has or not a an is dot then find
-%token open close comma colondash semicolon equals notequals questiondash
-
+%token open close comma colondash semicolon equals notequals questiondash lt gt lteq gteq
+%token times plus minus div mod
 %%
 
 statements:
@@ -27,8 +27,8 @@ datalog_predicate:
 ;
 
 termlist:
-    term
-|   termlist comma term
+    arithmetic_term
+|   termlist comma arithmetic_term
 ;
 
 datalog_rule:
@@ -37,10 +37,13 @@ datalog_rule:
 
 datalog_base_clause:
     datalog_predicate
-|   term equals term
-|   term notequals term
+|   term comparator term
 |   open datalog_clause close
 ;
+
+comparator:
+    equals | notequals | lt | gt | lteq | gteq
+    ;
 
 datalog_unary_clause:
     datalog_base_clause
@@ -68,13 +71,12 @@ fact: baseclause dot;
 
 rule: if clause then baseclause | baseclause if clause;
 
-// ?? factclause
 baseclause:
     term is unarypredicate
 |   term is entity
 |   unarypredicate term
-|   term has binarypredicate term
-|   term has binarypredicate term andfacts
+|   term has binarypredicate arithmetic_term
+|   term has binarypredicate arithmetic_term attributes
 ;
 
 notclause:
@@ -96,9 +98,9 @@ clause: orclause;
 
 // person x has name y, surname z
 
-andfacts:
-    comma binarypredicate term
-|   andfacts comma binarypredicate term
+attributes:
+    comma binarypredicate arithmetic_term
+|   attributes comma binarypredicate arithmetic_term
 ;
 
 predicate: identifier
@@ -107,6 +109,32 @@ binarypredicate: identifier;
 variable: identifier;
 
 term: entity | variable;
+
+baseterm:
+    term
+|   open arithmetic_term close
+;
+
+unaryterm:
+    baseterm
+|    minus baseterm
+;
+
+multerm:
+    unaryterm
+|   multerm times unaryterm
+|   multerm div unaryterm
+|   multerm mod unaryterm
+;
+
+plusterm:
+    multerm
+|   plusterm plus multerm
+|   plusterm minus multerm
+;
+
+arithmetic_term: plusterm;
+
 
 entity: string | atidentifier | integer | float;
 
