@@ -1,5 +1,5 @@
 # Introduction
-/Logical/ is a programming language for writing logical queries in a simple and intuitive way. It is mainly intended as an instructional language to learn about logic.
+*Logical* is a programming language for writing logical queries in a simple and intuitive way. It is mainly intended as an instructional language to learn about logic.
 
 # Stating facts
 A fact is something that is asserted to be true, for example
@@ -34,7 +34,7 @@ Entities can be one of the following:
 - A name or number prefixed with @.
 	
 # Creating rules
-A /rule/ is a relation that is determined using logic. A rule is a statement that defines something to be true. For example,
+A *rule* is a relation that is determined using logic. A rule is a statement that defines something to be true. For example,
 
 ```
 X is a person if X has parent Y.
@@ -66,25 +66,25 @@ This second example adds another condition, namely that `X` is a `person`, but o
 X has parent Y if person X has mother Y or X has father Y.
 	
 X is retired if 
-	X has sex "male", age A and A>=65 or
-	X has sex "female", age A and A>=60.
+    X has sex "male", age A and A>=65 or
+    X has sex "female", age A and A>=60.
 ```
 
 The comma operator is used to bind multiple attributes to an entity. This could be written out as follows:
 	
 ```
 X is retired if 
-	X has sex "male" and X has age A and A>=65 or
-	X has sex "female" and X has age A and A>=60.
+    X has sex "male" and X has age A and A>=65 or
+    X has sex "female" and X has age A and A>=60.
 ```
 
 As expected, `and` has a higher precedence than `or`, so there is no need to group these clauses, but it can make things clearer to grou them using brackets.
 
 ```
 X is retired if 
-	(X has sex "male" and X has age A and A>=65)
+    (X has sex "male" and X has age A and A>=65)
     or
-	(X has sex "female" and X has age A and A>=60).
+    (X has sex "female" and X has age A and A>=60).
 ```
 
 `person X`, `X is person` and `X is a person` mean exactly the same thing, but `person X` can have additional attributes. For example
@@ -98,7 +98,7 @@ person X has age 20
 ```
 
 # Queries
-A query is used to find results and print them. Queries can be used to report all members of a predicate, for example
+A *query* is used to find results and print them. Queries can be used to report all members of a predicate, for example
 
 ```
 find person X.
@@ -155,18 +155,16 @@ Cash @1 has value 10.
 "Fred" has cash @1.
 
 X is rich if 
-	X has cash Y and
-	Y has value Z and
-	Z>10.
+    X has cash Y and
+    Y has value Z and
+    Z>10.
 
 X is rich if
-	sum Z in
-		(X has cash Y and Y has value Z)
-	> 10.
+    sum Z in (X has cash Y and Y has value Z) > 10.
 
 X is rich if 
-	all Z>10 in 
-	(X has cash Y and Y has value Z).
+    all Z>10 in 
+    (X has cash Y and Y has value Z).
 ```
 
 # Special predicates
