@@ -123,6 +123,7 @@ is_a:
     is
 |   is a
 |   is an
+|   in
 ;
 
 notclause:
@@ -181,7 +182,7 @@ plusterm:
 
 sumterm:
     plusterm
-|   sum identifier in open clause close
+|   sum arithmetic_term in open clause close
 ;
 
 arithmetic_term: sumterm;
