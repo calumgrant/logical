@@ -1,12 +1,18 @@
 
-%token identifier  atidentifier string integer float
-%token if and has or not a an is dot then find
+%token identifier atentity string integer float
+%token if and has or not a an no is dot then find sum in all
 %token open close comma colondash semicolon equals notequals questiondash lt gt lteq gteq
 %token times plus minus div mod
 %%
 
+statementsopt: 
+|   statements
+;
+
 statements:
-    statement | statements statement ;
+    statement
+|   statements statement
+;
 
 statement:
     fact
@@ -14,6 +20,32 @@ statement:
 |   datalog
 |   query
 ;
+
+
+/*
+Special predicate names
+
+Quantifiers??
+
+import("fubar").
+
+exit(0).
+
+
+
+import file?
+// ?? commands line exit, clear, reset.
+
+// include file?
+modules?
+
+// join orderer
+person x has name foo
+
+x has name foo and
+x is person
+*/
+
 
 datalog:
     datalog_predicate dot
@@ -72,11 +104,24 @@ fact: baseclause dot;
 rule: if clause then baseclause | baseclause if clause;
 
 baseclause:
-    term is unarypredicate
-|   term is entity
+    term is_a unarypredicate
+|   term is_a entity
 |   unarypredicate term
-|   term has binarypredicate arithmetic_term
-|   term has binarypredicate arithmetic_term attributes
+|   term has_a binarypredicate arithmetic_term
+|   term has_a binarypredicate arithmetic_term attributes
+|   open clause close
+;
+
+has_a:
+    has
+|   has a
+|   has an
+;
+
+is_a:
+    is
+|   is a
+|   is an
 ;
 
 notclause:
@@ -96,7 +141,7 @@ orclause:
 
 clause: orclause;
 
-// person x has name y, surname z
+// Example: person x has name y, surname z
 
 attributes:
     comma binarypredicate arithmetic_term
@@ -117,7 +162,7 @@ baseterm:
 
 unaryterm:
     baseterm
-|    minus baseterm
+|   minus baseterm
 ;
 
 multerm:
@@ -133,9 +178,13 @@ plusterm:
 |   plusterm minus multerm
 ;
 
-arithmetic_term: plusterm;
+sumterm:
+    plusterm
+// |   sum identifier in clause
+;
 
+arithmetic_term: sumterm;
 
-entity: string | atidentifier | integer | float;
+entity: string | atentity | integer | float;
 
 %%
