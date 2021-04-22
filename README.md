@@ -2,19 +2,19 @@
 *Logical* is a programming language for writing logical queries in a simple and intuitive way. It is mainly intended as an instructional language to learn about logic.
 
 # Stating facts
-A fact is something that is asserted to be true, for example
+A fact is something that is stated to be true, for example
 
 ```
 "Fred" is a person.
 "Fred" has mother "Natasha".
 ```
 
-In this statement, Fred and Natasha are entities, and person and mother are relations.
+In these statements, `Fred` and `Natasha` are entities, and `person` and `mother` are relations. You can think of relations as tables of data with one or two columns.
 
-You could even combine these, for example 
+You can combine statements about a single entity, for example 
 
 ```
-Person "Fred" has mother "Natasha", surname "Brooks".
+person "Fred" has mother "Natasha", age 99, surname "Brooks".
 ```
 
 This defines three facts:
@@ -23,7 +23,7 @@ This defines three facts:
 2. "Fred" has mother "Natasha",
 3. "Fred" has surname "Brooks".
 
-Technically, `person` is a unary relation, and `mother` and `surname` are binary relations. You can think of relations as tables of data with one or two columns.
+Technically, `person` is a unary relation, and `mother` and `surname` are binary relations. 
 
 Entities can be one of the following:
 
@@ -32,7 +32,9 @@ Entities can be one of the following:
 - A string,
 - A Boolean value (true or false),
 - A name or number prefixed with @.
-	
+
+The order in which facts are defined has no significance, except in the case of special predicates.
+
 # Creating rules
 A *rule* is a relation that is determined using logic. A rule is a statement that defines something to be true. For example,
 
@@ -43,7 +45,7 @@ X is a person if Y has parent X.
 
 This defines a new unary relation called `person`, that is determined based on the (binary) relation `parent`.
 
-It is possible to write rules the other way, for example
+It is possible to write rules the other way, putting the `if` first, for example
 
 ```
 if X has parent Y then X is a person.
@@ -54,7 +56,7 @@ In these examples, `X` and `Y` are variables, `mother` is a binary relation and 
 
 If `mother` and `person` are not defined, then they are assumed to be new relations that are initially empty. Variables can be upper- or lower- case, but we will use upper case here.
 
-Another example, this time using or.
+Another example, this time using `or`.
 
 ```
 X has parent Y if X has mother Y or X has father Y.
@@ -70,7 +72,7 @@ X is retired if
     X has sex "female", age A and A>=60.
 ```
 
-The comma operator is used to bind multiple attributes to an entity. This could be written out as follows:
+The comma is used to bind multiple attributes to an entity. Without the comma, the previous example would be written out as:
 	
 ```
 X is retired if 
@@ -78,7 +80,7 @@ X is retired if
     X has sex "female" and X has age A and A>=60.
 ```
 
-As expected, `and` has a higher precedence than `or`, so there is no need to group these clauses, but it can make things clearer to grou them using brackets.
+As expected, `and` has a higher precedence than `or`, so there is no need to group these clauses, but it can make things clearer to group them using brackets.
 
 ```
 X is retired if 
@@ -130,7 +132,7 @@ The order in which facts and rules are stated does not make a difference, but a 
 Use C or C++-style comments.
 
 # Evaluation model
-Logical uses a simple evaluation model where all relations are fully evaluated and are stored as  tables in memory. A relation is computed when it is queried, which means running the rules and filling the table.
+Logical uses a simple evaluation model where all relations are fully evaluated and are stored as tables in memory. A relation is computed when it is queried, which means running the rules and filling the table.
 
 Relations are computed left to right, and if performance is important, then it is important for the person writing the rule to take evaluation order into consideration. For example
 
@@ -141,7 +143,7 @@ person X has age Y
 is computed by scanning the unary relation `person`, and joining it with the binary relation `age`. To swap the order of this evaluation, you could write
 	
 ```
-X has age X and X is a person
+X has age Y and X is a person
 ```
 
 This second rule is evaluated by scanning the binary relation `age`, and then filtering it on the unary relation `person`.
@@ -150,7 +152,7 @@ There is no attempt to optimize the evaluation order or to remove redundant step
 
 # Quantifiers
 ```
-Cash @1 has value 10.
+cash @1 has value 10.
 
 "Fred" has cash @1.
 
@@ -173,12 +175,28 @@ These special predicates have side-effects when facts are added to them. (This i
 
 ## `import`
 
-The `import` predicates imports a file.
+The `import` predicates imports a file. For example
+
+```
+import "testdata.logic"
+import "more_rules.logic"
+```
 
 ## `print`
 
 The `print` predicate displays the string to the output.
 
+```
+if
+    person X has name N
+then
+    print "Your name is " + N.
+```
+
 ## `error`
 
 Like `print`, `error` displays a message, this time to stderr.
+
+```
+error "There are no supervisors." if not supervisor S.
+```
