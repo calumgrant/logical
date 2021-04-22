@@ -1,8 +1,8 @@
 
-%token identifier atentity string integer float
+%token identifier atentity string integer float underscore
 %token if and has or not a an no is dot then find sum in all
 %token open close comma colondash semicolon equals notequals questiondash lt gt lteq gteq
-%token times plus minus div mod
+%token times plus minus div mod true false
 %%
 
 statementsopt: 
@@ -71,6 +71,8 @@ datalog_clause:
 query:
     find clause dot
 |   find predicate dot
+|   find baseclause if clause dot
+|   find variable if clause dot
 ;
 
 fact: baseclause dot;
@@ -81,12 +83,12 @@ baseclause:
     term is_a unarypredicate
 |   term is_a entity
 |   unarypredicate term
-//|   term has_a binarypredicate
+// |   term has_a binarypredicate
 |   term has_a binarypredicate arithmetic_term
 |   term has_a binarypredicate arithmetic_term attributes
+|   term attributes
 |   open clause close
-|   all baseclause in baseclause
-// |   predicate open close  // conflicts with datalog
+|   all baseclause in baseclause 
 ;
 
 has_a:
@@ -129,7 +131,7 @@ attributes:
 predicate: identifier
 unarypredicate: identifier;
 binarypredicate: identifier;
-variable: identifier;
+variable: identifier | underscore;
 
 term: entity | variable;
 
@@ -163,6 +165,6 @@ sumterm:
 
 arithmetic_term: sumterm;
 
-entity: string | atentity | integer | float;
+entity: string | atentity | integer | float | true | false;
 
 %%
