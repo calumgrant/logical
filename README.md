@@ -9,7 +9,7 @@ A fact is something that is stated to be true, for example
 "Fred" has mother "Natasha".
 ```
 
-In these statements, `Fred` and `Natasha` are entities, and `person` and `mother` are relations. You can think of relations as tables of data with one or two columns.
+In these statements, `"Fred"` and `"Natasha"` are entities, and `person` and `mother` are relations. You can think of relations as tables of data with one or two columns. `person` is a table/relation with one column, and `mother` is a table/relation with two columns.
 
 You can combine statements about a single entity, for example 
 
@@ -17,33 +17,34 @@ You can combine statements about a single entity, for example
 person "Fred" has mother "Natasha", age 99, surname "Brooks".
 ```
 
-This defines three facts:
+This defines 4 facts:
 
 1. "Fred" is a person,
 2. "Fred" has mother "Natasha",
+3. "Fred" has age 99,
 3. "Fred" has surname "Brooks".
 
-Technically, `person` is a unary relation, and `mother` and `surname` are binary relations. 
+Technically, `person` is a unary relation, and `mother`, `age` and `surname` are binary relations. 
 
 Entities can be one of the following:
 
-- An integer,
-- A floating point number,
-- A string,
-- A Boolean value (true or false),
-- A name or number prefixed with @.
+- An integer, (for example `123`)
+- A floating point number, (for example `3.14`)
+- A string, (for example `"Natasha"`)
+- A Boolean value (`true` or `false`),
+- A name or number prefixed with `@`, (for example `@xx-yy-123`).
 
 The order in which facts are defined has no significance, except in the case of special predicates.
 
 # Creating rules
-A *rule* is a relation that is determined using logic. A rule is a statement that defines something to be true. For example,
+A *rule* is a relation that is computed using logic. A rule is a statement that defines something to be true. For example,
 
 ```
 X is a person if X has parent Y.
 X is a person if Y has parent X.
 ```
 
-This defines a new unary relation called `person`, that is determined based on the (binary) relation `parent`.
+This defines a unary relation called `person`, that is determined based on the (binary) relation `parent`.
 
 It is possible to write rules the other way, putting the `if` first, for example
 
@@ -199,4 +200,42 @@ Like `print`, `error` displays a message, this time to stderr.
 
 ```
 error "There are no supervisors." if not supervisor S.
+```
+
+## `connect`
+
+Connects to a server. For example,
+
+```
+connect "localhost", username "foo", password "..."
+```
+
+## `session`
+
+Creates a named session, whose results are persisted.
+
+```
+session @9847.
+import "myfile.logic"
+session 0.
+```
+
+## `clear`
+
+Clears all results in the current session.
+
+```
+clear().
+```
+
+## `exit`
+
+Exits the session, closes the connection or exist the command.
+
+```
+exit().
+exit 0.
+exit(0).
+
+exit 127 if not user _.
 ```

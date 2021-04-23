@@ -1,10 +1,11 @@
+// %skeleton "lalr1.cc"
 
 %{
-#include <FlexLexer.h>
+// #include <FlexLexer.h>
 
-//int yylex() { return 0;}
+int yylex(...) { return 0;}
 
-// void yyerror(const char*) { }
+void yyerror(const char*) { }
 %}
 
 
