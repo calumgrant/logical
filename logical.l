@@ -15,10 +15,12 @@ and return tok_and;
 false           return tok_false;
 find return tok_find;
 has return tok_has;
-if              return tok_if;
+if     return tok_if;
 in return tok_in;
+is  return tok_is;
 no return tok_no;
 not return tok_not;
+or return tok_or;
 sum return tok_sum;
 then return tok_then;
 true            return tok_true;
@@ -52,7 +54,7 @@ _[a-zA-Z0-9_]+ return tok_identifier;
 [0-9]+          return tok_integer;
 \"([^"\\]|\\.)*\"   return tok_string;
 
-\/\/[^\n]+\n
+\/\/[^\n]+
 [ \r\n\t]+
 .
 

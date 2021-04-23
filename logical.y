@@ -87,11 +87,13 @@ query:
 
 fact: baseclause tok_dot;
 
-rule: tok_if clause tok_then baseclause | baseclause tok_if clause;
+rule: tok_if clause tok_then baseclause tok_dot | 
+baseclause tok_if clause tok_dot;
 
 baseclause:
     term is_a unarypredicate
-|   term is_a entity
+// |   term is_a entity
+|   term comparator term
 |   unarypredicate term
 // |   term has_a binarypredicate
 |   term has_a binarypredicate arithmetic_term
