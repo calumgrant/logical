@@ -1,11 +1,10 @@
 // %skeleton "lalr1.cc"
 
 %{
-// #include <FlexLexer.h>
+#include <iostream>
 
-int yylex(...) { return 0;}
-
-void yyerror(const char*) { }
+int yylex();
+void yyerror(const char*) { std::cerr << "Parse error at ?????"; }
 %}
 
 
@@ -26,7 +25,7 @@ statements:
 ;
 
 statement:
-    fact
+    fact { printf("Parsed a fact\n"); }
 |   rule
 |   datalog
 |   query

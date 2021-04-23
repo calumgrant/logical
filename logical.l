@@ -3,6 +3,9 @@
 #include "tokens.tab.h"
 %}
 
+%array
+
+
 %%
 
 a return tok_a;
@@ -20,7 +23,7 @@ sum return tok_sum;
 then return tok_then;
 true            return tok_true;
 
-\. return tok_dot;
+\. { return tok_dot; }
 \( return tok_open;
 \) return tok_close;
 , return tok_comma;
@@ -42,16 +45,16 @@ true            return tok_true;
 % return tok_mod;
 
 _               return tok_underscore;
-[a-z]           return tok_identifier;
-@[a-zA-Z_\-0-9]* return tok_identifier;
+[a-zA-Z][a-zA-Z0-9_]* return tok_identifier;
+_[a-zA-Z0-9_]+ return tok_identifier;
+
+@[a-zA-Z_\-0-9]* return tok_atentity;
 [0-9]+          return tok_integer;
 \"([^"\\]|\\.)*\"   return tok_string;
 
 \/\/[^\n]+\n
+[ \r\n\t]+
+.
 
 %%
-
-// int yyFlexLexer::yywrap() { return 0; }
-
-// void yyFlexLexer::error(int const & loc, const std::string &message) { }
 
