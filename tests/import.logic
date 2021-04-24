@@ -8,7 +8,7 @@ exit N if
 exit N if
     1 is a test and N=0
     or 
-    not 1 is a test and N=1.   
+    not 1 is a test and N=1.
 
 run(). 
-run(1,2,3).
+run(1,2,).

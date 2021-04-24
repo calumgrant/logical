@@ -1,10 +1,21 @@
 // %skeleton "lalr1.cc"
 
+%locations
+// %pure-parser
+
 %{
+#include "tokens.tab.h"
+
 #include <iostream>
 
 int yylex();
-void yyerror(const char*) { std::cerr << "Parse error at ?????"; }
+void yyerror(const char*) { std::cerr << "Syntax error at ?????"; }
+
+// int yylex(YYLVAL * val, YYLTYPE * loc);
+//void yyerror(YYLTYPE *loc, const char*) { std::cerr << "Syntax error at ?????"; }
+
+//    #define YYSTYPE bool
+//    void yyerror (yyscan_t yyscanner, char const *msg);
 %}
 
 
@@ -26,7 +37,7 @@ statements:
 
 statement:
     fact { printf("Parsed a fact\n"); }
-|   rule
+|   rule { printf("Parsed a rule\n"); }
 |   datalog
 |   query
 ;
@@ -48,7 +59,7 @@ termlist:
 ;
 
 datalog_rule:
-    datalog_predicate tok_colondash datalog_clause tok_dot
+    datalog_predicate tok_colondash datalog_clause
 ;
 
 datalog_base_clause:
@@ -92,10 +103,13 @@ baseclause tok_if clause tok_dot;
 
 baseclause:
     term is_a unarypredicate
-// |   term is_a entity
-|   term comparator term
+|   term is_a entity
+|   arithmetic_term comparator arithmetic_term
 |   unarypredicate term
 // |   term has_a binarypredicate
+|   unarypredicate term has_a binarypredicate arithmetic_term
+|   unarypredicate term has_a binarypredicate arithmetic_term attributes
+|   unarypredicate term attributes
 |   term has_a binarypredicate arithmetic_term
 |   term has_a binarypredicate arithmetic_term attributes
 |   term attributes

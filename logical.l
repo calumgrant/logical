@@ -1,10 +1,11 @@
 
 %{
 #include "tokens.tab.h"
+// # %option reentrant bison-bridge
 %}
 
 %array
-
+%option nodefault
 
 %%
 
@@ -53,6 +54,8 @@ _[a-zA-Z0-9_]+ return tok_identifier;
 @[a-zA-Z_\-0-9]* return tok_atentity;
 [0-9]+          return tok_integer;
 \"([^"\\]|\\.)*\"   return tok_string;
+
+[0-9]*\.[0-9]+([eE][+-]?[0-9]+)? return tok_float;
 
 \/\/[^\n]+
 [ \r\n\t]+

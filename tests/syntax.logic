@@ -1,0 +1,39 @@
+// A tour of Logical syntax.
+
+// These are facts - unary relations
+person "Fred".
+person @.
+person 123.
+person @123.
+person @person-123.
+person 3.14.
+person true.
+person false.
+
+// You can actually define constants as follows.
+pi 3.14159.
+googol 1.0e100.
+//googol 1e100.
+
+// Binary relations are defined using `has` and `,`.
+
+circle @c1.
+circle @c1, radius 10.
+circle @c2 has radius 20.
+circle C has diameter D if C has radius R and D = R*3.14159.
+circle C has diameter D if C has radius R and pi Pi and D = X*Pi.
+
+// Datalog syntax:
+
+f().
+f() :- g().
+f() :- g(), h().
+f(x) :- g(x), h(x).
+f(x) :- g(x), h(_).
+f() :- g(); h(); i().
+f() :- not g().
+f() :- (g()).
+f() :- (g();h()), i().
+
+// `print` is a predicate with a side-effect.
+print "Syntax test passed".
