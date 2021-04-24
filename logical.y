@@ -6,7 +6,7 @@
 
 %{
 #include <Clause.hpp>
-#define YYSTYPE AST::Clause*
+#define YYSTYPE AST::Node*
 
 // This is totally wrong I think
 extern char yytext[];
@@ -30,6 +30,11 @@ void yyerror(const char*) { std::cerr << "Syntax error at line " << yylineno; }
 
 //    #define YYSTYPE bool
 //    void yyerror (yyscan_t yyscanner, char const *msg);
+
+// What to do
+void ProcessFact(AST::Clause * statement);
+void ProcessRule(AST::Clause * lhs, AST::Clause * rhs);
+
 %}
 
 
@@ -50,14 +55,14 @@ statements:
 ;
 
 statement:
-    fact //{ printf("Parsed a fact\n"); }
-|   rule //{ printf("Parsed a rule\n"); }
+    fact
+|   rule
 |   datalog
 |   query
 ;
 
 datalog:
-    datalog_predicate tok_dot
+    datalog_predicate tok_dot { ProcessFact((AST::Clause*)$1); }
 |   datalog_rule tok_dot
 |   tok_questiondash datalog_predicate tok_dot
 ;
@@ -73,7 +78,7 @@ termlist:
 ;
 
 datalog_rule:
-    datalog_predicate tok_colondash datalog_clause
+    datalog_predicate tok_colondash datalog_clause { ProcessRule((AST::Clause*)$1,(AST::Clause*)$3); }
 ;
 
 datalog_base_clause:
@@ -130,11 +135,12 @@ variablelist:
 |   variablelist tok_comma variable
 ;
 
-fact: clause tok_dot { if($1) std::cout << "Got a fact!\n"; };
+fact: clause tok_dot { ProcessFact((AST::Clause*)$1); };
 
 rule:
-    tok_if clause tok_then clause tok_dot
-|   clause tok_if clause tok_dot;
+    tok_if clause tok_then clause tok_dot { ProcessRule((AST::Clause*)$4, (AST::Clause*)$2); }
+|   clause tok_if clause tok_dot { ProcessRule((AST::Clause*)$1, (AST::Clause*)$3); }
+;
 
 baseclause:
     term is_a unarypredicate { $$ = new AST::TermIs((AST::Entity*)$1, (AST::UnaryPredicate*)$3); }
@@ -204,10 +210,14 @@ attributes:
 |   attributes tok_comma binarypredicate arithmetic_term
 ;
 
-predicate: tok_identifier
+predicate: tok_identifier { $$ = nullptr; }
 unarypredicate: tok_identifier { $$ = new AST::UnaryPredicate(yytext); }
 binarypredicate: tok_identifier { $$ = new AST::BinaryPredicate(yytext); }
-variable: tok_identifier | tok_underscore;
+
+variable:
+    tok_identifier { $$ = new AST::Variable(yytext); }
+|   tok_underscore { $$ = new AST::UnderscoreVariable(); }
+;
 
 term:
     entity
@@ -279,7 +289,7 @@ entity:
         }
         $$ = new AST::String(value);
     }
-|   tok_atentity
+|   tok_atentity { $$ = new AST::AtEntity(yytext+1); }
 |   tok_integer { $$ = new AST::Integer(atoi(yytext)); }
 |   tok_float   { $$ = new AST::Float(atof(yytext)); }
 |   tok_true    { $$ = new AST::Bool(true); }

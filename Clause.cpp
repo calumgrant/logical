@@ -11,8 +11,6 @@ AST::String::String(const std::string &p) : value(p)
 AST::TermIs::TermIs(Entity* entity, UnaryPredicateOrList* list)
     : entity(entity), list(list)
 {
-    if(entity && list)
-    std::cout << "Got a full termis!\n";
 }
 
 AST::Predicate::Predicate(const char * name) : name(name) { }
@@ -41,4 +39,24 @@ AST::Integer::Integer(int v) : value(v)
 
 AST::Float::Float(double d) : value(d)
 {
+}
+
+AST::AtEntity::AtEntity(const char * v) : value(v)
+{   
+}
+
+AST::Rule::Rule(Clause * lhs, Clause * rhs) : lhs(lhs), rhs(rhs)
+{
+}
+
+void ProcessFact(AST::Clause * f)
+{
+    std::unique_ptr<AST::Clause> fact(f);
+    if(f) std::cout << "Processing fact\n";
+}
+
+void ProcessRule(AST::Clause * lhs, AST::Clause * rhs)
+{
+    std::unique_ptr<AST::Clause> l(lhs), r(rhs);
+    if(l && r) std::cout << "Processing rule\n";
 }

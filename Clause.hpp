@@ -4,7 +4,12 @@
 
 namespace AST
 {
-    class Clause
+    class Node
+    {
+
+    };
+
+    class Clause : public Node
     {
     };
 
@@ -25,16 +30,18 @@ namespace AST
     {
     public:
         Variable(const char * name);
-        std::string name;
+        const std::string name;
     };
 
-    class UnderscoreVariable : public Variable
+    class UnderscoreVariable : public Entity
     {
-
     };
 
     class AtEntity : public Entity
     {
+    public:
+        AtEntity(const char*v);
+        const std::string value;
     };
 
     class String : public Entity
@@ -107,5 +114,12 @@ namespace AST
         TermIs(Entity* entity, UnaryPredicateOrList* list);
         std::unique_ptr<Entity> entity;
         std::unique_ptr<UnaryPredicateOrList> list;
+    };
+
+    class Rule : public Clause
+    {
+    public:
+        Rule(Clause * lhs, Clause * rhs);
+        std::unique_ptr<Clause> lhs, rhs;
     };
 }
