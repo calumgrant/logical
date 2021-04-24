@@ -147,7 +147,8 @@ baseclause:
 |   term is_a entity
 |   unarypredicatelist term is_a unarypredicate
 |   arithmetic_term comparator arithmetic_term
-|   unarypredicatelist term { $$ = new AST::TermIs((AST::Entity*)$2, (AST::UnaryPredicateList*)$1); }
+// |   unarypredicatelist term { $$ = new AST::TermIs((AST::Entity*)$2, (AST::UnaryPredicateList*)$1); }
+|   unarypredicatelist termlist
 |   term has_a binarypredicate
 |   term tok_comma binarypredicate
 |   unarypredicatelist term has_a binarypredicate arithmetic_term

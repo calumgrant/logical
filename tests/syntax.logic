@@ -17,6 +17,9 @@ googol 1.0e100.
 googol 1e100.
 username "calum".
 
+number 1+2.
+number 1+2, 3+4, 1.2-2, 4.123.  // Is this even useful???
+
 // You can define multiple facts in the same statement.
 // These are the equivalent:
 large fish @f1 and small fish @f2.
