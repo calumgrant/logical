@@ -24,14 +24,9 @@ int main(int argc, char**argv)
         {
             yyin = f;
             int p = yyparse();
-            if(p==0) std::cout << "Parse success\n";
-            while(int c = yylex())
-            {
-                std::cout << c << "=[" << yytext << "]";
-//                std::cout << c << " " << yytext << std::endl;
-            }
+            if(p==0) std::cout << "Parse success!\n";
             fclose(f);
-
+            if(!p) return 128;
         }
         else
         {

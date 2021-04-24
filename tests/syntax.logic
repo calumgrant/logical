@@ -128,11 +128,11 @@ f() :- (g();h()), i().
 // `print` is a predicate with a side-effect.
 print "Syntax test passed".
 
-// `clear` is a special predicate.
-// It clears all rules.
-clear person X.
-clear person.
-clear person X has surname S.
-clear _.
+// `delete` is a special predicate.
+// It deletes all statements and rules.
+delete person X.
+delete person.
+delete person X has surname S.
+delete _.
 
-clear person P if P has surname "Smith".
+delete person P if P has surname "Smith".

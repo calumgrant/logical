@@ -9,7 +9,8 @@
 #include <iostream>
 
 int yylex();
-void yyerror(const char*) { std::cerr << "Syntax error at ?????"; }
+extern int yylineno;
+void yyerror(const char*) { std::cerr << "Syntax error at line " << yylineno; }
 
 // int yylex(YYLVAL * val, YYLTYPE * loc);
 //void yyerror(YYLTYPE *loc, const char*) { std::cerr << "Syntax error at ?????"; }

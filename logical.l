@@ -6,6 +6,7 @@
 
 %array
 %option nodefault
+%option yylineno
 
 %%
 
