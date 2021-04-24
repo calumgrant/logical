@@ -146,6 +146,7 @@ has_a:
     tok_has
 |   tok_has tok_a
 |   tok_has tok_an
+|   tok_has tok_no
 ;
 
 is_a:

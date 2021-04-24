@@ -55,6 +55,9 @@ P is retired if
 P is retired if 
     P has age A and (P is male and A>=65 or P is not a male and A>=60).
 
+P is orphan if P has no parent.
+P is orphan if P has no parent _.
+
 // This defines the relation `retired`, not the relation `person`.
 person P is retired if 
     P has age A and (P is male and A>=65 or P is female and A>=60).
