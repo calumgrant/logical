@@ -10,18 +10,77 @@ person 3.14.
 person true.
 person false.
 
-// You can actually define constants as follows.
+// You can actually define global constants as follows.
 pi 3.14159.
+pi is 3.14159.
 googol 1.0e100.
-//googol 1e100.
+googol 1e100.
+username "calum".
 
 // Binary relations are defined using `has` and `,`.
 
-circle @c1.
+// These are equivalent. They define a unary relation `circle` and the binary `radius`
 circle @c1, radius 10.
 circle @c2 has radius 20.
+
+// These are equivalent. `a` and `an` are optional and can be used to aid readability.
+@fred has first-name "Fred".
+@fred has a first-name "Fred".
+@fred has an first-name "Fred".
+@fred, first-name "Fred".
+@fred has first-name "Fred", surname "Brooks", age 99.
+
+// Rules
 circle C has diameter D if C has radius R and D = R*3.14159.
 circle C has diameter D if C has radius R and pi Pi and D = X*Pi.
+
+X has ancestor Y if 
+    X has parent Y or 
+    X has parent Z and Z has ancestor Y.
+
+X has parent Y if X has mother Y or X has father Y.
+
+P is retired if P has age A and A>=65.
+
+P is retired if 
+    P has age A and (P is male and A>=65 or P is female and A>=60).
+
+// This is a little subtle. It defines the relation `retired`, not the relation `person`.
+person P is retired if 
+    P has age A and (P is male and A>=65 or P is female and A>=60).
+
+person X is old if X has age A and A>=80.
+person X is young if not X is old.
+
+// Queries
+
+find person P.
+find person.
+find circle C, radius R.
+find C has radius R.
+find C has radius R, diameter D.
+find C has radius R, diameter D if D>10.
+find circle C and person P.
+find circle C and person P if 
+    P has age A and C has diameter A.
+find circle C and person P, surname S if 
+    P has age A and C has diameter A.
+
+// Query using a variable list
+find P if person P.
+find P, S if person P, surname S.
+
+// Quantifiers
+
+person X has money M if M = sum V in (X has cash C and C has value V).
+person X has money sum V in (X has cash C and C has amount V).
+person X has coins count C in (X has cash C).
+person X is rich if sum V in (X has cash C and C has value V) > 100.
+
+person X is rich if 
+    all (rich X) in X has parent P and rich P.
+
+// All
 
 // Datalog syntax:
 
@@ -34,6 +93,10 @@ f() :- g(); h(); i().
 f() :- not g().
 f() :- (g()).
 f() :- (g();h()), i().
+
+// Datalog query:
+
+?- f(X).
 
 // `print` is a predicate with a side-effect.
 print "Syntax test passed".

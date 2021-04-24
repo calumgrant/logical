@@ -13,6 +13,7 @@ a return tok_a;
 all return tok_all;
 an return tok_an;
 and return tok_and;
+count return tok_count;
 false           return tok_false;
 find return tok_find;
 has return tok_has;
@@ -48,14 +49,14 @@ true            return tok_true;
 % return tok_mod;
 
 _               return tok_underscore;
-[a-zA-Z][a-zA-Z0-9_]* return tok_identifier;
+[a-zA-Z][a-zA-Z0-9_\-]* return tok_identifier;
 _[a-zA-Z0-9_]+ return tok_identifier;
 
 @[a-zA-Z_\-0-9]* return tok_atentity;
 [0-9]+          return tok_integer;
 \"([^"\\]|\\.)*\"   return tok_string;
 
-[0-9]*\.[0-9]+([eE][+-]?[0-9]+)? return tok_float;
+[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+ return tok_float;
 
 \/\/[^\n]+
 [ \r\n\t]+

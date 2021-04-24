@@ -22,7 +22,7 @@ void yyerror(const char*) { std::cerr << "Syntax error at ?????"; }
 %token tok_identifier tok_atentity tok_string tok_integer tok_float tok_underscore
 %token tok_if tok_and tok_has tok_or tok_not tok_a tok_an tok_no tok_is tok_dot tok_then tok_find tok_sum tok_in tok_all
 %token tok_open tok_close tok_comma tok_colondash tok_semicolon tok_equals tok_notequals tok_questiondash tok_lt tok_gt tok_lteq tok_gteq
-%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false
+%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count
 
 %%
 
@@ -36,8 +36,8 @@ statements:
 ;
 
 statement:
-    fact { printf("Parsed a fact\n"); }
-|   rule { printf("Parsed a rule\n"); }
+    fact //{ printf("Parsed a fact\n"); }
+|   rule //{ printf("Parsed a rule\n"); }
 |   datalog
 |   query
 ;
@@ -90,10 +90,29 @@ datalog_clause:
 ;
 
 query:
-    tok_find clause tok_dot
+    tok_find queryclause tok_dot
 |   tok_find predicate tok_dot
-|   tok_find baseclause tok_if clause tok_dot
-|   tok_find variable tok_if clause tok_dot
+|   tok_find queryclause tok_if clause tok_dot
+|   tok_find variablelist tok_if clause tok_dot  // find A, surname S could be am attribute or a variable list 
+;
+
+querybaseclause:
+    unarypredicate variable
+|   unarypredicate variable has_a binarypredicate variable
+|   unarypredicate variable has_a binarypredicate variable attributes
+|   unarypredicate variable attributes
+|   variable has_a binarypredicate variable
+|   variable has_a binarypredicate variable attributes
+;
+
+queryclause:
+    querybaseclause
+|   queryclause tok_and querybaseclause
+;
+
+variablelist:
+    variable
+|   variablelist tok_comma variable
 ;
 
 fact: baseclause tok_dot;
@@ -104,7 +123,9 @@ baseclause tok_if clause tok_dot;
 baseclause:
     term is_a unarypredicate
 |   term is_a entity
+|   unarypredicate term is_a unarypredicate
 |   arithmetic_term comparator arithmetic_term
+//|   term comparator arithmetic_term
 |   unarypredicate term
 // |   term has_a binarypredicate
 |   unarypredicate term has_a binarypredicate arithmetic_term
@@ -114,7 +135,11 @@ baseclause:
 |   term has_a binarypredicate arithmetic_term attributes
 |   term attributes
 |   tok_open clause tok_close
-|   tok_all baseclause tok_in baseclause 
+;
+
+unarypredicatelist:
+    unarypredicate
+|   unarypredicatelist unarypredicate
 ;
 
 has_a:
@@ -130,9 +155,14 @@ is_a:
 |   tok_in
 ;
 
-notclause:
+allclause:
     baseclause
-|   tok_not baseclause
+|   tok_all tok_open clause tok_close tok_in allclause 
+;
+
+notclause:
+    allclause
+|   tok_not allclause
 ;
 
 andclause:
@@ -187,6 +217,7 @@ plusterm:
 sumterm:
     plusterm
 |   tok_sum arithmetic_term tok_in tok_open clause tok_close
+|   tok_count variable tok_in tok_open clause tok_close
 ;
 
 arithmetic_term: sumterm;
