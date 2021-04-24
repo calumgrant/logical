@@ -122,8 +122,11 @@ baseclause tok_if clause tok_dot;
 
 baseclause:
     term is_a unarypredicate
+|   term tok_is not_a unarypredicate
 |   term is_a entity
+|   term tok_is not_a entity
 |   unarypredicatelist term is_a unarypredicate
+|   unarypredicatelist term tok_is not_a unarypredicate
 |   arithmetic_term comparator arithmetic_term
 |   unarypredicatelist term
 |   term has_a binarypredicate
@@ -148,11 +151,19 @@ has_a:
 |   tok_has tok_an
 ;
 
+not_a:
+    tok_not
+|   tok_not tok_a
+|   tok_not tok_an
+;
+
 is_a:
     tok_is
 |   tok_is tok_a
 |   tok_is tok_an
 |   tok_in
+// |   tok_is tok_not
+
 ;
 
 allclause:

@@ -10,7 +10,7 @@ person 3.14.
 person true.
 person false.
 
-// You can actually define global constants as follows.
+// You can define global constants as follows.
 pi 3.14159.
 pi is 3.14159.
 googol 1.0e100.
@@ -32,7 +32,8 @@ circle @c2 has radius 20.
 
 // Rules
 circle C has diameter D if C has radius R and D = R*3.14159.
-circle C has diameter D if C has radius R and pi Pi and D = X*Pi.
+circle C has diameter D if C has radius R and pi Pi and D = R*Pi.
+circle C has diameter D if C has radius R and Pi is pi and D = R*Pi.
 
 X has ancestor Y if 
     X has parent Y or 
@@ -42,10 +43,19 @@ X has parent Y if X has mother Y or X has father Y.
 
 P is retired if P has age A and A>=65.
 
-P is retired if 
+P is retired if
     P has age A and (P is male and A>=65 or P is female and A>=60).
 
-// This is a little subtle. It defines the relation `retired`, not the relation `person`.
+P is retired if 
+    P has age A and (P is male and A>=65 or not male P and A>=60).
+
+P is retired if 
+    P has age A and (P is male and A>=65 or P is not male and A>=60).
+
+P is retired if 
+    P has age A and (P is male and A>=65 or P is not a male and A>=60).
+
+// This defines the relation `retired`, not the relation `person`.
 person P is retired if 
     P has age A and (P is male and A>=65 or P is female and A>=60).
 
