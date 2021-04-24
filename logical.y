@@ -96,6 +96,7 @@ query:
 |   tok_find variablelist tok_if clause tok_dot  // find A, surname S could be am attribute or a variable list 
 ;
 
+// Different syntax to distinguish them from variable lists A, B, C
 querybaseclause:
     unarypredicate variable
 |   unarypredicate variable has_a binarypredicate variable
@@ -115,10 +116,11 @@ variablelist:
 |   variablelist tok_comma variable
 ;
 
-fact: baseclause tok_dot;
+fact: clause tok_dot;
 
-rule: tok_if clause tok_then baseclause tok_dot | 
-baseclause tok_if clause tok_dot;
+rule:
+    tok_if clause tok_then clause tok_dot
+|   clause tok_if clause tok_dot;
 
 baseclause:
     term is_a unarypredicate

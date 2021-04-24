@@ -93,12 +93,18 @@ person X is rich if sum V in (X has cash C and C has value V) > 100.
 person X is rich if 
     all (rich X) in X has parent P and rich P.
 
-// New idea:
 // This states two facts: rich P and person P.
 rich person @p1.
 
-// TODO:
-// person X and rich X if foo X.
+// This defines two predicates: person/1 and rich/1
+person X and rich X if foo X.
+person X and rich X, money M if foo X and M=1000.
+
+rich person X, money M if foo X and M=1000.
+rich person X has money M if foo X and M=1000.
+rich person X has money 1000 if foo X.
+money(X,M) :- rich(X), person(X), foo(X), eq(M,1000).
+
 
 // rich person @p2 has name "Frank".
 person P is orphan if not P has parent. 
@@ -121,3 +127,12 @@ f() :- (g();h()), i().
 
 // `print` is a predicate with a side-effect.
 print "Syntax test passed".
+
+// `clear` is a special predicate.
+// It clears all rules.
+clear person X.
+clear person.
+clear person X has surname S.
+clear _.
+
+clear person P if P has surname "Smith".
