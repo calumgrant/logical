@@ -125,9 +125,9 @@ baseclause:
 |   term is_a entity
 |   unarypredicatelist term is_a unarypredicate
 |   arithmetic_term comparator arithmetic_term
-//|   term comparator arithmetic_term
 |   unarypredicatelist term
-// |   term has_a binarypredicate
+|   term has_a binarypredicate
+|   term tok_comma binarypredicate
 |   unarypredicatelist term has_a binarypredicate arithmetic_term
 |   unarypredicatelist term has_a binarypredicate arithmetic_term attributes
 |   unarypredicatelist term attributes

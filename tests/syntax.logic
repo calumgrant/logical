@@ -84,9 +84,11 @@ person X is rich if
 // This states two facts: rich P and person P.
 rich person @p1.
 
-rich person @p2 has name "Frank".
+// TODO:
+// person X and rich X if foo X.
 
-// All
+// rich person @p2 has name "Frank".
+person P is orphan if not P has parent. 
 
 // Datalog syntax:
 
