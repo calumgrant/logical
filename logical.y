@@ -123,14 +123,14 @@ baseclause tok_if clause tok_dot;
 baseclause:
     term is_a unarypredicate
 |   term is_a entity
-|   unarypredicate term is_a unarypredicate
+|   unarypredicatelist term is_a unarypredicate
 |   arithmetic_term comparator arithmetic_term
 //|   term comparator arithmetic_term
-|   unarypredicate term
+|   unarypredicatelist term
 // |   term has_a binarypredicate
-|   unarypredicate term has_a binarypredicate arithmetic_term
-|   unarypredicate term has_a binarypredicate arithmetic_term attributes
-|   unarypredicate term attributes
+|   unarypredicatelist term has_a binarypredicate arithmetic_term
+|   unarypredicatelist term has_a binarypredicate arithmetic_term attributes
+|   unarypredicatelist term attributes
 |   term has_a binarypredicate arithmetic_term
 |   term has_a binarypredicate arithmetic_term attributes
 |   term attributes
