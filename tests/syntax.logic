@@ -17,6 +17,17 @@ googol 1.0e100.
 googol 1e100.
 username "calum".
 
+// You can define multiple facts in the same statement.
+// These are the equivalent:
+large fish @f1 and small fish @f2.
+fish @f1 is large and fish @f2 is small.
+
+// In Datalog:
+fish(@f1).
+largs(@f1).
+fish(@f2).
+small(@f2).
+
 // Binary relations are defined using `has` and `,`.
 
 // These are equivalent. They define a unary relation `circle` and the binary `radius`
@@ -66,7 +77,6 @@ person X is old if X has age A and A>=80.
 person X is young if not X is old.
 
 // Queries
-
 find person P.
 find person.
 find circle C, radius R.

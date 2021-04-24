@@ -3,13 +3,26 @@
 %locations
 // %pure-parser
 
+
 %{
+#include <Clause.hpp>
+#define YYSTYPE AST::Clause*
+
+// This is totall wrong I think
+extern char yytext[];
+
+
 #include "tokens.tab.h"
+#include <memory>
 
 #include <iostream>
 
+
+// std::unique_ptr<AST::Clause>
+
 int yylex();
 extern int yylineno;
+extern int yyleng;
 void yyerror(const char*) { std::cerr << "Syntax error at line " << yylineno; }
 
 // int yylex(YYLVAL * val, YYLTYPE * loc);
@@ -229,6 +242,42 @@ sumterm:
 
 arithmetic_term: sumterm;
 
-entity: tok_string | tok_atentity | tok_integer | tok_float | tok_true | tok_false;
+entity: 
+    tok_string { 
+        std::string value;
+        for(int i=1; i<yyleng-1; ++i)
+        {
+            if(yytext[i]=='\\')
+            {
+                ++i;
+                switch(yytext[i])
+                {
+                case 'r':
+                    value.push_back('\r');
+                    break;
+                case 'n':
+                    value.push_back('\n');
+                    break;
+                case 't':
+                    value.push_back('\t');
+                    break;
+                case '\\':
+                    value.push_back('\\');
+                    break;
+                case '"':
+                    value.push_back('"');
+                    break;
+                default:
+                    yyerror("Invalid escape character");
+                    break;
+                }
+            }
+            else
+                value.push_back(yytext[i]);
+        }
+        $$ = new AST::String(value);
+    }
+
+|   tok_atentity | tok_integer | tok_float | tok_true | tok_false;
 
 %%
