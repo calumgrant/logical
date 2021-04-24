@@ -8,7 +8,7 @@
 #include <Clause.hpp>
 #define YYSTYPE AST::Clause*
 
-// This is totall wrong I think
+// This is totally wrong I think
 extern char yytext[];
 
 
@@ -130,18 +130,18 @@ variablelist:
 |   variablelist tok_comma variable
 ;
 
-fact: clause tok_dot;
+fact: clause tok_dot { if($1) std::cout << "Got a fact!\n"; };
 
 rule:
     tok_if clause tok_then clause tok_dot
 |   clause tok_if clause tok_dot;
 
 baseclause:
-    term is_a unarypredicate
+    term is_a unarypredicate { $$ = new AST::TermIs((AST::Entity*)$1, (AST::UnaryPredicate*)$3); }
 |   term is_a entity
 |   unarypredicatelist term is_a unarypredicate
 |   arithmetic_term comparator arithmetic_term
-|   unarypredicatelist term
+|   unarypredicatelist term { $$ = new AST::TermIs((AST::Entity*)$2, (AST::UnaryPredicateList*)$1); }
 |   term has_a binarypredicate
 |   term tok_comma binarypredicate
 |   unarypredicatelist term has_a binarypredicate arithmetic_term
@@ -150,12 +150,12 @@ baseclause:
 |   term has_a binarypredicate arithmetic_term
 |   term has_a binarypredicate arithmetic_term attributes
 |   term attributes
-|   tok_open clause tok_close
+|   tok_open clause tok_close { $$=$2; }
 ;
 
 unarypredicatelist:
-    unarypredicate
-|   unarypredicatelist unarypredicate
+    unarypredicate { $$ = new AST::UnaryPredicateList((AST::UnaryPredicate*)$1); }
+|   unarypredicatelist unarypredicate { $$=$1; ((AST::UnaryPredicateList*)$$)->Append((AST::UnaryPredicate*)$2); }
 ;
 
 has_a:
@@ -205,15 +205,17 @@ attributes:
 ;
 
 predicate: tok_identifier
-unarypredicate: tok_identifier;
-binarypredicate: tok_identifier;
+unarypredicate: tok_identifier { $$ = new AST::UnaryPredicate(yytext); }
+binarypredicate: tok_identifier { $$ = new AST::BinaryPredicate(yytext); }
 variable: tok_identifier | tok_underscore;
 
-term: entity | variable;
+term:
+    entity
+|   variable { $$ = new AST::Variable(yytext); }
 
 baseterm:
     term
-|   tok_open arithmetic_term tok_close
+|   tok_open arithmetic_term tok_close { $$ = $2; }
 ;
 
 unaryterm:
@@ -277,7 +279,11 @@ entity:
         }
         $$ = new AST::String(value);
     }
-
-|   tok_atentity | tok_integer | tok_float | tok_true | tok_false;
+|   tok_atentity
+|   tok_integer { $$ = new AST::Integer(atoi(yytext)); }
+|   tok_float   { $$ = new AST::Float(atof(yytext)); }
+|   tok_true    { $$ = new AST::Bool(true); }
+|   tok_false   { $$ = new AST::Bool(false); }
+;
 
 %%

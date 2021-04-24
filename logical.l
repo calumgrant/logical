@@ -1,5 +1,7 @@
 
 %{
+#define register
+
 #include "tokens.tab.h"
 // # %option reentrant bison-bridge
 %}
