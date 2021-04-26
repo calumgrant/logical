@@ -29,6 +29,7 @@ or return tok_or;
 sum return tok_sum;
 then return tok_then;
 true            return tok_true;
+with return tok_with;
 
 \. { return tok_dot; }
 \( return tok_open;

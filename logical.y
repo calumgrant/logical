@@ -40,7 +40,7 @@ void ProcessRule(AST::Clause * lhs, AST::Clause * rhs);
 %token tok_identifier tok_atentity tok_string tok_integer tok_float tok_underscore
 %token tok_if tok_and tok_has tok_or tok_not tok_a tok_an tok_no tok_is tok_dot tok_then tok_find tok_sum tok_in tok_all
 %token tok_open tok_close tok_comma tok_colondash tok_semicolon tok_equals tok_notequals tok_questiondash tok_lt tok_gt tok_lteq tok_gteq
-%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count
+%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count tok_with
 
 %%
 
@@ -151,9 +151,11 @@ baseclause:
 |   term has_a binarypredicate { $$ = new AST::NotImplementedClause($1, $3); }
 |   term tok_comma binarypredicate { $$ = new AST::NotImplementedClause($1, $3); }
 |   unarypredicatelist term has_a binarypredicate arithmetic_term { $$ = new AST::NotImplementedClause(); }
+|   unarypredicatelist term has_a binarypredicate arithmetic_term tok_with inlist { $$ = new AST::NotImplementedClause(); }
 |   unarypredicatelist term has_a binarypredicate arithmetic_term attributes { $$ = new AST::NotImplementedClause(); }
 |   unarypredicatelist term attributes { $$ = new AST::NotImplementedClause(); }
 |   term has_a binarypredicate arithmetic_term { $$ = new AST::NotImplementedClause(); }
+|   term has_a binarypredicate arithmetic_term tok_with inlist { $$ = new AST::NotImplementedClause(); }
 |   term has_a binarypredicate arithmetic_term attributes { $$ = new AST::NotImplementedClause(); }
 |   term attributes { $$ = new AST::NotImplementedClause(); }
 |   tok_open clause tok_close { $$=$2; }
@@ -162,6 +164,11 @@ baseclause:
 unarypredicatelist:
     unarypredicate { $$ = new AST::UnaryPredicateList((AST::UnaryPredicate*)$1); }
 |   unarypredicatelist unarypredicate { $$=$1; ((AST::UnaryPredicateList*)$$)->Append((AST::UnaryPredicate*)$2); }
+;
+
+inlist:
+    unarypredicate term
+|   inlist tok_comma unarypredicate term
 ;
 
 has_a:

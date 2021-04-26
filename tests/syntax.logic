@@ -13,15 +13,9 @@ person false.
 // You can define global constants as follows.
 pi 3.14159.
 3.1415926 is pi.
-// pi is 3.14159.  // Invalid. Should be 3.14159 is pi.
 googol 1.0e100.
 googol 1e100.
 username "calum".
-
-// These don't work because it could be parsed as number (1+2).
-// which is the datalog syntax.
-// number 1+2.
-// number 1+i if number i.
 
 // You can define multiple facts in the same statement.
 // These are the equivalent:
@@ -46,6 +40,13 @@ circle @c2 has radius 20.
 @fred has an first-name "Fred".
 @fred, first-name "Fred".
 @fred has first-name "Fred", surname "Brooks", age 99.
+
+// Ternary or more relations
+person @fred has a child "Bill" with position 0, age 10.
+@fred has a child "Mary" with position 1, age 8.
+
+// Same as:
+child-position-age(@fred, "Mary", 1, 8).
 
 // Rules
 circle C has diameter D if C has radius R and D = R*3.14159.
