@@ -19,7 +19,13 @@ add_executable(logical main.cpp Clause.cpp Database.cpp StringTable.cpp Entity.h
     ${FLEX_MyScanner_OUTPUTS}
     )
 
+add_executable(logical-tests tests.cpp Database.cpp Clause.cpp StringTable.cpp)
+
 set_target_properties(logical PROPERTIES
+    CXX_STANDARD 17
+    CXX_EXTENSIONS OFF)
+
+set_target_properties(logical-tests PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
 
