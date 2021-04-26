@@ -148,15 +148,43 @@ baseclause:
 |   arithmetic_term comparator arithmetic_term { $$ = new AST::NotImplementedClause($1, $3); }
 |   unarypredicatelist term { $$ = new AST::TermIs((AST::Entity*)$2, (AST::UnaryPredicateList*)$1); }
 |   term has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, new AST::AttributeList((AST::BinaryPredicate*)$3, nullptr, nullptr)); }
-|   term tok_comma binarypredicate { $$ = new AST::NotImplementedClause($1, $3); }
-|   unarypredicatelist term has_a binarypredicate arithmetic_term { $$ = new AST::NotImplementedClause(); }
+|   term tok_comma binarypredicate
+    {
+        $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, new AST::AttributeList((AST::BinaryPredicate*)$3, nullptr, nullptr));
+    }
+|   unarypredicatelist term has_a binarypredicate arithmetic_term
+    { 
+        $$ = new AST::EntityHasAttributes((AST::UnaryPredicateList*)$1, (AST::Entity*)$2, 
+            new AST::AttributeList((AST::BinaryPredicate*)$4, (AST::Entity*)$5, nullptr));
+    }
 |   unarypredicatelist term has_a binarypredicate arithmetic_term tok_with inlist { $$ = new AST::NotImplementedClause(); }
-|   unarypredicatelist term has_a binarypredicate arithmetic_term attributes { $$ = new AST::NotImplementedClause(); }
-|   unarypredicatelist term attributes { $$ = new AST::NotImplementedClause(); }
-|   term has_a binarypredicate arithmetic_term { $$ = new AST::NotImplementedClause(); }
-|   term has_a binarypredicate arithmetic_term tok_with inlist { $$ = new AST::NotImplementedClause(); }
-|   term has_a binarypredicate arithmetic_term attributes { $$ = new AST::NotImplementedClause(); }
-|   term attributes { $$ = new AST::NotImplementedClause(); }
+|   unarypredicatelist term has_a binarypredicate arithmetic_term attributes
+    { 
+        $$ = new AST::EntityHasAttributes((AST::UnaryPredicateList*)$1, (AST::Entity*)$2, 
+            new AST::AttributeList((AST::BinaryPredicate*)$4, (AST::Entity*)$5, (AST::AttributeList*)$6));
+    }
+|   unarypredicatelist term attributes 
+    { 
+        $$ = new AST::EntityHasAttributes((AST::UnaryPredicateList*)$1, (AST::Entity*)$2, (AST::AttributeList*)$3);
+    }
+|   term has_a binarypredicate arithmetic_term
+    { 
+        $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, 
+            new AST::AttributeList((AST::BinaryPredicate*)$3, (AST::Entity*)$4, nullptr));
+    }
+|   term has_a binarypredicate arithmetic_term tok_with inlist
+    { 
+        $$ = new AST::NotImplementedClause();
+    }
+|   term has_a binarypredicate arithmetic_term attributes
+    {
+        $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, 
+            new AST::AttributeList((AST::BinaryPredicate*)$3, (AST::Entity*)$4, (AST::AttributeList*)$5));
+    }
+|   term attributes
+    {
+        $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, (AST::AttributeList*)$2);
+    }
 |   tok_open clause tok_close { $$=$2; }
 ;
 
