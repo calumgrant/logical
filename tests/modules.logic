@@ -1,0 +1,23 @@
+// Modules examples.
+
+// Defines a module called "ast".
+// This has the effect of prefixing all predicate names with "ast-", except for those
+// names that already contain a "-".
+// This is in effect until the end of the file, or the next module statement.
+module "ast".  
+
+module "foo".
+
+// foo-expression(123).
+expression 123.
+
+module "bar".
+
+// Creates bar-expression:
+expression X if foo-expression X.
+
+// same as:
+bar-expression X if foo-expression X.
+
+// Back to global module.
+module "".
