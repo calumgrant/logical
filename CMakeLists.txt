@@ -14,7 +14,7 @@ ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 
-add_executable(logical main.cpp Clause.cpp Database.cpp
+add_executable(logical main.cpp Clause.cpp Database.cpp StringTable.cpp Entity.hpp StringTable.hpp
     ${BISON_MyParser_OUTPUTS}
     ${FLEX_MyScanner_OUTPUTS}
     )

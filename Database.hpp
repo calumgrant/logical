@@ -1,28 +1,8 @@
 
 #include <string>
 #include <unordered_map>
-
-typedef int EntityId;
-
-enum class EntityType
-{
-    Integer,
-    String,
-    Float,
-    AtEntity,
-    Boolean
-};
-
-// Something that's stored in the database
-struct Entity
-{
-    union
-    {
-        int i;
-        float f;
-    };
-    
-};
+#include <Entity.hpp>
+#include <StringTable.hpp>
 
 class Relation
 {
@@ -52,6 +32,7 @@ class Error
 
 };
 
+
 class Database
 {
 public:
@@ -74,4 +55,7 @@ public:
 private:
     std::unordered_map<std::string, UnaryTable> unaryRelations;
     std::unordered_map<std::string, BinaryTable> binaryRelations;
+
+    // String table
+    StringTable strings, atentities;
 };
