@@ -193,7 +193,7 @@ notclause:
 
 andclause:
     notclause
-|   andclause tok_and notclause
+|   andclause tok_and notclause { $$ = new AST::And((AST::Clause*)$1, (AST::Clause*)$3); }
 ;
 
 orclause:

@@ -46,7 +46,6 @@ class Error
 
 };
 
-
 class Database
 {
 public:

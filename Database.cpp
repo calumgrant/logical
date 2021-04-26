@@ -36,7 +36,6 @@ void UnaryTable::Add(const Entity &e)
 {
     std::cout << "Added (" << (int)e.type << "," << e.i << ") to the table\n";
     values.insert(e);
-    // TODO: Signal if changed.
 }
 
 void BinaryTable::Add(const Entity &e1, const Entity &e2)

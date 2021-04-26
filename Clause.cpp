@@ -131,3 +131,13 @@ Entity AST::UnnamedVariable::MakeEntity(Database &db) const
     db.UnboundError("_");
     return db.CreateInt(-1);
 }
+
+AST::And::And(Clause *lhs, Clause *rhs) : lhs(lhs), rhs(rhs)
+{
+}
+
+void AST::And::AssertFacts(Database &db)
+{
+    lhs->AssertFacts(db);
+    rhs->AssertFacts(db);
+}

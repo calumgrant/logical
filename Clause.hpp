@@ -100,6 +100,14 @@ namespace AST
     {
     };
 
+    class And : public Clause
+    {
+    public:
+        And(Clause *lhs, Clause *rhs);
+        void AssertFacts(Database &db) override;
+        std::unique_ptr<Clause> lhs, rhs;
+    };
+
     class Predicate : public Node
     {
     public:
