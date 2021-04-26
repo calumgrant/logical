@@ -1,10 +1,11 @@
 #include "Clause.hpp"
+#include "Database.hpp"
 
 AST::Node::~Node()
 {
 }
 
-AST::Variable::Variable(const char * name) : name(name)
+AST::NamedVariable::NamedVariable(const char * name) : name(name)
 {
 }
 
@@ -55,7 +56,7 @@ AST::Rule::Rule(Clause * lhs, Clause * rhs) : lhs(lhs), rhs(rhs)
 
 void AST::TermIs::AssertFacts(Database &db)
 {
-    std::cout << "TODO: Assert the facts.\n";
+    list->Assert(db, entity->MakeEntity(db));
 }
 
 AST::NotImplementedClause::NotImplementedClause(Node *a, Node *b, Node *c, Node *d)
@@ -69,4 +70,64 @@ AST::NotImplementedClause::NotImplementedClause(Node *a, Node *b, Node *c, Node 
 void AST::NotImplementedClause::AssertFacts(Database & db)
 {
     std::cerr << "Not implemented.\n";
+}
+
+void AST::UnaryPredicate::Assert(Database &db, const ::Entity &e) const
+{
+    db.GetUnaryRelation(name).Add(e);
+}
+
+void AST::UnaryPredicateList::Assert(Database &db, const ::Entity &e) const
+{
+    for(auto &l : list)
+        l->Assert(db, e);
+}
+
+bool AST::Bool::IsVariable() const { return false; }
+
+Entity AST::Bool::MakeEntity(Database &db) const
+{
+    return db.Create(value);
+}
+
+bool AST::Float::IsVariable() const { return false; }
+
+Entity AST::Float::MakeEntity(Database &db) const
+{
+    return db.Create(value);
+}
+
+bool AST::String::IsVariable() const { return false; }
+
+Entity AST::String::MakeEntity(Database &db) const
+{
+    return db.CreateString(value);
+}
+
+bool AST::Integer::IsVariable() const { return false; }
+
+Entity AST::Integer::MakeEntity(Database &db) const
+{
+    return db.CreateInt(value);
+}
+
+bool AST::AtEntity::IsVariable() const { return false; }
+
+Entity AST::AtEntity::MakeEntity(Database &db) const
+{
+    return db.CreateAt(value);
+}
+
+bool AST::Variable::IsVariable() const { return true; }
+
+Entity AST::NamedVariable::MakeEntity(Database &db) const
+{
+    db.UnboundError(name);
+    return db.CreateInt(-1);
+}
+
+Entity AST::UnnamedVariable::MakeEntity(Database &db) const
+{
+    db.UnboundError("_");
+    return db.CreateInt(-1);
 }

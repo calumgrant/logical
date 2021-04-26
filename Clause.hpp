@@ -3,6 +3,7 @@
 #include <vector>
 
 class Database;
+class Entity;
 
 namespace AST
 {
@@ -25,33 +26,38 @@ namespace AST
         void AssertFacts(Database &db) override;
     };
 
-    class UnaryRelationXX : public Clause
-    {
-    };
-
-    class BinaryRelationXX : public Clause
-    {
-    };
-
     class Entity : public Node
     {
+    public:
+        virtual bool IsVariable() const =0;
+        virtual ::Entity MakeEntity(Database &db) const =0;
     };
 
     class Variable : public Entity
     {
     public:
-        Variable(const char * name);
+        bool IsVariable() const override;
+    };
+
+    class NamedVariable : public Variable
+    {
+    public:
+        NamedVariable(const char * name);
+        ::Entity MakeEntity(Database &db) const override;
         const std::string name;
     };
 
-    class UnderscoreVariable : public Entity
+    class UnnamedVariable : public Variable
     {
+        ::Entity MakeEntity(Database &db) const override;
     };
 
     class AtEntity : public Entity
     {
     public:
         AtEntity(const char*v);
+        bool IsVariable() const override;
+        ::Entity MakeEntity(Database &db) const override;
         const std::string value;
     };
 
@@ -59,6 +65,8 @@ namespace AST
     {
     public:
         String(const std::string &p);
+        bool IsVariable() const override;
+        ::Entity MakeEntity(Database &db) const override;
         const std::string value;
     };
 
@@ -66,6 +74,8 @@ namespace AST
     {
     public:
         Integer(int i);
+        bool IsVariable() const override;
+        ::Entity MakeEntity(Database &db) const override;
         const int value;
     };
 
@@ -73,12 +83,16 @@ namespace AST
     {
     public:
         Float(double v);
+        bool IsVariable() const override;
+        ::Entity MakeEntity(Database &db) const override;
         const double value;
     };
 
     class Bool : public Entity{
     public:
         Bool(bool b);
+        bool IsVariable() const override;
+        ::Entity MakeEntity(Database &db) const override;
         const bool value;
     };
 
@@ -95,12 +109,15 @@ namespace AST
 
     class UnaryPredicateOrList : public Node
     {
+    public:
+        virtual void Assert(Database &db, const ::Entity &e) const =0;
     };
 
     class UnaryPredicate : public UnaryPredicateOrList
     {
     public:
         UnaryPredicate(const char * name);
+        void Assert(Database &db, const ::Entity &e) const override;
         std::string name;
     };
 
@@ -116,6 +133,7 @@ namespace AST
     public:
         UnaryPredicateList(UnaryPredicate * pred);
         void Append(UnaryPredicate * pred);
+        void Assert(Database &db, const ::Entity &e) const override;
         std::vector<std::unique_ptr<UnaryPredicate>> list;
     };
 

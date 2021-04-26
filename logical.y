@@ -215,13 +215,13 @@ unarypredicate: tok_identifier { $$ = new AST::UnaryPredicate(yytext); }
 binarypredicate: tok_identifier { $$ = new AST::BinaryPredicate(yytext); }
 
 variable:
-    tok_identifier { $$ = new AST::Variable(yytext); }
-|   tok_underscore { $$ = new AST::UnderscoreVariable(); }
+    tok_identifier { $$ = new AST::NamedVariable(yytext); }
+|   tok_underscore { $$ = new AST::UnnamedVariable(); }
 ;
 
 term:
     entity
-|   variable { $$ = new AST::Variable(yytext); }
+|   variable
 
 baseterm:
     term

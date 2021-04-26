@@ -1,6 +1,7 @@
 #include "Database.hpp"
 #undef _NDEBUG
 #include <cassert>
+#include <iostream>
 
 int main()
 {
@@ -17,6 +18,15 @@ int main()
     Database db;
     auto e1 = db.CreateInt(0);
 
-    auto &r = db.GetRelation("test", 1);
-    r.Add(e1);
+    auto &r1 = db.GetUnaryRelation("test");
+    r1.Add(e1);
+    assert(r1.size() == 1);
+
+    auto &r2 = db.GetBinaryRelation("test");
+    r2.Add(e1, e1);
+    assert(r2.size() == 1);
+    r2.Add(e1, e1);
+    assert(r2.size() == 1);
+
+    std::cout << "Tests passed\n";
 }

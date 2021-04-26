@@ -38,4 +38,12 @@ struct Entity
 
         return type < other.type;
     }
+
+    struct Hash
+    {
+        int operator()(const Entity &e) const
+        {
+            return e.hash();
+        }
+    };
 };
