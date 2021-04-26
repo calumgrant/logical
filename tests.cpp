@@ -4,13 +4,19 @@
 
 int main()
 {
-    StringTable s1;
-    int x = s1.GetId("hello");
-    assert(s1.GetId("hello")==x);
-    int y = s1.GetId("hello2");
+    StringTable st;
+    int x = st.GetId("hello");
+    assert(st.GetId("hello")==x);
+    int y = st.GetId("hello2");
     assert(x!=y);
-    assert(s1.GetId("hello2")==y);
+    assert(st.GetId("hello2")==y);
 
-    assert(s1.GetString(0) == "hello");
-    assert(s1.GetString(1) == "hello2");
+    assert(st.GetString(0) == "hello");
+    assert(st.GetString(1) == "hello2");
+
+    Database db;
+    auto e1 = db.CreateInt(0);
+
+    auto &r = db.GetRelation("test", 1);
+    r.Add(e1);
 }

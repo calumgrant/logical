@@ -7,7 +7,7 @@ enum class EntityType
     Integer,
     String,
     Float,
-    AtEntity,
+    AtString,
     Boolean
 };
 
@@ -20,6 +20,10 @@ struct Entity
         int i;
         float f;
     };
+
+    Entity() { }
+    Entity(EntityType t, int i) : type(t), i(i) { }
+    Entity(EntityType t, float f) : type(t), f(f) { }
 
     bool operator==(const Entity & other) const { return type == other.type && i == other.i; }
 

@@ -2,8 +2,8 @@
 
 int StringTable::GetId(const std::string &s)
 {
-    auto x = ids.find(s);
-    if(x == ids.end())
+    auto i = ids.find(s);
+    if(i == ids.end())
     {
         auto id = strings.size();
         strings.push_back(s);
@@ -11,7 +11,7 @@ int StringTable::GetId(const std::string &s)
         return id;
     }
     else
-    return x->second;
+        return i->second;
 }
 
 const std::string & StringTable::GetString(int id)
