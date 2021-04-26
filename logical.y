@@ -11,7 +11,6 @@
 // This is totally wrong I think
 extern char yytext[];
 
-
 #include "tokens.tab.h"
 #include <memory>
 
@@ -144,19 +143,19 @@ rule:
 
 baseclause:
     term is_a unarypredicate { $$ = new AST::TermIs((AST::Entity*)$1, (AST::UnaryPredicate*)$3); }
-|   term is_a entity
-|   unarypredicatelist term is_a unarypredicate
-|   arithmetic_term comparator arithmetic_term
-// |   unarypredicatelist term { $$ = new AST::TermIs((AST::Entity*)$2, (AST::UnaryPredicateList*)$1); }
-|   unarypredicatelist termlist
-|   term has_a binarypredicate
-|   term tok_comma binarypredicate
-|   unarypredicatelist term has_a binarypredicate arithmetic_term
-|   unarypredicatelist term has_a binarypredicate arithmetic_term attributes
-|   unarypredicatelist term attributes
-|   term has_a binarypredicate arithmetic_term
-|   term has_a binarypredicate arithmetic_term attributes
-|   term attributes
+|   term is_a entity { $$ = new AST::NotImplementedClause($1, $3); }
+|   unarypredicatelist term is_a unarypredicate { $$ = new AST::NotImplementedClause($1, $3); }
+|   arithmetic_term comparator arithmetic_term { $$ = new AST::NotImplementedClause($1, $3); }
+|   unarypredicatelist term { $$ = new AST::TermIs((AST::Entity*)$2, (AST::UnaryPredicateList*)$1); }
+// |   unarypredicatelist termlist
+|   term has_a binarypredicate { $$ = new AST::NotImplementedClause($1, $3); }
+|   term tok_comma binarypredicate { $$ = new AST::NotImplementedClause($1, $3); }
+|   unarypredicatelist term has_a binarypredicate arithmetic_term { $$ = new AST::NotImplementedClause(); }
+|   unarypredicatelist term has_a binarypredicate arithmetic_term attributes { $$ = new AST::NotImplementedClause(); }
+|   unarypredicatelist term attributes { $$ = new AST::NotImplementedClause(); }
+|   term has_a binarypredicate arithmetic_term { $$ = new AST::NotImplementedClause(); }
+|   term has_a binarypredicate arithmetic_term attributes { $$ = new AST::NotImplementedClause(); }
+|   term attributes { $$ = new AST::NotImplementedClause(); }
 |   tok_open clause tok_close { $$=$2; }
 ;
 

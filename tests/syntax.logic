@@ -12,13 +12,16 @@ person false.
 
 // You can define global constants as follows.
 pi 3.14159.
-pi is 3.14159.
+3.1415926 is pi.
+// pi is 3.14159.  // Invalid. Should be 3.14159 is pi.
 googol 1.0e100.
 googol 1e100.
 username "calum".
 
-number 1+2.
-number 1+2, 3+4, 1.2-2, 4.123.  // Is this even useful???
+// These don't work because it could be parsed as number (1+2).
+// which is the datalog syntax.
+// number 1+2.
+// number 1+i if number i.
 
 // You can define multiple facts in the same statement.
 // These are the equivalent:

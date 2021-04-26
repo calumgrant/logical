@@ -1,5 +1,9 @@
 #include "Clause.hpp"
 
+AST::Node::~Node()
+{
+}
+
 AST::Variable::Variable(const char * name) : name(name)
 {
 }
@@ -49,14 +53,20 @@ AST::Rule::Rule(Clause * lhs, Clause * rhs) : lhs(lhs), rhs(rhs)
 {
 }
 
-void ProcessFact(AST::Clause * f)
+void AST::TermIs::AssertFacts(Database &db)
 {
-    std::unique_ptr<AST::Clause> fact(f);
-    if(f) std::cout << "Processing fact\n";
+    std::cout << "TODO: Assert the facts.\n";
 }
 
-void ProcessRule(AST::Clause * lhs, AST::Clause * rhs)
+AST::NotImplementedClause::NotImplementedClause(Node *a, Node *b, Node *c, Node *d)
 {
-    std::unique_ptr<AST::Clause> l(lhs), r(rhs);
-    if(l && r) std::cout << "Processing rule\n";
+    delete a;
+    delete b;
+    delete c;
+    delete d;
+}
+
+void AST::NotImplementedClause::AssertFacts(Database & db)
+{
+    std::cerr << "Not implemented.\n";
 }

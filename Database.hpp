@@ -4,6 +4,15 @@
 
 typedef int EntityId;
 
+enum class EntityType
+{
+    Integer,
+    String,
+    Float,
+    AtEntity,
+    Boolean
+};
+
 // Something that's stored in the database
 struct Entity
 {
@@ -15,16 +24,32 @@ struct Entity
     
 };
 
-class UnaryTable
+class Relation
+{
+
+};
+
+class UnaryTable : public Relation
 {
 public:
     void Add(const Entity &e);
 };
 
-class BinaryTable
+class BinaryTable : public Relation
 {
 public:
     void Add(const Entity &e1, const Entity &e2);
+};
+
+class SourceLocation
+{
+    int lineNumber;
+};
+
+// ?? 
+class Error
+{
+
 };
 
 class Database
@@ -39,6 +64,13 @@ public:
 
     void Add(const std::string & table, const Entity &entityId);
     void Add(const std::string & table, const Entity &entityId1, const Entity &entity);
+
+    void SyntaxError(const SourceLocation&);
+
+    // Variable "name" is not bound to a value
+    void UnboundError(const std::string &name, const SourceLocation&);
+
+    void NotImplementedError(const SourceLocation&);
 private:
     std::unordered_map<std::string, UnaryTable> unaryRelations;
     std::unordered_map<std::string, BinaryTable> binaryRelations;

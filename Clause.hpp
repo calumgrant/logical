@@ -2,27 +2,38 @@
 #include <iostream>
 #include <vector>
 
+class Database;
+
 namespace AST
 {
     class Node
     {
-
+    public:
+        virtual ~Node();
     };
 
     class Clause : public Node
     {
+    public:
+        virtual void AssertFacts(Database &db)=0;
     };
 
-    class UnaryRelation : public Clause
+    class NotImplementedClause : public Clause
+    {
+    public:
+        NotImplementedClause(Node * =nullptr, Node* =nullptr, Node* =nullptr, Node* =nullptr);
+        void AssertFacts(Database &db) override;
+    };
+
+    class UnaryRelationXX : public Clause
     {
     };
 
-    class BinaryRelation : public Clause
+    class BinaryRelationXX : public Clause
     {
-
     };
 
-    class Entity : public Clause
+    class Entity : public Node
     {
     };
 
@@ -75,14 +86,14 @@ namespace AST
     {
     };
 
-    class Predicate : public Clause
+    class Predicate : public Node
     {
     public:
         Predicate(const char * name);
         std::string name;
     };
 
-    class UnaryPredicateOrList : public Clause
+    class UnaryPredicateOrList : public Node
     {
     };
 
@@ -114,6 +125,7 @@ namespace AST
         TermIs(Entity* entity, UnaryPredicateOrList* list);
         std::unique_ptr<Entity> entity;
         std::unique_ptr<UnaryPredicateOrList> list;
+        void AssertFacts(Database &db) override;
     };
 
     class Rule : public Clause
