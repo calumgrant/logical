@@ -154,6 +154,35 @@ namespace AST
         void AssertFacts(Database &db) override;
     };
 
+    class TermIsPredicate : public Clause
+    {
+    public:
+        TermIsPredicate(Entity* entity, UnaryPredicateOrList* list, UnaryPredicate * p);
+        std::unique_ptr<Entity> entity;
+        std::unique_ptr<UnaryPredicateOrList> list;
+        std::unique_ptr<UnaryPredicate> predicate;
+        void AssertFacts(Database &db) override;
+    };
+
+    class AttributeList : public Node
+    {
+    public:
+        AttributeList(BinaryPredicate * predicate, Entity * entityOpt, AttributeList* list);
+        std::unique_ptr<AttributeList> list;
+        std::unique_ptr<BinaryPredicate> predicate;
+        std::unique_ptr<Entity> entityOpt;
+    };
+
+    class EntityHasAttributes : public Clause
+    {
+    public:
+        EntityHasAttributes(UnaryPredicateOrList * unarypredicatesOpt, Entity*entity, AttributeList*attributes);
+        void AssertFacts(Database &db) override;
+        std::unique_ptr<UnaryPredicateOrList> unaryPredicatesOpt;
+        std::unique_ptr<Entity> entity;
+        std::unique_ptr<AttributeList> attributes;
+    };
+
     class Rule : public Clause
     {
     public:

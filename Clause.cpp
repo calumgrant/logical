@@ -18,6 +18,12 @@ AST::TermIs::TermIs(Entity* entity, UnaryPredicateOrList* list)
 {
 }
 
+AST::TermIsPredicate::TermIsPredicate(Entity* entity, UnaryPredicateOrList* list, UnaryPredicate *p)
+    : entity(entity), list(list), predicate(p)
+{
+}
+
+
 AST::Predicate::Predicate(const char * name) : name(name) { }
 
 AST::UnaryPredicate::UnaryPredicate(const char * name) : name(name) { }
@@ -58,6 +64,14 @@ void AST::TermIs::AssertFacts(Database &db)
 {
     list->Assert(db, entity->MakeEntity(db));
 }
+
+void AST::TermIsPredicate::AssertFacts(Database &db)
+{
+    ::Entity e(entity->MakeEntity(db));
+    list->Assert(db, e);
+    predicate->Assert(db, e);
+}
+
 
 AST::NotImplementedClause::NotImplementedClause(Node *a, Node *b, Node *c, Node *d)
 {
@@ -140,4 +154,19 @@ void AST::And::AssertFacts(Database &db)
 {
     lhs->AssertFacts(db);
     rhs->AssertFacts(db);
+}
+
+AST::AttributeList::AttributeList(BinaryPredicate * predicate, Entity * entityOpt, AttributeList *list) :
+    predicate(predicate), entityOpt(entityOpt), list(list)
+{
+}
+
+AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateOrList * unaryPredicatesOpt, Entity * entity, AttributeList * attributes) :
+    unaryPredicatesOpt(unaryPredicatesOpt), entity(entity), attributes(attributes)
+{
+}
+
+void AST::EntityHasAttributes::AssertFacts(Database &db)
+{
+    std::cout << "TODO: Assert attribute facts\n";
 }

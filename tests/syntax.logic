@@ -18,6 +18,8 @@ googol 1e100.
 username "calum".
 
 // You can define multiple facts in the same statement.
+large fish 1234.
+
 // These are the equivalent:
 large fish @f1 and small fish @f2.
 fish @f1 is large and fish @f2 is small.
@@ -29,6 +31,7 @@ fish(@f2).
 small(@f2).
 
 // Binary relations are defined using `has` and `,`.
+test -99999.  // Works up to here.
 
 // These are equivalent. They define a unary relation `circle` and the binary `radius`
 circle @c1, radius 10.

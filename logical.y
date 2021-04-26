@@ -144,11 +144,10 @@ rule:
 baseclause:
     term is_a unarypredicate { $$ = new AST::TermIs((AST::Entity*)$1, (AST::UnaryPredicate*)$3); }
 |   term is_a entity { $$ = new AST::NotImplementedClause($1, $3); }
-|   unarypredicatelist term is_a unarypredicate { $$ = new AST::NotImplementedClause($1, $3); }
+|   unarypredicatelist term is_a unarypredicate { $$ = new AST::TermIsPredicate((AST::Entity*)$2, (AST::UnaryPredicateList*)$1, (AST::UnaryPredicate*)$4); }
 |   arithmetic_term comparator arithmetic_term { $$ = new AST::NotImplementedClause($1, $3); }
 |   unarypredicatelist term { $$ = new AST::TermIs((AST::Entity*)$2, (AST::UnaryPredicateList*)$1); }
-// |   unarypredicatelist termlist
-|   term has_a binarypredicate { $$ = new AST::NotImplementedClause($1, $3); }
+|   term has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, new AST::AttributeList((AST::BinaryPredicate*)$3, nullptr, nullptr)); }
 |   term tok_comma binarypredicate { $$ = new AST::NotImplementedClause($1, $3); }
 |   unarypredicatelist term has_a binarypredicate arithmetic_term { $$ = new AST::NotImplementedClause(); }
 |   unarypredicatelist term has_a binarypredicate arithmetic_term tok_with inlist { $$ = new AST::NotImplementedClause(); }
@@ -213,8 +212,8 @@ clause: orclause;
 // Example: person x has name y, surname z
 
 attributes:
-    tok_comma binarypredicate arithmetic_term
-|   attributes tok_comma binarypredicate arithmetic_term
+    tok_comma binarypredicate arithmetic_term { $$ = new AST::AttributeList((AST::BinaryPredicate*)$2, (AST::Entity*)$3, nullptr); }
+|   attributes tok_comma binarypredicate arithmetic_term { $$ = new AST::AttributeList((AST::BinaryPredicate*)$3, (AST::Entity*)$4, (AST::AttributeList*)$1); }
 ;
 
 predicate: tok_identifier { $$ = nullptr; }
