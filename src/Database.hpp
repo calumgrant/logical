@@ -11,14 +11,14 @@ class Database;
 class Relation
 {
 public:
+    virtual ~Relation();
+    virtual int size() const =0;
 };
 
 class UnaryRelation : public Relation
 {
 public:
-    virtual ~UnaryRelation();
     virtual void Add(const Entity &e)=0;
-    virtual int size() const =0;
 };
 
 class UnaryTable : public UnaryRelation
@@ -48,12 +48,24 @@ struct PairHash
     }
 };
 
-class BinaryTable : public Relation
+class BinaryRelation : public Relation
+{
+public:
+    virtual void Add(const Entity &e1, const Entity &e2) =0;
+};
+
+class BinaryTable : public BinaryRelation
 {
 public:
     void Add(const Entity &e1, const Entity &e2);
     std::unordered_set<std::pair<Entity, Entity>, PairHash> values;
     int size() const;
+};
+
+class Table : public Relation
+{
+public:
+    int size() const override;
 };
 
 class SourceLocation
@@ -65,6 +77,14 @@ class SourceLocation
 class Error
 {
 
+};
+
+struct RelationHash
+{
+    int operator()(const std::pair<std::string, int> &p) const
+    {
+        return std::hash<std::string>()(p.first)+p.second;
+    }
 };
 
 class Database
@@ -91,15 +111,16 @@ public:
     void NotImplementedError(const SourceLocation&);
 
     UnaryRelation &GetUnaryRelation(const std::string &name);
-    BinaryTable &GetBinaryRelation(const std::string &name);
+    BinaryRelation &GetBinaryRelation(const std::string &name);
+    Relation &GetRelation(const std::string &name, int arity);
 
     const std::string &GetString(int id) const;
     const std::string &GetAtString(int id) const;
 
 private:
     std::unordered_map<std::string, std::unique_ptr<UnaryRelation>> unaryRelations;
-    std::unordered_map<std::string, BinaryTable> binaryRelations;
+    std::unordered_map<std::string, std::unique_ptr<BinaryRelation>> binaryRelations;
+    std::unordered_map< std::pair<std::string, int>, std::unique_ptr<Relation>, RelationHash> relations;
 
-    // String table
     StringTable strings, atstrings;
 };

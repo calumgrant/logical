@@ -16,20 +16,29 @@ UnaryRelation& Database::GetUnaryRelation(const std::string & name)
         return *i->second;
 }
 
-BinaryTable & Database::GetBinaryRelation(const std::string & name)
+BinaryRelation & Database::GetBinaryRelation(const std::string & name)
 {
-    return binaryRelations[name];
+    auto i = binaryRelations.end();
+    if (i==binaryRelations.end())
+    {
+        auto p = std::make_unique<BinaryTable>();
+        auto & result = *p;
+        binaryRelations.insert(std::make_pair(name, std::move(p)));
+        return result;
+    }
+    else
+        return *i->second;
 }
 
 void UnaryTable::Add(const Entity &e)
 {
-    std::cout << "Added (" << (int)e.type << "," << e.i << ") to the table\n";
+    //std::cout << "Added (" << (int)e.type << "," << e.i << ") to the table\n";
     values.insert(e);
 }
 
 void BinaryTable::Add(const Entity &e1, const Entity &e2)
 {
-    std::cout << "Added (" << (int)e1.type << "," << e1.i << ") (" << (int)e2.type << "," << e2.i << ") to the table\n";
+    //std::cout << "Added (" << (int)e1.type << "," << e1.i << ") (" << (int)e2.type << "," << e2.i << ") to the table\n";
     values.insert(std::make_pair(e1,e2));
 }
 
@@ -48,7 +57,7 @@ void Database::UnboundError(const std::string &name)
     std::cerr << "Error: " << name << " is unbound.\n";
 }
 
-UnaryRelation::~UnaryRelation()
+Relation::~Relation()
 {
 }
 
@@ -100,4 +109,32 @@ const std::string &Database::GetString(int id) const
 const std::string &Database::GetAtString(int id) const
 {
     return atstrings.GetString(id);
+}
+
+Relation &Database::GetRelation(const std::string &name, int arity)
+{
+    switch(arity)
+    {
+    case 1: return GetUnaryRelation(name);
+    case 2: return GetBinaryRelation(name);
+    }
+
+    auto index = std::make_pair(name, arity);
+
+    auto i = relations.find(index);
+
+    if (i == relations.end())
+    {
+        auto r = std::make_unique<Table>();
+        auto & result = *r;
+        relations.insert(std::make_pair(index, std::move(r)));
+        return result;
+    }
+    else
+        return *i->second;
+}
+
+int Table::size() const
+{
+    return 0;
 }

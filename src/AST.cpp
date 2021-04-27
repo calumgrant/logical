@@ -174,7 +174,7 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
     if(entityOpt)
     {
         ::Entity e2 = entityOpt->MakeEntity(db);
-        BinaryTable & table = db.GetBinaryRelation(predicate->name);
+        BinaryRelation & table = db.GetBinaryRelation(predicate->name);
 
         table.Add(e, e2);
     }
@@ -199,7 +199,25 @@ AST::DatalogPredicate::DatalogPredicate(Predicate * predicate, EntityList * enti
 
 void AST::DatalogPredicate::AssertFacts(Database &db) const
 {
-    std::cout << "TODO: Assert Datalog predicate " << predicate->name << ".\n";
+    int arity;
+
+    arity = entitiesOpt ? entitiesOpt->entities.size() : 0;
+
+    switch(arity)
+    {
+    case 1:
+        db.GetUnaryRelation(predicate->name).Add(entitiesOpt->entities[0]->MakeEntity(db));
+        return;
+    case 2:
+        db.GetBinaryRelation(predicate->name).Add(
+            entitiesOpt->entities[0]->MakeEntity(db),entitiesOpt->entities[1]->MakeEntity(db));
+        return;
+    }
+
+    auto &relation = db.GetRelation(predicate->name, arity);
+
+    // TODO: Add the data 
+    std::cout << "TODO: Assert Datalog predicate " << predicate->name << "/" << arity << ".\n";
 }
 
 void AST::Term::AssertRule(Database &db, Term &rhs) const

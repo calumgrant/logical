@@ -14,10 +14,11 @@ int main(int argc, char**argv)
     }
 
     Database db;
+    int verbose=0;
 
     for(int i=1; i<argc; ++i)
     {
-        std::cout << "Reading " << argv[i] << std::endl;
+        if(verbose) std::cout << "Reading " << argv[i] << std::endl;
         FILE * f = fopen(argv[i], "r");
 
         if(f)

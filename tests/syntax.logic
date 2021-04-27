@@ -1,6 +1,7 @@
 // A tour of Logical syntax.
 
 // These are facts - unary relations
+print "These are unary predicates".
 person "Fred".
 person @.
 person 123.
@@ -26,12 +27,11 @@ fish @f1 is large and fish @f2 is small.
 
 // In Datalog:
 fish(@f1).
-largs(@f1).
+large(@f1).
 fish(@f2).
 small(@f2).
 
 // Binary relations are defined using `has` and `,`.
-test -99999.  // Works up to here.
 
 // These are equivalent. They define a unary relation `circle` and the binary `radius`
 circle @c1, radius 10.
@@ -146,7 +146,6 @@ f() :- (g();h()), i().
 ?- f(X).
 
 // `print` is a predicate with a side-effect.
-print "Syntax test passed".
 
 // `delete` is a special predicate.
 // It deletes all statements and rules.
@@ -156,3 +155,5 @@ delete person X has surname S.
 delete _.
 
 delete person P if P has surname "Smith".
+
+print "Syntax test passed".
