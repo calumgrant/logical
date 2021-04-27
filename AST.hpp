@@ -52,10 +52,10 @@ namespace AST
         ::Entity MakeEntity(Database &db) const override;
     };
 
-    class AtEntity : public Entity
+    class AtString : public Entity
     {
     public:
-        AtEntity(const char*v);
+        AtString(const char*v);
         bool IsVariable() const override;
         ::Entity MakeEntity(Database &db) const override;
         const std::string value;
@@ -88,7 +88,8 @@ namespace AST
         const double value;
     };
 
-    class Bool : public Entity{
+    class Bool : public Entity
+    {
     public:
         Bool(bool b);
         bool IsVariable() const override;
@@ -130,7 +131,6 @@ namespace AST
     public:
         BinaryPredicate(const char * name);
     };
-
 
     class UnaryPredicateList : public UnaryPredicateOrList
     {
@@ -179,14 +179,6 @@ namespace AST
         std::unique_ptr<UnaryPredicateOrList> unaryPredicatesOpt;
         std::unique_ptr<Entity> entity;
         std::unique_ptr<AttributeList> attributes;
-    };
-
-    // DELETEME
-    class Rule : public Term
-    {
-    public:
-        Rule(Term * lhs, Term * rhs);
-        std::unique_ptr<Term> lhs, rhs;
     };
 
     class EntityList : public Node

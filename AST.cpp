@@ -52,12 +52,8 @@ AST::Float::Float(double d) : value(d)
 {
 }
 
-AST::AtEntity::AtEntity(const char * v) : value(v)
+AST::AtString::AtString(const char * v) : value(v)
 {   
-}
-
-AST::Rule::Rule(Term * lhs, Term * rhs) : lhs(lhs), rhs(rhs)
-{
 }
 
 void AST::TermIs::AssertFacts(Database &db) const
@@ -125,9 +121,9 @@ Entity AST::Integer::MakeEntity(Database &db) const
     return db.CreateInt(value);
 }
 
-bool AST::AtEntity::IsVariable() const { return false; }
+bool AST::AtString::IsVariable() const { return false; }
 
-Entity AST::AtEntity::MakeEntity(Database &db) const
+Entity AST::AtString::MakeEntity(Database &db) const
 {
     return db.CreateAt(value);
 }

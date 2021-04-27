@@ -325,7 +325,7 @@ value:
         }
         $$ = new AST::String(value);
     }
-|   tok_atstring { $$ = new AST::AtEntity(yytext+1); }
+|   tok_atstring { $$ = new AST::AtString(yytext+1); }
 |   tok_integer { $$ = new AST::Integer(atoi(yytext)); }
 |   tok_float   { $$ = new AST::Float(atof(yytext)); }
 |   tok_true    { $$ = new AST::Bool(true); }
