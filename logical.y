@@ -51,7 +51,10 @@
 int yylex();
 extern int yylineno;
 extern int yyleng;
-void yyerror(Database &db, const char*) { std::cerr << "Syntax error at line " << yylineno; }
+void yyerror(Database &db, const char*message)
+{
+    std::cerr << message << " at line " << yylineno << std:endl;
+}
 
 %}
 
@@ -89,8 +92,14 @@ datalog:
 ;
 
 datalog_predicate:
-    predicate tok_open tok_close { $$ = new AST::DatalogPredicate($1, nullptr); }
-|   predicate tok_open entitylist tok_close { $$ = new AST::DatalogPredicate($1, $3); }
+    predicate tok_open tok_close
+    {
+        $$ = new AST::DatalogPredicate($1, nullptr);
+    }
+|   predicate tok_open entitylist tok_close
+    {
+        $$ = new AST::DatalogPredicate($1, $3);
+    }
 ;
 
 entitylist:
