@@ -1,11 +1,10 @@
-// %skeleton "lalr1.cc"
 
 %locations
 // %pure-parser
-
+%parse-param { Database &db };
 
 %{
-#include <AST.hpp>
+#include <Database.hpp>
 #define YYSTYPE AST::Node*
 
 // This is totally wrong I think
@@ -18,20 +17,9 @@ extern char yytext[];
 int yylex();
 extern int yylineno;
 extern int yyleng;
-void yyerror(const char*) { std::cerr << "Syntax error at line " << yylineno; }
-
-// int yylex(YYLVAL * val, YYLTYPE * loc);
-//void yyerror(YYLTYPE *loc, const char*) { std::cerr << "Syntax error at ?????"; }
-
-//    #define YYSTYPE bool
-//    void yyerror (yyscan_t yyscanner, char const *msg);
-
-// What to do
-void ProcessFact(AST::Term * statement);
-void ProcessRule(AST::Term * lhs, AST::Term * rhs);
+void yyerror(Database &db, const char*) { std::cerr << "Syntax error at line " << yylineno; }
 
 %}
-
 
 %token tok_identifier tok_atstring tok_string tok_integer tok_float tok_underscore
 %token tok_if tok_and tok_has tok_or tok_not tok_a tok_an tok_no tok_is tok_dot tok_then tok_find tok_sum tok_in tok_all
@@ -57,7 +45,7 @@ statement:
 ;
 
 datalog:
-    datalog_predicate tok_dot { ProcessFact((AST::Term*)$1); }
+    datalog_predicate tok_dot { db.ProcessFact((AST::Term*)$1); }
 |   datalog_rule tok_dot
 |   tok_questiondash datalog_predicate tok_dot
 ;
@@ -75,7 +63,7 @@ entitylist:
 datalog_rule:
     datalog_predicate tok_colondash datalog_term
     {
-        ProcessRule((AST::Term*)$1,(AST::Term*)$3);
+        db.ProcessRule((AST::Term*)$1,(AST::Term*)$3);
     }
 ;
 
@@ -133,11 +121,11 @@ variablelist:
 |   variablelist tok_comma variable
 ;
 
-fact: term tok_dot { ProcessFact((AST::Term*)$1); };
+fact: term tok_dot { db.ProcessFact((AST::Term*)$1); };
 
 rule:
-    tok_if term tok_then term tok_dot { ProcessRule((AST::Term*)$4, (AST::Term*)$2); }
-|   term tok_if term tok_dot { ProcessRule((AST::Term*)$1, (AST::Term*)$3); }
+    tok_if term tok_then term tok_dot { db.ProcessRule((AST::Term*)$4, (AST::Term*)$2); }
+|   term tok_if term tok_dot { db.ProcessRule((AST::Term*)$1, (AST::Term*)$3); }
 ;
 
 baseterm:
@@ -316,7 +304,7 @@ value:
                     value.push_back('"');
                     break;
                 default:
-                    yyerror("Invalid escape character");
+                    yyerror(db, "Invalid escape character");
                     break;
                 }
             }

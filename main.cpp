@@ -1,9 +1,10 @@
 #include <iostream>
+#include "Database.hpp"
 
 extern "C" FILE * yyin;
 // extern "C" 
 int yylex();
-int yyparse();
+int yyparse(Database &db);
 // const char * yytext();
 // const char * YYTEXT;
 extern char yytext[];
@@ -16,6 +17,8 @@ int main(int argc, char**argv)
         return 127;
     }
 
+    Database db;
+
     for(int i=1; i<argc; ++i)
     {
         FILE * f = fopen(argv[i], "r");
@@ -23,7 +26,7 @@ int main(int argc, char**argv)
         if(f)
         {
             yyin = f;
-            int p = yyparse();
+            int p = yyparse(db);
             if(p==0) std::cout << "Parse success!\n";
             fclose(f);
             if(!p) return 128;

@@ -1,15 +1,11 @@
 #include "Database.hpp"
-#include "AST.hpp"
 
-// Need to create a pure parser and remove this global
-Database database;
-
-void ProcessFact(AST::Term * f)
+void Database::ProcessFact(AST::Term * f)
 {
     std::unique_ptr<AST::Term> fact(f);
     if(f)
     {
-        f->AssertFacts(database);
+        f->AssertFacts(*this);
     }
     else
     {
@@ -17,7 +13,7 @@ void ProcessFact(AST::Term * f)
     }
 }
 
-void ProcessRule(AST::Term * lhs, AST::Term * rhs)
+void Database::ProcessRule(AST::Term * lhs, AST::Term * rhs)
 {
     std::unique_ptr<AST::Term> l(lhs), r(rhs);
 }
