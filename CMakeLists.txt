@@ -13,13 +13,23 @@ FLEX_TARGET(MyScanner logical.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
-
-add_executable(logical main.cpp AST.cpp Database.cpp StringTable.cpp Entity.hpp StringTable.hpp
+add_library(logiccore 
+    AST.cpp AST.hpp
+    Database.cpp Database.hpp
+    StringTable.cpp StringTable.hpp
+    Entity.hpp
     ${BISON_MyParser_OUTPUTS}
-    ${FLEX_MyScanner_OUTPUTS}
-    )
+    ${FLEX_MyScanner_OUTPUTS})
 
-add_executable(logical-tests tests.cpp Database.cpp AST.cpp StringTable.cpp)
+add_executable(logical main.cpp)
+
+add_executable(logical-tests tests.cpp)
+target_link_libraries(logical-tests logiccore)
+target_link_libraries(logical logiccore)
+
+set_target_properties(logiccore PROPERTIES
+    CXX_STANDARD 17
+    CXX_EXTENSIONS OFF)
 
 set_target_properties(logical PROPERTIES
     CXX_STANDARD 17
@@ -29,5 +39,4 @@ set_target_properties(logical-tests PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
 
-
-target_link_libraries(logical ${FLEX_LIBRARIES})    
+target_link_libraries(logiccore ${FLEX_LIBRARIES})    
