@@ -53,7 +53,7 @@ extern int yylineno;
 extern int yyleng;
 void yyerror(Database &db, const char*message)
 {
-    std::cerr << message << " at line " << yylineno << std:endl;
+    std::cerr << message << " at line " << yylineno << std::endl;
 }
 
 %}
@@ -220,7 +220,7 @@ baseterm:
         $$ = new AST::EntityHasAttributes($1, $2, 
             new AST::AttributeList($4, $5, nullptr));
     }
-|   unarypredicatelist entity has_a binarypredicate arithmetic_entity tok_with inlist
+|   unarypredicatelist entity has_a binarypredicate arithmetic_entity tok_with withlist
     {
         $$ = new AST::NotImplementedTerm();
     }
@@ -236,7 +236,11 @@ baseterm:
     { 
         $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, nullptr));
     }
-|   entity has_a binarypredicate arithmetic_entity tok_with inlist
+|   entity has_a binarypredicate arithmetic_entity tok_with withlist
+    { 
+        $$ = new AST::NotImplementedTerm();
+    }
+|   entity is_a unarypredicate tok_with withlist
     { 
         $$ = new AST::NotImplementedTerm();
     }
@@ -256,9 +260,9 @@ unarypredicatelist:
 |   unarypredicatelist unarypredicate { $$=$1; $$->Append($2); }
 ;
 
-inlist:
+withlist:
     unarypredicate entity
-|   inlist tok_comma unarypredicate entity
+|   withlist tok_comma unarypredicate entity
 ;
 
 has_a:

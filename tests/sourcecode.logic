@@ -20,7 +20,6 @@ parameter @m1-1 has position 1, method @m1, name "y", type @string.
 // a 5-ary predicate.
 @m2-2 is a parameter with position 2, method @m1, name "z", type @float.
 
-
 // Source code
 
 expression statement @s1, parent @s2, position 0.

@@ -11,4 +11,4 @@ exit N if
     not 1 is a test and N=1.
 
 run(). 
-run(1,2,).
+run(1,2).

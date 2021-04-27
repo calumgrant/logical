@@ -3,6 +3,7 @@
 
 extern "C" FILE * yyin;
 int yyparse(Database &db);
+int yyrestart(FILE*);
 
 int main(int argc, char**argv)
 {
@@ -16,15 +17,18 @@ int main(int argc, char**argv)
 
     for(int i=1; i<argc; ++i)
     {
+        std::cout << "Reading " << argv[i] << std::endl;
         FILE * f = fopen(argv[i], "r");
 
         if(f)
         {
             yyin = f;
+            yyrestart(yyin);
             int p = yyparse(db);
-            if(p==0) std::cout << "Parse success!\n";
+            //if(p==0) std::cout << "Parse success!\n";
+            //else std::cerr << "Failed to parse " << argv[i] << std::endl;
             fclose(f);
-            if(!p) return 128;
+            if(p) return 128;
         }
         else
         {
@@ -32,4 +36,6 @@ int main(int argc, char**argv)
             return 128;
         }
     }
+
+    return 0;
 }
