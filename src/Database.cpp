@@ -2,9 +2,18 @@
 
 #include <iostream>
 
-UnaryTable & Database::GetUnaryRelation(const std::string & name)
+UnaryRelation& Database::GetUnaryRelation(const std::string & name)
 {
-    return unaryRelations[name];
+    auto i = unaryRelations.find(name);
+    if (i == unaryRelations.end())
+    {
+        auto p = std::make_unique<UnaryTable>();
+        auto & result = *p;
+        unaryRelations.insert(std::make_pair(name, std::move(p)));
+        return result;
+    }
+    else
+        return *i->second;
 }
 
 BinaryTable & Database::GetBinaryRelation(const std::string & name)
@@ -37,4 +46,58 @@ int BinaryTable::size() const
 void Database::UnboundError(const std::string &name)
 {
     std::cerr << "Error: " << name << " is unbound.\n";
+}
+
+UnaryRelation::~UnaryRelation()
+{
+}
+
+Database::Database()
+{
+    unaryRelations["print"] = std::make_unique<PrintRelation>(*this);
+}
+
+Database::~Database()
+{
+}
+
+PrintRelation::PrintRelation(Database &db) : database(db)
+{
+}
+
+void PrintRelation::Add(const Entity &e)
+{
+    switch(e.type)
+    {
+    case EntityType::Integer:
+        std::cout << e.i << std::endl;
+        break;
+    case EntityType::Float:
+        std::cout << e.f << std::endl;
+        break;
+    case EntityType::Boolean:
+        std::cout << (e.i?"true":"false") << std::endl;
+        break;
+    case EntityType::String:
+        std::cout << database.GetString(e.i) << std::endl;
+        break;
+    case EntityType::AtString:
+        std::cout << "@" << database.GetAtString(e.i) << std::endl;
+        break;
+    }
+}
+
+int PrintRelation::size() const
+{
+    return 0;
+}
+
+const std::string &Database::GetString(int id) const
+{
+    return strings.GetString(id);
+}
+
+const std::string &Database::GetAtString(int id) const
+{
+    return atstrings.GetString(id);
 }

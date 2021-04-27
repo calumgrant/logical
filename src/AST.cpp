@@ -103,7 +103,7 @@ Entity AST::Bool::MakeEntity(Database &db) const
 
 Entity AST::Float::MakeEntity(Database &db) const
 {
-    return db.Create(value);
+    return db.CreateFloat(value);
 }
 
 Entity AST::String::MakeEntity(Database &db) const

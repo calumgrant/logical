@@ -6,17 +6,37 @@
 #include "Entity.hpp"
 #include "StringTable.hpp"
 
+class Database;
+
 class Relation
 {
 public:
 };
 
-class UnaryTable : public Relation
+class UnaryRelation : public Relation
 {
 public:
-    void Add(const Entity &e);
+    virtual ~UnaryRelation();
+    virtual void Add(const Entity &e)=0;
+    virtual int size() const =0;
+};
+
+class UnaryTable : public UnaryRelation
+{
+public:
+    void Add(const Entity &e) override;
     std::unordered_set<Entity, Entity::Hash> values;
-    int size() const;
+    int size() const override;
+};
+
+class PrintRelation : public UnaryRelation
+{
+public:
+    PrintRelation(Database&db);
+    void Add(const Entity &e) override;
+    int size() const override;
+private:
+    Database &database;
 };
 
 struct PairHash
@@ -50,6 +70,8 @@ class Error
 class Database
 {
 public:
+    Database();
+    ~Database();
 
     // Create entities
     Entity CreateString(const std::string&s) { return Entity { EntityType::String, strings.GetId(s) }; }
@@ -68,11 +90,14 @@ public:
 
     void NotImplementedError(const SourceLocation&);
 
-    UnaryTable &GetUnaryRelation(const std::string &name);
+    UnaryRelation &GetUnaryRelation(const std::string &name);
     BinaryTable &GetBinaryRelation(const std::string &name);
 
+    const std::string &GetString(int id) const;
+    const std::string &GetAtString(int id) const;
+
 private:
-    std::unordered_map<std::string, UnaryTable> unaryRelations;
+    std::unordered_map<std::string, std::unique_ptr<UnaryRelation>> unaryRelations;
     std::unordered_map<std::string, BinaryTable> binaryRelations;
 
     // String table

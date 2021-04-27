@@ -14,7 +14,7 @@ int StringTable::GetId(const std::string &s)
         return i->second;
 }
 
-const std::string & StringTable::GetString(int id)
+const std::string & StringTable::GetString(int id) const
 {
     return strings[id];
 }
