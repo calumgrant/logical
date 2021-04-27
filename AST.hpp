@@ -1,5 +1,4 @@
 #include <string>
-#include <iostream>
 #include <vector>
 
 class Database;
@@ -17,7 +16,7 @@ namespace AST
     {
     public:
         virtual void AssertFacts(Database &db) const =0;
-        void AssertRule(Database &db, Term&rhs);
+        void AssertRule(Database &db, Term&rhs) const;
     };
 
     class NotImplementedTerm : public Term
@@ -97,6 +96,18 @@ namespace AST
         Bool(bool b);
         ::Entity MakeEntity(Database &db) const override;
         const bool value;
+    };
+
+    class ArithmeticEntity : public Entity
+    {
+    };
+
+    class NotImplementedEntity : public ArithmeticEntity
+    {
+    public:
+        NotImplementedEntity(Node *e1=nullptr, Node *e2=nullptr);
+        bool IsVariable() const override;
+        ::Entity MakeEntity(Database &db) const override;
     };
 
     class And : public Term

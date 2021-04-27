@@ -1,16 +1,48 @@
 
+%require "3.4"
+
+%code requires {
+    #include <AST.hpp>
+
+    enum class ComparatorType { lt, lteq, gt, gteq, eq, neq };
+}
+
 %locations
 // %pure-parser
 %parse-param { Database &db };
 
+%union
+{
+    AST::Node *node;
+    AST::Term* term;
+    AST::EntityList* entities;
+    AST::UnaryPredicateList* unarypredicatelist;
+    AST::Predicate* predicate;
+    AST::Entity* entity;
+    AST::UnaryPredicate* unarypredicate;
+    AST::BinaryPredicate* binarypredicate;
+    ComparatorType comparator;
+    AST::AttributeList* attributes;
+}
+
+%type<term> fact
+%type<term> term andterm orterm notterm allterm datalog_predicate baseterm datalog_term datalog_base_term datalog_and_term datalog_unary_term
+%type<entities> entitylist
+%type<unarypredicatelist> unarypredicatelist
+%type<entity> entity arithmetic_entity value variable baseentity sumentity plusentity mulentity unaryentity
+%type<predicate> predicate
+%type<unarypredicate> unarypredicate
+%type<binarypredicate> binarypredicate
+%type<attributes> attributes
+
 %{
 #include <Database.hpp>
-#include <AST.hpp>
 
-#define YYSTYPE AST::Node*
+// #define YYSTYPE AST::Node*
 
 // This is totally wrong I think
 extern char yytext[];
+
 
 #include "tokens.tab.h"
 #include <memory>
@@ -77,7 +109,7 @@ datalog_rule:
 
 datalog_base_term:
     datalog_predicate
-|   entity comparator entity
+|   entity comparator entity { $$ = new AST::NotImplementedTerm($1, $3); }
 |   tok_open datalog_term tok_close { $$ = $2; }
 ;
 
@@ -87,7 +119,7 @@ comparator:
 
 datalog_unary_term:
     datalog_base_term
-|   tok_not datalog_base_term
+|   tok_not datalog_base_term { $$ = new AST::NotImplementedTerm($2); }
 ;
 
 datalog_and_term:
@@ -97,9 +129,15 @@ datalog_and_term:
 ;
 
 datalog_term:
-|   datalog_term tok_or datalog_and_term
-|   datalog_term tok_semicolon datalog_and_term
-|   datalog_and_term
+    datalog_term tok_or datalog_and_term
+    {
+        $$ = new AST::NotImplementedTerm($1, $3);
+    }
+|   datalog_term tok_semicolon datalog_and_term 
+    {
+        $$ = new AST::NotImplementedTerm($1, $3);
+    }
+|   datalog_and_term { $$=$1; }
 ;
 
 query:
@@ -132,9 +170,10 @@ variablelist:
 fact: 
     term tok_dot 
     {
-        std::unique_ptr<AST::Term> term((AST::Term*)$1);
+        std::unique_ptr<AST::Term> term($1);
         term->AssertFacts(db);
-    };
+    }
+;
 
 rule:
     tok_if term tok_then term tok_dot
@@ -231,11 +270,14 @@ is_a:
 allterm:
     baseterm
 |   tok_all tok_open term tok_close tok_in allterm 
+    {
+        $$ = new AST::NotImplementedTerm($3, $6);
+    }
 ;
 
 notterm:
     allterm
-|   tok_not allterm
+|   tok_not allterm { $$ = new AST::NotImplementedTerm($2); }
 ;
 
 andterm:
@@ -277,26 +319,26 @@ baseentity:
 
 unaryentity:
     baseentity
-|   tok_minus baseentity
+|   tok_minus baseentity { $$ = new AST::NotImplementedEntity($2); }
 ;
 
 mulentity:
     unaryentity
-|   mulentity tok_times unaryentity
-|   mulentity tok_div unaryentity
-|   mulentity tok_mod unaryentity
+|   mulentity tok_times unaryentity { $$ = new AST::NotImplementedEntity($1,$3); }
+|   mulentity tok_div unaryentity { $$ = new AST::NotImplementedEntity($1,$3); }
+|   mulentity tok_mod unaryentity { $$ = new AST::NotImplementedEntity($1,$3); }
 ;
 
 plusentity:
     mulentity
-|   plusentity tok_plus mulentity
-|   plusentity tok_minus mulentity
+|   plusentity tok_plus mulentity { $$ = new AST::NotImplementedEntity($1,$3); }
+|   plusentity tok_minus mulentity { $$ = new AST::NotImplementedEntity($1,$3); }
 ;
 
 sumentity:
     plusentity
-|   tok_sum arithmetic_entity tok_in tok_open term tok_close
-|   tok_count variable tok_in tok_open term tok_close
+|   tok_sum arithmetic_entity tok_in tok_open term tok_close { $$ = new AST::NotImplementedEntity($2,$5); }
+|   tok_count variable tok_in tok_open term tok_close { $$ = new AST::NotImplementedEntity($2,$5); }
 ;
 
 arithmetic_entity: sumentity;

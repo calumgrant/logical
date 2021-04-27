@@ -2,12 +2,7 @@
 #include "Database.hpp"
 
 extern "C" FILE * yyin;
-// extern "C" 
-int yylex();
 int yyparse(Database &db);
-// const char * yytext();
-// const char * YYTEXT;
-extern char yytext[];
 
 int main(int argc, char**argv)
 {

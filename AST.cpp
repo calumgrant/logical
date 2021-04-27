@@ -1,5 +1,6 @@
 #include "AST.hpp"
 #include "Database.hpp"
+#include <iostream>
 
 AST::Node::~Node()
 {
@@ -201,7 +202,24 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     std::cout << "TODO: Assert Datalog predicate " << predicate->name << ".\n";
 }
 
-void AST::Term::AssertRule(Database &db, Term &rhs)
+void AST::Term::AssertRule(Database &db, Term &rhs) const
 {
     // TODO
 }
+
+AST::NotImplementedEntity::NotImplementedEntity(AST::Node *n1, AST::Node *n2)
+{
+    std::unique_ptr<Node> node1(n1), node2(n2);
+}
+
+bool AST::NotImplementedEntity::IsVariable() const
+{
+    return false;
+}
+    
+::Entity AST::NotImplementedEntity::MakeEntity(Database &db) const
+{
+    std::cerr << "Not implemented arithmetic\n";
+    return db.CreateInt(-1);
+}
+
