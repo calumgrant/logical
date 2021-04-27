@@ -1,4 +1,5 @@
 print "Hello, world!".
+print "Hello,\n\tworld!".
 print 42.
 print 3.14.
 print true.

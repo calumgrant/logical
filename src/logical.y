@@ -89,6 +89,7 @@ datalog:
     }
 |   datalog_rule tok_dot
 |   tok_questiondash datalog_predicate tok_dot
+|   tok_questiondash datalog_rule tok_dot
 ;
 
 datalog_predicate:
@@ -157,6 +158,10 @@ datalog_term:
 query:
     tok_find queryterm tok_dot
 |   tok_find predicate tok_dot
+    {
+        std::unique_ptr<AST::Predicate> predicate($2);
+        db.Find(predicate->name);
+    }
 |   tok_find queryterm tok_if term tok_dot
 |   tok_find variablelist tok_if term tok_dot  // find A, surname S could be am attribute or a variable list 
 ;

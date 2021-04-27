@@ -74,26 +74,31 @@ PrintRelation::PrintRelation(Database &db) : database(db)
 {
 }
 
-void PrintRelation::Add(const Entity &e)
+void Database::Print(const Entity &e, std::ostream &os) const
 {
     switch(e.type)
     {
     case EntityType::Integer:
-        std::cout << e.i << std::endl;
+        os << e.i << std::endl;
         break;
     case EntityType::Float:
-        std::cout << e.f << std::endl;
+        os << e.f << std::endl;
         break;
     case EntityType::Boolean:
-        std::cout << (e.i?"true":"false") << std::endl;
+        os << (e.i?"true":"false") << std::endl;
         break;
     case EntityType::String:
-        std::cout << database.GetString(e.i) << std::endl;
+        os << GetString(e.i) << std::endl;
         break;
     case EntityType::AtString:
-        std::cout << "@" << database.GetAtString(e.i) << std::endl;
+        os << "@" << GetAtString(e.i) << std::endl;
         break;
     }
+}
+
+void PrintRelation::Add(const Entity &e)
+{
+    database.Print(e, std::cout);
 }
 
 int PrintRelation::size() const
@@ -137,4 +142,50 @@ Relation &Database::GetRelation(const std::string &name, int arity)
 int Table::size() const
 {
     return 0;
+}
+
+void Database::Find(const std::string & unaryPredicateName)
+{
+    class Tmp : public Relation::Visitor
+    {
+    public:
+        Database &db;
+        int count;
+        Tmp(Database &db) : db(db), count() { }
+
+        void OnRow(const Entity *e) override
+        {
+            std::cout << "\t";
+            db.Print(*e, std::cout);
+            ++count;
+        }
+    };
+    Tmp visitor(*this);
+
+    GetUnaryRelation(unaryPredicateName).Visit(visitor);
+
+    std::cout << "Found " << visitor.count << " rows\n";
+}
+
+void UnaryTable::Visit(Visitor &v) const
+{
+    for(auto &i : values)
+    {
+        v.OnRow(&i);
+    }
+}
+
+void PrintRelation::Visit(Visitor&) const
+{
+    // Empty relation.
+}
+
+void BinaryTable::Visit(Visitor&v) const
+{
+    // todo
+}
+
+void Table::Visit(Visitor&v) const
+{
+    // todo
 }

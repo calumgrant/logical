@@ -11,6 +11,14 @@ class Database;
 class Relation
 {
 public:
+    class Visitor
+    {
+    public:
+        virtual void OnRow(const Entity*)=0;
+    };
+
+    virtual void Visit(Visitor&v) const =0;
+
     virtual ~Relation();
     virtual int size() const =0;
 };
@@ -27,6 +35,7 @@ public:
     void Add(const Entity &e) override;
     std::unordered_set<Entity, Entity::Hash> values;
     int size() const override;
+    void Visit(Visitor&v) const override;
 };
 
 class PrintRelation : public UnaryRelation
@@ -35,6 +44,7 @@ public:
     PrintRelation(Database&db);
     void Add(const Entity &e) override;
     int size() const override;
+    void Visit(Visitor&v) const override;
 private:
     Database &database;
 };
@@ -54,18 +64,28 @@ public:
     virtual void Add(const Entity &e1, const Entity &e2) =0;
 };
 
+template<int N>
+struct Row
+{
+    Entity data[N];
+};
+
 class BinaryTable : public BinaryRelation
 {
 public:
-    void Add(const Entity &e1, const Entity &e2);
+    void Add(const Entity &e1, const Entity &e2) override;
     std::unordered_set<std::pair<Entity, Entity>, PairHash> values;
-    int size() const;
+    int size() const override;
+    void Visit(Visitor&v) const override;
 };
 
 class Table : public Relation
 {
 public:
     int size() const override;
+    void Visit(Visitor&v) const override;
+    int arity;
+    std::vector<Entity> data;
 };
 
 class SourceLocation
@@ -116,6 +136,10 @@ public:
 
     const std::string &GetString(int id) const;
     const std::string &GetAtString(int id) const;
+
+    void Find(const std::string & unaryPredicateName);
+
+    void Print(const Entity &e, std::ostream &os) const;
 
 private:
     std::unordered_map<std::string, std::unique_ptr<UnaryRelation>> unaryRelations;

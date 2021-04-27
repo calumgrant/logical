@@ -1,0 +1,27 @@
+// Welcome to Logical!
+//
+// Logical is a logic programming language, with a natural syntax
+// designed to make logic programming easier to understand.
+
+// Let's print some text:
+// `print` is a special predicate that prints anything that's defined on it.
+
+print "Welcome to the Logical tutorial!".
+
+// Let's create some data.
+// This says that Fred is a person.
+
+"Fred" is a person.
+
+// This says that Mary is a person.
+
+"Mary" is a person.
+
+// Let's write a query to find everyone who is a person.
+// This outputs all person.
+
+find person P.
+
+// Here is a query with a condition
+
+find person P if P is "Mary".

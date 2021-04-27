@@ -60,7 +60,7 @@ _       return tok_underscore;
 
 [0-9]*\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+  { yylval.fval = atof(yytext); return tok_float; }
 
-\/\/[^\n]+
+\/\/[^\n]*
 [ \r\n\t]+
 .
 
