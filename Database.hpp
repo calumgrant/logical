@@ -5,8 +5,6 @@
 
 #include "Entity.hpp"
 #include "StringTable.hpp"
-#include "AST.hpp"
-
 
 class Relation
 {
@@ -72,10 +70,6 @@ public:
 
     UnaryTable &GetUnaryRelation(const std::string &name);
     BinaryTable &GetBinaryRelation(const std::string &name);
-
-    // What to do
-    void ProcessFact(AST::Term * statement);
-    void ProcessRule(AST::Term * lhs, AST::Term * rhs);
 
 private:
     std::unordered_map<std::string, UnaryTable> unaryRelations;

@@ -17,6 +17,7 @@ namespace AST
     {
     public:
         virtual void AssertFacts(Database &db) const =0;
+        void AssertRule(Database &db, Term&rhs);
     };
 
     class NotImplementedTerm : public Term

@@ -1,22 +1,6 @@
 #include "Database.hpp"
 
-void Database::ProcessFact(AST::Term * f)
-{
-    std::unique_ptr<AST::Term> fact(f);
-    if(f)
-    {
-        f->AssertFacts(*this);
-    }
-    else
-    {
-        std::cout << "Error: null fact\n";
-    }
-}
-
-void Database::ProcessRule(AST::Term * lhs, AST::Term * rhs)
-{
-    std::unique_ptr<AST::Term> l(lhs), r(rhs);
-}
+#include <iostream>
 
 UnaryTable & Database::GetUnaryRelation(const std::string & name)
 {

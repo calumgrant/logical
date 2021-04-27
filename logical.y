@@ -5,6 +5,8 @@
 
 %{
 #include <Database.hpp>
+#include <AST.hpp>
+
 #define YYSTYPE AST::Node*
 
 // This is totally wrong I think
@@ -45,7 +47,11 @@ statement:
 ;
 
 datalog:
-    datalog_predicate tok_dot { db.ProcessFact((AST::Term*)$1); }
+    datalog_predicate tok_dot
+    {
+        std::unique_ptr<AST::Term> term((AST::Term*)$1);
+        term->AssertFacts(db);
+    }
 |   datalog_rule tok_dot
 |   tok_questiondash datalog_predicate tok_dot
 ;
@@ -63,7 +69,9 @@ entitylist:
 datalog_rule:
     datalog_predicate tok_colondash datalog_term
     {
-        db.ProcessRule((AST::Term*)$1,(AST::Term*)$3);
+        std::unique_ptr<AST::Term> lhs((AST::Term*)$1);
+        std::unique_ptr<AST::Term> rhs((AST::Term*)$3);
+        lhs->AssertRule(db, *rhs);
     }
 ;
 
@@ -121,11 +129,26 @@ variablelist:
 |   variablelist tok_comma variable
 ;
 
-fact: term tok_dot { db.ProcessFact((AST::Term*)$1); };
+fact: 
+    term tok_dot 
+    {
+        std::unique_ptr<AST::Term> term((AST::Term*)$1);
+        term->AssertFacts(db);
+    };
 
 rule:
-    tok_if term tok_then term tok_dot { db.ProcessRule((AST::Term*)$4, (AST::Term*)$2); }
-|   term tok_if term tok_dot { db.ProcessRule((AST::Term*)$1, (AST::Term*)$3); }
+    tok_if term tok_then term tok_dot
+    {
+        std::unique_ptr<AST::Term> lhs((AST::Term*)$4);
+        std::unique_ptr<AST::Term> rhs((AST::Term*)$2);
+        lhs->AssertRule(db, *rhs);
+    }
+|   term tok_if term tok_dot
+    {
+        std::unique_ptr<AST::Term> lhs((AST::Term*)$1);
+        std::unique_ptr<AST::Term> rhs((AST::Term*)$3);
+        lhs->AssertRule(db, *rhs);
+    }
 ;
 
 baseterm:
