@@ -25,7 +25,6 @@
     AST::AttributeList* attributes;
 }
 
-%type<term> fact
 %type<term> term andterm orterm notterm allterm datalog_predicate baseterm datalog_term datalog_base_term datalog_and_term datalog_unary_term
 %type<entities> entitylist
 %type<unarypredicatelist> unarypredicatelist
@@ -34,15 +33,13 @@
 %type<unarypredicate> unarypredicate
 %type<binarypredicate> binarypredicate
 %type<attributes> attributes
+%type<comparator> comparator
 
 %{
 #include <Database.hpp>
 
-// #define YYSTYPE AST::Node*
-
-// This is totally wrong I think
+// This is totally wrong
 extern char yytext[];
-
 
 #include "tokens.tab.h"
 #include <memory>
@@ -81,7 +78,7 @@ statement:
 datalog:
     datalog_predicate tok_dot
     {
-        std::unique_ptr<AST::Term> term((AST::Term*)$1);
+        std::unique_ptr<AST::Term> term($1);
         term->AssertFacts(db);
     }
 |   datalog_rule tok_dot
@@ -89,20 +86,20 @@ datalog:
 ;
 
 datalog_predicate:
-    predicate tok_open tok_close { $$ = new AST::DatalogPredicate((AST::Predicate*)$1, nullptr); }
-|   predicate tok_open entitylist tok_close { $$ = new AST::DatalogPredicate((AST::Predicate*)$1, (AST::EntityList*)$3); }
+    predicate tok_open tok_close { $$ = new AST::DatalogPredicate($1, nullptr); }
+|   predicate tok_open entitylist tok_close { $$ = new AST::DatalogPredicate($1, $3); }
 ;
 
 entitylist:
-    arithmetic_entity { $$ = new AST::EntityList((AST::Entity*)$1); }
-|   entitylist tok_comma arithmetic_entity { ((AST::EntityList*)$1)->Add((AST::Entity*)$3); }
+    arithmetic_entity { $$ = new AST::EntityList($1); }
+|   entitylist tok_comma arithmetic_entity { $1->Add($3); }
 ;
 
 datalog_rule:
     datalog_predicate tok_colondash datalog_term
     {
-        std::unique_ptr<AST::Term> lhs((AST::Term*)$1);
-        std::unique_ptr<AST::Term> rhs((AST::Term*)$3);
+        std::unique_ptr<AST::Term> lhs($1);
+        std::unique_ptr<AST::Term> rhs($3);
         lhs->AssertRule(db, *rhs);
     }
 ;
@@ -114,8 +111,13 @@ datalog_base_term:
 ;
 
 comparator:
-    tok_equals | tok_notequals | tok_lt | tok_gt | tok_lteq | tok_gteq
-    ;
+    tok_equals { $$ = ComparatorType::eq; }
+|   tok_notequals { $$ = ComparatorType::neq; }
+|   tok_lt { $$ = ComparatorType::lt; }
+|   tok_gt { $$ = ComparatorType::gt; }
+|   tok_lteq { $$ = ComparatorType::lteq; }
+|   tok_gteq { $$ = ComparatorType::gteq; }
+;
 
 datalog_unary_term:
     datalog_base_term
@@ -137,7 +139,7 @@ datalog_term:
     {
         $$ = new AST::NotImplementedTerm($1, $3);
     }
-|   datalog_and_term { $$=$1; }
+|   datalog_and_term
 ;
 
 query:
@@ -178,33 +180,33 @@ fact:
 rule:
     tok_if term tok_then term tok_dot
     {
-        std::unique_ptr<AST::Term> lhs((AST::Term*)$4);
-        std::unique_ptr<AST::Term> rhs((AST::Term*)$2);
+        std::unique_ptr<AST::Term> lhs($4);
+        std::unique_ptr<AST::Term> rhs($2);
         lhs->AssertRule(db, *rhs);
     }
 |   term tok_if term tok_dot
     {
-        std::unique_ptr<AST::Term> lhs((AST::Term*)$1);
-        std::unique_ptr<AST::Term> rhs((AST::Term*)$3);
+        std::unique_ptr<AST::Term> lhs($1);
+        std::unique_ptr<AST::Term> rhs($3);
         lhs->AssertRule(db, *rhs);
     }
 ;
 
 baseterm:
-    entity is_a unarypredicate { $$ = new AST::TermIs((AST::Entity*)$1, (AST::UnaryPredicate*)$3); }
+    entity is_a unarypredicate { $$ = new AST::TermIs($1, $3); }
 |   entity is_a value { $$ = new AST::NotImplementedTerm($1, $3); }
-|   unarypredicatelist entity is_a unarypredicate { $$ = new AST::TermIsPredicate((AST::Entity*)$2, (AST::UnaryPredicateList*)$1, (AST::UnaryPredicate*)$4); }
+|   unarypredicatelist entity is_a unarypredicate { $$ = new AST::TermIsPredicate($2, $1, $4); }
 |   arithmetic_entity comparator arithmetic_entity { $$ = new AST::NotImplementedTerm($1, $3); }
-|   unarypredicatelist entity { $$ = new AST::TermIs((AST::Entity*)$2, (AST::UnaryPredicateList*)$1); }
-|   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, new AST::AttributeList((AST::BinaryPredicate*)$3, nullptr, nullptr)); }
+|   unarypredicatelist entity { $$ = new AST::TermIs($2, $1); }
+|   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr, nullptr)); }
 |   entity tok_comma binarypredicate
     {
-        $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, new AST::AttributeList((AST::BinaryPredicate*)$3, nullptr, nullptr));
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr, nullptr));
     }
 |   unarypredicatelist entity has_a binarypredicate arithmetic_entity
     { 
-        $$ = new AST::EntityHasAttributes((AST::UnaryPredicateList*)$1, (AST::Entity*)$2, 
-            new AST::AttributeList((AST::BinaryPredicate*)$4, (AST::Entity*)$5, nullptr));
+        $$ = new AST::EntityHasAttributes($1, $2, 
+            new AST::AttributeList($4, $5, nullptr));
     }
 |   unarypredicatelist entity has_a binarypredicate arithmetic_entity tok_with inlist
     {
@@ -212,17 +214,15 @@ baseterm:
     }
 |   unarypredicatelist entity has_a binarypredicate arithmetic_entity attributes
     { 
-        $$ = new AST::EntityHasAttributes((AST::UnaryPredicateList*)$1, (AST::Entity*)$2, 
-            new AST::AttributeList((AST::BinaryPredicate*)$4, (AST::Entity*)$5, (AST::AttributeList*)$6));
+        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4, $5, $6));
     }
 |   unarypredicatelist entity attributes 
     { 
-        $$ = new AST::EntityHasAttributes((AST::UnaryPredicateList*)$1, (AST::Entity*)$2, (AST::AttributeList*)$3);
+        $$ = new AST::EntityHasAttributes($1, $2, $3);
     }
 |   entity has_a binarypredicate arithmetic_entity
     { 
-        $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, 
-            new AST::AttributeList((AST::BinaryPredicate*)$3, (AST::Entity*)$4, nullptr));
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, nullptr));
     }
 |   entity has_a binarypredicate arithmetic_entity tok_with inlist
     { 
@@ -230,19 +230,18 @@ baseterm:
     }
 |   entity has_a binarypredicate arithmetic_entity attributes
     {
-        $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, 
-            new AST::AttributeList((AST::BinaryPredicate*)$3, (AST::Entity*)$4, (AST::AttributeList*)$5));
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, $5));
     }
 |   entity attributes
     {
-        $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, (AST::AttributeList*)$2);
+        $$ = new AST::EntityHasAttributes(nullptr, $1, $2);
     }
 |   tok_open term tok_close { $$=$2; }
 ;
 
 unarypredicatelist:
-    unarypredicate { $$ = new AST::UnaryPredicateList((AST::UnaryPredicate*)$1); }
-|   unarypredicatelist unarypredicate { $$=$1; ((AST::UnaryPredicateList*)$$)->Append((AST::UnaryPredicate*)$2); }
+    unarypredicate { $$ = new AST::UnaryPredicateList($1); }
+|   unarypredicatelist unarypredicate { $$=$1; $$->Append($2); }
 ;
 
 inlist:
@@ -282,7 +281,7 @@ notterm:
 
 andterm:
     notterm
-|   andterm tok_and notterm { $$ = new AST::And((AST::Term*)$1, (AST::Term*)$3); }
+|   andterm tok_and notterm { $$ = new AST::And($1, $3); }
 ;
 
 orterm:
@@ -295,8 +294,8 @@ term: orterm;
 // Example: person x has name y, surname z
 
 attributes:
-    tok_comma binarypredicate arithmetic_entity { $$ = new AST::AttributeList((AST::BinaryPredicate*)$2, (AST::Entity*)$3, nullptr); }
-|   attributes tok_comma binarypredicate arithmetic_entity { $$ = new AST::AttributeList((AST::BinaryPredicate*)$3, (AST::Entity*)$4, (AST::AttributeList*)$1); }
+    tok_comma binarypredicate arithmetic_entity { $$ = new AST::AttributeList($2, $3, nullptr); }
+|   attributes tok_comma binarypredicate arithmetic_entity { $$ = new AST::AttributeList($3, $4, $1); }
 ;
 
 predicate: tok_identifier { $$ = new AST::Predicate(yytext); }
