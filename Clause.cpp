@@ -60,12 +60,12 @@ AST::Rule::Rule(Clause * lhs, Clause * rhs) : lhs(lhs), rhs(rhs)
 {
 }
 
-void AST::TermIs::AssertFacts(Database &db)
+void AST::TermIs::AssertFacts(Database &db) const
 {
     list->Assert(db, entity->MakeEntity(db));
 }
 
-void AST::TermIsPredicate::AssertFacts(Database &db)
+void AST::TermIsPredicate::AssertFacts(Database &db) const
 {
     ::Entity e(entity->MakeEntity(db));
     list->Assert(db, e);
@@ -81,7 +81,7 @@ AST::NotImplementedClause::NotImplementedClause(Node *a, Node *b, Node *c, Node 
     delete d;
 }
 
-void AST::NotImplementedClause::AssertFacts(Database & db)
+void AST::NotImplementedClause::AssertFacts(Database & db) const
 {
     std::cerr << "Not implemented.\n";
 }
@@ -150,7 +150,7 @@ AST::And::And(Clause *lhs, Clause *rhs) : lhs(lhs), rhs(rhs)
 {
 }
 
-void AST::And::AssertFacts(Database &db)
+void AST::And::AssertFacts(Database &db) const
 {
     lhs->AssertFacts(db);
     rhs->AssertFacts(db);
@@ -166,7 +166,49 @@ AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateOrList * unaryPredic
 {
 }
 
-void AST::EntityHasAttributes::AssertFacts(Database &db)
+void AST::EntityHasAttributes::AssertFacts(Database &db) const
 {
-    std::cout << "TODO: Assert attribute facts\n";
+    ::Entity e = entity->MakeEntity(db);
+    if(unaryPredicatesOpt)
+    {
+        unaryPredicatesOpt->Assert(db, e);
+    }
+
+    if(attributes)
+    {
+        attributes->Assert(db, e);
+    }
+}
+
+void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
+{
+    if(entityOpt)
+    {
+        ::Entity e2 = entityOpt->MakeEntity(db);
+        BinaryTable & table = db.GetBinaryRelation(predicate->name);
+
+        table.Add(e, e2);
+    }
+
+    if(list) list->Assert(db, e);
+}
+
+AST::EntityList::EntityList(Entity *e)
+{
+    Add(e);
+}
+
+void AST::EntityList::Add(Entity *e)
+{
+    entities.push_back(std::unique_ptr<Entity>(e));
+}
+
+AST::DatalogPredicate::DatalogPredicate(Predicate * predicate, EntityList * entityListOpt) :
+    predicate(predicate), entitiesOpt(entityListOpt)
+{
+}
+
+void AST::DatalogPredicate::AssertFacts(Database &db) const
+{
+    std::cout << "TODO: Assert Datalog predicate.\n";
 }

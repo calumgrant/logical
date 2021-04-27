@@ -40,6 +40,7 @@ void UnaryTable::Add(const Entity &e)
 
 void BinaryTable::Add(const Entity &e1, const Entity &e2)
 {
+    std::cout << "Added (" << (int)e1.type << "," << e1.i << ") (" << (int)e2.type << "," << e2.i << ") to the table\n";
     values.insert(std::make_pair(e1,e2));
 }
 

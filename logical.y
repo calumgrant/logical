@@ -67,23 +67,26 @@ datalog:
 ;
 
 datalog_predicate:
-    tok_identifier tok_open tok_close
-|   tok_identifier tok_open termlist tok_close
+    predicate tok_open tok_close { $$ = new AST::DatalogPredicate((AST::Predicate*)$1, nullptr); }
+|   predicate tok_open termlist tok_close { $$ = new AST::DatalogPredicate((AST::Predicate*)$1, (AST::EntityList*)$3); }
 ;
 
 termlist:
-    arithmetic_term
-|   termlist tok_comma arithmetic_term
+    arithmetic_term { $$ = new AST::EntityList((AST::Entity*)$1); }
+|   termlist tok_comma arithmetic_term { ((AST::EntityList*)$1)->Add((AST::Entity*)$3); }
 ;
 
 datalog_rule:
-    datalog_predicate tok_colondash datalog_clause { ProcessRule((AST::Clause*)$1,(AST::Clause*)$3); }
+    datalog_predicate tok_colondash datalog_clause
+    {
+        ProcessRule((AST::Clause*)$1,(AST::Clause*)$3);
+    }
 ;
 
 datalog_base_clause:
     datalog_predicate
 |   term comparator term
-|   tok_open datalog_clause tok_close
+|   tok_open datalog_clause tok_close { $$ = $2; }
 ;
 
 comparator:
@@ -157,7 +160,10 @@ baseclause:
         $$ = new AST::EntityHasAttributes((AST::UnaryPredicateList*)$1, (AST::Entity*)$2, 
             new AST::AttributeList((AST::BinaryPredicate*)$4, (AST::Entity*)$5, nullptr));
     }
-|   unarypredicatelist term has_a binarypredicate arithmetic_term tok_with inlist { $$ = new AST::NotImplementedClause(); }
+|   unarypredicatelist term has_a binarypredicate arithmetic_term tok_with inlist
+    {
+        $$ = new AST::NotImplementedClause();
+    }
 |   unarypredicatelist term has_a binarypredicate arithmetic_term attributes
     { 
         $$ = new AST::EntityHasAttributes((AST::UnaryPredicateList*)$1, (AST::Entity*)$2, 
@@ -244,7 +250,7 @@ attributes:
 |   attributes tok_comma binarypredicate arithmetic_term { $$ = new AST::AttributeList((AST::BinaryPredicate*)$3, (AST::Entity*)$4, (AST::AttributeList*)$1); }
 ;
 
-predicate: tok_identifier { $$ = nullptr; }
+predicate: tok_identifier { $$ = new AST::Predicate(yytext); }
 unarypredicate: tok_identifier { $$ = new AST::UnaryPredicate(yytext); }
 binarypredicate: tok_identifier { $$ = new AST::BinaryPredicate(yytext); }
 
