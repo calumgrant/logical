@@ -13,11 +13,7 @@ extern char yytext[];
 
 #include "tokens.tab.h"
 #include <memory>
-
 #include <iostream>
-
-
-// std::unique_ptr<AST::Clause>
 
 int yylex();
 extern int yylineno;
@@ -31,8 +27,8 @@ void yyerror(const char*) { std::cerr << "Syntax error at line " << yylineno; }
 //    void yyerror (yyscan_t yyscanner, char const *msg);
 
 // What to do
-void ProcessFact(AST::Clause * statement);
-void ProcessRule(AST::Clause * lhs, AST::Clause * rhs);
+void ProcessFact(AST::Term * statement);
+void ProcessRule(AST::Term * lhs, AST::Term * rhs);
 
 %}
 
@@ -61,7 +57,7 @@ statement:
 ;
 
 datalog:
-    datalog_predicate tok_dot { ProcessFact((AST::Clause*)$1); }
+    datalog_predicate tok_dot { ProcessFact((AST::Term*)$1); }
 |   datalog_rule tok_dot
 |   tok_questiondash datalog_predicate tok_dot
 ;
@@ -79,7 +75,7 @@ entitylist:
 datalog_rule:
     datalog_predicate tok_colondash datalog_term
     {
-        ProcessRule((AST::Clause*)$1,(AST::Clause*)$3);
+        ProcessRule((AST::Term*)$1,(AST::Term*)$3);
     }
 ;
 
@@ -137,18 +133,18 @@ variablelist:
 |   variablelist tok_comma variable
 ;
 
-fact: term tok_dot { ProcessFact((AST::Clause*)$1); };
+fact: term tok_dot { ProcessFact((AST::Term*)$1); };
 
 rule:
-    tok_if term tok_then term tok_dot { ProcessRule((AST::Clause*)$4, (AST::Clause*)$2); }
-|   term tok_if term tok_dot { ProcessRule((AST::Clause*)$1, (AST::Clause*)$3); }
+    tok_if term tok_then term tok_dot { ProcessRule((AST::Term*)$4, (AST::Term*)$2); }
+|   term tok_if term tok_dot { ProcessRule((AST::Term*)$1, (AST::Term*)$3); }
 ;
 
 baseterm:
     entity is_a unarypredicate { $$ = new AST::TermIs((AST::Entity*)$1, (AST::UnaryPredicate*)$3); }
-|   entity is_a value { $$ = new AST::NotImplementedClause($1, $3); }
+|   entity is_a value { $$ = new AST::NotImplementedTerm($1, $3); }
 |   unarypredicatelist entity is_a unarypredicate { $$ = new AST::TermIsPredicate((AST::Entity*)$2, (AST::UnaryPredicateList*)$1, (AST::UnaryPredicate*)$4); }
-|   arithmetic_entity comparator arithmetic_entity { $$ = new AST::NotImplementedClause($1, $3); }
+|   arithmetic_entity comparator arithmetic_entity { $$ = new AST::NotImplementedTerm($1, $3); }
 |   unarypredicatelist entity { $$ = new AST::TermIs((AST::Entity*)$2, (AST::UnaryPredicateList*)$1); }
 |   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, new AST::AttributeList((AST::BinaryPredicate*)$3, nullptr, nullptr)); }
 |   entity tok_comma binarypredicate
@@ -162,7 +158,7 @@ baseterm:
     }
 |   unarypredicatelist entity has_a binarypredicate arithmetic_entity tok_with inlist
     {
-        $$ = new AST::NotImplementedClause();
+        $$ = new AST::NotImplementedTerm();
     }
 |   unarypredicatelist entity has_a binarypredicate arithmetic_entity attributes
     { 
@@ -180,7 +176,7 @@ baseterm:
     }
 |   entity has_a binarypredicate arithmetic_entity tok_with inlist
     { 
-        $$ = new AST::NotImplementedClause();
+        $$ = new AST::NotImplementedTerm();
     }
 |   entity has_a binarypredicate arithmetic_entity attributes
     {
@@ -233,7 +229,7 @@ notterm:
 
 andterm:
     notterm
-|   andterm tok_and notterm { $$ = new AST::And((AST::Clause*)$1, (AST::Clause*)$3); }
+|   andterm tok_and notterm { $$ = new AST::And((AST::Term*)$1, (AST::Term*)$3); }
 ;
 
 orterm:

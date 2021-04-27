@@ -4,9 +4,9 @@
 // Need to create a pure parser and remove this global
 Database database;
 
-void ProcessFact(AST::Clause * f)
+void ProcessFact(AST::Term * f)
 {
-    std::unique_ptr<AST::Clause> fact(f);
+    std::unique_ptr<AST::Term> fact(f);
     if(f)
     {
         f->AssertFacts(database);
@@ -17,9 +17,9 @@ void ProcessFact(AST::Clause * f)
     }
 }
 
-void ProcessRule(AST::Clause * lhs, AST::Clause * rhs)
+void ProcessRule(AST::Term * lhs, AST::Term * rhs)
 {
-    std::unique_ptr<AST::Clause> l(lhs), r(rhs);
+    std::unique_ptr<AST::Term> l(lhs), r(rhs);
 }
 
 UnaryTable & Database::GetUnaryRelation(const std::string & name)

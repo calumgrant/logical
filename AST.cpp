@@ -56,7 +56,7 @@ AST::AtEntity::AtEntity(const char * v) : value(v)
 {   
 }
 
-AST::Rule::Rule(Clause * lhs, Clause * rhs) : lhs(lhs), rhs(rhs)
+AST::Rule::Rule(Term * lhs, Term * rhs) : lhs(lhs), rhs(rhs)
 {
 }
 
@@ -73,7 +73,7 @@ void AST::TermIsPredicate::AssertFacts(Database &db) const
 }
 
 
-AST::NotImplementedClause::NotImplementedClause(Node *a, Node *b, Node *c, Node *d)
+AST::NotImplementedTerm::NotImplementedTerm(Node *a, Node *b, Node *c, Node *d)
 {
     delete a;
     delete b;
@@ -81,7 +81,7 @@ AST::NotImplementedClause::NotImplementedClause(Node *a, Node *b, Node *c, Node 
     delete d;
 }
 
-void AST::NotImplementedClause::AssertFacts(Database & db) const
+void AST::NotImplementedTerm::AssertFacts(Database & db) const
 {
     std::cerr << "Not implemented.\n";
 }
@@ -146,7 +146,7 @@ Entity AST::UnnamedVariable::MakeEntity(Database &db) const
     return db.CreateInt(-1);
 }
 
-AST::And::And(Clause *lhs, Clause *rhs) : lhs(lhs), rhs(rhs)
+AST::And::And(Term *lhs, Term *rhs) : lhs(lhs), rhs(rhs)
 {
 }
 

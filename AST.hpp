@@ -13,16 +13,16 @@ namespace AST
         virtual ~Node();
     };
 
-    class Clause : public Node
+    class Term : public Node
     {
     public:
         virtual void AssertFacts(Database &db) const =0;
     };
 
-    class NotImplementedClause : public Clause
+    class NotImplementedTerm : public Term
     {
     public:
-        NotImplementedClause(Node * =nullptr, Node* =nullptr, Node* =nullptr, Node* =nullptr);
+        NotImplementedTerm(Node * =nullptr, Node* =nullptr, Node* =nullptr, Node* =nullptr);
         void AssertFacts(Database &db) const override;
     };
 
@@ -96,12 +96,12 @@ namespace AST
         const bool value;
     };
 
-    class And : public Clause
+    class And : public Term
     {
     public:
-        And(Clause *lhs, Clause *rhs);
+        And(Term *lhs, Term *rhs);
         void AssertFacts(Database &db) const override;
-        std::unique_ptr<Clause> lhs, rhs;
+        std::unique_ptr<Term> lhs, rhs;
     };
 
     class Predicate : public Node
@@ -141,7 +141,7 @@ namespace AST
         std::vector< std::unique_ptr<UnaryPredicate> > list;
     };
 
-    class TermIs : public Clause
+    class TermIs : public Term
     {
     public:
         TermIs(Entity* entity, UnaryPredicateOrList* list);
@@ -150,7 +150,7 @@ namespace AST
         void AssertFacts(Database &db) const override;
     };
 
-    class TermIsPredicate : public Clause
+    class TermIsPredicate : public Term
     {
     public:
         TermIsPredicate(Entity* entity, UnaryPredicateOrList* list, UnaryPredicate * p);
@@ -171,7 +171,7 @@ namespace AST
         void Assert(Database &db, const ::Entity &e) const;
     };
 
-    class EntityHasAttributes : public Clause
+    class EntityHasAttributes : public Term
     {
     public:
         EntityHasAttributes(UnaryPredicateOrList * unarypredicatesOpt, Entity*entity, AttributeList*attributes);
@@ -182,11 +182,11 @@ namespace AST
     };
 
     // DELETEME
-    class Rule : public Clause
+    class Rule : public Term
     {
     public:
-        Rule(Clause * lhs, Clause * rhs);
-        std::unique_ptr<Clause> lhs, rhs;
+        Rule(Term * lhs, Term * rhs);
+        std::unique_ptr<Term> lhs, rhs;
     };
 
     class EntityList : public Node
@@ -197,7 +197,7 @@ namespace AST
         std::vector< std::unique_ptr<Entity> > entities;
     };
 
-    class DatalogPredicate : public Clause
+    class DatalogPredicate : public Term
     {
     public:
         DatalogPredicate(Predicate * predicate, EntityList * entityListOpt);
