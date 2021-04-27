@@ -77,48 +77,48 @@ entitylist:
 ;
 
 datalog_rule:
-    datalog_predicate tok_colondash datalog_clause
+    datalog_predicate tok_colondash datalog_term
     {
         ProcessRule((AST::Clause*)$1,(AST::Clause*)$3);
     }
 ;
 
-datalog_base_clause:
+datalog_base_term:
     datalog_predicate
 |   entity comparator entity
-|   tok_open datalog_clause tok_close { $$ = $2; }
+|   tok_open datalog_term tok_close { $$ = $2; }
 ;
 
 comparator:
     tok_equals | tok_notequals | tok_lt | tok_gt | tok_lteq | tok_gteq
     ;
 
-datalog_unary_clause:
-    datalog_base_clause
-|   tok_not datalog_base_clause
+datalog_unary_term:
+    datalog_base_term
+|   tok_not datalog_base_term
 ;
 
-datalog_and_clause:
-    datalog_unary_clause
-|   datalog_and_clause tok_and datalog_unary_clause
-|   datalog_and_clause tok_comma datalog_unary_clause
+datalog_and_term:
+    datalog_unary_term
+|   datalog_and_term tok_and datalog_unary_term
+|   datalog_and_term tok_comma datalog_unary_term
 ;
 
-datalog_clause:
-|   datalog_clause tok_or datalog_and_clause
-|   datalog_clause tok_semicolon datalog_and_clause
-|   datalog_and_clause
+datalog_term:
+|   datalog_term tok_or datalog_and_term
+|   datalog_term tok_semicolon datalog_and_term
+|   datalog_and_term
 ;
 
 query:
-    tok_find queryclause tok_dot
+    tok_find queryterm tok_dot
 |   tok_find predicate tok_dot
-|   tok_find queryclause tok_if clause tok_dot
-|   tok_find variablelist tok_if clause tok_dot  // find A, surname S could be am attribute or a variable list 
+|   tok_find queryterm tok_if term tok_dot
+|   tok_find variablelist tok_if term tok_dot  // find A, surname S could be am attribute or a variable list 
 ;
 
 // Different syntax to distinguish them from variable lists A, B, C
-querybaseclause:
+querybaseterm:
     unarypredicate variable
 |   unarypredicate variable has_a binarypredicate variable
 |   unarypredicate variable has_a binarypredicate variable attributes
@@ -127,9 +127,9 @@ querybaseclause:
 |   variable has_a binarypredicate variable attributes
 ;
 
-queryclause:
-    querybaseclause
-|   queryclause tok_and querybaseclause
+queryterm:
+    querybaseterm
+|   queryterm tok_and querybaseterm
 ;
 
 variablelist:
@@ -137,14 +137,14 @@ variablelist:
 |   variablelist tok_comma variable
 ;
 
-fact: clause tok_dot { ProcessFact((AST::Clause*)$1); };
+fact: term tok_dot { ProcessFact((AST::Clause*)$1); };
 
 rule:
-    tok_if clause tok_then clause tok_dot { ProcessRule((AST::Clause*)$4, (AST::Clause*)$2); }
-|   clause tok_if clause tok_dot { ProcessRule((AST::Clause*)$1, (AST::Clause*)$3); }
+    tok_if term tok_then term tok_dot { ProcessRule((AST::Clause*)$4, (AST::Clause*)$2); }
+|   term tok_if term tok_dot { ProcessRule((AST::Clause*)$1, (AST::Clause*)$3); }
 ;
 
-baseclause:
+baseterm:
     entity is_a unarypredicate { $$ = new AST::TermIs((AST::Entity*)$1, (AST::UnaryPredicate*)$3); }
 |   entity is_a value { $$ = new AST::NotImplementedClause($1, $3); }
 |   unarypredicatelist entity is_a unarypredicate { $$ = new AST::TermIsPredicate((AST::Entity*)$2, (AST::UnaryPredicateList*)$1, (AST::UnaryPredicate*)$4); }
@@ -191,7 +191,7 @@ baseclause:
     {
         $$ = new AST::EntityHasAttributes(nullptr, (AST::Entity*)$1, (AST::AttributeList*)$2);
     }
-|   tok_open clause tok_close { $$=$2; }
+|   tok_open term tok_close { $$=$2; }
 ;
 
 unarypredicatelist:
@@ -221,27 +221,27 @@ is_a:
 |   tok_is tok_not tok_an
 ;
 
-allclause:
-    baseclause
-|   tok_all tok_open clause tok_close tok_in allclause 
+allterm:
+    baseterm
+|   tok_all tok_open term tok_close tok_in allterm 
 ;
 
-notclause:
-    allclause
-|   tok_not allclause
+notterm:
+    allterm
+|   tok_not allterm
 ;
 
-andclause:
-    notclause
-|   andclause tok_and notclause { $$ = new AST::And((AST::Clause*)$1, (AST::Clause*)$3); }
+andterm:
+    notterm
+|   andterm tok_and notterm { $$ = new AST::And((AST::Clause*)$1, (AST::Clause*)$3); }
 ;
 
-orclause:
-    andclause
-|   orclause tok_or andclause
+orterm:
+    andterm
+|   orterm tok_or andterm
 ;
 
-clause: orclause;
+term: orterm;
 
 // Example: person x has name y, surname z
 
@@ -288,8 +288,8 @@ plusentity:
 
 sumentity:
     plusentity
-|   tok_sum arithmetic_entity tok_in tok_open clause tok_close
-|   tok_count variable tok_in tok_open clause tok_close
+|   tok_sum arithmetic_entity tok_in tok_open term tok_close
+|   tok_count variable tok_in tok_open term tok_close
 ;
 
 arithmetic_entity: sumentity;
