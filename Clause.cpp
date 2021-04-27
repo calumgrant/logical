@@ -210,5 +210,5 @@ AST::DatalogPredicate::DatalogPredicate(Predicate * predicate, EntityList * enti
 
 void AST::DatalogPredicate::AssertFacts(Database &db) const
 {
-    std::cout << "TODO: Assert Datalog predicate.\n";
+    std::cout << "TODO: Assert Datalog predicate " << predicate->name << ".\n";
 }

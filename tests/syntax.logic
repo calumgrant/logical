@@ -24,8 +24,6 @@ large fish 1234.
 large fish @f1 and small fish @f2.
 fish @f1 is large and fish @f2 is small.
 
-test -99998.  // Works up to here.
-
 // In Datalog:
 fish(@f1).
 largs(@f1).

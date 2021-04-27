@@ -56,7 +56,7 @@ _               return tok_underscore;
 [a-zA-Z][a-zA-Z0-9_\-]* return tok_identifier;
 _[a-zA-Z0-9_]+ return tok_identifier;
 
-@[a-zA-Z_\-0-9]* return tok_atentity;
+@[a-zA-Z_\-0-9]* return tok_atstring;
 -?[0-9]+          return tok_integer;
 \"([^"\\]|\\.)*\"   return tok_string;
 
