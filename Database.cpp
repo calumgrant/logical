@@ -1,5 +1,5 @@
 #include "Database.hpp"
-#include "Clause.hpp"
+#include "AST.hpp"
 
 // Need to create a pure parser and remove this global
 Database database;

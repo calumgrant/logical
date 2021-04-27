@@ -5,7 +5,7 @@
 
 
 %{
-#include <Clause.hpp>
+#include <AST.hpp>
 #define YYSTYPE AST::Node*
 
 // This is totally wrong I think

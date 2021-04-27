@@ -1,4 +1,4 @@
-#include "Clause.hpp"
+#include "AST.hpp"
 #include "Database.hpp"
 
 AST::Node::~Node()
