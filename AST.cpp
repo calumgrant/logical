@@ -93,35 +93,27 @@ void AST::UnaryPredicateList::Assert(Database &db, const ::Entity &e) const
         l->Assert(db, e);
 }
 
-bool AST::Bool::IsVariable() const { return false; }
+bool AST::Value::IsVariable() const { return false; }
 
 Entity AST::Bool::MakeEntity(Database &db) const
 {
     return db.Create(value);
 }
 
-bool AST::Float::IsVariable() const { return false; }
-
 Entity AST::Float::MakeEntity(Database &db) const
 {
     return db.Create(value);
 }
-
-bool AST::String::IsVariable() const { return false; }
 
 Entity AST::String::MakeEntity(Database &db) const
 {
     return db.CreateString(value);
 }
 
-bool AST::Integer::IsVariable() const { return false; }
-
 Entity AST::Integer::MakeEntity(Database &db) const
 {
     return db.CreateInt(value);
 }
-
-bool AST::AtString::IsVariable() const { return false; }
 
 Entity AST::AtString::MakeEntity(Database &db) const
 {

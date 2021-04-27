@@ -52,47 +52,48 @@ namespace AST
         ::Entity MakeEntity(Database &db) const override;
     };
 
-    class AtString : public Entity
+    class Value : public Entity
+    {
+    public:
+        bool IsVariable() const override;
+    };
+
+    class AtString : public Value
     {
     public:
         AtString(const char*v);
-        bool IsVariable() const override;
         ::Entity MakeEntity(Database &db) const override;
         const std::string value;
     };
 
-    class String : public Entity
+    class String : public Value
     {
     public:
         String(const std::string &p);
-        bool IsVariable() const override;
         ::Entity MakeEntity(Database &db) const override;
         const std::string value;
     };
 
-    class Integer : public Entity
+    class Integer : public Value
     {
     public:
         Integer(int i);
-        bool IsVariable() const override;
         ::Entity MakeEntity(Database &db) const override;
         const int value;
     };
 
-    class Float : public Entity
+    class Float : public Value
     {
     public:
         Float(double v);
-        bool IsVariable() const override;
         ::Entity MakeEntity(Database &db) const override;
         const double value;
     };
 
-    class Bool : public Entity
+    class Bool : public Value
     {
     public:
         Bool(bool b);
-        bool IsVariable() const override;
         ::Entity MakeEntity(Database &db) const override;
         const bool value;
     };
