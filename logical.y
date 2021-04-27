@@ -23,6 +23,9 @@
     AST::BinaryPredicate* binarypredicate;
     ComparatorType comparator;
     AST::AttributeList* attributes;
+    int ival;
+    char *sval;
+    float fval;
 }
 
 %type<term> term andterm orterm notterm allterm datalog_predicate baseterm datalog_term datalog_base_term datalog_and_term datalog_unary_term
@@ -34,12 +37,12 @@
 %type<binarypredicate> binarypredicate
 %type<attributes> attributes
 %type<comparator> comparator
+%type<sval> tok_identifier tok_atstring tok_string
+%type<ival> tok_integer
+%type<fval> tok_float
 
 %{
 #include <Database.hpp>
-
-// This is totally wrong
-extern char yytext[];
 
 #include "tokens.tab.h"
 #include <memory>
@@ -298,12 +301,12 @@ attributes:
 |   attributes tok_comma binarypredicate arithmetic_entity { $$ = new AST::AttributeList($3, $4, $1); }
 ;
 
-predicate: tok_identifier { $$ = new AST::Predicate(yytext); }
-unarypredicate: tok_identifier { $$ = new AST::UnaryPredicate(yytext); }
-binarypredicate: tok_identifier { $$ = new AST::BinaryPredicate(yytext); }
+predicate: tok_identifier { $$ = new AST::Predicate($1); free($1); }
+unarypredicate: tok_identifier { $$ = new AST::UnaryPredicate($1); free($1); }
+binarypredicate: tok_identifier { $$ = new AST::BinaryPredicate($1); free($1); }
 
 variable:
-    tok_identifier { $$ = new AST::NamedVariable(yytext); }
+    tok_identifier { $$ = new AST::NamedVariable($1); free($1); }
 |   tok_underscore { $$ = new AST::UnnamedVariable(); }
 ;
 
@@ -347,10 +350,10 @@ value:
         std::string value;
         for(int i=1; i<yyleng-1; ++i)
         {
-            if(yytext[i]=='\\')
+            if($1[i]=='\\')
             {
                 ++i;
-                switch(yytext[i])
+                switch($1[i])
                 {
                 case 'r':
                     value.push_back('\r');
@@ -373,13 +376,14 @@ value:
                 }
             }
             else
-                value.push_back(yytext[i]);
+                value.push_back($1[i]);
         }
+        free($1);
         $$ = new AST::String(value);
     }
-|   tok_atstring { $$ = new AST::AtString(yytext+1); }
-|   tok_integer { $$ = new AST::Integer(atoi(yytext)); }
-|   tok_float   { $$ = new AST::Float(atof(yytext)); }
+|   tok_atstring { $$ = new AST::AtString($1+1); free($1); }
+|   tok_integer { $$ = new AST::Integer($1); }
+|   tok_float   { $$ = new AST::Float($1); }
 |   tok_true    { $$ = new AST::Bool(true); }
 |   tok_false   { $$ = new AST::Bool(false); }
 ;
