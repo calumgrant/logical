@@ -21,6 +21,7 @@ add_library(logiccore
     Table.cpp Table.hpp
     Evaluation.cpp Evaluation.hpp
     Compiler.cpp Compiler.hpp
+    Relation.cpp Relation.hpp
     ${BISON_MyParser_OUTPUTS}
     ${FLEX_MyScanner_OUTPUTS})
 

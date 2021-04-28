@@ -2,12 +2,12 @@
 
 #include <iostream>
 
-UnaryRelation& Database::GetUnaryRelation(const std::string & name)
+Relation& Database::GetUnaryRelation(const std::string & name)
 {
     auto i = unaryRelations.find(name);
     if (i == unaryRelations.end())
     {
-        auto p = std::make_unique<UnaryTable>();
+        auto p = std::make_shared<UnaryTable>();
         auto & result = *p;
         unaryRelations.insert(std::make_pair(name, std::move(p)));
         return result;
@@ -16,12 +16,12 @@ UnaryRelation& Database::GetUnaryRelation(const std::string & name)
         return *i->second;
 }
 
-BinaryRelation & Database::GetBinaryRelation(const std::string & name)
+Relation & Database::GetBinaryRelation(const std::string & name)
 {
     auto i = binaryRelations.end();
     if (i==binaryRelations.end())
     {
-        auto p = std::make_unique<BinaryTable>();
+        auto p = std::make_shared<BinaryTable>();
         auto & result = *p;
         binaryRelations.insert(std::make_pair(name, std::move(p)));
         return result;
@@ -30,24 +30,24 @@ BinaryRelation & Database::GetBinaryRelation(const std::string & name)
         return *i->second;
 }
 
-void UnaryTable::Add(const Entity &e)
+void UnaryTable::Add(const Entity *row)
 {
     //std::cout << "Added (" << (int)e.type << "," << e.i << ") to the table\n";
-    values.insert(e);
+    values.insert(row[0]);
 }
 
-void BinaryTable::Add(const Entity &e1, const Entity &e2)
+void BinaryTable::Add(const Entity * row)
 {
     //std::cout << "Added (" << (int)e1.type << "," << e1.i << ") (" << (int)e2.type << "," << e2.i << ") to the table\n";
-    values.insert(std::make_pair(e1,e2));
+    values.insert(std::make_pair(row[0],row[1]));
 }
 
-int UnaryTable::size() const
+int UnaryTable::Count()
 {
     return values.size();
 }
 
-int BinaryTable::size() const
+int BinaryTable::Count()
 {
     return values.size();
 }
@@ -63,7 +63,7 @@ Relation::~Relation()
 
 Database::Database()
 {
-    unaryRelations["print"] = std::make_unique<PrintRelation>(*this);
+    unaryRelations["print"] = std::make_shared<PrintRelation>(*this);
 }
 
 Database::~Database()
@@ -96,12 +96,12 @@ void Database::Print(const Entity &e, std::ostream &os) const
     }
 }
 
-void PrintRelation::Add(const Entity &e)
+void PrintRelation::Add(const Entity * row)
 {
-    database.Print(e, std::cout);
+    database.Print(row[0], std::cout);
 }
 
-int PrintRelation::size() const
+int PrintRelation::Count()
 {
     return 0;
 }
@@ -139,7 +139,7 @@ Relation &Database::GetRelation(const std::string &name, int arity)
         return *i->second;
 }
 
-int TableX::size() const
+int TableX::Count()
 {
     return 0;
 }
@@ -162,12 +162,13 @@ void Database::Find(const std::string & unaryPredicateName)
     };
     Tmp visitor(*this);
 
-    GetUnaryRelation(unaryPredicateName).Visit(visitor);
+    Entity row;
+    GetUnaryRelation(unaryPredicateName).Query(&row, visitor);
 
     std::cout << "Found " << visitor.count << " rows\n";
 }
 
-void UnaryTable::Visit(Visitor &v) const
+void UnaryTable::Query(Entity * row, Visitor &v)
 {
     for(auto &i : values)
     {
@@ -175,17 +176,21 @@ void UnaryTable::Visit(Visitor &v) const
     }
 }
 
-void PrintRelation::Visit(Visitor&) const
+void PrintRelation::Query(Entity * row, Visitor&)
 {
     // Empty relation.
 }
 
-void BinaryTable::Visit(Visitor&v) const
+void BinaryTable::Query(Entity * row, Visitor&v)
 {
     // todo
 }
 
-void TableX::Visit(Visitor&v) const
+void TableX::Query(Entity * row, Visitor&v)
 {
     // todo
+}
+
+void TableX::Add(const Entity *row)
+{
 }

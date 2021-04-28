@@ -85,7 +85,7 @@ void AST::NotImplementedTerm::AssertFacts(Database & db) const
 
 void AST::UnaryPredicate::Assert(Database &db, const ::Entity &e) const
 {
-    db.GetUnaryRelation(name).Add(e);
+    db.GetUnaryRelation(name).Add(&e);
 }
 
 void AST::UnaryPredicateList::Assert(Database &db, const ::Entity &e) const
@@ -173,10 +173,10 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
 {
     if(entityOpt)
     {
-        ::Entity e2 = entityOpt->MakeEntity(db);
-        BinaryRelation & table = db.GetBinaryRelation(predicate->name);
+        ::Entity row[2] = { e, entityOpt->MakeEntity(db) };
+        Relation & table = db.GetBinaryRelation(predicate->name);
 
-        table.Add(e, e2);
+        table.Add(row);
     }
 
     if(list) list->Assert(db, e);
@@ -206,12 +206,18 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     switch(arity)
     {
     case 1:
-        db.GetUnaryRelation(predicate->name).Add(entitiesOpt->entities[0]->MakeEntity(db));
-        return;
+        {
+            ::Entity e = entitiesOpt->entities[0]->MakeEntity(db);
+            db.GetUnaryRelation(predicate->name).Add(&e);
+            return;
+        }
     case 2:
-        db.GetBinaryRelation(predicate->name).Add(
-            entitiesOpt->entities[0]->MakeEntity(db),entitiesOpt->entities[1]->MakeEntity(db));
-        return;
+        {
+            ::Entity row[2] = { entitiesOpt->entities[0]->MakeEntity(db),
+                entitiesOpt->entities[1]->MakeEntity(db) };
+            db.GetBinaryRelation(predicate->name).Add(row);
+            return;
+        }
     }
 
     auto &relation = db.GetRelation(predicate->name, arity);
