@@ -4,6 +4,7 @@
 
 class Database;
 class Entity;
+class Evaluation;
 
 class Relation
 {
@@ -28,7 +29,19 @@ public:
     virtual ~Relation();
 };
 
-class UnaryTable : public Relation
+class Predicate : public Relation
+{
+public:
+    Predicate();
+    bool rulesRun;
+    std::shared_ptr<Relation> data;
+    std::vector< std::shared_ptr<Evaluation> > rules;
+
+    // Evaluates all rules if needed
+    void Evaluate();
+};
+
+class UnaryTable : public Predicate
 {
 public:
     void Add(const Entity *row) override;
@@ -37,7 +50,7 @@ public:
     void Query(Entity*row, Visitor&v) override;
 };
 
-class PrintRelation : public Relation
+class PrintRelation : public Predicate
 {
 public:
     PrintRelation(Database&db);
@@ -63,7 +76,7 @@ struct Row
     Entity data[N];
 };
 
-class BinaryTable : public Relation
+class BinaryTable : public Relation  // Bug: When "Predicate", there's a crash
 {
 public:
     void Add(const Entity * row) override;

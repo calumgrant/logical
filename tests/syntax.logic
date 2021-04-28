@@ -41,6 +41,8 @@ small(@f2).
 // These are equivalent. They define a unary relation `circle` and the binary `radius`
 circle @c1, radius 10.
 circle @c2 has radius 20.
+print "....".
+
 
 // These are equivalent. `a` and `an` are optional and can be used to aid readability.
 @fred has first-name "Fred".

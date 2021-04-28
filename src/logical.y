@@ -222,7 +222,7 @@ baseclause:
     }
 |   unarypredicatelist entity has_a binarypredicate arithmetic_entity
     { 
-        $$ = new AST::EntityHasAttributes($1, $2, 
+        $$ = new AST::EntityHasAttributes($1, $2,
             new AST::AttributeList($4, $5, nullptr));
     }
 |   unarypredicatelist entity has_a binarypredicate arithmetic_entity tok_with withlist

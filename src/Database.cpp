@@ -9,7 +9,7 @@ Relation& Database::GetUnaryRelation(const std::string & name)
     {
         auto p = std::make_shared<UnaryTable>();
         auto & result = *p;
-        unaryRelations.insert(std::make_pair(name, std::move(p)));
+        unaryRelations.insert(std::make_pair(name, p));
         return result;
     }
     else
@@ -23,7 +23,7 @@ Relation & Database::GetBinaryRelation(const std::string & name)
     {
         auto p = std::make_shared<BinaryTable>();
         auto & result = *p;
-        binaryRelations.insert(std::make_pair(name, std::move(p)));
+        binaryRelations.insert(std::make_pair(name, p));
         return result;
     }
     else
@@ -95,9 +95,9 @@ Relation &Database::GetRelation(const std::string &name, int arity)
 
     if (i == relations.end())
     {
-        auto r = std::make_unique<TableX>();
+        auto r = std::make_shared<TableX>();
         auto & result = *r;
-        relations.insert(std::make_pair(index, std::move(r)));
+        relations.insert(std::make_pair(index, r));
         return result;
     }
     else

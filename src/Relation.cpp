@@ -68,3 +68,7 @@ void TableX::Query(Entity * row, Visitor&v)
 void TableX::Add(const Entity *row)
 {
 }
+
+Predicate::Predicate() : rulesRun(false)
+{
+}

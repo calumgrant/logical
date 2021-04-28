@@ -1,4 +1,5 @@
 #include <memory>
+#include <vector>
 
 class Relation;
 class Entity;
@@ -38,5 +39,13 @@ class WriterB : public Evaluation
 {
 public:
     WriterB(Relation &rel, Entity *e);
+    void Evaluate() override;
+};
+
+class RuleEvaluation : public Evaluation
+{
+public:
+    // Local data, pre-initialised with constants
+    std::vector<Entity> data;
     void Evaluate() override;
 };
