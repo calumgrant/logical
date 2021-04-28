@@ -49,3 +49,11 @@ public:
     std::vector<Entity> data;
     void Evaluate() override;
 };
+
+class OrEvaluation : public Evaluation
+{
+public:
+    OrEvaluation(const std::shared_ptr<Evaluation> branch1, const std::shared_ptr<Evaluation> branch2);
+    std::shared_ptr<Evaluation> branch;
+    void Evaluate() override;
+};
