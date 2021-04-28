@@ -130,7 +130,7 @@ Relation &Database::GetRelation(const std::string &name, int arity)
 
     if (i == relations.end())
     {
-        auto r = std::make_unique<Table>();
+        auto r = std::make_unique<TableX>();
         auto & result = *r;
         relations.insert(std::make_pair(index, std::move(r)));
         return result;
@@ -139,7 +139,7 @@ Relation &Database::GetRelation(const std::string &name, int arity)
         return *i->second;
 }
 
-int Table::size() const
+int TableX::size() const
 {
     return 0;
 }
@@ -185,7 +185,7 @@ void BinaryTable::Visit(Visitor&v) const
     // todo
 }
 
-void Table::Visit(Visitor&v) const
+void TableX::Visit(Visitor&v) const
 {
     // todo
 }

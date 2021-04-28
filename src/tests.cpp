@@ -1,4 +1,7 @@
 #include "Database.hpp"
+
+#include "Table.hpp"
+
 #undef _NDEBUG
 #include <cassert>
 #include <iostream>

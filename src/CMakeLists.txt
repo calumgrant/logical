@@ -18,6 +18,9 @@ add_library(logiccore
     Database.cpp Database.hpp
     StringTable.cpp StringTable.hpp
     Entity.hpp
+    Table.cpp Table.hpp
+    Evaluation.cpp Evaluation.hpp
+    Compiler.cpp Compiler.hpp
     ${BISON_MyParser_OUTPUTS}
     ${FLEX_MyScanner_OUTPUTS})
 

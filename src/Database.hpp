@@ -79,7 +79,7 @@ public:
     void Visit(Visitor&v) const override;
 };
 
-class Table : public Relation
+class TableX : public Relation
 {
 public:
     int size() const override;

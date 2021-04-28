@@ -11,6 +11,11 @@ person 3.14.
 person true.
 person false.
 
+print "".
+print "Here are the people:".
+find person.
+print "".
+
 // You can define global constants as follows.
 pi 3.14159.
 3.1415926 is pi.
