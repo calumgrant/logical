@@ -12,17 +12,17 @@ namespace AST
         virtual ~Node();
     };
 
-    class Term : public Node
+    class Clause : public Node
     {
     public:
         virtual void AssertFacts(Database &db) const =0;
-        void AssertRule(Database &db, Term&rhs) const;
+        void AssertRule(Database &db, Clause&rhs) const;
     };
 
-    class NotImplementedTerm : public Term
+    class NotImplementedClause : public Clause
     {
     public:
-        NotImplementedTerm(Node * =nullptr, Node* =nullptr, Node* =nullptr, Node* =nullptr);
+        NotImplementedClause(Node * =nullptr, Node* =nullptr, Node* =nullptr, Node* =nullptr);
         void AssertFacts(Database &db) const override;
     };
 
@@ -110,12 +110,12 @@ namespace AST
         ::Entity MakeEntity(Database &db) const override;
     };
 
-    class And : public Term
+    class And : public Clause
     {
     public:
-        And(Term *lhs, Term *rhs);
+        And(Clause *lhs, Clause *rhs);
         void AssertFacts(Database &db) const override;
-        std::unique_ptr<Term> lhs, rhs;
+        std::unique_ptr<Clause> lhs, rhs;
     };
 
     class Predicate : public Node
@@ -154,19 +154,19 @@ namespace AST
         std::vector< std::unique_ptr<UnaryPredicate> > list;
     };
 
-    class TermIs : public Term
+    class EntityIs : public Clause
     {
     public:
-        TermIs(Entity* entity, UnaryPredicateOrList* list);
+        EntityIs(Entity* entity, UnaryPredicateOrList* list);
         std::unique_ptr<Entity> entity;
         std::unique_ptr<UnaryPredicateOrList> list;
         void AssertFacts(Database &db) const override;
     };
 
-    class TermIsPredicate : public Term
+    class EntityIsPredicate : public Clause
     {
     public:
-        TermIsPredicate(Entity* entity, UnaryPredicateOrList* list, UnaryPredicate * p);
+        EntityIsPredicate(Entity* entity, UnaryPredicateOrList* list, UnaryPredicate * p);
         std::unique_ptr<Entity> entity;
         std::unique_ptr<UnaryPredicateOrList> list;
         std::unique_ptr<UnaryPredicate> predicate;
@@ -184,7 +184,7 @@ namespace AST
         void Assert(Database &db, const ::Entity &e) const;
     };
 
-    class EntityHasAttributes : public Term
+    class EntityHasAttributes : public Clause
     {
     public:
         EntityHasAttributes(UnaryPredicateOrList * unarypredicatesOpt, Entity*entity, AttributeList*attributes);
@@ -202,7 +202,7 @@ namespace AST
         std::vector< std::unique_ptr<Entity> > entities;
     };
 
-    class DatalogPredicate : public Term
+    class DatalogPredicate : public Clause
     {
     public:
         DatalogPredicate(Predicate * predicate, EntityList * entityListOpt);

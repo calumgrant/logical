@@ -1,6 +1,6 @@
 #include <memory>
 
-class UnaryRelation;
+class Relation;
 class Entity;
 
 class Evaluation
@@ -12,32 +12,31 @@ public:
     std::shared_ptr<Evaluation> next;
 };
 
+class UnaryEvaluation : public Evaluation
+{
+protected:
+    UnaryEvaluation(Relation &rel, Entity *e);
+    Relation & relation;
+    Entity * e;
+};
+
 class EvaluateF : public Evaluation
 {
 public:
-    EvaluateF(UnaryRelation &rel, Entity*);
+    EvaluateF(Relation &rel, Entity*);
     void Evaluate() override;
-private:
-    Entity * e;
-    UnaryRelation & relation;
 };
 
 class EvaluateB : public Evaluation
 {
 public:
-    EvaluateB(UnaryRelation &rel, Entity*);
+    EvaluateB(Relation &rel, Entity*);
     void Evaluate() override;
-private:
-    Entity * e;
-    UnaryRelation & relation;
 };
 
 class WriterB : public Evaluation
 {
 public:
-    WriterB(UnaryRelation &rel, Entity *e);
+    WriterB(Relation &rel, Entity *e);
     void Evaluate() override;
-
-    Entity *e;
-    UnaryRelation &relation;
 };

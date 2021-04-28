@@ -14,12 +14,12 @@ AST::String::String(const std::string &p) : value(p)
 { 
 }
 
-AST::TermIs::TermIs(Entity* entity, UnaryPredicateOrList* list)
+AST::EntityIs::EntityIs(Entity* entity, UnaryPredicateOrList* list)
     : entity(entity), list(list)
 {
 }
 
-AST::TermIsPredicate::TermIsPredicate(Entity* entity, UnaryPredicateOrList* list, UnaryPredicate *p)
+AST::EntityIsPredicate::EntityIsPredicate(Entity* entity, UnaryPredicateOrList* list, UnaryPredicate *p)
     : entity(entity), list(list), predicate(p)
 {
 }
@@ -57,12 +57,12 @@ AST::AtString::AtString(const char * v) : value(v)
 {   
 }
 
-void AST::TermIs::AssertFacts(Database &db) const
+void AST::EntityIs::AssertFacts(Database &db) const
 {
     list->Assert(db, entity->MakeEntity(db));
 }
 
-void AST::TermIsPredicate::AssertFacts(Database &db) const
+void AST::EntityIsPredicate::AssertFacts(Database &db) const
 {
     ::Entity e(entity->MakeEntity(db));
     list->Assert(db, e);
@@ -70,7 +70,7 @@ void AST::TermIsPredicate::AssertFacts(Database &db) const
 }
 
 
-AST::NotImplementedTerm::NotImplementedTerm(Node *a, Node *b, Node *c, Node *d)
+AST::NotImplementedClause::NotImplementedClause(Node *a, Node *b, Node *c, Node *d)
 {
     delete a;
     delete b;
@@ -78,7 +78,7 @@ AST::NotImplementedTerm::NotImplementedTerm(Node *a, Node *b, Node *c, Node *d)
     delete d;
 }
 
-void AST::NotImplementedTerm::AssertFacts(Database & db) const
+void AST::NotImplementedClause::AssertFacts(Database & db) const
 {
     std::cerr << "Not implemented.\n";
 }
@@ -135,7 +135,7 @@ Entity AST::UnnamedVariable::MakeEntity(Database &db) const
     return db.CreateInt(-1);
 }
 
-AST::And::And(Term *lhs, Term *rhs) : lhs(lhs), rhs(rhs)
+AST::And::And(Clause *lhs, Clause *rhs) : lhs(lhs), rhs(rhs)
 {
 }
 
@@ -226,7 +226,7 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     std::cout << "TODO: Assert Datalog predicate " << predicate->name << "/" << arity << ".\n";
 }
 
-void AST::Term::AssertRule(Database &db, Term &rhs) const
+void AST::Clause::AssertRule(Database &db, Clause &rhs) const
 {
     // TODO
 }

@@ -14,7 +14,7 @@
 %union
 {
     AST::Node *node;
-    AST::Term* term;
+    AST::Clause* clause;
     AST::EntityList* entities;
     AST::UnaryPredicateList* unarypredicatelist;
     AST::Predicate* predicate;
@@ -28,7 +28,7 @@
     float fval;
 }
 
-%type<term> term andterm orterm notterm allterm datalog_predicate baseterm datalog_term datalog_base_term datalog_and_term datalog_unary_term
+%type<clause> clause andclause orclause notclause allclause datalog_predicate baseclause datalog_clause datalog_base_clause datalog_and_clause datalog_unary_clause
 %type<entities> entitylist
 %type<unarypredicatelist> unarypredicatelist
 %type<entity> entity arithmetic_entity value variable baseentity sumentity plusentity mulentity unaryentity
@@ -84,8 +84,8 @@ statement:
 datalog:
     datalog_predicate tok_dot
     {
-        std::unique_ptr<AST::Term> term($1);
-        term->AssertFacts(db);
+        std::unique_ptr<AST::Clause> clause($1);
+        clause->AssertFacts(db);
     }
 |   datalog_rule tok_dot
 |   tok_questiondash datalog_predicate tok_dot
@@ -109,18 +109,18 @@ entitylist:
 ;
 
 datalog_rule:
-    datalog_predicate tok_colondash datalog_term
+    datalog_predicate tok_colondash datalog_clause
     {
-        std::unique_ptr<AST::Term> lhs($1);
-        std::unique_ptr<AST::Term> rhs($3);
+        std::unique_ptr<AST::Clause> lhs($1);
+        std::unique_ptr<AST::Clause> rhs($3);
         lhs->AssertRule(db, *rhs);
     }
 ;
 
-datalog_base_term:
+datalog_base_clause:
     datalog_predicate
-|   entity comparator entity { $$ = new AST::NotImplementedTerm($1, $3); }
-|   tok_open datalog_term tok_close { $$ = $2; }
+|   entity comparator entity { $$ = new AST::NotImplementedClause($1, $3); }
+|   tok_open datalog_clause tok_close { $$ = $2; }
 ;
 
 comparator:
@@ -132,42 +132,42 @@ comparator:
 |   tok_gteq { $$ = ComparatorType::gteq; }
 ;
 
-datalog_unary_term:
-    datalog_base_term
-|   tok_not datalog_base_term { $$ = new AST::NotImplementedTerm($2); }
+datalog_unary_clause:
+    datalog_base_clause
+|   tok_not datalog_base_clause { $$ = new AST::NotImplementedClause($2); }
 ;
 
-datalog_and_term:
-    datalog_unary_term
-|   datalog_and_term tok_and datalog_unary_term
-|   datalog_and_term tok_comma datalog_unary_term
+datalog_and_clause:
+    datalog_unary_clause
+|   datalog_and_clause tok_and datalog_unary_clause
+|   datalog_and_clause tok_comma datalog_unary_clause
 ;
 
-datalog_term:
-    datalog_term tok_or datalog_and_term
+datalog_clause:
+    datalog_clause tok_or datalog_and_clause
     {
-        $$ = new AST::NotImplementedTerm($1, $3);
+        $$ = new AST::NotImplementedClause($1, $3);
     }
-|   datalog_term tok_semicolon datalog_and_term 
+|   datalog_clause tok_semicolon datalog_and_clause 
     {
-        $$ = new AST::NotImplementedTerm($1, $3);
+        $$ = new AST::NotImplementedClause($1, $3);
     }
-|   datalog_and_term
+|   datalog_and_clause
 ;
 
 query:
-    tok_find queryterm tok_dot
+    tok_find queryclause tok_dot
 |   tok_find predicate tok_dot
     {
         std::unique_ptr<AST::Predicate> predicate($2);
         db.Find(predicate->name);
     }
-|   tok_find queryterm tok_if term tok_dot
-|   tok_find variablelist tok_if term tok_dot  // find A, surname S could be am attribute or a variable list 
+|   tok_find queryclause tok_if clause tok_dot
+|   tok_find variablelist tok_if clause tok_dot  // find A, surname S could be am attribute or a variable list 
 ;
 
 // Different syntax to distinguish them from variable lists A, B, C
-querybaseterm:
+querybaseclause:
     unarypredicate variable
 |   unarypredicate variable has_a binarypredicate variable
 |   unarypredicate variable has_a binarypredicate variable attributes
@@ -176,9 +176,9 @@ querybaseterm:
 |   variable has_a binarypredicate variable attributes
 ;
 
-queryterm:
-    querybaseterm
-|   queryterm tok_and querybaseterm
+queryclause:
+    querybaseclause
+|   queryclause tok_and querybaseclause
 ;
 
 variablelist:
@@ -187,34 +187,34 @@ variablelist:
 ;
 
 fact: 
-    term tok_dot 
+    clause tok_dot 
     {
-        std::unique_ptr<AST::Term> term($1);
-        term->AssertFacts(db);
+        std::unique_ptr<AST::Clause> clause($1);
+        clause->AssertFacts(db);
     }
 ;
 
 rule:
-    tok_if term tok_then term tok_dot
+    tok_if clause tok_then clause tok_dot
     {
-        std::unique_ptr<AST::Term> lhs($4);
-        std::unique_ptr<AST::Term> rhs($2);
+        std::unique_ptr<AST::Clause> lhs($4);
+        std::unique_ptr<AST::Clause> rhs($2);
         lhs->AssertRule(db, *rhs);
     }
-|   term tok_if term tok_dot
+|   clause tok_if clause tok_dot
     {
-        std::unique_ptr<AST::Term> lhs($1);
-        std::unique_ptr<AST::Term> rhs($3);
+        std::unique_ptr<AST::Clause> lhs($1);
+        std::unique_ptr<AST::Clause> rhs($3);
         lhs->AssertRule(db, *rhs);
     }
 ;
 
-baseterm:
-    entity is_a unarypredicate { $$ = new AST::TermIs($1, $3); }
-|   entity is_a value { $$ = new AST::NotImplementedTerm($1, $3); }
-|   unarypredicatelist entity is_a unarypredicate { $$ = new AST::TermIsPredicate($2, $1, $4); }
-|   arithmetic_entity comparator arithmetic_entity { $$ = new AST::NotImplementedTerm($1, $3); }
-|   unarypredicatelist entity { $$ = new AST::TermIs($2, $1); }
+baseclause:
+    entity is_a unarypredicate { $$ = new AST::EntityIs($1, $3); }
+|   entity is_a value { $$ = new AST::NotImplementedClause($1, $3); }
+|   unarypredicatelist entity is_a unarypredicate { $$ = new AST::EntityIsPredicate($2, $1, $4); }
+|   arithmetic_entity comparator arithmetic_entity { $$ = new AST::NotImplementedClause($1, $3); }
+|   unarypredicatelist entity { $$ = new AST::EntityIs($2, $1); }
 |   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr, nullptr)); }
 |   entity tok_comma binarypredicate
     {
@@ -227,7 +227,7 @@ baseterm:
     }
 |   unarypredicatelist entity has_a binarypredicate arithmetic_entity tok_with withlist
     {
-        $$ = new AST::NotImplementedTerm();
+        $$ = new AST::NotImplementedClause();
     }
 |   unarypredicatelist entity has_a binarypredicate arithmetic_entity attributes
     { 
@@ -243,11 +243,11 @@ baseterm:
     }
 |   entity has_a binarypredicate arithmetic_entity tok_with withlist
     { 
-        $$ = new AST::NotImplementedTerm();
+        $$ = new AST::NotImplementedClause();
     }
 |   entity is_a unarypredicate tok_with withlist
     { 
-        $$ = new AST::NotImplementedTerm();
+        $$ = new AST::NotImplementedClause();
     }
 |   entity has_a binarypredicate arithmetic_entity attributes
     {
@@ -257,7 +257,7 @@ baseterm:
     {
         $$ = new AST::EntityHasAttributes(nullptr, $1, $2);
     }
-|   tok_open term tok_close { $$=$2; }
+|   tok_open clause tok_close { $$=$2; }
 ;
 
 unarypredicatelist:
@@ -287,30 +287,30 @@ is_a:
 |   tok_is tok_not tok_an
 ;
 
-allterm:
-    baseterm
-|   tok_all tok_open term tok_close tok_in allterm 
+allclause:
+    baseclause
+|   tok_all tok_open clause tok_close tok_in allclause 
     {
-        $$ = new AST::NotImplementedTerm($3, $6);
+        $$ = new AST::NotImplementedClause($3, $6);
     }
 ;
 
-notterm:
-    allterm
-|   tok_not allterm { $$ = new AST::NotImplementedTerm($2); }
+notclause:
+    allclause
+|   tok_not allclause { $$ = new AST::NotImplementedClause($2); }
 ;
 
-andterm:
-    notterm
-|   andterm tok_and notterm { $$ = new AST::And($1, $3); }
+andclause:
+    notclause
+|   andclause tok_and notclause { $$ = new AST::And($1, $3); }
 ;
 
-orterm:
-    andterm
-|   orterm tok_or andterm
+orclause:
+    andclause
+|   orclause tok_or andclause
 ;
 
-term: orterm;
+clause: orclause;
 
 // Example: person x has name y, surname z
 
@@ -357,8 +357,8 @@ plusentity:
 
 sumentity:
     plusentity
-|   tok_sum arithmetic_entity tok_in tok_open term tok_close { $$ = new AST::NotImplementedEntity($2,$5); }
-|   tok_count variable tok_in tok_open term tok_close { $$ = new AST::NotImplementedEntity($2,$5); }
+|   tok_sum arithmetic_entity tok_in tok_open clause tok_close { $$ = new AST::NotImplementedEntity($2,$5); }
+|   tok_count variable tok_in tok_open clause tok_close { $$ = new AST::NotImplementedEntity($2,$5); }
 ;
 
 arithmetic_entity: sumentity;
