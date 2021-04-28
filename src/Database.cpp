@@ -2,32 +2,30 @@
 
 #include <iostream>
 
-Relation& Database::GetUnaryRelation(const std::string & name)
+std::shared_ptr<Relation> Database::GetUnaryRelation(const std::string & name)
 {
     auto i = unaryRelations.find(name);
     if (i == unaryRelations.end())
     {
         auto p = std::make_shared<UnaryTable>();
-        auto & result = *p;
         unaryRelations.insert(std::make_pair(name, p));
-        return result;
+        return p;
     }
     else
-        return *i->second;
+        return i->second;
 }
 
-Relation & Database::GetBinaryRelation(const std::string & name)
+std::shared_ptr<Relation> Database::GetBinaryRelation(const std::string & name)
 {
     auto i = binaryRelations.end();
     if (i==binaryRelations.end())
     {
         auto p = std::make_shared<BinaryTable>();
-        auto & result = *p;
         binaryRelations.insert(std::make_pair(name, p));
-        return result;
+        return p;
     }
     else
-        return *i->second;
+        return i->second;
 }
 
 void Database::UnboundError(const std::string &name)
@@ -81,7 +79,7 @@ const std::string &Database::GetAtString(int id) const
     return atstrings.GetString(id);
 }
 
-Relation &Database::GetRelation(const std::string &name, int arity)
+std::shared_ptr<Relation> Database::GetRelation(const std::string &name, int arity)
 {
     switch(arity)
     {
@@ -96,12 +94,11 @@ Relation &Database::GetRelation(const std::string &name, int arity)
     if (i == relations.end())
     {
         auto r = std::make_shared<TableX>();
-        auto & result = *r;
         relations.insert(std::make_pair(index, r));
-        return result;
+        return r;
     }
     else
-        return *i->second;
+        return i->second;
 }
 
 void Database::Find(const std::string & unaryPredicateName)
@@ -123,7 +120,7 @@ void Database::Find(const std::string & unaryPredicateName)
     Tmp visitor(*this);
 
     Entity row;
-    GetUnaryRelation(unaryPredicateName).Query(&row, visitor);
+    GetUnaryRelation(unaryPredicateName)->Query(&row, visitor);
 
     std::cout << "Found " << visitor.count << " rows\n";
 }

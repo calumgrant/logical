@@ -76,7 +76,7 @@ struct Row
     Entity data[N];
 };
 
-class BinaryTable : public Relation  // Bug: When "Predicate", there's a crash
+class BinaryTable : public Predicate
 {
 public:
     void Add(const Entity * row) override;

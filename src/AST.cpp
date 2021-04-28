@@ -85,7 +85,7 @@ void AST::NotImplementedClause::AssertFacts(Database & db) const
 
 void AST::UnaryPredicate::Assert(Database &db, const ::Entity &e) const
 {
-    db.GetUnaryRelation(name).Add(&e);
+    db.GetUnaryRelation(name)->Add(&e);
 }
 
 void AST::UnaryPredicateList::Assert(Database &db, const ::Entity &e) const
@@ -174,9 +174,9 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
     if(entityOpt)
     {
         ::Entity row[2] = { e, entityOpt->MakeEntity(db) };
-        Relation & table = db.GetBinaryRelation(predicate->name);
+        auto table = db.GetBinaryRelation(predicate->name);
 
-        table.Add(row);
+        table->Add(row);
     }
 
     if(list) list->Assert(db, e);
@@ -208,19 +208,19 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     case 1:
         {
             ::Entity e = entitiesOpt->entities[0]->MakeEntity(db);
-            db.GetUnaryRelation(predicate->name).Add(&e);
+            db.GetUnaryRelation(predicate->name)->Add(&e);
             return;
         }
     case 2:
         {
             ::Entity row[2] = { entitiesOpt->entities[0]->MakeEntity(db),
                 entitiesOpt->entities[1]->MakeEntity(db) };
-            db.GetBinaryRelation(predicate->name).Add(row);
+            db.GetBinaryRelation(predicate->name)->Add(row);
             return;
         }
     }
 
-    auto &relation = db.GetRelation(predicate->name, arity);
+    auto relation = db.GetRelation(predicate->name, arity);
 
     // TODO: Add the data 
     std::cout << "TODO: Assert Datalog predicate " << predicate->name << "/" << arity << ".\n";

@@ -50,9 +50,9 @@ public:
 
     void NotImplementedError(const SourceLocation&);
 
-    Relation &GetUnaryRelation(const std::string &name);
-    Relation &GetBinaryRelation(const std::string &name);
-    Relation &GetRelation(const std::string &name, int arity);
+    std::shared_ptr<Relation> GetUnaryRelation(const std::string &name);
+    std::shared_ptr<Relation> GetBinaryRelation(const std::string &name);
+    std::shared_ptr<Relation> GetRelation(const std::string &name, int arity);
 
     const std::string &GetString(int id) const;
     const std::string &GetAtString(int id) const;
