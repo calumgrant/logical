@@ -81,7 +81,7 @@ statement:
 |   rule
     {
         std::unique_ptr<AST::Rule> rule($1);
-        rule->Assert(db);
+        rule->Compile(db);
     }
 |   datalog
 |   query
@@ -96,7 +96,7 @@ datalog:
 |   datalog_rule tok_dot
     {
         std::unique_ptr<AST::Rule> rule($1);
-        rule->Assert(db);
+        rule->Compile(db);
     }
 |   tok_questiondash datalog_predicate tok_dot
 |   tok_questiondash datalog_rule tok_dot

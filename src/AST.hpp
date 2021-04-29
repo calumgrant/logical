@@ -6,10 +6,26 @@ class Entity;
 
 namespace AST
 {
+    class Visitor
+    {
+    public:
+        virtual void OnVariable(const std::string&);
+        virtual void OnUnaryPredicate(const std::string&);
+        virtual void OnUnnamedVariable();
+        virtual void OnBool(bool value);
+        virtual void OnString(const std::string & value);
+        virtual void OnAtString(const std::string & value);
+        virtual void OnFloat(double value);
+        virtual void OnInteger(int value);
+        virtual void OnPredicate(const std::string&);
+        virtual void OnBinaryPredicate(const std::string&);
+    };
+
     class Node
     {
     public:
         virtual ~Node();
+        virtual void Visit(Visitor&) const =0;
     };
 
     class Clause : public Node
@@ -23,6 +39,7 @@ namespace AST
     public:
         NotImplementedClause(Node * =nullptr, Node* =nullptr, Node* =nullptr, Node* =nullptr);
         void AssertFacts(Database &db) const override;
+        void Visit(Visitor&) const override;
     };
 
     class Entity : public Node
@@ -43,12 +60,15 @@ namespace AST
     public:
         NamedVariable(const char * name);
         ::Entity MakeEntity(Database &db) const override;
+        void Visit(Visitor&) const override;
+
         const std::string name;
     };
 
     class UnnamedVariable : public Variable
     {
         ::Entity MakeEntity(Database &db) const override;
+         void Visit(Visitor&) const override;
     };
 
     class Value : public Entity
@@ -62,6 +82,7 @@ namespace AST
     public:
         AtString(const char*v);
         ::Entity MakeEntity(Database &db) const override;
+        void Visit(Visitor&) const override;
         const std::string value;
     };
 
@@ -70,6 +91,7 @@ namespace AST
     public:
         String(const std::string &p);
         ::Entity MakeEntity(Database &db) const override;
+        void Visit(Visitor&) const override;
         const std::string value;
     };
 
@@ -79,6 +101,7 @@ namespace AST
         Integer(int i);
         ::Entity MakeEntity(Database &db) const override;
         const int value;
+        void Visit(Visitor&) const override;
     };
 
     class Float : public Value
@@ -87,6 +110,7 @@ namespace AST
         Float(double v);
         ::Entity MakeEntity(Database &db) const override;
         const double value;
+        void Visit(Visitor&) const override;
     };
 
     class Bool : public Value
@@ -95,6 +119,7 @@ namespace AST
         Bool(bool b);
         ::Entity MakeEntity(Database &db) const override;
         const bool value;
+        void Visit(Visitor&) const override;
     };
 
     class ArithmeticEntity : public Entity
@@ -106,6 +131,7 @@ namespace AST
     public:
         NotImplementedEntity(Node *e1=nullptr, Node *e2=nullptr);
         bool IsVariable() const override;
+        void Visit(Visitor&) const override;
         ::Entity MakeEntity(Database &db) const override;
     };
 
@@ -114,6 +140,7 @@ namespace AST
     public:
         And(Clause *lhs, Clause *rhs);
         void AssertFacts(Database &db) const override;
+        void Visit(Visitor&) const override;
         std::unique_ptr<Clause> lhs, rhs;
     };
 
@@ -121,6 +148,7 @@ namespace AST
     {
     public:
         Predicate(const char * name);
+        void Visit(Visitor&) const override;
         std::string name;
     };
 
@@ -135,6 +163,7 @@ namespace AST
     public:
         UnaryPredicate(const char * name);
         void Assert(Database &db, const ::Entity &e) const override;
+        void Visit(Visitor&) const override;
         std::string name;
     };
 
@@ -142,6 +171,7 @@ namespace AST
     {
     public:
         BinaryPredicate(const char * name);
+        void Visit(Visitor&) const override;
     };
 
     class UnaryPredicateList : public UnaryPredicateOrList
@@ -150,6 +180,7 @@ namespace AST
         UnaryPredicateList(UnaryPredicate * pred);
         void Append(UnaryPredicate * pred);
         void Assert(Database &db, const ::Entity &e) const override;
+        void Visit(Visitor&) const override;
         std::vector< std::unique_ptr<UnaryPredicate> > list;
     };
 
@@ -160,6 +191,7 @@ namespace AST
         std::unique_ptr<Entity> entity;
         std::unique_ptr<UnaryPredicateOrList> list;
         void AssertFacts(Database &db) const override;
+        void Visit(Visitor&) const override;
     };
 
     class EntityIsPredicate : public Clause
@@ -170,17 +202,19 @@ namespace AST
         std::unique_ptr<UnaryPredicateOrList> list;
         std::unique_ptr<UnaryPredicate> predicate;
         void AssertFacts(Database &db) const override;
+        void Visit(Visitor&) const override;
     };
 
     class AttributeList : public Node
     {
     public:
-        AttributeList(BinaryPredicate * predicate, Entity * entityOpt, AttributeList* list);
-        std::unique_ptr<AttributeList> list;
+        AttributeList(BinaryPredicate * predicate, Entity * entityOpt, AttributeList* listOpt);
+        std::unique_ptr<AttributeList> listOpt;  // ?? Not sure if this should be nullable
         std::unique_ptr<BinaryPredicate> predicate;
         std::unique_ptr<Entity> entityOpt;
 
         void Assert(Database &db, const ::Entity &e) const;
+        void Visit(Visitor&) const override;
     };
 
     class EntityHasAttributes : public Clause
@@ -188,6 +222,7 @@ namespace AST
     public:
         EntityHasAttributes(UnaryPredicateOrList * unarypredicatesOpt, Entity*entity, AttributeList*attributes);
         void AssertFacts(Database &db) const override;
+        void Visit(Visitor&) const override;
         std::unique_ptr<UnaryPredicateOrList> unaryPredicatesOpt;
         std::unique_ptr<Entity> entity;
         std::unique_ptr<AttributeList> attributes;
@@ -198,6 +233,7 @@ namespace AST
     public:
         EntityList(Entity*);
         void Add(Entity*);
+        void Visit(Visitor&) const override;
         std::vector< std::unique_ptr<Entity> > entities;
     };
 
@@ -206,6 +242,7 @@ namespace AST
     public:
         DatalogPredicate(Predicate * predicate, EntityList * entityListOpt);
         void AssertFacts(Database &db) const override;
+        void Visit(Visitor&) const override;
         std::unique_ptr<Predicate> predicate;
         std::unique_ptr<EntityList> entitiesOpt;
     };
@@ -214,7 +251,8 @@ namespace AST
     {
     public:
         Rule(Clause * lhs, Clause * rhs);
-        void Assert(Database &db);
+        void Compile(Database &db);
+        void Visit(Visitor&) const override;
         std::unique_ptr<Clause> lhs, rhs;
     };
 }

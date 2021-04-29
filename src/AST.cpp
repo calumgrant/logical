@@ -145,8 +145,8 @@ void AST::And::AssertFacts(Database &db) const
     rhs->AssertFacts(db);
 }
 
-AST::AttributeList::AttributeList(BinaryPredicate * predicate, Entity * entityOpt, AttributeList *list) :
-    predicate(predicate), entityOpt(entityOpt), list(list)
+AST::AttributeList::AttributeList(BinaryPredicate * predicate, Entity * entityOpt, AttributeList *listOpt) :
+    predicate(predicate), entityOpt(entityOpt), listOpt(listOpt)
 {
 }
 
@@ -179,7 +179,7 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
         table->Add(row);
     }
 
-    if(list) list->Assert(db, e);
+    if(listOpt) listOpt->Assert(db, e);
 }
 
 AST::EntityList::EntityList(Entity *e)
@@ -247,6 +247,157 @@ AST::Rule::Rule(AST::Clause * lhs, AST::Clause * rhs) :
 {
 }
 
-void AST::Rule::Assert(Database &db)
+void AST::NamedVariable::Visit(Visitor&v) const
 {
+    v.OnVariable(name);
+}
+
+void AST::UnaryPredicate::Visit(Visitor&v) const
+{
+    v.OnUnaryPredicate(name);
+}
+
+void AST::UnnamedVariable::Visit(Visitor&v) const
+{
+    v.OnUnnamedVariable();
+}
+
+void AST::DatalogPredicate::Visit(Visitor&v) const
+{
+    predicate->Visit(v);
+    if(entitiesOpt) entitiesOpt->Visit(v);
+}
+
+void AST::Visitor::OnVariable(const std::string&)
+{
+}
+
+void AST::Visitor::OnUnaryPredicate(const std::string&)
+{
+}
+
+void AST::Visitor::OnUnnamedVariable()
+{
+}
+
+void AST::EntityIsPredicate::Visit(Visitor&v) const
+{
+    entity->Visit(v);
+    list->Visit(v);
+    predicate->Visit(v);
+}
+
+void AST::UnaryPredicateList::Visit(Visitor&v) const
+{
+    for(auto &i : list)
+        i->Visit(v);
+}
+
+void AST::EntityHasAttributes::Visit(Visitor&v) const
+{
+    if(unaryPredicatesOpt) unaryPredicatesOpt->Visit(v);
+    entity->Visit(v);
+    attributes->Visit(v);
+}
+
+void AST::NotImplementedClause::Visit(Visitor&) const
+{
+}
+
+void AST::And::Visit(Visitor&v) const
+{
+    lhs->Visit(v);
+    rhs->Visit(v);
+}
+
+void AST::Bool::Visit(Visitor&v) const
+{
+    v.OnBool(value);
+}
+
+void AST::String::Visit(Visitor&v) const
+{
+    v.OnString(value);
+}
+
+void AST::AtString::Visit(Visitor&v) const
+{
+    v.OnAtString(value);
+}
+
+void AST::Float::Visit(Visitor&v) const
+{
+    v.OnFloat(value);
+}
+
+void AST::EntityIs::Visit(Visitor&v) const
+{
+    entity->Visit(v);
+    list->Visit(v);
+}
+
+void AST::Integer::Visit(Visitor&v) const
+{
+    v.OnInteger(value);
+}
+
+void AST::NotImplementedEntity::Visit(Visitor&v) const
+{
+}
+
+void AST::EntityList::Visit(Visitor&v) const
+{
+    for(auto &e : entities)
+        e->Visit(v);
+}
+
+void AST::Visitor::OnFloat(double value)
+{
+}
+
+void AST::Visitor::OnString(const std::string&)
+{
+}
+
+void AST::Visitor::OnAtString(const std::string&)
+{
+}
+
+void AST::Visitor::OnBool(bool)
+{
+}
+
+void AST::Visitor::OnInteger(int)
+{
+}
+
+void AST::Predicate::Visit(Visitor&v) const
+{
+    v.OnPredicate(name);
+}
+
+void AST::AttributeList::Visit(Visitor &v) const
+{
+    if(listOpt) listOpt->Visit(v);
+    predicate->Visit(v);
+    if(entityOpt) entityOpt->Visit(v);
+}
+
+void AST::Visitor::OnPredicate(const std::string &name)
+{
+}
+
+void AST::BinaryPredicate::Visit(Visitor&v) const
+{
+    v.OnBinaryPredicate(name);
+}
+
+void AST::Visitor::OnBinaryPredicate(const std::string &name)
+{
+}
+
+void AST::Rule::Visit(Visitor&v) const
+{
+    lhs->Visit(v);
+    rhs->Visit(v);
 }

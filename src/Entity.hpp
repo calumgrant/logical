@@ -1,5 +1,4 @@
 
-
 typedef int EntityId;
 
 enum class EntityType

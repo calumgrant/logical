@@ -6,8 +6,6 @@
 #include "StringTable.hpp"
 #include "Relation.hpp"
 
-
-
 class SourceLocation
 {
     int lineNumber;
@@ -60,7 +58,6 @@ public:
     void Find(const std::string & unaryPredicateName);
 
     void Print(const Entity &e, std::ostream &os) const;
-
 private:
     std::unordered_map< std::string, std::shared_ptr<Relation> > unaryRelations;
     std::unordered_map< std::string, std::shared_ptr<Relation> > binaryRelations;
