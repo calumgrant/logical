@@ -4,4 +4,4 @@
 
 class Evaluation;
 
-std::shared_ptr<Evaluation> Compile(AST::Clause &clause);
+std::shared_ptr<Evaluation> CompileRule(AST::Clause &lhs, AST::Clause &rhs);

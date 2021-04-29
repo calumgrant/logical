@@ -26,6 +26,7 @@
     int ival;
     char *sval;
     float fval;
+    AST::Rule * rule;
 }
 
 %type<clause> clause andclause orclause notclause allclause datalog_predicate baseclause datalog_clause datalog_base_clause datalog_and_clause datalog_unary_clause
@@ -40,6 +41,7 @@
 %type<sval> tok_identifier tok_atstring tok_string
 %type<ival> tok_integer
 %type<fval> tok_float
+%type<rule> datalog_rule rule
 
 %{
 #include <Database.hpp>
@@ -77,6 +79,10 @@ statements:
 statement:
     fact
 |   rule
+    {
+        std::unique_ptr<AST::Rule> rule($1);
+        rule->Assert(db);
+    }
 |   datalog
 |   query
 ;
@@ -88,6 +94,10 @@ datalog:
         clause->AssertFacts(db);
     }
 |   datalog_rule tok_dot
+    {
+        std::unique_ptr<AST::Rule> rule($1);
+        rule->Assert(db);
+    }
 |   tok_questiondash datalog_predicate tok_dot
 |   tok_questiondash datalog_rule tok_dot
 ;
@@ -111,9 +121,7 @@ entitylist:
 datalog_rule:
     datalog_predicate tok_colondash datalog_clause
     {
-        std::unique_ptr<AST::Clause> lhs($1);
-        std::unique_ptr<AST::Clause> rhs($3);
-        lhs->AssertRule(db, *rhs);
+        $$ = new AST::Rule($1,$3);
     }
 ;
 
@@ -163,17 +171,17 @@ query:
         db.Find(predicate->name);
     }
 |   tok_find queryclause tok_if clause tok_dot
-|   tok_find variablelist tok_if clause tok_dot  // find A, surname S could be am attribute or a variable list 
+|   tok_find variablelist tok_in clause tok_dot
 ;
 
 // Different syntax to distinguish them from variable lists A, B, C
 querybaseclause:
-    unarypredicate variable
-|   unarypredicate variable has_a binarypredicate variable
-|   unarypredicate variable has_a binarypredicate variable attributes
-|   unarypredicate variable attributes
-|   variable has_a binarypredicate variable
-|   variable has_a binarypredicate variable attributes
+    unarypredicatelist entity
+|   unarypredicatelist entity has_a binarypredicate entity
+|   unarypredicatelist entity has_a binarypredicate entity attributes
+|   unarypredicatelist entity attributes
+|   entity has_a binarypredicate entity
+|   entity has_a binarypredicate entity attributes
 ;
 
 queryclause:
@@ -197,20 +205,16 @@ fact:
 rule:
     tok_if clause tok_then clause tok_dot
     {
-        std::unique_ptr<AST::Clause> lhs($4);
-        std::unique_ptr<AST::Clause> rhs($2);
-        lhs->AssertRule(db, *rhs);
+        $$ = new AST::Rule($2,$4);
     }
 |   clause tok_if clause tok_dot
     {
-        std::unique_ptr<AST::Clause> lhs($1);
-        std::unique_ptr<AST::Clause> rhs($3);
-        lhs->AssertRule(db, *rhs);
+        $$ = new AST::Rule($1,$3);
     }
 ;
 
 baseclause:
-    entity is_a unarypredicate { $$ = new AST::EntityIs($1, $3); }
+    entity is_a unarypredicatelist { $$ = new AST::EntityIs($1, $3); }
 |   entity is_a value { $$ = new AST::NotImplementedClause($1, $3); }
 |   unarypredicatelist entity is_a unarypredicate { $$ = new AST::EntityIsPredicate($2, $1, $4); }
 |   arithmetic_entity comparator arithmetic_entity { $$ = new AST::NotImplementedClause($1, $3); }

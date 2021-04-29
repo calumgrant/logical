@@ -226,11 +226,6 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     std::cout << "TODO: Assert Datalog predicate " << predicate->name << "/" << arity << ".\n";
 }
 
-void AST::Clause::AssertRule(Database &db, Clause &rhs) const
-{
-    // TODO
-}
-
 AST::NotImplementedEntity::NotImplementedEntity(AST::Node *n1, AST::Node *n2)
 {
     std::unique_ptr<Node> node1(n1), node2(n2);
@@ -247,3 +242,11 @@ bool AST::NotImplementedEntity::IsVariable() const
     return db.CreateInt(-1);
 }
 
+AST::Rule::Rule(AST::Clause * lhs, AST::Clause * rhs) :
+    lhs(lhs), rhs(rhs)
+{
+}
+
+void AST::Rule::Assert(Database &db)
+{
+}

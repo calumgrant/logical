@@ -16,7 +16,6 @@ namespace AST
     {
     public:
         virtual void AssertFacts(Database &db) const =0;
-        void AssertRule(Database &db, Clause&rhs) const;
     };
 
     class NotImplementedClause : public Clause
@@ -209,5 +208,13 @@ namespace AST
         void AssertFacts(Database &db) const override;
         std::unique_ptr<Predicate> predicate;
         std::unique_ptr<EntityList> entitiesOpt;
+    };
+
+    class Rule : public Node
+    {
+    public:
+        Rule(Clause * lhs, Clause * rhs);
+        void Assert(Database &db);
+        std::unique_ptr<Clause> lhs, rhs;
     };
 }

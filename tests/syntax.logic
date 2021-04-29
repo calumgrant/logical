@@ -107,8 +107,8 @@ find circle C and person P, surname S if
     P has age A and C has diameter A.
 
 // Query using a variable list
-find P if person P.
-find P, S if person P, surname S.
+find P in person P.
+find P, S in person P, surname S.
 
 // Quantifiers
 
