@@ -57,3 +57,9 @@ public:
     std::shared_ptr<Evaluation> branch;
     void Evaluate() override;
 };
+
+class NoneEvaluation : public Evaluation
+{
+public:
+    void Evaluate() override;
+};

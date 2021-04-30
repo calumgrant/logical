@@ -59,14 +59,23 @@ AST::AtString::AtString(const char * v) : value(v)
 
 void AST::EntityIs::AssertFacts(Database &db) const
 {
-    list->Assert(db, entity->MakeEntity(db));
+    if(const Value *v = entity->IsValue())
+        list->Assert(db, v->MakeEntity(db));
+    else
+        db.UnboundError("...");
 }
 
 void AST::EntityIsPredicate::AssertFacts(Database &db) const
 {
-    ::Entity e(entity->MakeEntity(db));
-    list->Assert(db, e);
-    predicate->Assert(db, e);
+    auto v = entity->IsValue();
+    if(v)
+    {
+        ::Entity e(v->MakeEntity(db));
+        list->Assert(db, e);
+        predicate->Assert(db, e);
+    }
+    else
+        db.UnboundError("...");
 }
 
 
@@ -94,7 +103,10 @@ void AST::UnaryPredicateList::Assert(Database &db, const ::Entity &e) const
         l->Assert(db, e);
 }
 
-bool AST::Value::IsVariable() const { return false; }
+const AST::Variable * AST::Value::IsVariable() const { return nullptr; }
+
+const AST::Value * AST::Value::IsValue() const { return this; }
+
 
 Entity AST::Bool::MakeEntity(Database &db) const
 {
@@ -121,19 +133,7 @@ Entity AST::AtString::MakeEntity(Database &db) const
     return db.CreateAt(value);
 }
 
-bool AST::Variable::IsVariable() const { return true; }
-
-Entity AST::NamedVariable::MakeEntity(Database &db) const
-{
-    db.UnboundError(name);
-    return db.CreateInt(-1);
-}
-
-Entity AST::UnnamedVariable::MakeEntity(Database &db) const
-{
-    db.UnboundError("_");
-    return db.CreateInt(-1);
-}
+const AST::Variable * AST::Variable::IsVariable() const { return this; }
 
 AST::And::And(Clause *lhs, Clause *rhs) : lhs(lhs), rhs(rhs)
 {
@@ -157,7 +157,13 @@ AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateOrList * unaryPredic
 
 void AST::EntityHasAttributes::AssertFacts(Database &db) const
 {
-    ::Entity e = entity->MakeEntity(db);
+    auto v = entity->IsValue();
+    if(!v)
+    {
+        db.UnboundError("...");
+        return;
+    }
+    ::Entity e = v->MakeEntity(db);
     if(unaryPredicatesOpt)
     {
         unaryPredicatesOpt->Assert(db, e);
@@ -173,7 +179,13 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
 {
     if(entityOpt)
     {
-        ::Entity row[2] = { e, entityOpt->MakeEntity(db) };
+        auto v = entityOpt->IsValue();
+        if(!v)
+        {
+            db.UnboundError("...");
+            return;
+        }
+        ::Entity row[2] = { e, v->MakeEntity(db) };
         auto table = db.GetBinaryRelation(predicate->name);
 
         table->Add(row);
@@ -207,15 +219,29 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     {
     case 1:
         {
-            ::Entity e = entitiesOpt->entities[0]->MakeEntity(db);
-            db.GetUnaryRelation(predicate->name)->Add(&e);
+            auto v = entitiesOpt->entities[0]->IsValue();
+            if(v)
+            {
+                ::Entity e = v->MakeEntity(db);
+                db.GetUnaryRelation(predicate->name)->Add(&e);
+            }
+            else
+                db.UnboundError("...");
             return;
         }
     case 2:
         {
-            ::Entity row[2] = { entitiesOpt->entities[0]->MakeEntity(db),
-                entitiesOpt->entities[1]->MakeEntity(db) };
-            db.GetBinaryRelation(predicate->name)->Add(row);
+            auto v0 = entitiesOpt->entities[0]->IsValue();
+            auto v1 = entitiesOpt->entities[1]->IsValue();
+            if(!v0) db.UnboundError("...");
+            if(!v1) db.UnboundError("...");
+
+            if(v0 && v1)
+            {
+                ::Entity row[2] = { v0->MakeEntity(db), v1->MakeEntity(db) };
+                db.GetBinaryRelation(predicate->name)->Add(row);
+            }
+
             return;
         }
     }
@@ -231,17 +257,11 @@ AST::NotImplementedEntity::NotImplementedEntity(AST::Node *n1, AST::Node *n2)
     std::unique_ptr<Node> node1(n1), node2(n2);
 }
 
-bool AST::NotImplementedEntity::IsVariable() const
+const AST::Variable * AST::NotImplementedEntity::IsVariable() const
 {
-    return false;
+    return nullptr;
 }
     
-::Entity AST::NotImplementedEntity::MakeEntity(Database &db) const
-{
-    std::cerr << "Not implemented arithmetic\n";
-    return db.CreateInt(-1);
-}
-
 AST::Rule::Rule(AST::Clause * lhs, AST::Clause * rhs) :
     lhs(lhs), rhs(rhs)
 {
@@ -400,4 +420,67 @@ void AST::Rule::Visit(Visitor&v) const
 {
     lhs->Visit(v);
     rhs->Visit(v);
+}
+
+AST::Clause::Clause() : next(nullptr)
+{
+}
+
+void AST::Clause::SetNext(Clause & n)
+{
+    next = &n;
+}
+
+AST::Or::Or(Clause * l, Clause *r) : lhs(l), rhs(r)
+{
+}
+
+AST::Not::Not(Clause *c) : clause(c)
+{
+}
+
+void AST::And::SetNext(Clause &n)
+{
+    lhs->SetNext(*rhs);
+    rhs->SetNext(n);
+}
+
+const AST::NamedVariable * AST::NamedVariable::IsNamedVariable() const { return this; }
+const AST::Value * AST::Variable::IsValue() const { return nullptr; }
+
+const AST::NamedVariable * AST::UnnamedVariable::IsNamedVariable() const { return nullptr; }
+
+const AST::Value * AST::NotImplementedEntity::IsValue() const { return nullptr; }
+
+void AST::Or::AssertFacts(Database &db) const
+{
+}
+
+void AST::Or::Visit(Visitor&v) const 
+{
+    lhs->Visit(v);
+    rhs->Visit(v);
+}
+
+void AST::Or::SetNext(Clause &n)
+{
+    lhs->SetNext(n);
+    rhs->SetNext(n);
+}
+
+
+void AST::Not::AssertFacts(Database &db) const
+{
+    // TODO: Error
+}
+
+void AST::Not::Visit(Visitor&v) const
+{
+    clause->Visit(v);
+}
+
+void AST::Not::SetNext(Clause &c)
+{
+    next = &c;
+    clause->SetNext(*this);
 }

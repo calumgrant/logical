@@ -3,22 +3,30 @@
 
 class Database;
 class Entity;
+class Compilation;
+class Evaluation;
 
 namespace AST
 {
+    class Variable;
+    class Value;
+    class NamedVariable;
+
     class Visitor
     {
     public:
-        virtual void OnVariable(const std::string&);
+        virtual void OnPredicate(const std::string&);
         virtual void OnUnaryPredicate(const std::string&);
+        virtual void OnBinaryPredicate(const std::string&);
+
+        virtual void OnVariable(const std::string&);
         virtual void OnUnnamedVariable();
-        virtual void OnBool(bool value);
+
         virtual void OnString(const std::string & value);
         virtual void OnAtString(const std::string & value);
-        virtual void OnFloat(double value);
         virtual void OnInteger(int value);
-        virtual void OnPredicate(const std::string&);
-        virtual void OnBinaryPredicate(const std::string&);
+        virtual void OnFloat(double value);
+        virtual void OnBool(bool value);
     };
 
     class Node
@@ -31,7 +39,14 @@ namespace AST
     class Clause : public Node
     {
     public:
+        Clause();
         virtual void AssertFacts(Database &db) const =0;
+
+        // const?
+        Clause * next;
+        virtual void SetNext(Clause&);
+
+        virtual std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation)=0;
     };
 
     class NotImplementedClause : public Clause
@@ -40,41 +55,46 @@ namespace AST
         NotImplementedClause(Node * =nullptr, Node* =nullptr, Node* =nullptr, Node* =nullptr);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
     };
 
     class Entity : public Node
     {
     public:
-        virtual bool IsVariable() const =0;
-        virtual ::Entity MakeEntity(Database &db) const =0;
+        virtual const Variable * IsVariable() const =0;
+        virtual const Value * IsValue() const =0;
     };
 
     class Variable : public Entity
     {
     public:
-        bool IsVariable() const override;
+        const Variable * IsVariable() const override;
+        virtual const NamedVariable * IsNamedVariable() const =0;
+        const Value * IsValue() const override;
     };
 
     class NamedVariable : public Variable
     {
     public:
         NamedVariable(const char * name);
-        ::Entity MakeEntity(Database &db) const override;
         void Visit(Visitor&) const override;
+        const NamedVariable * IsNamedVariable() const override;
 
         const std::string name;
     };
 
     class UnnamedVariable : public Variable
     {
-        ::Entity MakeEntity(Database &db) const override;
-         void Visit(Visitor&) const override;
+        void Visit(Visitor&) const override;
+        const NamedVariable * IsNamedVariable() const override;
     };
 
     class Value : public Entity
     {
     public:
-        bool IsVariable() const override;
+        const Variable * IsVariable() const override;
+        const Value * IsValue() const override;
+        virtual ::Entity MakeEntity(Database &db) const =0;
     };
 
     class AtString : public Value
@@ -130,9 +150,9 @@ namespace AST
     {
     public:
         NotImplementedEntity(Node *e1=nullptr, Node *e2=nullptr);
-        bool IsVariable() const override;
+        const Variable * IsVariable() const override;
+        const Value * IsValue() const override;
         void Visit(Visitor&) const override;
-        ::Entity MakeEntity(Database &db) const override;
     };
 
     class And : public Clause
@@ -141,7 +161,31 @@ namespace AST
         And(Clause *lhs, Clause *rhs);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
+        void SetNext(Clause&) override;
         std::unique_ptr<Clause> lhs, rhs;
+    };
+
+    class Or : public Clause
+    {
+    public:
+        Or(Clause *lhs, Clause *rhs);
+        void AssertFacts(Database &db) const override;
+        void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
+        void SetNext(Clause&) override;
+        std::unique_ptr<Clause> lhs, rhs;
+    };
+
+    class Not : public Clause
+    {
+    public:
+        Not(Clause * c);
+        void AssertFacts(Database &db) const override;
+        void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
+        void SetNext(Clause&) override;
+        std::unique_ptr<Clause> clause;
     };
 
     class Predicate : public Node
@@ -192,6 +236,7 @@ namespace AST
         std::unique_ptr<UnaryPredicateOrList> list;
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
     };
 
     class EntityIsPredicate : public Clause
@@ -203,6 +248,7 @@ namespace AST
         std::unique_ptr<UnaryPredicate> predicate;
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
     };
 
     class AttributeList : public Node
@@ -223,6 +269,7 @@ namespace AST
         EntityHasAttributes(UnaryPredicateOrList * unarypredicatesOpt, Entity*entity, AttributeList*attributes);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::unique_ptr<UnaryPredicateOrList> unaryPredicatesOpt;
         std::unique_ptr<Entity> entity;
         std::unique_ptr<AttributeList> attributes;
@@ -243,6 +290,7 @@ namespace AST
         DatalogPredicate(Predicate * predicate, EntityList * entityListOpt);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::unique_ptr<Predicate> predicate;
         std::unique_ptr<EntityList> entitiesOpt;
     };

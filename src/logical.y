@@ -142,23 +142,23 @@ comparator:
 
 datalog_unary_clause:
     datalog_base_clause
-|   tok_not datalog_base_clause { $$ = new AST::NotImplementedClause($2); }
+|   tok_not datalog_base_clause { $$ = new AST::Not($2); }
 ;
 
 datalog_and_clause:
     datalog_unary_clause
-|   datalog_and_clause tok_and datalog_unary_clause
-|   datalog_and_clause tok_comma datalog_unary_clause
+|   datalog_and_clause tok_and datalog_unary_clause { $$ = new AST::And($1, $3); }
+|   datalog_and_clause tok_comma datalog_unary_clause { $$ = new AST::And($1, $3); }
 ;
 
 datalog_clause:
     datalog_clause tok_or datalog_and_clause
     {
-        $$ = new AST::NotImplementedClause($1, $3);
+        $$ = new AST::Or($1, $3);
     }
 |   datalog_clause tok_semicolon datalog_and_clause 
     {
-        $$ = new AST::NotImplementedClause($1, $3);
+        $$ = new AST::Or($1, $3);
     }
 |   datalog_and_clause
 ;
@@ -311,7 +311,7 @@ andclause:
 
 orclause:
     andclause
-|   orclause tok_or andclause
+|   orclause tok_or andclause { $$ = new AST::Or($1, $3); }
 ;
 
 clause: orclause;
