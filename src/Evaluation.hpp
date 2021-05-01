@@ -1,8 +1,7 @@
 #include <memory>
 #include <vector>
 
-class Relation;
-class Entity;
+#include "Relation.hpp"
 
 /*
  Evaluates a rule/predicate.
@@ -74,10 +73,10 @@ public:
 class RuleEvaluation : public Evaluation
 {
 public:
-    RuleEvaluation(const std::shared_ptr<Evaluation> &eval, int size);
+    RuleEvaluation(std::vector<Entity> && compilation, const std::shared_ptr<Evaluation> &eval);
 
     // Local data, pre-initialised with constants
-    std::vector<Entity> data;
+    std::vector<Entity> row;
 
     void Evaluate(Entity * row) override;
 private:

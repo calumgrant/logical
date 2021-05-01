@@ -17,7 +17,9 @@ public:
     int AddVariable(const std::string &name, bool & alreadyBound);
     int AddValue(const Entity &e);
     int AddUnnamedVariable();
+    
+    std::vector<Entity> row;
 private:
-    int stack_size;
+    // int stack_size;
     std::unordered_map<std::string, int> variables;
 };

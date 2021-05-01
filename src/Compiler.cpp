@@ -78,6 +78,9 @@ void AST::Rule::Compile(Database &db)
     rhs->SetNext(writer);
 
     auto evaluation = rhs->Compile(db, compilation);
+    
+    evaluation = std::make_shared<RuleEvaluation>(std::move(compilation.row), evaluation);
+    
     lhs->AddRule(db, evaluation);
 }
 
@@ -172,7 +175,7 @@ std::shared_ptr<Evaluation> AST::EntityIs::Compile(Database &db, Compilation &co
 
 Compilation::Compilation()
 {
-    stack_size = 0;
+    //stack_size = 0;
 }
 
 Compilation::~Compilation()
@@ -191,19 +194,24 @@ int Compilation::AddVariable(const std::string &name, bool &alreadybound)
     }
     else
     {
-        return variables[name] = stack_size++;
+        auto size = row.size();
+        row.push_back(Entity());
+        return variables[name] = size;
     }
 }
 
 int Compilation::AddUnnamedVariable()
 {
-    return stack_size++;
+    auto size = row.size();
+    row.push_back(Entity());
+    return size;
 }
 
 int Compilation::AddValue(const Entity &e)
 {
-    // TODO: Store the value
-    return stack_size++;
+    auto size = row.size();
+    row.push_back(e);
+    return size;
 }
 
 std::shared_ptr<Evaluation> AST::Or::Compile(Database &db, Compilation & compilation)
@@ -233,6 +241,26 @@ UnaryEvaluation::UnaryEvaluation(const std::shared_ptr<Relation> &rel, int slot,
                 
 void EvaluateF::Evaluate(Entity * row)
 {
+    class Visitor : public Relation::Visitor
+    {
+    public:
+        Visitor(Entity * row, int slot, Evaluation & next) :
+            row(row), slot(slot), next(next)
+        {
+        }
+        
+        void OnRow(const Entity *e) override
+        {
+            row[slot] = e[0];
+            next.Evaluate(row);
+        }
+        
+        Entity * row;
+        int slot;
+        Evaluation & next;
+    } v(row, slot, *next);
+    
+    relation->Query(row+slot, v);
 }
 
 void EvaluateB::Evaluate(Entity * row)
@@ -381,4 +409,14 @@ void OrEvaluation::Evaluate(Entity * row)
 {
     left->Evaluate(row);
     right->Evaluate(row);
+}
+
+RuleEvaluation::RuleEvaluation(std::vector<Entity> &&row, const std::shared_ptr<Evaluation> & eval) :
+    row(row), evaluation(eval)
+{
+}
+
+void RuleEvaluation::Evaluate(Entity*)
+{
+    evaluation->Evaluate(&row[0]);
 }

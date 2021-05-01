@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Entity.hpp"
 #include <unordered_set>
 #include <vector>
