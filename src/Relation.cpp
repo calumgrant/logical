@@ -48,27 +48,43 @@ int TableX::Count()
     return 0;
 }
 
-void UnaryTable::Query(Entity * row, Visitor &v)
+void UnaryTable::Query(Entity * row, int columns, Visitor &v)
 {
     RunRules();
-    for(auto &i : values)
+    
+    switch(columns)
     {
-        v.OnRow(&i);
+        case 0:
+            for(auto &i : values)
+            {
+                v.OnRow(&i);
+            }
+            break;
+        case 1:
+            {
+                auto i = values.find(row[0]);
+                if (i != values.end())
+                    v.OnRow(row);
+                break;
+            }
+            break;
+        default:
+            assert(!"Invalid query columns");
     }
 }
 
-void PrintRelation::Query(Entity * row, Visitor&)
+void PrintRelation::Query(Entity * row, int, Visitor&)
 {
     // Empty relation.
 }
 
-void BinaryTable::Query(Entity * row, Visitor&v)
+void BinaryTable::Query(Entity * row, int, Visitor&v)
 {
     RunRules();
     // todo
 }
 
-void TableX::Query(Entity * row, Visitor&v)
+void TableX::Query(Entity * row, int, Visitor&v)
 {
     // todo
 }

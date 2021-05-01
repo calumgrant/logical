@@ -21,7 +21,7 @@ public:
     // Visit selected rows, based on the data in query
     // Which columns are inputs and which are outputs is unspecified.
     // Call back v.OnRow for each result,
-    virtual void Query(Entity *query, Visitor &v) =0;
+    virtual void Query(Entity *query, int columns, Visitor &v) =0;
 
     // Insert a row into this table.
     virtual void Add(const Entity * row) =0;
@@ -56,10 +56,13 @@ class UnaryTable : public Predicate
 {
 public:
     void Add(const Entity *row) override;
-    std::unordered_set<Entity, Entity::Hash> values;
     int Count() override;
-    void Query(Entity*row, Visitor&v) override;
+    void Query(Entity*row, int columns, Visitor&v) override;
+private:
+    std::unordered_set<Entity, Entity::Hash> values;
+    std::shared_ptr<Relation> index;
 };
+
 
 class PrintRelation : public Predicate
 {
@@ -67,7 +70,7 @@ public:
     PrintRelation(Database&db);
     void Add(const Entity *row) override;
     int Count() override;
-    void Query(Entity *row, Visitor&v) override;
+    void Query(Entity *row, int columns, Visitor&v) override;
 private:
     Database &database;
 };
@@ -87,14 +90,14 @@ public:
     void Add(const Entity * row) override;
     std::unordered_set<std::pair<Entity, Entity>, PairHash> values;
     int Count() override;
-    void Query(Entity * row, Visitor&v) override;
+    void Query(Entity * row, int columns, Visitor&v) override;
 };
 
 class TableX : public Predicate
 {
 public:
     int Count() override;
-    void Query(Entity * row, Visitor&v) override;
+    void Query(Entity * row, int columns, Visitor&v) override;
     void Add(const Entity*row) override;
     int arity;
     std::vector<Entity> data;

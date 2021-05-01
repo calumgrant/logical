@@ -120,7 +120,7 @@ void Database::Find(const std::string & unaryPredicateName)
     Tmp visitor(*this);
 
     Entity row;
-    GetUnaryRelation(unaryPredicateName)->Query(&row, visitor);
+    GetUnaryRelation(unaryPredicateName)->Query(&row, 0, visitor);
 
     std::cout << "Found " << visitor.count << " rows\n";
 }

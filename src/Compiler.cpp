@@ -106,7 +106,7 @@ std::shared_ptr<Evaluation> AST::NotImplementedClause::Compile(Database &db, Com
 
 std::shared_ptr<Evaluation> AST::And::Compile(Database &db, Compilation &c)
 {
-    return std::make_shared<NoneEvaluation>();
+    return lhs->Compile(db, c);
 }
 
 std::shared_ptr<Evaluation> AST::EntityIs::Compile(Database &db, Compilation &compilation)
@@ -175,7 +175,6 @@ std::shared_ptr<Evaluation> AST::EntityIs::Compile(Database &db, Compilation &co
 
 Compilation::Compilation()
 {
-    //stack_size = 0;
 }
 
 Compilation::~Compilation()
@@ -222,49 +221,6 @@ std::shared_ptr<Evaluation> AST::Or::Compile(Database &db, Compilation & compila
 std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compilation)
 {
     return std::make_shared<NoneEvaluation>();
-}
-
-EvaluateB::EvaluateB(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
-    UnaryEvaluation(rel, slot, next)
-{
-}
-
-EvaluateF::EvaluateF(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
-    UnaryEvaluation(rel, slot, next)
-{
-}
-
-UnaryEvaluation::UnaryEvaluation(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
-                     relation(rel), slot(slot), next(next)
-{
-}
-                
-void EvaluateF::Evaluate(Entity * row)
-{
-    class Visitor : public Relation::Visitor
-    {
-    public:
-        Visitor(Entity * row, int slot, Evaluation & next) :
-            row(row), slot(slot), next(next)
-        {
-        }
-        
-        void OnRow(const Entity *e) override
-        {
-            row[slot] = e[0];
-            next.Evaluate(row);
-        }
-        
-        Entity * row;
-        int slot;
-        Evaluation & next;
-    } v(row, slot, *next);
-    
-    relation->Query(row+slot, v);
-}
-
-void EvaluateB::Evaluate(Entity * row)
-{
 }
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Compilation &c)
@@ -398,25 +354,4 @@ void AST::EntityIs::AddRule(Database &db, const std::shared_ptr<Evaluation> & ru
         for(auto &i : l->list)
             db.GetUnaryRelation(i->name)->AddRule(rule);
     }
-}
-
-OrEvaluation::OrEvaluation(const std::shared_ptr<Evaluation> & lhs, const std::shared_ptr<Evaluation> & rhs) :
-    left(lhs), right(rhs)
-{
-}
-
-void OrEvaluation::Evaluate(Entity * row)
-{
-    left->Evaluate(row);
-    right->Evaluate(row);
-}
-
-RuleEvaluation::RuleEvaluation(std::vector<Entity> &&row, const std::shared_ptr<Evaluation> & eval) :
-    row(row), evaluation(eval)
-{
-}
-
-void RuleEvaluation::Evaluate(Entity*)
-{
-    evaluation->Evaluate(&row[0]);
 }

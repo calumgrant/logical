@@ -31,8 +31,7 @@ class UnaryEvaluation : public Evaluation
 {
 protected:
     UnaryEvaluation(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next);
-    // !! weak_ptr to avoid memory leaks
-    std::shared_ptr<Relation> relation;
+    std::weak_ptr<Relation> relation;
     int slot;
     std::shared_ptr<Evaluation> next;
 };
