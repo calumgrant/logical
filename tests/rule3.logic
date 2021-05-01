@@ -1,0 +1,12 @@
+f 1.
+g 2.
+
+X is h if 
+    X is f or 
+    X is g.
+
+i X if f X or g X.
+
+find h. // 3 rows
+find i. // 3 rows
+print "Rule 3 test passed".

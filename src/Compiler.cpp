@@ -215,7 +215,11 @@ int Compilation::AddValue(const Entity &e)
 
 std::shared_ptr<Evaluation> AST::Or::Compile(Database &db, Compilation & compilation)
 {
-    return std::make_shared<NoneEvaluation>();
+    Compilation c2(compilation);
+    auto l = lhs->Compile(db, compilation);
+    auto r = rhs->Compile(db, c2);
+
+    return std::make_shared<OrEvaluation>(l, r);
 }
 
 std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compilation)

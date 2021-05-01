@@ -4,4 +4,5 @@ f 3.
 
 g X if f X and f X.
 find g.  // Should be 3 rows
+
 print "Rule2 test passed".

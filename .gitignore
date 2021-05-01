@@ -2,3 +2,4 @@ build*/*
 xcode-build*/*
 launch.json
 .vscode/settings.json
+.DS_Store
