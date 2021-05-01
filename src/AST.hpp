@@ -49,6 +49,7 @@ namespace AST
         // ?? Const
         virtual std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation)=0;
         virtual std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation)=0;
+        virtual void AddRule(Database &db, const std::shared_ptr<Evaluation>&)=0;
     };
 
     class NotImplementedClause : public Clause
@@ -59,7 +60,8 @@ namespace AST
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
-    };
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
+     };
 
     class Entity : public Node
     {
@@ -167,6 +169,7 @@ namespace AST
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
         void SetNext(Clause&) override;
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
         std::unique_ptr<Clause> lhs, rhs;
     };
 
@@ -179,6 +182,7 @@ namespace AST
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
         void SetNext(Clause&) override;
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
         std::unique_ptr<Clause> lhs, rhs;
     };
 
@@ -191,6 +195,7 @@ namespace AST
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
         void SetNext(Clause&) override;
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
         std::unique_ptr<Clause> clause;
     };
 
@@ -244,6 +249,7 @@ namespace AST
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
     };
 
     class EntityIsPredicate : public Clause
@@ -257,6 +263,7 @@ namespace AST
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
     };
 
     class AttributeList : public Node
@@ -279,6 +286,8 @@ namespace AST
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
+
         std::unique_ptr<UnaryPredicateOrList> unaryPredicatesOpt;
         std::unique_ptr<Entity> entity;
         std::unique_ptr<AttributeList> attributes;
@@ -299,6 +308,8 @@ namespace AST
         DatalogPredicate(Predicate * predicate, EntityList * entityListOpt);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
+
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
         std::unique_ptr<Predicate> predicate;

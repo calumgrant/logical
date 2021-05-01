@@ -42,19 +42,24 @@ public:
     {
     }
     
-    void Visit(AST::Visitor &v) const { }
-    void AssertFacts(Database &db) const {}
+    void Visit(AST::Visitor &v) const override { }
+    void AssertFacts(Database &db) const override {}
         
-    std::shared_ptr<Evaluation> Compile(Database &db, Compilation &c)
+    std::shared_ptr<Evaluation> Compile(Database &db, Compilation &c) override
     {
         return lhs.CompileLhs(db, c);
     }
     
-    std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation)
+    std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override
     {
         assert(!"Impossible");
         return std::make_shared<NoneEvaluation>();
     }
+
+    void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override
+    {
+    }
+
     
 private:
     AST::Clause & lhs;
@@ -73,6 +78,7 @@ void AST::Rule::Compile(Database &db)
     rhs->SetNext(writer);
 
     auto evaluation = rhs->Compile(db, compilation);
+    lhs->AddRule(db, evaluation);
 }
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compilation &c)
@@ -259,7 +265,16 @@ std::shared_ptr<Evaluation> AST::EntityIs::CompileLhs(Database &db, Compilation 
                 }
                 else if(AST::UnaryPredicateList *l = dynamic_cast<UnaryPredicateList*>(&*list))
                 {
-                    // Not implemented...
+                    std::shared_ptr<Evaluation> result;
+                    for(auto & i : l->list)
+                    {
+                        auto e = std::make_shared<WriterB>(db.GetUnaryRelation(i->name), slot);
+                        if(result)
+                            result = std::make_shared<OrEvaluation>(result, e);
+                        else
+                            result = e;
+                    }
+                    return result;
                 }
                 else
                 {
@@ -309,4 +324,61 @@ std::shared_ptr<Evaluation> AST::Not::CompileLhs(Database &db, Compilation &c)
 {
     db.InvalidLhs();
     return std::make_shared<NoneEvaluation>();
+}
+
+void AST::DatalogPredicate::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
+{
+    // TODO
+}
+
+void AST::EntityIsPredicate::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
+{
+    // TODO
+}
+
+void AST::EntityHasAttributes::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
+{
+    // TODO
+}
+
+void AST::NotImplementedClause::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
+{
+}
+
+void AST::And::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
+{
+    // ??
+}
+
+void AST::Or::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
+{
+}
+
+void AST::Not::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
+{
+}
+
+void AST::EntityIs::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
+{
+    if(UnaryPredicate *u = dynamic_cast<UnaryPredicate*>(&*list))
+    {
+        db.GetUnaryRelation(u->name)->AddRule(rule);
+
+    }
+    else if(UnaryPredicateList *l = dynamic_cast<UnaryPredicateList*>(&*list))
+    {
+        for(auto &i : l->list)
+            db.GetUnaryRelation(i->name)->AddRule(rule);
+    }
+}
+
+OrEvaluation::OrEvaluation(const std::shared_ptr<Evaluation> & lhs, const std::shared_ptr<Evaluation> & rhs) :
+    left(lhs), right(rhs)
+{
+}
+
+void OrEvaluation::Evaluate(Entity * row)
+{
+    left->Evaluate(row);
+    right->Evaluate(row);
 }

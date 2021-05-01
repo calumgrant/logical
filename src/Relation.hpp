@@ -1,6 +1,7 @@
 #include "Entity.hpp"
 #include <unordered_set>
 #include <vector>
+#include <memory>
 
 class Database;
 class Entity;
@@ -27,18 +28,26 @@ public:
     virtual int Count() =0;
 
     virtual ~Relation();
+    
+    virtual void AddRule(const std::shared_ptr<Evaluation> & rule) =0;
 };
 
 class Predicate : public Relation
 {
 public:
     Predicate();
-    bool rulesRun;
     std::shared_ptr<Relation> data;
-    std::vector< std::shared_ptr<Evaluation> > rules;
 
     // Evaluates all rules if needed
     void Evaluate();
+    
+    // Run rules if not already run
+    void RunRules();
+    void AddRule(const std::shared_ptr<Evaluation> &) override;
+    void MakeDirty();
+private:
+    bool rulesRun;
+    std::vector< std::shared_ptr<Evaluation> > rules;
 };
 
 class UnaryTable : public Predicate
@@ -70,12 +79,6 @@ struct PairHash
     }
 };
 
-template<int N>
-struct Row
-{
-    Entity data[N];
-};
-
 class BinaryTable : public Predicate
 {
 public:
@@ -85,7 +88,7 @@ public:
     void Query(Entity * row, Visitor&v) override;
 };
 
-class TableX : public Relation
+class TableX : public Predicate
 {
 public:
     int Count() override;
