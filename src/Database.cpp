@@ -124,3 +124,8 @@ void Database::Find(const std::string & unaryPredicateName)
 
     std::cout << "Found " << visitor.count << " rows\n";
 }
+
+void Database::InvalidLhs()
+{
+    std::cerr << "Invalid left hand side of a rule.\n";
+}

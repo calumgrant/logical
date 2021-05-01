@@ -1,3 +1,4 @@
 build*/*
+xcode-build*/*
 launch.json
 .vscode/settings.json

@@ -1,9 +1,19 @@
 #include "Evaluation.hpp"
+#include "Relation.hpp"
 
 Evaluation::~Evaluation()
 {
 }
 
-void NoneEvaluation::Evaluate()
+void NoneEvaluation::Evaluate(Entity * row)
 {
+}
+
+WriterB::WriterB(const std::shared_ptr<Relation> & relation, int slot) : relation(relation), slot(slot)
+{
+}
+
+void WriterB::Evaluate(Entity * row)
+{
+    relation->Add(row+slot);
 }

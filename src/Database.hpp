@@ -58,6 +58,10 @@ public:
     void Find(const std::string & unaryPredicateName);
 
     void Print(const Entity &e, std::ostream &os) const;
+    
+    
+    // Logs an error for invalid left hand side clause
+    void InvalidLhs();
 private:
     std::unordered_map< std::string, std::shared_ptr<Relation> > unaryRelations;
     std::unordered_map< std::string, std::shared_ptr<Relation> > binaryRelations;
