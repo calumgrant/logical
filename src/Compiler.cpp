@@ -81,6 +81,9 @@ void AST::Rule::Compile(Database &db)
     
     evaluation = std::make_shared<RuleEvaluation>(std::move(compilation.row), evaluation);
     
+    if(db.Explain())
+        evaluation->Explain(std::cout, 0);
+    
     lhs->AddRule(db, evaluation);
 }
 
@@ -215,6 +218,7 @@ int Compilation::AddValue(const Entity &e)
 
 std::shared_ptr<Evaluation> AST::Or::Compile(Database &db, Compilation & compilation)
 {
+    // This is broken - FIXME
     Compilation c2(compilation);
     auto l = lhs->Compile(db, compilation);
     auto r = rhs->Compile(db, c2);

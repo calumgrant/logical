@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <vector>
 #include <memory>
+#include <string>
 
 class Database;
 class Entity;
@@ -32,13 +33,15 @@ public:
     virtual ~Relation();
     
     virtual void AddRule(const std::shared_ptr<Evaluation> & rule) =0;
+    
+    virtual const std::string & Name() const =0;
 };
 
 class Predicate : public Relation
 {
 public:
-    Predicate();
-    std::shared_ptr<Relation> data;
+    Predicate(const std::string &name);
+    // std::shared_ptr<Relation> data;
 
     // Evaluates all rules if needed
     void Evaluate();
@@ -47,14 +50,17 @@ public:
     void RunRules();
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     void MakeDirty();
+    const std::string & Name() const override;
 private:
     bool rulesRun;
     std::vector< std::shared_ptr<Evaluation> > rules;
+    std::string name;
 };
 
 class UnaryTable : public Predicate
 {
 public:
+    UnaryTable(const std::string&name);
     void Add(const Entity *row) override;
     int Count() override;
     void Query(Entity*row, int columns, Visitor&v) override;
@@ -87,6 +93,7 @@ struct PairHash
 class BinaryTable : public Predicate
 {
 public:
+    BinaryTable(const std::string&name);
     void Add(const Entity * row) override;
     std::unordered_set<std::pair<Entity, Entity>, PairHash> values;
     int Count() override;
@@ -96,6 +103,7 @@ public:
 class TableX : public Predicate
 {
 public:
+    TableX(const std::string&name);
     int Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
     void Add(const Entity*row) override;

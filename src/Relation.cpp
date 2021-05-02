@@ -29,7 +29,7 @@ int BinaryTable::Count()
     return values.size();
 }
 
-PrintRelation::PrintRelation(Database &db) : database(db)
+PrintRelation::PrintRelation(Database &db) : Predicate("print"), database(db)
 {
 }
 
@@ -93,7 +93,7 @@ void TableX::Add(const Entity *row)
 {
 }
 
-Predicate::Predicate() : rulesRun(false)
+Predicate::Predicate(const std::string &name) : rulesRun(false), name(name)
 {
 }
 
@@ -112,8 +112,25 @@ void Predicate::RunRules()
 {
     if(rulesRun) return;
     
-    for(auto p : rules)
+    for(auto & p : rules)
         p->Evaluate(nullptr);
     
     rulesRun = true;
+}
+
+UnaryTable::UnaryTable(const std::string &name) : Predicate(name)
+{
+}
+
+BinaryTable::BinaryTable(const std::string &name) : Predicate(name)
+{
+}
+
+TableX::TableX(const std::string &name) : Predicate(name)
+{
+}
+
+const std::string & Predicate::Name() const
+{
+    return name;
 }

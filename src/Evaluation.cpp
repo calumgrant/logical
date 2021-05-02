@@ -1,4 +1,5 @@
 #include "Evaluation.hpp"
+#include <iostream>
 
 Evaluation::~Evaluation()
 {
@@ -86,4 +87,52 @@ void EvaluateB::Evaluate(Entity * row)
 
     // Bug: We need to get a different relation here.
     relation.lock()->Query(row+slot, 1, v);
+}
+
+void OrEvaluation::Explain(std::ostream & os, int indent) const
+{
+    left->Explain(os, indent);
+    right->Explain(os, indent);
+}
+
+void NoneEvaluation::Explain(std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "None\n";
+}
+
+void Evaluation::Indent(std::ostream & os, int indent)
+{
+    std::fill_n(std::ostream_iterator<char>(os), indent, ' ');
+}
+
+void RuleEvaluation::Explain(std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Rule with " << row.size() << " variables\n";
+    evaluation->Explain(os, indent+4);
+}
+
+void WriterB::Explain(std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Write [" << slot << "] into " << relation->Name() << "\n";
+}
+
+void EvaluateB::Explain(std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    auto r = relation.lock();
+    assert(r);
+    os << "Lookup [" << slot << "] in " << r->Name() << std::endl;
+    next->Explain(os, indent+4);
+}
+
+void EvaluateF::Explain(std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    auto r = relation.lock();
+    assert(r);
+    os << "Scan " << r->Name() << " into [" << slot << "]\n";
+    next->Explain(os, indent+4);
 }

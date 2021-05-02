@@ -7,7 +7,7 @@ std::shared_ptr<Relation> Database::GetUnaryRelation(const std::string & name)
     auto i = unaryRelations.find(name);
     if (i == unaryRelations.end())
     {
-        auto p = std::make_shared<UnaryTable>();
+        auto p = std::make_shared<UnaryTable>(name);
         unaryRelations.insert(std::make_pair(name, p));
         return p;
     }
@@ -20,7 +20,7 @@ std::shared_ptr<Relation> Database::GetBinaryRelation(const std::string & name)
     auto i = binaryRelations.end();
     if (i==binaryRelations.end())
     {
-        auto p = std::make_shared<BinaryTable>();
+        auto p = std::make_shared<BinaryTable>(name);
         binaryRelations.insert(std::make_pair(name, p));
         return p;
     }
@@ -37,7 +37,7 @@ Relation::~Relation()
 {
 }
 
-Database::Database()
+Database::Database() : verbose(false)
 {
     unaryRelations["print"] = std::make_shared<PrintRelation>(*this);
 }
@@ -93,7 +93,7 @@ std::shared_ptr<Relation> Database::GetRelation(const std::string &name, int ari
 
     if (i == relations.end())
     {
-        auto r = std::make_shared<TableX>();
+        auto r = std::make_shared<TableX>(name);
         relations.insert(std::make_pair(index, r));
         return r;
     }
@@ -128,4 +128,14 @@ void Database::Find(const std::string & unaryPredicateName)
 void Database::InvalidLhs()
 {
     std::cerr << "Invalid left hand side of a rule.\n";
+}
+
+void Database::SetVerbose(bool v)
+{
+    verbose = v;
+}
+
+bool Database::Explain() const
+{
+    return verbose;
 }

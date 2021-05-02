@@ -13,11 +13,17 @@ int main(int argc, char**argv)
         return 127;
     }
 
-    Database db;
     int verbose=0;
+    Database db;
 
     for(int i=1; i<argc; ++i)
     {
+        if(strcmp(argv[i], "-v")==0)
+        {
+            verbose = true;
+            db.SetVerbose(true);
+            continue;
+        }
         if(verbose) std::cout << "Reading " << argv[i] << std::endl;
         FILE * f = fopen(argv[i], "r");
 

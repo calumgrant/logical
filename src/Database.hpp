@@ -62,10 +62,17 @@ public:
     
     // Logs an error for invalid left hand side clause
     void InvalidLhs();
+    
+    // Options for logging output
+    // True if we want explanations
+    void SetVerbose(bool value=true);
+    bool Explain() const;
 private:
     std::unordered_map< std::string, std::shared_ptr<Relation> > unaryRelations;
     std::unordered_map< std::string, std::shared_ptr<Relation> > binaryRelations;
     std::unordered_map< std::pair<std::string, int>, std::shared_ptr<Relation>, RelationHash> relations;
 
     StringTable strings, atstrings;
+    
+    bool verbose;
 };
