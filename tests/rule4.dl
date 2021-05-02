@@ -1,6 +1,6 @@
 // Test facts
 
 f 1.
-g 2 if f 1.
+g "two" if f 1.
 
 find g.

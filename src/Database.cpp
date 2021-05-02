@@ -50,24 +50,40 @@ void Database::Print(const Entity &e, std::ostream &os) const
 {
     switch(e.type)
     {
+    case EntityType::None:
+            os << "None";
+            break;
     case EntityType::Integer:
-        os << e.i << std::endl;
+        os << e.i;
         break;
     case EntityType::Float:
-        os << e.f << std::endl;
+        os << e.f;
         break;
     case EntityType::Boolean:
-        os << (e.i?"true":"false") << std::endl;
+        os << (e.i?"true":"false");
         break;
     case EntityType::String:
-        os << GetString(e.i) << std::endl;
+        os << GetString(e.i);
         break;
     case EntityType::AtString:
-        os << "@" << GetAtString(e.i) << std::endl;
+        os << "@" << GetAtString(e.i);
         break;
     }
 }
 
+void Database::PrintQuoted(const Entity &e, std::ostream &os) const
+{
+    if(e.type == EntityType::String)
+    {
+        os << '\"';
+        Print(e, os);
+        os << '\"';
+    }
+    else
+    {
+        Print(e, os);
+    }
+}
 
 const std::string &Database::GetString(int id) const
 {
@@ -114,6 +130,7 @@ void Database::Find(const std::string & unaryPredicateName)
         {
             std::cout << "\t";
             db.Print(*e, std::cout);
+            std::cout << std::endl;
             ++count;
         }
     };

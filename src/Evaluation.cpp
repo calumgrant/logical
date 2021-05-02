@@ -1,4 +1,6 @@
 #include "Evaluation.hpp"
+#include "Database.hpp"
+
 #include <iostream>
 
 Evaluation::~Evaluation()
@@ -89,13 +91,13 @@ void EvaluateB::Evaluate(Entity * row)
     relation.lock()->Query(row+slot, 1, v);
 }
 
-void OrEvaluation::Explain(std::ostream & os, int indent) const
+void OrEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 {
-    left->Explain(os, indent);
-    right->Explain(os, indent);
+    left->Explain(db, os, indent);
+    right->Explain(db, os, indent);
 }
 
-void NoneEvaluation::Explain(std::ostream & os, int indent) const
+void NoneEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
     os << "None\n";
@@ -106,33 +108,43 @@ void Evaluation::Indent(std::ostream & os, int indent)
     std::fill_n(std::ostream_iterator<char>(os), indent, ' ');
 }
 
-void RuleEvaluation::Explain(std::ostream & os, int indent) const
+void RuleEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
     os << "Rule with " << row.size() << " variables ->\n";
-    evaluation->Explain(os, indent+4);
+    for(int i=0; i<row.size(); ++i)
+    {
+        if(row[i].type != EntityType::None)
+        {
+            Indent(os, indent+4);
+            os << "_" << i << " = ";
+            db.PrintQuoted(row[i], os);
+            os << std::endl;
+        }
+    }
+    evaluation->Explain(db, os, indent+4);
 }
 
-void WriterB::Explain(std::ostream & os, int indent) const
+void WriterB::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
     os << "Write _" << slot << " into " << relation->Name() << "\n";
 }
 
-void EvaluateB::Explain(std::ostream &os, int indent) const
+void EvaluateB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     auto r = relation.lock();
     assert(r);
     os << "Lookup _" << slot << " in " << r->Name() << " ->\n";
-    next->Explain(os, indent+4);
+    next->Explain(db, os, indent+4);
 }
 
-void EvaluateF::Explain(std::ostream &os, int indent) const
+void EvaluateF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     auto r = relation.lock();
     assert(r);
     os << "Scan " << r->Name() << " into _" << slot << " ->\n";
-    next->Explain(os, indent+4);
+    next->Explain(db, os, indent+4);
 }

@@ -82,7 +82,7 @@ void AST::Rule::Compile(Database &db)
     evaluation = std::make_shared<RuleEvaluation>(std::move(compilation.row), evaluation);
     
     if(db.Explain())
-        evaluation->Explain(std::cout, 0);
+        evaluation->Explain(db, std::cout, 0);
     
     lhs->AddRule(db, evaluation);
 }

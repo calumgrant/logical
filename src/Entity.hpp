@@ -4,6 +4,7 @@ typedef int EntityId;
 
 enum class EntityType
 {
+    None,
     Integer,
     String,
     Float,
@@ -21,7 +22,7 @@ struct Entity
         float f;
     };
 
-    Entity() { }
+    Entity() : type(EntityType::None) { }
     Entity(EntityType t, int i) : type(t), i(i) { }
     Entity(EntityType t, float f) : type(t), f(f) { }
 

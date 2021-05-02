@@ -59,7 +59,9 @@ public:
 
     void Print(const Entity &e, std::ostream &os) const;
     
-    
+    // Same as Print, but put quotes around strings.
+    void PrintQuoted(const Entity &e, std::ostream &os) const;
+
     // Logs an error for invalid left hand side clause
     void InvalidLhs();
     

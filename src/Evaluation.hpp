@@ -22,7 +22,7 @@ class Evaluation
 public:
     virtual ~Evaluation();
     virtual void Evaluate(Entity * row) =0;  // Const
-    virtual void Explain(std::ostream &os, int indent=4) const =0;
+    virtual void Explain(Database &db, std::ostream &os, int indent=4) const =0;
 
     static void Indent(std::ostream &os, int indent=0);
 };
@@ -47,7 +47,7 @@ class EvaluateF : public UnaryEvaluation
 public:
     EvaluateF(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next);
     void Evaluate(Entity * row) override;
-    void Explain(std::ostream &os, int indent) const override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
 };
 
 /*
@@ -61,7 +61,7 @@ class ExistsF : public UnaryEvaluation
 {
     ExistsF(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next);
     void Evaluate(Entity * row) override;
-    void Explain(std::ostream &os, int indent) const override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
 };
 
 /*
@@ -73,7 +73,7 @@ class EvaluateB : public UnaryEvaluation
 public:
     EvaluateB(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next);
     void Evaluate(Entity * row) override;
-    void Explain(std::ostream &os, int indent) const override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
 };
 
 /*
@@ -84,7 +84,7 @@ class WriterB : public Evaluation
 public:
     WriterB(const std::shared_ptr<Relation> &rel, int slot);
     void Evaluate(Entity * row) override;
-    void Explain(std::ostream &os, int indent) const override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
     std::shared_ptr<Relation> relation;
     int slot;
@@ -96,7 +96,7 @@ public:
     RuleEvaluation(std::vector<Entity> && compilation, const std::shared_ptr<Evaluation> &eval);
 
     void Evaluate(Entity * row) override;
-    void Explain(std::ostream &os, int indent) const override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
     std::shared_ptr<Evaluation> evaluation;
     
@@ -109,7 +109,7 @@ class OrEvaluation : public Evaluation
 public:
     OrEvaluation(const std::shared_ptr<Evaluation> &left, const std::shared_ptr<Evaluation> &right);
     void Evaluate(Entity * row) override;
-    void Explain(std::ostream &os, int indent) const override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
     std::shared_ptr<Evaluation> left, right;
 };
@@ -121,5 +121,5 @@ class NoneEvaluation : public Evaluation
 {
 public:
     void Evaluate(Entity * row) override;
-    void Explain(std::ostream &os, int indent) const override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
 };
