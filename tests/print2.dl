@@ -1,0 +1,4 @@
+"Hello" is greeting.
+"Goodbye" is greeting.
+
+print X if greeting X.

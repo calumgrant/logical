@@ -75,6 +75,7 @@ class PrintRelation : public Predicate
 public:
     PrintRelation(Database&db);
     void Add(const Entity *row) override;
+    void AddRule(const std::shared_ptr<Evaluation> &) override;
     int Count() override;
     void Query(Entity *row, int columns, Visitor&v) override;
 private:

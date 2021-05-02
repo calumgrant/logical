@@ -36,6 +36,13 @@ PrintRelation::PrintRelation(Database &db) : Predicate("print"), database(db)
 void PrintRelation::Add(const Entity * row)
 {
     database.Print(row[0], std::cout);
+    std::cout << std::endl;
+}
+
+void PrintRelation::AddRule(const std::shared_ptr<Evaluation> & eval)
+{
+    // Run the rule immediately.
+    eval->Evaluate(nullptr);
 }
 
 int PrintRelation::Count()

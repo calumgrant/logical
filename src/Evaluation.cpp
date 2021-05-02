@@ -111,7 +111,7 @@ void Evaluation::Indent(std::ostream & os, int indent)
 void RuleEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Rule with " << row.size() << " variables ->\n";
+    os << "Evaluate with " << row.size() << " variables ->\n";
     for(int i=0; i<row.size(); ++i)
     {
         if(row[i].type != EntityType::None)

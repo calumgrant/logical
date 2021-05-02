@@ -1,0 +1,9 @@
+f 1.
+
+g "Hello" if f X.
+
+find g.
+
+error "Test failed" if not g "Hello".
+
+print "Rule 5 test passed" if g "Hello".
