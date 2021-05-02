@@ -236,12 +236,38 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Comp
     return std::make_shared<NoneEvaluation>();
 }
 
+std::shared_ptr<Evaluation> AST::EntityIs::WritePredicates(Database &db, int slot)
+{
+    if(AST::UnaryPredicate * up = dynamic_cast<UnaryPredicate*>(&*list))
+    {
+        return std::make_shared<WriterB>(db.GetUnaryRelation(up->name), slot);
+    }
+    else if(AST::UnaryPredicateList *l = dynamic_cast<UnaryPredicateList*>(&*list))
+    {
+        std::shared_ptr<Evaluation> result;
+        for(auto & i : l->list)
+        {
+            auto e = std::make_shared<WriterB>(db.GetUnaryRelation(i->name), slot);
+            if(result)
+                result = std::make_shared<OrEvaluation>(result, e);
+            else
+                result = e;
+        }
+        return result;
+    }
+    else
+    {
+        assert(!"Impossible");
+    }
+}
+
 std::shared_ptr<Evaluation> AST::EntityIs::CompileLhs(Database &db, Compilation &c)
 {
     int slot;
     if(const AST::Value *v = entity->IsValue())
     {
         slot = c.AddValue(v->MakeEntity(db));
+        return WritePredicates(db, slot);
     }
     else if(const AST::Variable *v = entity->IsVariable())
     {
@@ -251,27 +277,7 @@ std::shared_ptr<Evaluation> AST::EntityIs::CompileLhs(Database &db, Compilation 
             slot = c.AddVariable(nv->name, bound);
             if(bound)
             {
-                if(AST::UnaryPredicate * up = dynamic_cast<UnaryPredicate*>(&*list))
-                {
-                    return std::make_shared<WriterB>(db.GetUnaryRelation(up->name), slot);
-                }
-                else if(AST::UnaryPredicateList *l = dynamic_cast<UnaryPredicateList*>(&*list))
-                {
-                    std::shared_ptr<Evaluation> result;
-                    for(auto & i : l->list)
-                    {
-                        auto e = std::make_shared<WriterB>(db.GetUnaryRelation(i->name), slot);
-                        if(result)
-                            result = std::make_shared<OrEvaluation>(result, e);
-                        else
-                            result = e;
-                    }
-                    return result;
-                }
-                else
-                {
-                    assert(!"Impossible");
-                }
+                return WritePredicates(db, slot);
             }
             if(!bound)
             {

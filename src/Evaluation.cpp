@@ -109,14 +109,14 @@ void Evaluation::Indent(std::ostream & os, int indent)
 void RuleEvaluation::Explain(std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Rule with " << row.size() << " variables\n";
+    os << "Rule with " << row.size() << " variables ->\n";
     evaluation->Explain(os, indent+4);
 }
 
 void WriterB::Explain(std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Write [" << slot << "] into " << relation->Name() << "\n";
+    os << "Write _" << slot << " into " << relation->Name() << "\n";
 }
 
 void EvaluateB::Explain(std::ostream &os, int indent) const
@@ -124,7 +124,7 @@ void EvaluateB::Explain(std::ostream &os, int indent) const
     Indent(os, indent);
     auto r = relation.lock();
     assert(r);
-    os << "Lookup [" << slot << "] in " << r->Name() << std::endl;
+    os << "Lookup _" << slot << " in " << r->Name() << " ->\n";
     next->Explain(os, indent+4);
 }
 
@@ -133,6 +133,6 @@ void EvaluateF::Explain(std::ostream &os, int indent) const
     Indent(os, indent);
     auto r = relation.lock();
     assert(r);
-    os << "Scan " << r->Name() << " into [" << slot << "]\n";
+    os << "Scan " << r->Name() << " into _" << slot << " ->\n";
     next->Explain(os, indent+4);
 }

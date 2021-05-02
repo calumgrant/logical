@@ -243,13 +243,16 @@ namespace AST
     {
     public:
         EntityIs(Entity* entity, UnaryPredicateOrList* list);
-        std::unique_ptr<Entity> entity;
-        std::unique_ptr<UnaryPredicateOrList> list;
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
         void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
+    private:
+        std::shared_ptr<Evaluation> WritePredicates(Database &db, int slot);
+        
+        std::unique_ptr<Entity> entity;
+        std::unique_ptr<UnaryPredicateOrList> list;
     };
 
     class EntityIsPredicate : public Clause
