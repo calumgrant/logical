@@ -1,4 +1,4 @@
 "Hello" is greeting.
 "Goodbye" is greeting.
 
-print X if greeting X.
+print "Test passed" if greeting "Hello" and greeting "Goodbye".

@@ -301,7 +301,7 @@ allclause:
 
 notclause:
     allclause
-|   tok_not allclause { $$ = new AST::NotImplementedClause($2); }
+|   tok_not allclause { $$ = new AST::Not($2); }
 ;
 
 andclause:

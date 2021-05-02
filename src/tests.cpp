@@ -1,6 +1,8 @@
 #include "Database.hpp"
 
 #include "Table.hpp"
+#include "Compiler.hpp"
+#include "Entity.hpp"
 
 #undef _NDEBUG
 #include <cassert>
@@ -32,6 +34,51 @@ int main()
     Entity row2[2] = { e1, e1 };
     r2->Add(row2);
     assert(r2->Count() == 1);
+
+    {
+        Compilation c;
+        bool bound;
+        int slot = c.AddVariable("x", bound);
+        assert(slot==0);
+        assert(!bound);
+        slot = c.AddVariable("y", bound);
+        assert(slot == 1);
+        assert(!bound);
+
+        slot = c.AddVariable("x", bound);
+        assert(slot == 0);
+        assert(bound);
+
+        slot = c.AddVariable("y", bound);
+        assert(slot == 1);
+        assert(bound);
+    }
+
+    {
+        Compilation c;
+        int slot;
+        bool bound;
+        slot = c.AddValue(Entity(EntityType::Integer, 1));
+
+        // Let's create some branches
+        c.AddVariable("x", bound);
+        
+        int branch1 = c.CreateBranch();
+        slot = c.AddVariable("y", bound);
+        assert(slot==2);
+        assert(!bound);
+
+        c.Branch(branch1);
+        slot = c.AddVariable("z", bound);
+        assert(slot==3);
+        assert(!bound);
+
+        // Slots in all branches are the same
+        // But, the binding information is different.
+        slot = c.AddVariable("y", bound);
+        assert(slot==2);
+        assert(!bound);
+    }
 
     std::cout << "Tests passed\n";
 }

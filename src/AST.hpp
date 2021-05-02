@@ -196,6 +196,8 @@ namespace AST
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
         void SetNext(Clause&) override;
         void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
+        
+    private:
         std::unique_ptr<Clause> clause;
     };
 

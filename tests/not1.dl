@@ -1,0 +1,3 @@
+f 1.
+
+print "Test passed" if f 1 and not f 2.

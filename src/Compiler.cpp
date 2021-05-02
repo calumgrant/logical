@@ -187,10 +187,12 @@ Compilation::~Compilation()
 int Compilation::AddVariable(const std::string &name, bool &alreadybound)
 {
     auto i = variables.find(name);
+    auto j = boundVariables2.find(name);
     
-    alreadybound = i != variables.end();
+    bool alreadySeen = i != variables.end();
+    alreadybound = j != boundVariables2.end();
 
-    if( alreadybound )
+    if( alreadySeen )
     {
         return i->second;
     }
@@ -198,7 +200,26 @@ int Compilation::AddVariable(const std::string &name, bool &alreadybound)
     {
         auto size = row.size();
         row.push_back(Entity());
-        return variables[name] = size;
+        variables[name] = size;
+        boundVariables2.insert(name);
+        boundVariables.push_back(name);
+
+        return size;
+    }
+}
+
+int Compilation::CreateBranch()
+{
+    return boundVariables.size();
+}
+
+void Compilation::Branch(int branch)
+{
+    while(boundVariables.size() > branch)
+    {
+        auto name = std::move(boundVariables.back());
+        boundVariables.pop_back();
+        boundVariables2.erase(name);
     }
 }
 
@@ -218,17 +239,58 @@ int Compilation::AddValue(const Entity &e)
 
 std::shared_ptr<Evaluation> AST::Or::Compile(Database &db, Compilation & compilation)
 {
-    // This is broken - FIXME
-    Compilation c2(compilation);
+    int branch = compilation.CreateBranch();
     auto l = lhs->Compile(db, compilation);
-    auto r = rhs->Compile(db, c2);
+    compilation.Branch(branch);
+    auto r = rhs->Compile(db, compilation);
 
     return std::make_shared<OrEvaluation>(l, r);
 }
 
+class NotHandler : public AST::Clause
+{
+public:
+    NotHandler(Clause & next)
+    {
+    }
+    
+    void SetNext(Clause&) override
+    {
+        
+    }
+
+    virtual std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override
+    {
+        return std::make_shared<NoneEvaluation>();
+    }
+    
+    std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override
+    {
+        return std::make_shared<NoneEvaluation>();
+    }
+    
+    void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override
+    {
+    }
+    
+    void Visit(AST::Visitor&) const override {}
+    
+    void AssertFacts(Database&) const override
+    {
+    }
+};
+
 std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compilation)
 {
-    return std::make_shared<NoneEvaluation>();
+    int branch = compilation.CreateBranch();
+    
+    // Fixme this is all wrong
+    NotHandler handler(*next);
+    clause->SetNext(handler);
+    clause->Compile(db, compilation);
+    compilation.Branch(branch);
+    
+    return clause->Compile(db, compilation);
 }
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Compilation &c)
