@@ -37,9 +37,10 @@ Relation::~Relation()
 {
 }
 
-Database::Database() : verbose(false)
+Database::Database() : verbose(false), userError(false)
 {
-    unaryRelations["print"] = std::make_shared<PrintRelation>(*this);
+    unaryRelations["print"] = std::make_shared<PrintRelation>(std::cout, *this);
+    unaryRelations["error"] = std::make_shared<ErrorRelation>(*this);
 }
 
 Database::~Database()
@@ -155,4 +156,14 @@ void Database::SetVerbose(bool v)
 bool Database::Explain() const
 {
     return verbose;
+}
+
+bool Database::UserErrorReported() const
+{
+    return userError;
+}
+
+void Database::ReportUserError()
+{
+    userError = true;
 }

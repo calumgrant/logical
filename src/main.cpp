@@ -43,6 +43,9 @@ int main(int argc, char**argv)
             return 128;
         }
     }
+    
+    if(db.UserErrorReported())
+        return 1;
 
     return 0;
 }

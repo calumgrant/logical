@@ -69,6 +69,10 @@ public:
     // True if we want explanations
     void SetVerbose(bool value=true);
     bool Explain() const;
+
+    void ReportUserError();
+    bool UserErrorReported() const;
+
 private:
     std::unordered_map< std::string, std::shared_ptr<Relation> > unaryRelations;
     std::unordered_map< std::string, std::shared_ptr<Relation> > binaryRelations;
@@ -77,4 +81,5 @@ private:
     StringTable strings, atstrings;
     
     bool verbose;
+    bool userError;
 };

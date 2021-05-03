@@ -33,6 +33,3 @@ error X if
     horse X and not expected-horse X
     or
     expected-horse X and not horse X.
-
-if error X then print X.
-if not error _ then print "Test passed".

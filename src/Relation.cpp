@@ -29,14 +29,15 @@ int BinaryTable::Count()
     return values.size();
 }
 
-PrintRelation::PrintRelation(Database &db) : Predicate("print"), database(db)
+PrintRelation::PrintRelation(std::ostream & output, Database &db) :
+    Predicate("print"), output(output), database(db)
 {
 }
 
 void PrintRelation::Add(const Entity * row)
 {
-    database.Print(row[0], std::cout);
-    std::cout << std::endl;
+    database.Print(row[0], output);
+    output << std::endl;
 }
 
 void PrintRelation::AddRule(const std::shared_ptr<Evaluation> & eval)
@@ -48,6 +49,16 @@ void PrintRelation::AddRule(const std::shared_ptr<Evaluation> & eval)
 int PrintRelation::Count()
 {
     return 0;
+}
+
+ErrorRelation::ErrorRelation(Database &db) : PrintRelation(std::cout, db)
+{
+}
+
+void ErrorRelation::Add(const Entity * row)
+{
+    PrintRelation::Add(row);
+    database.ReportUserError();
 }
 
 int TableX::Count()

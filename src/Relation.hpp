@@ -69,17 +69,24 @@ private:
     std::shared_ptr<Relation> index;
 };
 
-
 class PrintRelation : public Predicate
 {
 public:
-    PrintRelation(Database&db);
+    PrintRelation(std::ostream & output, Database&db);
     void Add(const Entity *row) override;
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     int Count() override;
     void Query(Entity *row, int columns, Visitor&v) override;
-private:
+protected:
+    std::ostream & output;
     Database &database;
+};
+
+class ErrorRelation : public PrintRelation
+{
+public:
+    ErrorRelation(Database&db);
+    void Add(const Entity *row) override;
 };
 
 struct PairHash
