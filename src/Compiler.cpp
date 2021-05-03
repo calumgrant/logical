@@ -82,7 +82,9 @@ void AST::Rule::Compile(Database &db)
     evaluation = std::make_shared<RuleEvaluation>(std::move(compilation.row), evaluation);
     
     if(db.Explain())
+    {
         evaluation->Explain(db, std::cout, 0);
+    }
     
     lhs->AddRule(db, evaluation);
 }
@@ -378,7 +380,7 @@ std::shared_ptr<Evaluation> AST::EntityIsPredicate::CompileLhs(Database &db, Com
 
 std::shared_ptr<Evaluation> AST::And::CompileLhs(Database &db, Compilation &c)
 {
-    return std::make_shared<NoneEvaluation>();
+    return std::make_shared<OrEvaluation>(lhs->CompileLhs(db, c), rhs->CompileLhs(db, c));
 }
 
 std::shared_ptr<Evaluation> AST::Or::CompileLhs(Database &db, Compilation &c)
