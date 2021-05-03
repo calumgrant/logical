@@ -27,7 +27,7 @@
     AST::Rule * rule;
 }
 
-%type<clause> clause andclause orclause notclause allclause datalog_predicate baseclause datalog_clause datalog_base_clause datalog_and_clause datalog_unary_clause
+%type<clause> clause queryclause querybaseclause andclause orclause notclause allclause datalog_predicate baseclause datalog_clause datalog_base_clause datalog_and_clause datalog_unary_clause
 %type<entities> entitylist
 %type<unarypredicatelist> unarypredicatelist
 %type<entity> entity arithmetic_entity value variable baseentity sumentity plusentity mulentity unaryentity
@@ -163,6 +163,10 @@ datalog_clause:
 
 query:
     tok_find queryclause tok_dot
+    {
+        std::unique_ptr<AST::Clause> query($2);
+        query->Find(db);
+    }
 |   tok_find predicate tok_dot
     {
         std::unique_ptr<AST::Predicate> predicate($2);
@@ -174,12 +178,12 @@ query:
 
 // Different syntax to distinguish them from variable lists A, B, C
 querybaseclause:
-    unarypredicatelist entity
-|   unarypredicatelist entity has_a binarypredicate entity
-|   unarypredicatelist entity has_a binarypredicate entity attributes
-|   unarypredicatelist entity attributes
-|   entity has_a binarypredicate entity
-|   entity has_a binarypredicate entity attributes
+    unarypredicatelist entity { $$ = new AST::NotImplementedClause($1,$2); }
+|   unarypredicatelist entity has_a binarypredicate entity { $$ = new AST::NotImplementedClause($1,$2); }
+|   unarypredicatelist entity has_a binarypredicate entity attributes { $$ = new AST::NotImplementedClause($1,$2); }
+|   unarypredicatelist entity attributes { $$ = new AST::NotImplementedClause($1,$2); }
+|   entity has_a binarypredicate entity { $$ = new AST::NotImplementedClause($1); }
+|   entity has_a binarypredicate entity attributes { $$ = new AST::NotImplementedClause($1); }
 ;
 
 queryclause:

@@ -52,6 +52,9 @@ namespace AST
         virtual std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation)=0;
         virtual std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation)=0;
         virtual void AddRule(Database &db, const std::shared_ptr<Evaluation>&)=0;
+
+        // ?? const
+        void Find(Database &db);
     };
 
     class NotImplementedClause : public Clause
