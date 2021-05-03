@@ -3,8 +3,6 @@
 
 %code requires {
     #include <AST.hpp>
-
-    enum class ComparatorType { lt, lteq, gt, gteq, eq, neq };
 }
 
 %locations
@@ -217,7 +215,10 @@ baseclause:
     entity is_a unarypredicatelist { $$ = new AST::EntityIs($1, $3); }
 |   entity is_a value { $$ = new AST::NotImplementedClause($1, $3); }
 |   unarypredicatelist entity is_a unarypredicate { $$ = new AST::EntityIsPredicate($2, $1, $4); }
-|   arithmetic_entity comparator arithmetic_entity { $$ = new AST::NotImplementedClause($1, $3); }
+|   arithmetic_entity comparator arithmetic_entity 
+    {
+        $$ = new AST::Comparator($1, $2, $3);
+    }
 |   unarypredicatelist entity { $$ = new AST::EntityIs($2, $1); }
 |   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr, nullptr)); }
 |   entity tok_comma binarypredicate

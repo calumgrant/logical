@@ -148,3 +148,24 @@ private:
     std::shared_ptr<Evaluation> notBody, next;
 };
 
+class EqualsBB : public Evaluation
+{
+public:
+    EqualsBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    int slot1, slot2;
+    std::shared_ptr<Evaluation> next;
+};
+
+class EqualsBF : public Evaluation
+{
+public:
+    EqualsBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    int slot1, slot2;
+    std::shared_ptr<Evaluation> next;
+};

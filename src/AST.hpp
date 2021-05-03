@@ -6,6 +6,8 @@ class Entity;
 class Compilation;
 class Evaluation;
 
+enum class ComparatorType { lt, lteq, gt, gteq, eq, neq };
+
 namespace AST
 {
     class Variable;
@@ -68,6 +70,7 @@ namespace AST
     public:
         virtual const Variable * IsVariable() const =0;
         virtual const Value * IsValue() const =0;
+        virtual int CompileEntity(Database & db, Compilation &c, bool & bound) const =0;
     };
 
     class Variable : public Entity
@@ -84,6 +87,7 @@ namespace AST
         NamedVariable(const char * name);
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
+        int CompileEntity(Database & db, Compilation &c, bool & bound) const override;
 
         const std::string name;
     };
@@ -92,6 +96,7 @@ namespace AST
     {
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
+        int CompileEntity(Database & db, Compilation &c, bool & bound) const override;
     };
 
     class Value : public Entity
@@ -100,6 +105,7 @@ namespace AST
         const Variable * IsVariable() const override;
         const Value * IsValue() const override;
         virtual ::Entity MakeEntity(Database &db) const =0;
+        int CompileEntity(Database & db, Compilation &c, bool & bound) const override;
     };
 
     class AtString : public Value
@@ -158,6 +164,7 @@ namespace AST
         const Variable * IsVariable() const override;
         const Value * IsValue() const override;
         void Visit(Visitor&) const override;
+        int CompileEntity(Database & db, Compilation &c, bool & bound) const override;
     };
 
     class And : public Clause
@@ -199,6 +206,20 @@ namespace AST
         
     private:
         std::unique_ptr<Clause> clause;
+    };
+
+    class Comparator : public Clause
+    {
+    public:
+        Comparator(Entity * lhs, ComparatorType cmp, Entity * rhs);
+        void AssertFacts(Database &db) const override;
+        void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
+        std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
+    private:
+        std::unique_ptr<Entity> lhs, rhs;
+        ComparatorType type;
     };
 
     class Predicate : public Node

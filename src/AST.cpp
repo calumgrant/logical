@@ -484,3 +484,18 @@ void AST::Not::SetNext(Clause &c)
     next = &c;
     clause->SetNext(*this);
 }
+
+AST::Comparator::Comparator(Entity * lhs, ComparatorType type, Entity * rhs) : lhs(lhs), type(type), rhs(rhs)
+{
+}
+
+void AST::Comparator::AssertFacts(Database &db) const
+{
+    db.InvalidLhs();
+}
+
+void AST::Comparator::Visit(Visitor&visitor) const
+{
+    lhs->Visit(visitor);
+    rhs->Visit(visitor);
+}

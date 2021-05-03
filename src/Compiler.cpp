@@ -444,3 +444,67 @@ void AST::EntityIs::AddRule(Database &db, const std::shared_ptr<Evaluation> & ru
             db.GetUnaryRelation(i->name)->AddRule(rule);
     }
 }
+
+std::shared_ptr<Evaluation> AST::Comparator::Compile(Database &db, Compilation & compilation)
+{
+    if(type == ComparatorType::eq)
+    {
+        bool bound1, bound2;
+        int slot1 = lhs->CompileEntity(db, compilation, bound1);
+        int slot2 = rhs->CompileEntity(db, compilation, bound2);
+        
+        if(!bound1 && !bound2)
+        {
+            db.UnboundError("="); // !! Better error message
+            return std::make_shared<NoneEvaluation>();
+        }
+        
+        auto nextEval = next->Compile(db, compilation);
+        
+        if(bound1 && bound2)
+            return std::make_shared<EqualsBB>(slot1, slot2, nextEval);
+        if(bound1 && !bound2)
+            return std::make_shared<EqualsBF>(slot1, slot2, nextEval);
+        if(bound2 && !bound1)
+            return std::make_shared<EqualsBF>(slot2, slot1, nextEval);
+    }
+    
+    // !! Not implemented error
+    return std::make_shared<NoneEvaluation>();
+}
+
+std::shared_ptr<Evaluation> AST::Comparator::CompileLhs(Database &db, Compilation &compilation)
+{
+    db.InvalidLhs();
+    return std::make_shared<NoneEvaluation>();
+}
+
+// void SetNext(Clause&) override;
+void AST::Comparator::AddRule(Database &db, const std::shared_ptr<Evaluation>&)
+{
+    db.InvalidLhs();
+}
+
+int AST::NamedVariable::CompileEntity(Database &db, Compilation &c, bool &bound) const
+{
+    return c.AddVariable(name, bound);
+}
+
+int AST::UnnamedVariable::CompileEntity(Database &db, Compilation &c, bool &bound) const
+{
+    bound = false;
+    return c.AddUnnamedVariable();
+}
+
+int AST::NotImplementedEntity::CompileEntity(Database &db, Compilation &c, bool &bound) const
+{
+    bound = false;
+    return 0;
+}
+
+int AST::Value::CompileEntity(Database &db, Compilation &c, bool &bound) const
+{
+    bound = true;
+    return c.AddValue(MakeEntity(db));
+}
+

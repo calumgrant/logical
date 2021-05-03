@@ -47,7 +47,7 @@ public:
     void UnboundError(const std::string &name);
 
     void NotImplementedError(const SourceLocation&);
-
+    
     std::shared_ptr<Relation> GetUnaryRelation(const std::string &name);
     std::shared_ptr<Relation> GetBinaryRelation(const std::string &name);
     std::shared_ptr<Relation> GetRelation(const std::string &name, int arity);

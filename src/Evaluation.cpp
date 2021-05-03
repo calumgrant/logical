@@ -180,3 +180,39 @@ void NotEvaluation::Explain(Database &db, std::ostream & os, int indent) const
     os << "Else ->\n";
     next->Explain(db, os, indent+4);
 }
+
+EqualsBB::EqualsBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
+    slot1(slot1), slot2(slot2), next(next)
+{
+}
+
+void EqualsBB::Evaluate(Entity *row)
+{
+    if(row[slot1] == row[slot2])
+        next->Evaluate(row);
+}
+
+void EqualsBB::Explain(Database & db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Test _" << slot1 << " == _" << slot2 << " ->\n";
+    next->Explain(db, os, indent+4);
+}
+
+EqualsBF::EqualsBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
+    slot1(slot1), slot2(slot2), next(next)
+{
+}
+
+void EqualsBF::Evaluate(Entity *row)
+{
+    row[slot2] = row[slot1];
+    next->Evaluate(row);
+}
+
+void EqualsBF::Explain(Database & db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Assign _" << slot2 << " := _" << slot1 << " ->\n";
+    next->Explain(db, os, indent+4);
+}
