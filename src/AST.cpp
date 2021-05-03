@@ -499,7 +499,3 @@ void AST::Comparator::Visit(Visitor&visitor) const
     lhs->Visit(visitor);
     rhs->Visit(visitor);
 }
-
-void AST::Clause::Find(Database &db)
-{
-}

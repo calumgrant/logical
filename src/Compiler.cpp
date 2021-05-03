@@ -67,11 +67,6 @@ private:
 
 void AST::Rule::Compile(Database &db)
 {
-    int locals_size=0;
-    std::unordered_map<std::string, int> variables;
-
-    std::vector<Entity> locals;
-
     Compilation compilation;
     
     TableWriterClause writer(*lhs);
@@ -504,3 +499,62 @@ int AST::Value::CompileEntity(Database &db, Compilation &c, bool &bound) const
     return c.AddValue(MakeEntity(db));
 }
 
+class ResultsPrinterEval : public Evaluation
+{
+public:
+    ResultsPrinterEval(Database & db, int rs) : database(db), rowSize(rs) { }
+    
+    void Evaluate(Entity * row)
+    {
+        for(int i=0; i<rowSize; ++i)
+            database.PrintQuoted(row[i], std::cout);
+        std::cout << std::endl;
+    }
+    
+    void Explain(Database &db, std::ostream &os, int indent) const override
+    {
+        Indent(os, indent);
+        os << "Print row\n";
+    }
+    
+private:
+    Database & database;
+    const int rowSize;
+};
+
+class ResultsPrinter : public AST::Clause
+{
+public:
+    ResultsPrinter(Database &db) : database(db)
+    {
+    }
+    
+    std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override
+    {
+        return std::make_shared<ResultsPrinterEval>(db, compilation.row.size());
+    }
+    
+    std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override
+    {
+        return std::make_shared<NoneEvaluation>();
+    }
+    
+    void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override {}
+    
+    void Visit(AST::Visitor&) const override { }
+    
+    void AssertFacts(Database &db) const override {}
+
+private:
+    Database & database;
+};
+
+void AST::Clause::Find(Database &db)
+{
+    Compilation c;
+    ResultsPrinter p(db);
+    SetNext(p);
+    auto eval = Compile(db, c);
+    
+    eval->Evaluate(&c.row[0]);
+}
