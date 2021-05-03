@@ -250,7 +250,9 @@ std::shared_ptr<Evaluation> AST::Or::Compile(Database &db, Compilation & compila
 class NotHandler : public AST::Clause
 {
 public:
-    NotHandler(Clause & next)
+    std::shared_ptr<NotTerminator> terminator;
+    
+    explicit NotHandler(const std::shared_ptr<NotTerminator> & terminator) : terminator(terminator)
     {
     }
     
@@ -258,12 +260,12 @@ public:
     {
         
     }
-
+        
     virtual std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override
     {
-        return std::make_shared<NoneEvaluation>();
+        return terminator;
     }
-    
+        
     std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override
     {
         return std::make_shared<NoneEvaluation>();
@@ -283,14 +285,18 @@ public:
 std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compilation)
 {
     int branch = compilation.CreateBranch();
+
+    auto terminator = std::make_shared<NotTerminator>();
     
-    // Fixme this is all wrong
-    NotHandler handler(*next);
-    clause->SetNext(handler);
-    clause->Compile(db, compilation);
     compilation.Branch(branch);
-    
-    return clause->Compile(db, compilation);
+    auto nextEval = next->Compile(db, compilation);
+    compilation.Branch(branch);
+
+    NotHandler handler(terminator);
+    clause->SetNext(handler);
+    auto bodyEval = clause->Compile(db, compilation);
+
+    return std::make_shared<NotEvaluation>(terminator, bodyEval, nextEval);
 }
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Compilation &c)

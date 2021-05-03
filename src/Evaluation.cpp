@@ -148,3 +148,32 @@ void EvaluateF::Explain(Database &db, std::ostream &os, int indent) const
     os << "Scan " << r->Name() << " into _" << slot << " ->\n";
     next->Explain(db, os, indent+4);
 }
+
+void NotTerminator::Evaluate(Entity * row)
+{
+    resultFound = true;
+}
+
+void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Fail next branch\n";
+}
+
+NotEvaluation::NotEvaluation(const std::shared_ptr<NotTerminator> & terminator, const std::shared_ptr<Evaluation> &notBody, const std::shared_ptr<Evaluation> & next) : terminator(terminator), notBody(notBody), next(next)
+{
+}
+
+void NotEvaluation::Evaluate(Entity * row)
+{
+    terminator->resultFound = false;
+    notBody->Evaluate(row);
+    if( !terminator->resultFound )
+        next->Evaluate(row);
+}
+
+void NotEvaluation::Explain(Database &db, std::ostream & os, int indent) const
+{
+    notBody->Explain(db, os, indent);
+    next->Explain(db, os, indent);
+}
