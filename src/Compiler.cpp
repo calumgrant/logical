@@ -157,17 +157,13 @@ std::shared_ptr<Evaluation> AST::EntityIs::Compile(Database &db, Compilation &co
     }
     else if(auto l = dynamic_cast<AST::UnaryPredicateList*>(&*list))
     {
-        for(auto i = l->list.rbegin(); i!=l->list.rend(); ++i)
+        for(int i = l->list.size()-1; i>=0; --i)
         {
-            auto relation = db.GetUnaryRelation((*i)->name);
-            if(bound)
+            auto relation = db.GetUnaryRelation(l->list[i]->name);
+            if(i>0 || bound)
                 eval = std::make_shared<EvaluateB>(relation, slot, eval);
             else
-            {
                 eval = std::make_shared<EvaluateF>(relation, slot, eval);
-                bound = true;
-            }
-
         }
     }
     else

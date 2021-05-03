@@ -1,0 +1,38 @@
+large mouse "Mickey".
+small mouse "Mini".
+large dog "Pluto".
+
+yellow house X if mouse X.
+
+horse X if large mouse X.
+
+expected-large "Mickey".
+expected-large "Pluto".
+expected-mouse "Mickey".
+expected-mouse "Mini".
+expected-yellow "Mickey".
+expected-yellow "Mini".
+expected-horse "Mickey".
+
+error X if 
+    large X and not expected-large X
+    or
+    expected-large X and not large X.
+
+error X if 
+    mouse X and not expected-mouse X
+    or
+    expected-mouse X and not mouse X.
+
+error X if 
+    yellow X and not expected-yellow X
+    or
+    expected-yellow X and not yellow X.
+
+error X if 
+    horse X and not expected-horse X
+    or
+    expected-horse X and not horse X.
+
+if error X then print X.
+if not error _ then print "Test passed".
