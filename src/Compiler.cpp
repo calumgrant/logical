@@ -196,6 +196,11 @@ int Compilation::AddVariable(const std::string &name, bool &alreadybound)
 
     if( alreadySeen )
     {
+        if(!alreadybound)
+        {
+            boundVariables2.insert(name);
+            boundVariables.push_back(name);
+        }
         return i->second;
     }
     else

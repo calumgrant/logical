@@ -205,7 +205,7 @@ fact:
 rule:
     tok_if clause tok_then clause tok_dot
     {
-        $$ = new AST::Rule($2,$4);
+        $$ = new AST::Rule($4,$2);
     }
 |   clause tok_if clause tok_dot
     {

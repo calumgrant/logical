@@ -157,7 +157,7 @@ void NotTerminator::Evaluate(Entity * row)
 void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Fail next branch\n";
+    os << "Fail next else\n";
 }
 
 NotEvaluation::NotEvaluation(const std::shared_ptr<NotTerminator> & terminator, const std::shared_ptr<Evaluation> &notBody, const std::shared_ptr<Evaluation> & next) : terminator(terminator), notBody(notBody), next(next)
@@ -175,5 +175,8 @@ void NotEvaluation::Evaluate(Entity * row)
 void NotEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 {
     notBody->Explain(db, os, indent);
-    next->Explain(db, os, indent);
+
+    Indent(os, indent);
+    os << "Else ->\n";
+    next->Explain(db, os, indent+4);
 }

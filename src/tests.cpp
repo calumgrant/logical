@@ -80,5 +80,22 @@ int main()
         assert(!bound);
     }
 
+    {
+        Compilation c;
+        bool bound;
+        int branch = c.CreateBranch();
+
+        int slot = c.AddVariable("X", bound);
+        assert(!bound);
+        slot = c.AddVariable("X", bound);
+        assert(bound);
+        
+        c.Branch(branch);
+        slot = c.AddVariable("X", bound);
+        assert(!bound);
+        slot = c.AddVariable("X", bound);
+        assert(bound);
+    }
+
     std::cout << "Tests passed\n";
 }

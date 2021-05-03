@@ -1,0 +1,8 @@
+f 1.
+g 2.
+h X if f X or g X.
+
+error "Missing" if not h 1 or not h 2.
+
+if error X then print X.
+if not error _ then print "Test passed.".
