@@ -7,4 +7,7 @@ find X has succ Y.
 
 X has succ2 Y if X has succ Z and Z has succ Y.
 
+test X if _ has succ2 X.
+find test.
+
 find X has succ2 Y.

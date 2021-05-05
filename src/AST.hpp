@@ -288,7 +288,7 @@ namespace AST
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
         void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
     private:
-        std::shared_ptr<Evaluation> WritePredicates(Database &db, int slot);
+        std::shared_ptr<Evaluation> WritePredicates(Database &db, Compilation &c, int slot);
 
         std::unique_ptr<Entity> entity;
         std::unique_ptr<UnaryPredicateList> predicates;

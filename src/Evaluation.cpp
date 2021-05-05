@@ -7,6 +7,11 @@ Evaluation::~Evaluation()
 {
 }
 
+NoneEvaluation::NoneEvaluation()
+{
+    // This is useful for a breakpoint
+}
+
 void NoneEvaluation::Evaluate(Entity * row)
 {
 }
@@ -33,13 +38,17 @@ void OrEvaluation::Evaluate(Entity * row)
 }
 
 RuleEvaluation::RuleEvaluation(std::vector<Entity> &&row, const std::shared_ptr<Evaluation> & eval) :
-    row(row), evaluation(eval)
+    row(row), evaluation(eval), evaluated(false)
 {
 }
 
 void RuleEvaluation::Evaluate(Entity*)
 {
-    evaluation->Evaluate(&row[0]);
+    if(!evaluated)
+    {
+        evaluated = true;
+        evaluation->Evaluate(&row[0]);
+    }
 }
 
 EvaluateB::EvaluateB(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
@@ -308,4 +317,21 @@ BinaryRelationEvaluation::BinaryRelationEvaluation(const std::shared_ptr<Relatio
     BinaryEvaluation(slot1, slot2, next),
     relation(relation)
 {
+}
+
+WriterBB::WriterBB(const std::shared_ptr<Relation> & relation, int slot1, int slot2) :
+    relation(relation), slot1(slot1), slot2(slot2)
+{
+}
+
+void WriterBB::Evaluate(Entity *row)
+{
+    Entity data[2] = { row[slot1], row[slot2] };
+    relation.lock()->Add(data);
+}
+
+void WriterBB::Explain(Database &db, std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    os << "Write (_" << slot1 << ",_" << slot2 << ") into " << relation.lock()->Name() << std::endl;
 }

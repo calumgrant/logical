@@ -102,6 +102,7 @@ private:
     
     // Local data, pre-initialised with constants
     std::vector<Entity> row;
+    bool evaluated;
 };
 
 class OrEvaluation : public Evaluation
@@ -120,6 +121,7 @@ private:
 class NoneEvaluation : public Evaluation
 {
 public:
+    NoneEvaluation();
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 };
@@ -213,10 +215,13 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
 };
 
-class WriterBB : public BinaryRelationEvaluation
+class WriterBB : public Evaluation
 {
 public:
-    WriterBB(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    WriterBB(const std::shared_ptr<Relation>&, int slot1, int slot2);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    std::weak_ptr<Relation> relation;
+    int slot1, slot2;
 };

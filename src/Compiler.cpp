@@ -301,11 +301,11 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Comp
     return std::make_shared<NoneEvaluation>();
 }
 
-std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, int slot)
+std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Compilation &c, int slot)
 {
+    std::shared_ptr<Evaluation> result;
     if(predicates)
     {
-        std::shared_ptr<Evaluation> result;
         for(auto & i : predicates->list)
         {
             auto e = std::make_shared<WriterB>(db.GetUnaryRelation(i->name), slot);
@@ -314,42 +314,44 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, int
             else
                 result = e;
         }
-        return result;
     }
     
-    return std::make_shared<NoneEvaluation>();
+    if(attributes)
+    {
+        for(auto i = &attributes; *i; i = &(*i)->listOpt)
+        {
+            bool bound;
+            int slot2 = (*i)->entityOpt->CompileEntity(db, c, bound);
+            if(bound)
+            {
+                auto e = std::make_shared<WriterBB>(db.GetUnaryRelation((*i)->predicate->name), slot, slot2);
+                if(result)
+                    result = std::make_shared<OrEvaluation>(result, e);
+                else
+                    result = e;
+            }
+            else
+                db.UnboundError("...");
+        }
+    }
+
+    if(!result) result = std::make_shared<NoneEvaluation>();
+    return result;
 }
 
 std::shared_ptr<Evaluation> AST::EntityClause::CompileLhs(Database &db, Compilation &c)
 {
-    int slot;
-    
-    if(const AST::Value *v = entity->IsValue())
+    bool bound;
+    int slot = entity->CompileEntity(db, c, bound);
+    if(bound)
     {
-        slot = c.AddValue(v->MakeEntity(db));
-        return WritePredicates(db, slot);
+        return WritePredicates(db, c, slot);
     }
-    else if(const AST::Variable *v = entity->IsVariable())
+    else
     {
-        if(const AST::NamedVariable *nv = v->IsNamedVariable())
-        {
-            bool bound;
-            slot = c.AddVariable(nv->name, bound);
-            if(bound)
-            {
-                return WritePredicates(db, slot);
-            }
-            if(!bound)
-            {
-                db.UnboundError(nv->name);
-            }
-        }
-        else
-        {
-            // Unbound variable
-            db.UnboundError("_");
-        }
+        db.UnboundError("...");
     }
+
     return std::make_shared<NoneEvaluation>();
 }
 
@@ -402,6 +404,11 @@ void AST::EntityClause::AddRule(Database &db, const std::shared_ptr<Evaluation> 
     {
         for(auto &i : predicates->list)
             db.GetUnaryRelation(i->name)->AddRule(rule);
+    }
+    
+    for(auto p = &attributes; *p; p=&(*p)->listOpt)
+    {
+        db.GetBinaryRelation((*p)->predicate->name)->AddRule(rule);
     }
 }
 
@@ -530,12 +537,35 @@ private:
     std::shared_ptr<ResultsPrinterEval> printer;
 };
 
+// !! Deleteme
+class EvaluateVisitor : public AST::Visitor
+{
+public:
+    EvaluateVisitor(Database &db) : db(db) { }
+
+    void OnUnaryPredicate(const std::string&name) override
+    {
+        db.GetUnaryRelation(name)->RunRules();
+    }
+    
+    void OnBinaryPredicate(const std::string&name) override
+    {
+        db.GetBinaryRelation(name)->RunRules();
+    }
+private:
+    Database & db;
+};
+
 void AST::Clause::Find(Database &db)
 {
     Compilation c;
     ResultsPrinter p(db);
     SetNext(p);
     auto eval = Compile(db, c);
+
+    // !! I don't think this is necessary
+    EvaluateVisitor visitor(db);
+    Visit(visitor);
     
     eval->Evaluate(&c.row[0]);
     std::cout << "Found " << p.Count() << " results\n";

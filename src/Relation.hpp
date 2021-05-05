@@ -35,6 +35,8 @@ public:
     virtual void AddRule(const std::shared_ptr<Evaluation> & rule) =0;
     
     virtual const std::string & Name() const =0;
+    
+    virtual void RunRules() =0;
 };
 
 class Predicate : public Relation
@@ -47,7 +49,7 @@ public:
     void Evaluate();
     
     // Run rules if not already run
-    void RunRules();
+    void RunRules() override;
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     void MakeDirty();
     const std::string & Name() const override;

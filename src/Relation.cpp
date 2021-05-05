@@ -112,6 +112,7 @@ void BinaryTable::Query(Entity * row, int bound, Visitor&v)
                 v.OnRow(data);
             }
         default:
+            std::cout << "TODO: Implement the join\n";
             // Not implemented yet
             break;
     }
