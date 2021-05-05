@@ -89,14 +89,32 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compila
     return std::make_shared<NoneEvaluation>();
 }
 
-std::shared_ptr<Evaluation> AST::EntityIsPredicate::Compile(Database &db, Compilation &c)
+std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilation &c, int slot, bool alreadyBound, AST::Clause * next)
 {
-    return std::make_shared<NoneEvaluation>();
-}
-
-std::shared_ptr<Evaluation> AST::EntityHasAttributes::Compile(Database &db, Compilation &c)
-{
-    return std::make_shared<NoneEvaluation>();
+    bool bound = false;
+    int slot2 = entityOpt ? entityOpt->CompileEntity(db, c, bound) : c.AddUnnamedVariable();
+    
+    auto tail = listOpt ? listOpt->Compile(db, c, slot, true, next) : next->Compile(db, c);
+    
+    auto relation = db.GetBinaryRelation(predicate->name);
+    
+    if(alreadyBound && bound)
+    {
+        return std::make_shared<EvaluateBB>(relation, slot, slot2, tail);
+    }
+    else if(alreadyBound && !bound)
+    {
+        return std::make_shared<EvaluateBF>(relation, slot, slot2, tail);
+    }
+    else if(!alreadyBound && bound)
+    {
+        return std::make_shared<EvaluateFB>(relation, slot, slot2, tail);
+    }
+    else
+    {
+        return std::make_shared<EvaluateFF>(relation, slot, slot2, tail);
+    }
+        
 }
 
 std::shared_ptr<Evaluation> AST::NotImplementedClause::Compile(Database &db, Compilation &c)
@@ -109,7 +127,7 @@ std::shared_ptr<Evaluation> AST::And::Compile(Database &db, Compilation &c)
     return lhs->Compile(db, c);
 }
 
-std::shared_ptr<Evaluation> AST::EntityIs::Compile(Database &db, Compilation &compilation)
+std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation &compilation)
 {
     /*
         Two cases:
@@ -117,53 +135,34 @@ std::shared_ptr<Evaluation> AST::EntityIs::Compile(Database &db, Compilation &co
         2) It's unbound, by a named or an unnamed variable
     */
     bool bound = false;
-    int slot = 0;
-
-    if(const AST::Variable *v = entity->IsVariable())
-    {
-        if(auto *named = v->IsNamedVariable())
-        {
-            slot = compilation.AddVariable(named->name, bound);
-        }
-        else
-        {
-            slot = compilation.AddUnnamedVariable();
-        }
-    }
-    else if(const Value *v = entity->IsValue())
-    {
-        slot = compilation.AddValue(v->MakeEntity(db));
-        bound = true;
-    }
+    int slot = entity->CompileEntity(db, compilation, bound);
     
     assert(next);
-    auto eval = next->Compile(db, compilation);
+    std::shared_ptr<Evaluation> eval;
 
-    if( auto e = dynamic_cast<AST::UnaryPredicate*>(&*list))
+    if(attributes)
     {
-        auto relation = db.GetUnaryRelation(e->name);
-        if(bound)
-            eval = std::make_shared<EvaluateB>(relation, slot, eval);
-        else
-        {
-            eval = std::make_shared<EvaluateF>(relation, slot, eval);
-            bound = true;
-        }
+        bool entityBound2;
+        entityBound2 = bound || predicates;
+    
+        // Compile the attributes using the information provided
+        eval = attributes->Compile(db, compilation, slot, entityBound2, next);
     }
-    else if(auto l = dynamic_cast<AST::UnaryPredicateList*>(&*list))
+    else
     {
-        for(int i = l->list.size()-1; i>=0; --i)
+        eval = next->Compile(db, compilation);
+    }
+
+    if(predicates)
+    {
+        for(int i = predicates->list.size()-1; i>=0; --i)
         {
-            auto relation = db.GetUnaryRelation(l->list[i]->name);
+            auto relation = db.GetUnaryRelation(predicates->list[i]->name);
             if(i>0 || bound)
                 eval = std::make_shared<EvaluateB>(relation, slot, eval);
             else
                 eval = std::make_shared<EvaluateF>(relation, slot, eval);
         }
-    }
-    else
-    {
-        assert(!"Invalid list type");
     }
 
     return eval;
@@ -302,16 +301,12 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Comp
     return std::make_shared<NoneEvaluation>();
 }
 
-std::shared_ptr<Evaluation> AST::EntityIs::WritePredicates(Database &db, int slot)
+std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, int slot)
 {
-    if(AST::UnaryPredicate * up = dynamic_cast<UnaryPredicate*>(&*list))
-    {
-        return std::make_shared<WriterB>(db.GetUnaryRelation(up->name), slot);
-    }
-    else if(AST::UnaryPredicateList *l = dynamic_cast<UnaryPredicateList*>(&*list))
+    if(predicates)
     {
         std::shared_ptr<Evaluation> result;
-        for(auto & i : l->list)
+        for(auto & i : predicates->list)
         {
             auto e = std::make_shared<WriterB>(db.GetUnaryRelation(i->name), slot);
             if(result)
@@ -321,15 +316,14 @@ std::shared_ptr<Evaluation> AST::EntityIs::WritePredicates(Database &db, int slo
         }
         return result;
     }
-    else
-    {
-        assert(!"Impossible");
-    }
+    
+    return std::make_shared<NoneEvaluation>();
 }
 
-std::shared_ptr<Evaluation> AST::EntityIs::CompileLhs(Database &db, Compilation &c)
+std::shared_ptr<Evaluation> AST::EntityClause::CompileLhs(Database &db, Compilation &c)
 {
     int slot;
+    
     if(const AST::Value *v = entity->IsValue())
     {
         slot = c.AddValue(v->MakeEntity(db));
@@ -359,17 +353,7 @@ std::shared_ptr<Evaluation> AST::EntityIs::CompileLhs(Database &db, Compilation 
     return std::make_shared<NoneEvaluation>();
 }
 
-std::shared_ptr<Evaluation> AST::EntityHasAttributes::CompileLhs(Database &db, Compilation &c)
-{
-    return std::make_shared<NoneEvaluation>();
-}
-
 std::shared_ptr<Evaluation> AST::NotImplementedClause::CompileLhs(Database &db, Compilation &c)
-{
-    return std::make_shared<NoneEvaluation>();
-}
-
-std::shared_ptr<Evaluation> AST::EntityIsPredicate::CompileLhs(Database &db, Compilation &c)
 {
     return std::make_shared<NoneEvaluation>();
 }
@@ -395,16 +379,6 @@ void AST::DatalogPredicate::AddRule(Database &db, const std::shared_ptr<Evaluati
     // TODO
 }
 
-void AST::EntityIsPredicate::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
-{
-    // TODO
-}
-
-void AST::EntityHasAttributes::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
-{
-    // TODO
-}
-
 void AST::NotImplementedClause::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
 {
 }
@@ -422,16 +396,11 @@ void AST::Not::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
 {
 }
 
-void AST::EntityIs::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
+void AST::EntityClause::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
 {
-    if(UnaryPredicate *u = dynamic_cast<UnaryPredicate*>(&*list))
+    if(predicates)
     {
-        db.GetUnaryRelation(u->name)->AddRule(rule);
-
-    }
-    else if(UnaryPredicateList *l = dynamic_cast<UnaryPredicateList*>(&*list))
-    {
-        for(auto &i : l->list)
+        for(auto &i : predicates->list)
             db.GetUnaryRelation(i->name)->AddRule(rule);
     }
 }
@@ -502,13 +471,19 @@ int AST::Value::CompileEntity(Database &db, Compilation &c, bool &bound) const
 class ResultsPrinterEval : public Evaluation
 {
 public:
-    ResultsPrinterEval(Database & db, int rs) : database(db), rowSize(rs) { }
+    ResultsPrinterEval(Database & db, int rs) : database(db), rowSize(rs), count() { }
     
-    void Evaluate(Entity * row)
+    
+    void Evaluate(Entity * row) override
     {
+        std::cout << "\t";
         for(int i=0; i<rowSize; ++i)
+        {
+            if(i>0) std::cout << ", ";
             database.PrintQuoted(row[i], std::cout);
+        }
         std::cout << std::endl;
+        ++count;
     }
     
     void Explain(Database &db, std::ostream &os, int indent) const override
@@ -517,9 +492,12 @@ public:
         os << "Print row\n";
     }
     
+    std::size_t Count() const { return count; }
+    
 private:
     Database & database;
     const int rowSize;
+    std::size_t count;
 };
 
 class ResultsPrinter : public AST::Clause
@@ -531,7 +509,7 @@ public:
     
     std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override
     {
-        return std::make_shared<ResultsPrinterEval>(db, compilation.row.size());
+        return printer = std::make_shared<ResultsPrinterEval>(db, compilation.row.size());
     }
     
     std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override
@@ -539,14 +517,17 @@ public:
         return std::make_shared<NoneEvaluation>();
     }
     
-    void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override {}
+    void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override { }
     
     void Visit(AST::Visitor&) const override { }
     
-    void AssertFacts(Database &db) const override {}
+    void AssertFacts(Database &db) const override { }
+    
+    std::size_t Count() const { return printer ? printer->Count() : 0; }
 
 private:
     Database & database;
+    std::shared_ptr<ResultsPrinterEval> printer;
 };
 
 void AST::Clause::Find(Database &db)
@@ -557,4 +538,5 @@ void AST::Clause::Find(Database &db)
     auto eval = Compile(db, c);
     
     eval->Evaluate(&c.row[0]);
+    std::cout << "Found " << p.Count() << " results\n";
 }

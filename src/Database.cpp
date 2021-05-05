@@ -17,7 +17,7 @@ std::shared_ptr<Relation> Database::GetUnaryRelation(const std::string & name)
 
 std::shared_ptr<Relation> Database::GetBinaryRelation(const std::string & name)
 {
-    auto i = binaryRelations.end();
+    auto i = binaryRelations.find(name);
     if (i==binaryRelations.end())
     {
         auto p = std::make_shared<BinaryTable>(name);

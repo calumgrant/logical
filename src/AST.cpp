@@ -14,13 +14,17 @@ AST::String::String(const std::string &p) : value(p)
 { 
 }
 
-AST::EntityIs::EntityIs(Entity* entity, UnaryPredicateOrList* list)
-    : entity(entity), list(list)
+AST::EntityClause::EntityClause(Entity* entity, UnaryPredicateList* list, UnaryPredicateList * isList, AttributeList * attributes)
+    : entity(entity), predicates(list), isPredicates(isList), attributes(attributes)
 {
 }
 
-AST::EntityIsPredicate::EntityIsPredicate(Entity* entity, UnaryPredicateOrList* list, UnaryPredicate *p)
-    : entity(entity), list(list), predicate(p)
+AST::EntityIs::EntityIs(Entity * entity, UnaryPredicateList * list) : EntityClause(entity, list)
+{
+}
+
+AST::EntityIsPredicate::EntityIsPredicate(Entity* entity, UnaryPredicateList* list, UnaryPredicateList *p) :
+    EntityClause(entity, list,p)
 {
 }
 
@@ -57,22 +61,19 @@ AST::AtString::AtString(const char * v) : value(v)
 {   
 }
 
-void AST::EntityIs::AssertFacts(Database &db) const
-{
-    if(const Value *v = entity->IsValue())
-        list->Assert(db, v->MakeEntity(db));
-    else
-        db.UnboundError("...");
-}
-
-void AST::EntityIsPredicate::AssertFacts(Database &db) const
+void AST::EntityClause::AssertFacts(Database &db) const
 {
     auto v = entity->IsValue();
     if(v)
     {
         ::Entity e(v->MakeEntity(db));
-        list->Assert(db, e);
-        predicate->Assert(db, e);
+        if(predicates)
+            predicates->Assert(db, e);  // Bug: These should be on the right hand side?
+        if(isPredicates)
+            isPredicates->Assert(db, e);
+        
+        if(attributes)
+            attributes->Assert(db, e);
     }
     else
         db.UnboundError("...");
@@ -150,29 +151,9 @@ AST::AttributeList::AttributeList(BinaryPredicate * predicate, Entity * entityOp
 {
 }
 
-AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateOrList * unaryPredicatesOpt, Entity * entity, AttributeList * attributes) :
-    unaryPredicatesOpt(unaryPredicatesOpt), entity(entity), attributes(attributes)
+AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateList * unaryPredicatesOpt, Entity * entity, AttributeList * attributes) :
+    EntityClause(entity, unaryPredicatesOpt, nullptr, attributes)
 {
-}
-
-void AST::EntityHasAttributes::AssertFacts(Database &db) const
-{
-    auto v = entity->IsValue();
-    if(!v)
-    {
-        db.UnboundError("...");
-        return;
-    }
-    ::Entity e = v->MakeEntity(db);
-    if(unaryPredicatesOpt)
-    {
-        unaryPredicatesOpt->Assert(db, e);
-    }
-
-    if(attributes)
-    {
-        attributes->Assert(db, e);
-    }
 }
 
 void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
@@ -300,24 +281,18 @@ void AST::Visitor::OnUnnamedVariable()
 {
 }
 
-void AST::EntityIsPredicate::Visit(Visitor&v) const
+void AST::EntityClause::Visit(Visitor&v) const
 {
-    entity->Visit(v);
-    list->Visit(v);
-    predicate->Visit(v);
+    if(entity) entity->Visit(v);
+    if(predicates) predicates->Visit(v);
+    if(isPredicates) isPredicates->Visit(v);
+    if(attributes) attributes->Visit(v);
 }
 
 void AST::UnaryPredicateList::Visit(Visitor&v) const
 {
     for(auto &i : list)
         i->Visit(v);
-}
-
-void AST::EntityHasAttributes::Visit(Visitor&v) const
-{
-    if(unaryPredicatesOpt) unaryPredicatesOpt->Visit(v);
-    entity->Visit(v);
-    attributes->Visit(v);
 }
 
 void AST::NotImplementedClause::Visit(Visitor&) const
@@ -348,12 +323,6 @@ void AST::AtString::Visit(Visitor&v) const
 void AST::Float::Visit(Visitor&v) const
 {
     v.OnFloat(value);
-}
-
-void AST::EntityIs::Visit(Visitor&v) const
-{
-    entity->Visit(v);
-    list->Visit(v);
 }
 
 void AST::Integer::Visit(Visitor&v) const

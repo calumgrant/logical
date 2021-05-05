@@ -233,17 +233,11 @@ namespace AST
         std::string name;
     };
 
-    class UnaryPredicateOrList : public Node
-    {
-    public:
-        virtual void Assert(Database &db, const ::Entity &e) const =0;
-    };
-
-    class UnaryPredicate : public UnaryPredicateOrList
+    class UnaryPredicate : public Node
     {
     public:
         UnaryPredicate(const char * name);
-        void Assert(Database &db, const ::Entity &e) const override;
+        void Assert(Database &db, const ::Entity &e) const;
         void Visit(Visitor&) const override;
         std::string name;
     };
@@ -255,44 +249,14 @@ namespace AST
         void Visit(Visitor&) const override;
     };
 
-    class UnaryPredicateList : public UnaryPredicateOrList
+    class UnaryPredicateList : public Node
     {
     public:
         UnaryPredicateList(UnaryPredicate * pred);
         void Append(UnaryPredicate * pred);
-        void Assert(Database &db, const ::Entity &e) const override;
+        void Assert(Database &db, const ::Entity &e) const;
         void Visit(Visitor&) const override;
         std::vector< std::unique_ptr<UnaryPredicate> > list;
-    };
-
-    class EntityIs : public Clause
-    {
-    public:
-        EntityIs(Entity* entity, UnaryPredicateOrList* list);
-        void AssertFacts(Database &db) const override;
-        void Visit(Visitor&) const override;
-        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
-        std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
-        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
-    private:
-        std::shared_ptr<Evaluation> WritePredicates(Database &db, int slot);
-        
-        std::unique_ptr<Entity> entity;
-        std::unique_ptr<UnaryPredicateOrList> list;
-    };
-
-    class EntityIsPredicate : public Clause
-    {
-    public:
-        EntityIsPredicate(Entity* entity, UnaryPredicateOrList* list, UnaryPredicate * p);
-        std::unique_ptr<Entity> entity;
-        std::unique_ptr<UnaryPredicateOrList> list;
-        std::unique_ptr<UnaryPredicate> predicate;
-        void AssertFacts(Database &db) const override;
-        void Visit(Visitor&) const override;
-        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
-        std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
-        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
     };
 
     class AttributeList : public Node
@@ -305,21 +269,50 @@ namespace AST
 
         void Assert(Database &db, const ::Entity &e) const;
         void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database & db, Compilation &c, int slot, bool alreadyBound, Clause *next);
     };
 
-    class EntityHasAttributes : public Clause
+    /*
+     Any clause of the form:
+        large mouse X
+        large mouse X is small dog
+        X has name "Snoopy", age 10
+     */
+    class EntityClause : public Clause
     {
     public:
-        EntityHasAttributes(UnaryPredicateOrList * unarypredicatesOpt, Entity*entity, AttributeList*attributes);
+        EntityClause(Entity* entity, UnaryPredicateList* predicates, UnaryPredicateList *isPredicates = nullptr, AttributeList * attributes = nullptr);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
         void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
+    private:
+        std::shared_ptr<Evaluation> WritePredicates(Database &db, int slot);
 
-        std::unique_ptr<UnaryPredicateOrList> unaryPredicatesOpt;
         std::unique_ptr<Entity> entity;
+        std::unique_ptr<UnaryPredicateList> predicates;
+        std::unique_ptr<UnaryPredicateList> isPredicates;
         std::unique_ptr<AttributeList> attributes;
+    };
+
+    class EntityIs : public EntityClause
+    {
+    public:
+        EntityIs(Entity* entity, UnaryPredicateList* list);
+    };
+
+    class EntityIsPredicate : public EntityClause
+    {
+    public:
+        EntityIsPredicate(Entity* entity, UnaryPredicateList* list, UnaryPredicateList * p);
+    };
+
+
+    class EntityHasAttributes : public EntityClause
+    {
+    public:
+        EntityHasAttributes(UnaryPredicateList * unarypredicatesOpt, Entity*entity, AttributeList*attributes);
     };
 
     class EntityList : public Node

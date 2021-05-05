@@ -96,9 +96,25 @@ void PrintRelation::Query(Entity * row, int, Visitor&)
     // Empty relation.
 }
 
-void BinaryTable::Query(Entity * row, int, Visitor&v)
+void BinaryTable::Query(Entity * row, int bound, Visitor&v)
 {
     RunRules();
+    
+    switch(bound)
+    {
+        case 0:
+            for(auto & i : values)
+            {
+                Entity data[2];
+                // TODO: Store a pair in the table to make the scan faster
+                data[0] = i.first;
+                data[1] = i.second;
+                v.OnRow(data);
+            }
+        default:
+            // Not implemented yet
+            break;
+    }
     // todo
 }
 

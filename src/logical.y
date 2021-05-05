@@ -224,7 +224,7 @@ rule:
 baseclause:
     entity is_a unarypredicatelist { $$ = new AST::EntityIs($1, $3); }
 |   entity is_a value { $$ = new AST::NotImplementedClause($1, $3); }
-|   unarypredicatelist entity is_a unarypredicate { $$ = new AST::EntityIsPredicate($2, $1, $4); }
+|   unarypredicatelist entity is_a unarypredicatelist { $$ = new AST::EntityIsPredicate($2, $1, $4); }
 |   arithmetic_entity comparator arithmetic_entity 
     {
         $$ = new AST::Comparator($1, $2, $3);

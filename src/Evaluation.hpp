@@ -148,24 +148,75 @@ private:
     std::shared_ptr<Evaluation> notBody, next;
 };
 
-class EqualsBB : public Evaluation
+class BinaryEvaluation : public Evaluation
+{
+protected:
+    BinaryEvaluation(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    int slot1, slot2;
+    std::shared_ptr<Evaluation> next;
+
+};
+
+class EqualsBB : public BinaryEvaluation
 {
 public:
     EqualsBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
-private:
-    int slot1, slot2;
-    std::shared_ptr<Evaluation> next;
 };
 
-class EqualsBF : public Evaluation
+class EqualsBF : public BinaryEvaluation
 {
 public:
     EqualsBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
-private:
-    int slot1, slot2;
-    std::shared_ptr<Evaluation> next;
+};
+
+class BinaryRelationEvaluation : public BinaryEvaluation
+{
+public:
+    BinaryRelationEvaluation(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+protected:
+    std::weak_ptr<Relation> relation;
+};
+
+class EvaluateFF : public BinaryRelationEvaluation
+{
+public:
+    EvaluateFF(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+};
+
+class EvaluateFB : public BinaryRelationEvaluation
+{
+public:
+    EvaluateFB(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+};
+
+class EvaluateBF : public BinaryRelationEvaluation
+{
+public:
+    EvaluateBF(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+};
+
+class EvaluateBB : public BinaryRelationEvaluation
+{
+public:
+    EvaluateBB(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+};
+
+class WriterBB : public BinaryRelationEvaluation
+{
+public:
+    WriterBB(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
 };

@@ -181,8 +181,13 @@ void NotEvaluation::Explain(Database &db, std::ostream & os, int indent) const
     next->Explain(db, os, indent+4);
 }
 
-EqualsBB::EqualsBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
+BinaryEvaluation::BinaryEvaluation(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
     slot1(slot1), slot2(slot2), next(next)
+{
+}
+
+EqualsBB::EqualsBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
+    BinaryEvaluation(slot1, slot2, next)
 {
 }
 
@@ -200,7 +205,7 @@ void EqualsBB::Explain(Database & db, std::ostream & os, int indent) const
 }
 
 EqualsBF::EqualsBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), next(next)
+    BinaryEvaluation(slot1, slot2, next)
 {
 }
 
@@ -215,4 +220,92 @@ void EqualsBF::Explain(Database & db, std::ostream & os, int indent) const
     Indent(os, indent);
     os << "Assign _" << slot2 << " := _" << slot1 << " ->\n";
     next->Explain(db, os, indent+4);
+}
+
+EvaluateBB::EvaluateBB(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : BinaryRelationEvaluation(relation, slot1, slot2, next)
+{
+}
+
+void EvaluateBB::Evaluate(Entity * row)
+{
+}
+
+void EvaluateBB::Explain(Database &db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Lookup (_" << slot1 << ",_" << slot2 << ") in " << relation.lock()->Name() << " ->\n";
+    next->Explain(db, os, indent+4);
+}
+
+EvaluateBF::EvaluateBF(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : BinaryRelationEvaluation(relation, slot1, slot2, next)
+{
+}
+
+void EvaluateBF::Evaluate(Entity * row)
+{
+}
+
+void EvaluateBF::Explain(Database &db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Join " << relation.lock()->Name() << " column 1 on _" << slot1 << " into _" << slot2 << " ->\n";
+    
+    next->Explain(db, os, indent+4);
+}
+
+EvaluateFB::EvaluateFB(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : BinaryRelationEvaluation(relation, slot1, slot2, next)
+{
+}
+
+void EvaluateFB::Evaluate(Entity * row)
+{
+}
+
+void EvaluateFB::Explain(Database &db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Join (out _" << slot1 << ", in _" << slot2 << ") in " << relation.lock()->Name() << " ->\n";
+    next->Explain(db, os, indent+4);
+}
+
+EvaluateFF::EvaluateFF(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : BinaryRelationEvaluation(relation, slot1, slot2, next)
+{
+}
+
+void EvaluateFF::Evaluate(Entity * row)
+{
+    class Visitor : public Relation::Visitor
+    {
+    public:
+        Visitor(Entity * row, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
+            row(row), slot1(slot1), slot2(slot2), next(next)
+        {
+        }
+        
+        void OnRow(const Entity * data) override
+        {
+            row[slot1] = data[0];
+            row[slot2] = data[1];
+            next->Evaluate(row);
+        }
+    private:
+        Entity * row;
+        int slot1, slot2;
+        std::shared_ptr<Evaluation> next;
+    } visitor(row, slot1, slot2, next);
+    
+    relation.lock()->Query(nullptr, 0, visitor);
+}
+
+void EvaluateFF::Explain(Database &db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Scan " << relation.lock()->Name() << " into (_" << slot1 << ",_" << slot2 << ") ->\n";
+    next->Explain(db, os, indent+4);
+}
+
+BinaryRelationEvaluation::BinaryRelationEvaluation(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
+    BinaryEvaluation(slot1, slot2, next),
+    relation(relation)
+{
 }
