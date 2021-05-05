@@ -1,16 +1,10 @@
 # Work plan
 
 ## Short term
-- Binary predicates
+- Binary predicates - carry on testing them.
 - `f X and g X if ...`
 - `exit`
-- Refactor `AST::EntityIs` into a common subtype `EntityClause`
-  - entityOpt `X` in `X is a mouse`
-  - unaryPredicates `large`, `mouse` in `large mouse X is ...`
-  - definedPredicates `small` and `green` in `mouse X is small, green`
-  - AttributesOpt `name Y` and `age 99` in `X has name Y, age 99`
-  - WithAttributes `mouse X with age 99, colour @blue`
-- Remove `BinaryPredicateOrList` and just use `BinaryPredicateList`
+- Fix up tests, `make tests`
 
 ## Binary predicates
 
