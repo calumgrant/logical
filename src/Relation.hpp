@@ -2,6 +2,7 @@
 
 #include "Entity.hpp"
 #include <unordered_set>
+#include <unordered_map>
 #include <vector>
 #include <memory>
 #include <string>
@@ -105,9 +106,11 @@ class BinaryTable : public Predicate
 public:
     BinaryTable(const std::string&name);
     void Add(const Entity * row) override;
-    std::unordered_set<std::pair<Entity, Entity>, PairHash> values;
     int Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
+private:
+    std::unordered_set<std::pair<Entity, Entity>, PairHash> values;
+    std::unordered_multimap<Entity, Entity, Entity::Hash> map1;
 };
 
 class TableX : public Predicate

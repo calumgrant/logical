@@ -324,7 +324,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
             int slot2 = (*i)->entityOpt->CompileEntity(db, c, bound);
             if(bound)
             {
-                auto e = std::make_shared<WriterBB>(db.GetUnaryRelation((*i)->predicate->name), slot, slot2);
+                auto e = std::make_shared<WriterBB>(db.GetBinaryRelation((*i)->predicate->name), slot, slot2);
                 if(result)
                     result = std::make_shared<OrEvaluation>(result, e);
                 else
@@ -537,35 +537,12 @@ private:
     std::shared_ptr<ResultsPrinterEval> printer;
 };
 
-// !! Deleteme
-class EvaluateVisitor : public AST::Visitor
-{
-public:
-    EvaluateVisitor(Database &db) : db(db) { }
-
-    void OnUnaryPredicate(const std::string&name) override
-    {
-        db.GetUnaryRelation(name)->RunRules();
-    }
-    
-    void OnBinaryPredicate(const std::string&name) override
-    {
-        db.GetBinaryRelation(name)->RunRules();
-    }
-private:
-    Database & db;
-};
-
 void AST::Clause::Find(Database &db)
 {
     Compilation c;
     ResultsPrinter p(db);
     SetNext(p);
     auto eval = Compile(db, c);
-
-    // !! I don't think this is necessary
-    EvaluateVisitor visitor(db);
-    Visit(visitor);
     
     eval->Evaluate(&c.row[0]);
     std::cout << "Found " << p.Count() << " results\n";

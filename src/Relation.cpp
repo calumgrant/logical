@@ -13,8 +13,16 @@ void UnaryTable::Add(const Entity *row)
 void BinaryTable::Add(const Entity * row)
 {
     MakeDirty();
+    
+    auto value = std::make_pair(row[0],row[1]);
     //std::cout << "Added (" << (int)e1.type << "," << e1.i << ") (" << (int)e2.type << "," << e2.i << ") to the table\n";
-    values.insert(std::make_pair(row[0],row[1]));
+    auto p = values.insert(value);
+    
+    if(p.second)
+    {
+        // TODO: Lazy map initialization
+        map1.insert(value);
+    }
 }
 
 int UnaryTable::Count()
@@ -111,6 +119,17 @@ void BinaryTable::Query(Entity * row, int bound, Visitor&v)
                 data[1] = i.second;
                 v.OnRow(data);
             }
+            break;
+        case 1:
+            {
+                auto range = map1.equal_range(row[0]);
+                for(auto i=range.first; i!=range.second; ++i)
+                {
+                    row[1] = i->second;
+                    v.OnRow(row);  // ??
+                }
+            }
+            break;
         default:
             std::cout << "TODO: Implement the join\n";
             // Not implemented yet
