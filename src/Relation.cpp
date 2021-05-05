@@ -22,6 +22,7 @@ void BinaryTable::Add(const Entity * row)
     {
         // TODO: Lazy map initialization
         map1.insert(value);
+        map2.insert(std::make_pair(row[1], row[0]));
     }
 }
 
@@ -126,6 +127,16 @@ void BinaryTable::Query(Entity * row, int bound, Visitor&v)
                 for(auto i=range.first; i!=range.second; ++i)
                 {
                     row[1] = i->second;
+                    v.OnRow(row);  // ??
+                }
+            }
+            break;
+        case 2:
+            {
+                auto range = map2.equal_range(row[1]);
+                for(auto i=range.first; i!=range.second; ++i)
+                {
+                    row[0] = i->second;
                     v.OnRow(row);  // ??
                 }
             }

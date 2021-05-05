@@ -109,8 +109,9 @@ public:
     int Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
 private:
+    // This representation is inefficient - fixme.
     std::unordered_set<std::pair<Entity, Entity>, PairHash> values;
-    std::unordered_multimap<Entity, Entity, Entity::Hash> map1;
+    std::unordered_multimap<Entity, Entity, Entity::Hash> map1, map2;
 };
 
 class TableX : public Predicate

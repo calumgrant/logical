@@ -309,6 +309,29 @@ EvaluateFB::EvaluateFB(const std::shared_ptr<Relation> & relation, int slot1, in
 
 void EvaluateFB::Evaluate(Entity * row)
 {
+    class Visitor : public Relation::Visitor
+    {
+    public:
+        Visitor(Entity * row, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
+            row(row), slot1(slot1), slot2(slot2), next(next)
+        {
+        }
+        
+        void OnRow(const Entity * data) override
+        {
+            row[slot1] = data[0];
+            next->Evaluate(row);
+        }
+    private:
+        Entity * row;
+        int slot1, slot2;
+        std::shared_ptr<Evaluation> next;
+    } visitor(row, slot1, slot2, next);
+    
+    Entity data[2];
+    data[1] = row[slot2];
+    
+    relation.lock()->Query(data, 2, visitor);
 }
 
 void EvaluateFB::Explain(Database &db, std::ostream & os, int indent) const
