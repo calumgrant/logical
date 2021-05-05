@@ -7,7 +7,14 @@ find X has succ Y.
 
 X has succ2 Y if X has succ Z and Z has succ Y.
 
-test X if _ has succ2 X.
-find test.
-
 find X has succ2 Y.
+
+test X if _ has succ2 X.
+test2 X if X has succ2 _.
+
+print "Passed" if 1 has succ 2.
+print "Failed 1" if not 1 has succ X.
+error "Failed 2" if not X has succ 1.
+
+find test.
+find test2.

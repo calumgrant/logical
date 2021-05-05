@@ -140,7 +140,7 @@ void Database::Find(const std::string & unaryPredicateName)
     Entity row;
     GetUnaryRelation(unaryPredicateName)->Query(&row, 0, visitor);
 
-    std::cout << "Found " << visitor.count << " rows\n";
+    std::cout << "Found " << visitor.count << " results\n";
 }
 
 void Database::InvalidLhs()

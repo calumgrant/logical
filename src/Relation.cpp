@@ -130,6 +130,12 @@ void BinaryTable::Query(Entity * row, int bound, Visitor&v)
                 }
             }
             break;
+        case 3:
+            {
+                if(values.find(std::make_pair(row[0], row[1])) != values.end())
+                    v.OnRow(row);
+            }
+            break;
         default:
             std::cout << "TODO: Implement the join\n";
             // Not implemented yet

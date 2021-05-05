@@ -237,7 +237,25 @@ EvaluateBB::EvaluateBB(const std::shared_ptr<Relation> & relation, int slot1, in
 
 void EvaluateBB::Evaluate(Entity * row)
 {
-    std::cout << "TODO: EvaluateBB::Evaluate\n";
+    class Visitor : public Relation::Visitor
+    {
+    public:
+        Visitor(const std::shared_ptr<Evaluation> & next, Entity * row) : row(row), next(next)
+        {
+        }
+        
+        void OnRow(const Entity * data) override
+        {
+            next->Evaluate(row);
+        }
+    private:
+        Entity * row;
+        std::shared_ptr<Evaluation> next;
+    } v(next, row);
+    
+    Entity data[2] = { row[slot1], row[slot2] };
+
+    relation.lock()->Query(data, 3, v);
 }
 
 void EvaluateBB::Explain(Database &db, std::ostream & os, int indent) const
