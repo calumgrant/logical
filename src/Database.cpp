@@ -167,3 +167,8 @@ void Database::ReportUserError()
 {
     userError = true;
 }
+
+Entity Database::AddStrings(int id1, int id2)
+{
+    return CreateString(GetString(id1) + GetString(id2));
+}

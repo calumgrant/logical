@@ -37,6 +37,8 @@ public:
     Entity CreateFloat(float f) { return Entity { EntityType::Float, f}; }
     Entity CreateAt(const std::string &s)  { return Entity { EntityType::AtString, atstrings.GetId(s) }; }
     Entity Create(bool b) { return Entity { EntityType::Boolean, b}; }
+    
+    Entity AddStrings(int id1, int id2);
 
     void Add(const std::string & table, const Entity &entityId);
     void Add(const std::string & table, const Entity &entityId1, const Entity &entity);

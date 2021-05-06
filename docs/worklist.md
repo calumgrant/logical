@@ -1,20 +1,5 @@
 # Work plan
 
-How to compile `A=1 and B=2 and C=A+B`.
-  The expression does not bind any variables, or it is an error.
-
-
-- Rename `CompileEntity` to `BindVariables`
-- Call `Entity::Compile` That in many cases is a noop.
-
-X=Y+1`:
-  - Bind all of the variables in execution sequence
-  - 
-
- - we need to create an evaluation
-    Calculate _2 = _1 + _0 ->
-        Assign _3 = _2
-
 ## Short term
 - `number X has successor X+1, predecessor X-1.`
 - `f X and g X if ...`

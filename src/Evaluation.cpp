@@ -586,6 +586,10 @@ void AddBBF::Evaluate(Entity *row)
         row[slot3].type = EntityType::Integer;
         row[slot3].i = row[slot1].i + row[slot2].i;
     }
+    else if(row[slot1].type == EntityType::String && row[slot2].type == EntityType::String)
+    {
+        row[slot3] = database.AddStrings(row[slot1].i,row[slot2].i);
+    }
     else
     {
         return;

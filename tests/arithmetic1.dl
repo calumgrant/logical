@@ -8,3 +8,15 @@ bar X if X = 1+2+3.
 error "bar" if not bar 6.
 
 // Test: foo 1+2.
+
+f X if X = "a" + "b".
+error "f" if not f "ab".
+
+"Calum" is a person.
+"Fred" is a person.
+"Hello" is a greeting.
+"Goodbye" is a greeting.
+
+say S if greeting G and person P and S = G + " " + P.
+
+error "say" if not (say "Goodbye Fred" and say "Goodbye Calum" and say "Hello Calum" and say "Hello Fred").
