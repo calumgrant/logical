@@ -13,6 +13,9 @@
 - Problem is negative facts like `print -2.` Try to turn it into an entity.
 - `number X has square X*X.` is not bound yet.
 - `number X has square Y if Y = X*X.` also not bound yet.
+- Tuple counts on all `Evaluate()` methods.
+- `error "negative" if not 5 has negative -5.` does not work.
+
 
 ## Binary predicates
 

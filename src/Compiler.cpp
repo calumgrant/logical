@@ -595,7 +595,7 @@ std::shared_ptr<Evaluation> AST::Entity::Compile(Database &db, const std::shared
 
 std::shared_ptr<Evaluation> AST::NegateEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
 {
-    return std::make_shared<NegateBF>(resultSlot, slot1, next);
+    return std::make_shared<NegateBF>(slot1, resultSlot, next);
 }
 
 std::shared_ptr<Evaluation> AST::AddEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
