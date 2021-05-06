@@ -3,18 +3,27 @@
 2 has succ 3, pred 1.
 3 has succ 4, pred 2.
 
+print "Expect 4 results:".
 find X has succ Y.
 
 X has succ2 Y if X has succ Z and Z has succ Y.
 
+print "Expect 3 results:".
 find X has succ2 Y.
 
 test X if _ has succ2 X.
 test2 X if X has succ2 _.
 
-print "Passed" if 1 has succ 2.
-print "Failed 1" if not 1 has succ X.
-error "Failed 2" if not X has succ 1.
+// Test the basic binding 
 
+error "Failed BB" if not 1 has succ 2.
+error "Failed BF" if not 1 has succ _.
+error "Failed FB" if not _ has succ 1.
+error "Failed FF" if not _ has succ _.
+
+error "Failed succ2" if not 1 has succ2 3.
+
+print "Expect 3 results:".
 find test.
+print "Expect 3 results:".
 find test2.

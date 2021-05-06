@@ -4,7 +4,6 @@
 - Binary predicates - carry on testing them.
 - `f X and g X if ...`
 - `exit`
-- Fix up tests, `make tests`
 
 ## Binary predicates
 
@@ -56,6 +55,7 @@ The initial release will be a simple in-memory Datalog interpreter, supporting a
  - [ ] Compilation on multiple platforms
  - [ ] Create issues for contributors to work on.
  - [ ] Imports
+ - [ ] Command line arguments: Inputs from stdin, output to file.
 
 ## Second release
 
