@@ -337,7 +337,7 @@ void EvaluateFB::Evaluate(Entity * row)
 void EvaluateFB::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Join (out _" << slot1 << ", in _" << slot2 << ") in " << relation.lock()->Name() << " ->\n";
+    os << "Join " << relation.lock()->Name() << " column 2 on _" << slot2 << " into _" << slot1 << " ->\n";
     next->Explain(db, os, indent+4);
 }
 

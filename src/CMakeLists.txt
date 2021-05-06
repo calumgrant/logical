@@ -72,6 +72,6 @@ add_test(NAME Exit1 COMMAND logical ../tests/exit1.dl)
 add_test(NAME Exit2 COMMAND logical ../tests/exit2.dl)
 
 add_test(NAME Binary1 COMMAND logical ../tests/binary1.dl)
-
+add_test(NAME Binary2 COMMAND logical ../tests/binary2.dl)
 
 add_test(NAME tutorial COMMAND logical ../samples/tutorial.dl)

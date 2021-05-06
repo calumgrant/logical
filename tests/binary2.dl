@@ -1,0 +1,16 @@
+0 has successor 1.
+1 has successor 2, predecessor 0.
+2 has successor 3, predecessor 1.
+3 has predecessor 2.
+
+error "Successor" if A has successor B and not B has predecessor A.
+error "Predecessor" if A has predecessor B and not B has successor A.
+
+error "Successor1" if A has successor B and not B has predecessor A and A has successor _ and _ has successor B.
+error "Predecessor2" if A has predecessor B and not B has successor A.
+
+red node @1 has edge-to @2.
+error "Red node" if not red node @1.
+error "Red node" if not red node _.
+error "Red" if not red @1.
+error "Node" if not node @1.
