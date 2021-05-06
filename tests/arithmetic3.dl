@@ -1,0 +1,11 @@
+
+number X has successor X+1, predecessor X-1 if 1<=X<=10.
+
+error "succ" if not number 5 has successor 6.
+error "pred" if not number 5 has predecessor 4.
+
+number2 X if number X has successor _, predecessor _.
+number3 X if X has successor _, predecessor _.
+
+// Bug this does not find results:
+// find number X has predecessor A, successor B.

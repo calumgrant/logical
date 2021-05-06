@@ -662,6 +662,32 @@ void AddBBF::Explain(Database &db, std::ostream &os, int indent) const
 
 void SubBBF::Evaluate(Entity *row)
 {
+    auto t1 = row[slot1].type;
+    auto t2 = row[slot1].type;
+    
+    if(t1 == EntityType::Integer && t2 == EntityType::Integer)
+    {
+        row[slot3].type = EntityType::Integer;
+        row[slot3].i = row[slot1].i - row[slot2].i;
+    }
+    else if(t1 == EntityType::Float && t2 == EntityType::Float)
+    {
+        row[slot3].type = EntityType::Float;
+        row[slot3].f = row[slot1].f - row[slot2].f;
+    }
+    else if(t1 == EntityType::Float && t2 == EntityType::Integer)
+    {
+        row[slot3].type = EntityType::Float;
+        row[slot3].f = row[slot1].f - row[slot2].i;
+    }
+    else if(t1 == EntityType::Integer && t2 == EntityType::Float)
+    {
+        row[slot3].type = EntityType::Float;
+        row[slot3].f = row[slot1].i - row[slot2].f;
+    }
+    else
+        return;
+    
     next->Evaluate(row);
 }
 

@@ -45,18 +45,18 @@ print "....".
 
 
 // These are equivalent. `a` and `an` are optional and can be used to aid readability.
-@fred has first-name "Fred".
-@fred has a first-name "Fred".
-@fred has an first-name "Fred".
-@fred, first-name "Fred".
-@fred has first-name "Fred", surname "Brooks", age 99.
+@fred has first_name "Fred".
+@fred has a first_name "Fred".
+@fred has an first_name "Fred".
+@fred, first_name "Fred".
+@fred has first_name "Fred", surname "Brooks", age 99.
 
 // Ternary or more relations
 person @fred has a child "Bill" with position 0, age 10.
 @fred has a child "Mary" with position 1, age 8.
 
 // Same as:
-child-position-age(@fred, "Mary", 1, 8).
+child_position_age(@fred, "Mary", 1, 8).
 
 // Rules
 circle C has diameter D if C has radius R and D = R*3.14159.

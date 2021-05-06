@@ -18,4 +18,5 @@ error "string+float" if not "b0.5" = "b"+0.5.
 // Complex chain of things
 error "chain" if not "mary123" = "mary" + 1 + 2 + 3.
 
-print 1+2.
+sdc X if 1<=A<=100 and X = "Hello " + A.
+error 123 if not sdc "Hello 10".

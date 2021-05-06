@@ -6,30 +6,30 @@ yellow house X if mouse X.
 
 horse X if large mouse X.
 
-expected-large "Mickey".
-expected-large "Pluto".
-expected-mouse "Mickey".
-expected-mouse "Mini".
-expected-yellow "Mickey".
-expected-yellow "Mini".
-expected-horse "Mickey".
+expected_large "Mickey".
+expected_large "Pluto".
+expected_mouse "Mickey".
+expected_mouse "Mini".
+expected_yellow "Mickey".
+expected_yellow "Mini".
+expected_horse "Mickey".
 
 error X if 
-    large X and not expected-large X
+    large X and not expected_large X
     or
-    expected-large X and not large X.
+    expected_large X and not large X.
 
 error X if 
-    mouse X and not expected-mouse X
+    mouse X and not expected_mouse X
     or
-    expected-mouse X and not mouse X.
+    expected_mouse X and not mouse X.
 
 error X if 
-    yellow X and not expected-yellow X
+    yellow X and not expected_yellow X
     or
-    expected-yellow X and not yellow X.
+    expected_yellow X and not yellow X.
 
 error X if 
-    horse X and not expected-horse X
+    horse X and not expected_horse X
     or
-    expected-horse X and not horse X.
+    expected_horse X and not horse X.

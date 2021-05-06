@@ -13,7 +13,7 @@ namespace @global-namespace has name "".
 class @c1, name "MyClass", parent @global-namespace.
 
 builtin numeric type @int has name "int".
-method @m1, class @c1, name "foo", return-type @int.
+method @m1, class @c1, name "foo", return_type @int.
 parameter @m1-0, position 0, method @m1, name "x", type @c1.
 parameter @m1-1 has position 1, method @m1, name "y", type @string.
 
@@ -33,16 +33,16 @@ expression statement @s1, parent @s2, position 0.
 block statement @s2, parent @m1.
 
 // Special way to make an anonymous entity.
-variable-access expression _, name "x", variable @m1-0, location @l0, parent @e1, position 0.
+variable_access expression _, name "x", variable @m1-0, location @l0, parent @e1, position 0.
 
 plus expression @e1, parent @s1.
 
-expression e is arithmetic-expression if 
+expression e is arithmetic_expression if 
     plus e or
     minus e or
     times e or
     divide e.
 
 // Source locations
-location @l0, file "/home/calum/foo.c", start-line 0, end-line 0, start-column 1, end-column 10.
+location @l0, file "/home/calum/foo.c", start_line 0, end_line 0, start_column 1, end_column 10.
 

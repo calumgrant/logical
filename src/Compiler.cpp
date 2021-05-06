@@ -4,36 +4,6 @@
 
 #include <iostream>
 
-// Deleteme?
-class VariableNumberer : public AST::Visitor
-{
-public:
-    std::unordered_map<std::string, int> variables;
-    void OnVariable(const std::string &name) override
-    {
-        variables.insert(std::make_pair(name, variables.size()));
-    }
-};
-
-class LeftHandSide : public AST::Clause
-{
-public:
-    void Visit(AST::Visitor &v) const override
-    {
-    }
-
-    void AssertFacts(Database &db) const override
-    {
-
-    }
-
-    std::shared_ptr<Relation> sink;
-
-    std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override
-    {
-        return std::make_shared<NoneEvaluation>();
-    }
-};
 
 class TableWriterClause : public AST::Clause
 {
@@ -324,7 +294,8 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
             int slot2 = (*i)->entityOpt->BindVariables(db, c, bound);
             if(bound)
             {
-                auto e = std::make_shared<WriterBB>(db.GetBinaryRelation((*i)->predicate->name), slot, slot2);
+                std::shared_ptr<Evaluation> e = std::make_shared<WriterBB>(db.GetBinaryRelation((*i)->predicate->name), slot, slot2);
+                e = (*i)->entityOpt->Compile(db, e);
                 if(result)
                     result = std::make_shared<OrEvaluation>(result, e);
                 else
