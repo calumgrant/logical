@@ -45,3 +45,4 @@ expression e is arithmetic-expression if
 
 // Source locations
 location @l0, file "/home/calum/foo.c", start-line 0, end-line 0, start-column 1, end-column 10.
+

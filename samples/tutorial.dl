@@ -38,7 +38,7 @@ large person "John".
 
 find large "John".
 
-is X person?
+// is X person?
 
 // Finds all P if P is a person and P is large
 

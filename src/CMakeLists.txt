@@ -49,7 +49,10 @@ set_target_properties(logical-tests PROPERTIES
 target_link_libraries(logiccore ${FLEX_LIBRARIES})   
 
 add_test(NAME UnitTests COMMAND logical-tests)
+
 add_test(NAME Syntax COMMAND logical ../tests/syntax.dl)
+add_test(NAME Sourcecode COMMAND logical ../tests/sourcecode.dl)
+
 add_test(NAME Rule1 COMMAND logical ../tests/rule1.dl)
 add_test(NAME Rule2 COMMAND logical ../tests/rule2.dl)
 add_test(NAME Rule3 COMMAND logical ../tests/rule3.dl)
@@ -65,3 +68,8 @@ add_test(NAME Or2 COMMAND logical ../tests/or2.dl)
 
 add_test(NAME Print1 COMMAND logical ../tests/print.dl)
 add_test(NAME Print2 COMMAND logical ../tests/print2.dl)
+
+add_test(NAME Exit1 COMMAND logical ../tests/exit.dl)
+add_test(NAME Exit-2 COMMAND logical ../tests/exit2.dl)
+
+add_test(NAME tutorial COMMAND logical ../samples/tutorial.dl)
