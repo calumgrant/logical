@@ -58,7 +58,6 @@ add_test(NAME Rule2 COMMAND logical ../tests/rule2.dl)
 add_test(NAME Rule3 COMMAND logical ../tests/rule3.dl)
 add_test(NAME Rule4 COMMAND logical ../tests/rule4.dl)
 add_test(NAME Rule5 COMMAND logical ../tests/rule5.dl)
-add_test(NAME Rule6 COMMAND logical ../tests/rule6.dl)
 add_test(NAME Binary1 COMMAND logical ../tests/binary1.dl)
 add_test(NAME Not1 COMMAND logical ../tests/not1.dl)
 add_test(NAME Not2 COMMAND logical ../tests/not2.dl)
@@ -66,10 +65,13 @@ add_test(NAME Not2 COMMAND logical ../tests/not2.dl)
 add_test(NAME Or1 COMMAND logical ../tests/or1.dl)
 add_test(NAME Or2 COMMAND logical ../tests/or2.dl)
 
-add_test(NAME Print1 COMMAND logical ../tests/print.dl)
+add_test(NAME Print1 COMMAND logical ../tests/print1.dl)
 add_test(NAME Print2 COMMAND logical ../tests/print2.dl)
 
-add_test(NAME Exit1 COMMAND logical ../tests/exit.dl)
-add_test(NAME Exit-2 COMMAND logical ../tests/exit2.dl)
+add_test(NAME Exit1 COMMAND logical ../tests/exit1.dl)
+add_test(NAME Exit2 COMMAND logical ../tests/exit2.dl)
+
+add_test(NAME Rule6 COMMAND logical ../tests/rule6.dl)
+
 
 add_test(NAME tutorial COMMAND logical ../samples/tutorial.dl)
