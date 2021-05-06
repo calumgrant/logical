@@ -92,7 +92,7 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compila
 std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilation &c, int slot, bool alreadyBound, AST::Clause * next)
 {
     bool bound = false;
-    int slot2 = entityOpt ? entityOpt->CompileEntity(db, c, bound) : c.AddUnnamedVariable();
+    int slot2 = entityOpt ? entityOpt->BindVariables(db, c, bound) : c.AddUnnamedVariable();
     
     auto tail = listOpt ? listOpt->Compile(db, c, slot, true, next) : next->Compile(db, c);
     
@@ -135,7 +135,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
         2) It's unbound, by a named or an unnamed variable
     */
     bool bound = false;
-    int slot = entity->CompileEntity(db, compilation, bound);
+    int slot = entity->BindVariables(db, compilation, bound);
     
     assert(next);
     std::shared_ptr<Evaluation> eval;
@@ -321,7 +321,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
         for(auto i = &attributes; *i; i = &(*i)->listOpt)
         {
             bool bound;
-            int slot2 = (*i)->entityOpt->CompileEntity(db, c, bound);
+            int slot2 = (*i)->entityOpt->BindVariables(db, c, bound);
             if(bound)
             {
                 auto e = std::make_shared<WriterBB>(db.GetBinaryRelation((*i)->predicate->name), slot, slot2);
@@ -342,7 +342,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
 std::shared_ptr<Evaluation> AST::EntityClause::CompileLhs(Database &db, Compilation &c)
 {
     bool bound;
-    int slot = entity->CompileEntity(db, c, bound);
+    int slot = entity->BindVariables(db, c, bound);
     if(bound)
     {
         return WritePredicates(db, c, slot);
@@ -414,30 +414,42 @@ void AST::EntityClause::AddRule(Database &db, const std::shared_ptr<Evaluation> 
 
 std::shared_ptr<Evaluation> AST::Comparator::Compile(Database &db, Compilation & compilation)
 {
+    bool bound1, bound2;
+    int slot1 = lhs->BindVariables(db, compilation, bound1);
+    int slot2 = rhs->BindVariables(db, compilation, bound2);
+
+    auto eval = next->Compile(db, compilation);
+
     if(type == ComparatorType::eq)
     {
-        bool bound1, bound2;
-        int slot1 = lhs->CompileEntity(db, compilation, bound1);
-        int slot2 = rhs->CompileEntity(db, compilation, bound2);
-        
         if(!bound1 && !bound2)
         {
             db.UnboundError("="); // !! Better error message
             return std::make_shared<NoneEvaluation>();
         }
-        
-        auto nextEval = next->Compile(db, compilation);
-        
+                
         if(bound1 && bound2)
-            return std::make_shared<EqualsBB>(slot1, slot2, nextEval);
+            eval = std::make_shared<EqualsBB>(slot1, slot2, eval);
         if(bound1 && !bound2)
-            return std::make_shared<EqualsBF>(slot1, slot2, nextEval);
+            eval = std::make_shared<EqualsBF>(slot1, slot2, eval);
         if(bound2 && !bound1)
-            return std::make_shared<EqualsBF>(slot2, slot1, nextEval);
+            eval = std::make_shared<EqualsBF>(slot2, slot1, eval);
+    }
+    else
+    {
+        if(!bound1 || !bound2)
+        {
+            db.UnboundError("="); // !! Better error message
+            eval = std::make_shared<NoneEvaluation>();
+        }
+
+        eval = std::make_shared<CompareBB>(slot1, type, slot2, eval);
     }
     
-    // !! Not implemented error
-    return std::make_shared<NoneEvaluation>();
+    eval = rhs->Compile(db, eval);
+    eval = lhs->Compile(db, eval);
+    
+    return eval;
 }
 
 std::shared_ptr<Evaluation> AST::Comparator::CompileLhs(Database &db, Compilation &compilation)
@@ -452,24 +464,24 @@ void AST::Comparator::AddRule(Database &db, const std::shared_ptr<Evaluation>&)
     db.InvalidLhs();
 }
 
-int AST::NamedVariable::CompileEntity(Database &db, Compilation &c, bool &bound) const
+int AST::NamedVariable::BindVariables(Database &db, Compilation &c, bool &bound)
 {
     return c.AddVariable(name, bound);
 }
 
-int AST::UnnamedVariable::CompileEntity(Database &db, Compilation &c, bool &bound) const
+int AST::UnnamedVariable::BindVariables(Database &db, Compilation &c, bool &bound)
 {
     bound = false;
     return c.AddUnnamedVariable();
 }
 
-int AST::NotImplementedEntity::CompileEntity(Database &db, Compilation &c, bool &bound) const
+int AST::NotImplementedEntity::BindVariables(Database &db, Compilation &c, bool &bound)
 {
     bound = false;
     return 0;
 }
 
-int AST::Value::CompileEntity(Database &db, Compilation &c, bool &bound) const
+int AST::Value::BindVariables(Database &db, Compilation &c, bool &bound)
 {
     bound = true;
     return c.AddValue(MakeEntity(db));
@@ -546,4 +558,101 @@ void AST::Clause::Find(Database &db)
     
     eval->Evaluate(&c.row[0]);
     std::cout << "Found " << p.Count() << " results\n";
+}
+
+std::shared_ptr<Evaluation> AST::Range::Compile(Database &db, Compilation & compilation)
+{
+    bool bound1, bound2, bound3;
+    int slot1 = lowerBound->BindVariables(db, compilation, bound1);
+    int slot2 = upperBound->BindVariables(db, compilation, bound2);
+    int slot3 = entity->BindVariables(db, compilation, bound3);
+
+    if(!bound1 || !bound2)
+    {
+        db.UnboundError("...");
+        return std::make_shared<NoneEvaluation>();
+    }
+
+    auto nextEval = next->Compile(db, compilation);
+
+    if(bound3)
+    {
+        return std::make_shared<RangeB>(slot1, cmp1, slot3, cmp2, slot2, nextEval);
+    }
+    else
+    {
+        return std::make_shared<RangeU>(slot1, cmp1, slot3, cmp2, slot2, nextEval);
+    }
+}
+
+std::shared_ptr<Evaluation> AST::Range::CompileLhs(Database &db, Compilation &compilation)
+{
+    db.InvalidLhs();
+    return std::make_shared<NoneEvaluation>();
+}
+
+int AST::BinaryArithmeticEntity::BindVariables(Database &db, Compilation &c, bool &bound)
+{
+    bound = true;
+    bool bound1, bound2;
+    lhsSlot = lhs->BindVariables(db, c, bound1);
+    if(!bound1) db.UnboundError("...");
+    rhsSlot = rhs->BindVariables(db, c, bound2);
+    if(!bound1) db.UnboundError("...");
+
+    resultSlot = c.AddUnnamedVariable();
+    
+    return resultSlot;
+}
+
+
+int AST::NegateEntity::BindVariables(Database & db, Compilation &c, bool & bound)
+{
+    slot1 = entity->BindVariables(db, c, bound);
+    
+    if(!bound)
+        db.UnboundError("...");
+    bound = true;
+    resultSlot = c.AddUnnamedVariable();
+    return resultSlot;
+}
+
+std::shared_ptr<Evaluation> AST::Entity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+{
+    return next;
+}
+
+std::shared_ptr<Evaluation> AST::NegateEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+{
+    return std::make_shared<NegateBF>(resultSlot, slot1, next);
+}
+
+std::shared_ptr<Evaluation> AST::AddEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+{
+    auto eval = next;
+    eval = std::make_shared<AddBBF>(db, lhsSlot, rhsSlot, resultSlot, eval);
+    eval = rhs->Compile(db, eval);
+    eval = lhs->Compile(db, eval);
+    return eval;
+}
+
+std::shared_ptr<Evaluation> AST::SubEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+{
+    return std::make_shared<SubBBF>(lhsSlot, rhsSlot, resultSlot, next);
+}
+
+std::shared_ptr<Evaluation> AST::MulEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+{
+    // TODO: Repeat a string by multiplying it.
+    return std::make_shared<MulBBF>(lhsSlot, rhsSlot, resultSlot, next);
+}
+
+std::shared_ptr<Evaluation> AST::DivEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+{
+    return std::make_shared<DivBBF>(lhsSlot, rhsSlot, resultSlot, next);
+}
+
+std::shared_ptr<Evaluation> AST::ModEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+{
+    return std::make_shared<ModBBF>(lhsSlot, rhsSlot, resultSlot, next);
 }

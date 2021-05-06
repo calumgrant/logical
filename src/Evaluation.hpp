@@ -3,6 +3,8 @@
 
 #include "Relation.hpp"
 
+enum class ComparatorType;
+
 /*
  Evaluates a rule/predicate.
  
@@ -224,4 +226,99 @@ public:
 private:
     std::weak_ptr<Relation> relation;
     int slot1, slot2;
+};
+
+class RangeB : public Evaluation
+{
+public:
+    RangeB(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    int slot1, slot2, slot3;
+    ComparatorType cmp1, cmp2;
+    std::shared_ptr<Evaluation> next;
+};
+
+class RangeU : public Evaluation
+{
+public:
+    RangeU(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    int slot1, slot2, slot3;
+    ComparatorType cmp1, cmp2;
+    std::shared_ptr<Evaluation> next;
+};
+
+class CompareBB : public BinaryEvaluation
+{
+public:
+    // We could have a different Evaluation type for each
+    // operator for a little extra speed.
+    CompareBB(int slot1, ComparatorType cmp, int slot2, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    ComparatorType cmp;
+};
+
+class NegateBF : public BinaryEvaluation
+{
+public:
+    NegateBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+};
+
+class BinaryArithmeticEvaluation : public Evaluation
+{
+protected:
+    BinaryArithmeticEvaluation(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next);
+    
+    int slot1, slot2, slot3;
+    std::shared_ptr<Evaluation> next;
+};
+
+class AddBBF : public BinaryArithmeticEvaluation
+{
+public:
+    AddBBF(Database &db, int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    Database & database;  // Needed for string addition
+};
+
+class SubBBF : public BinaryArithmeticEvaluation
+{
+public:
+    SubBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+};
+
+class MulBBF : public BinaryArithmeticEvaluation
+{
+public:
+    MulBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+};
+
+class DivBBF : public BinaryArithmeticEvaluation
+{
+public:
+    DivBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+};
+
+class ModBBF : public BinaryArithmeticEvaluation
+{
+public:
+    ModBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
 };

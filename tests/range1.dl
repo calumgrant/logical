@@ -1,0 +1,28 @@
+data X if 1<=X<=5 or 10<X<15.
+data2 X if data X and 2<=X<=12.
+
+// Create a table of size 10k.
+large X if 0<X<=100000.
+error "Large" if not large 1000 or not large 1 or not large 100000.
+error "Large 1000" if not large 1000.
+error "Large 1" if not large 1.
+error "Large 100000" if not large 100000.
+
+find data.
+find data2.
+
+// A cartesian product of size 100
+X has pair Y if 1<=X<=10 and 1<=Y<=10.
+
+error "cp" if not 1 has pair 1.
+error "cp" if not 10 has pair 10.
+
+small X if 1<=X<=10.
+
+numbers X if 1<=X<=10 or 10<=X<=20 and 12<=X<18.
+
+find small.
+find numbers.
+
+error "Failed 1" if not 1<=2<=10.
+error "Failed 2" if 1<10<2.

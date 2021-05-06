@@ -1,0 +1,10 @@
+
+foo X if Y=1 and X = Y+1.
+
+error "foo" if not foo 2.
+
+bar X if X = 1+2+3.
+
+error "bar" if not bar 6.
+
+// Test: foo 1+2.

@@ -229,6 +229,12 @@ baseclause:
     {
         $$ = new AST::Comparator($1, $2, $3);
     }
+|   arithmetic_entity comparator arithmetic_entity comparator arithmetic_entity
+    {
+        // Technically this is too broad but anyway
+        // This would allow 1>=X>=2 which we don't really want.
+        $$ = new AST::Range($1, $2, $3, $4, $5);
+    }
 |   unarypredicatelist entity { $$ = new AST::EntityIs($2, $1); }
 |   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr, nullptr)); }
 |   entity tok_comma binarypredicate
@@ -354,20 +360,20 @@ baseentity:
 
 unaryentity:
     baseentity
-|   tok_minus baseentity { $$ = new AST::NotImplementedEntity($2); }
+|   tok_minus baseentity { $$ = new AST::NegateEntity($2); }
 ;
 
 mulentity:
     unaryentity
-|   mulentity tok_times unaryentity { $$ = new AST::NotImplementedEntity($1,$3); }
-|   mulentity tok_div unaryentity { $$ = new AST::NotImplementedEntity($1,$3); }
-|   mulentity tok_mod unaryentity { $$ = new AST::NotImplementedEntity($1,$3); }
+|   mulentity tok_times unaryentity { $$ = new AST::MulEntity($1,$3); }
+|   mulentity tok_div unaryentity { $$ = new AST::DivEntity($1,$3); }
+|   mulentity tok_mod unaryentity { $$ = new AST::ModEntity($1,$3); }
 ;
 
 plusentity:
     mulentity
-|   plusentity tok_plus mulentity { $$ = new AST::NotImplementedEntity($1,$3); }
-|   plusentity tok_minus mulentity { $$ = new AST::NotImplementedEntity($1,$3); }
+|   plusentity tok_plus mulentity { $$ = new AST::AddEntity($1,$3); }
+|   plusentity tok_minus mulentity { $$ = new AST::SubEntity($1,$3); }
 ;
 
 sumentity:

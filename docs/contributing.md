@@ -15,13 +15,13 @@ make test
 
 In the build directory, run
 
-```
+```bash
 make test
 ```
 
 # Adding tests
 
-New tests are added by adding a `.dl` file to the `tests` directory, and adding an entry for the test in `CMakeLists.txt`.
+New tests are added by adding a `.dl` file to the `tests` directory, and adding an entry for the test in `src/CMakeLists.txt`.
 
 # Overall design
 
@@ -49,7 +49,7 @@ calling `next->Evaluate(row)`. `Evaluate` can call `next->Evaluate()` 0, 1 or ma
 is to call a `Writer` class that writes data into a relation. By enabling verbose output (`logical -v`), you can see
 the structure of the `Evaluation` classes, which is generated using `Evaluation::Explain()` method.
 
-There are many different `Evaluation` classes. The main ones are:
+There are many different `Evaluation` classes. The main classes are:
 
  * `EvaluateF` scans a unary predicate, and calls `next->Evaluate()` with each row in the predicate.
  * `EvaluateB` checks if a value is in a relation, and calls `next->Evaluate()` once if successful.

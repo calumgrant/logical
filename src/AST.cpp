@@ -468,3 +468,97 @@ void AST::Comparator::Visit(Visitor&visitor) const
     lhs->Visit(visitor);
     rhs->Visit(visitor);
 }
+
+AST::Range::Range(Entity * lb, ComparatorType cmp1, Entity *e, ComparatorType cmp2, Entity * ub) :
+    lowerBound(lb), cmp1(cmp1), entity(e), cmp2(cmp2), upperBound(ub)
+{
+}
+
+void AST::Range::AssertFacts(Database &db) const
+{
+    db.InvalidLhs();
+}
+
+void AST::Range::Visit(Visitor&v) const
+{
+    lowerBound->Visit(v);
+    entity->Visit(v);
+    upperBound->Visit(v);
+}
+
+void AST::Range::AddRule(Database &db, const std::shared_ptr<Evaluation>&)
+{
+    db.InvalidLhs();
+}
+
+std::ostream & operator<<(std::ostream & os, ComparatorType t)
+{
+    switch(t)
+    {
+    case ComparatorType::eq:
+        os << "=";
+        break;
+    case ComparatorType::neq:
+        os << "!=";
+        break;
+    case ComparatorType::lt:
+        os << "<";
+        break;
+    case ComparatorType::gt:
+        os << ">";
+        break;
+    case ComparatorType::lteq:
+        os << "<=";
+        break;
+    case ComparatorType::gteq:
+        os << ">=";
+        break;
+    }
+    return os;
+}
+
+AST::NegateEntity::NegateEntity(Entity * e) : entity(e)
+{
+}
+
+AST::BinaryArithmeticEntity::BinaryArithmeticEntity(Entity *l, Entity *r) : lhs(l), rhs(r)
+{
+}
+
+AST::AddEntity::AddEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
+{
+}
+
+AST::SubEntity::SubEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
+{
+}
+
+AST::MulEntity::MulEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
+{
+}
+
+AST::DivEntity::DivEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
+{
+}
+
+AST::ModEntity::ModEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
+{
+}
+
+const AST::Value * AST::BinaryArithmeticEntity::IsValue() const { return nullptr; }
+
+const AST::Variable * AST::BinaryArithmeticEntity::IsVariable() const { return nullptr; }
+
+void AST::BinaryArithmeticEntity::Visit(Visitor&v) const
+{
+    lhs->Visit(v);
+    rhs->Visit(v);
+}
+ 
+const AST::Variable * AST::NegateEntity::IsVariable() const { return nullptr; }
+const AST::Value * AST::NegateEntity::IsValue() const { return nullptr; }
+
+void AST::NegateEntity::Visit(Visitor &v) const
+{
+    entity->Visit(v);
+}

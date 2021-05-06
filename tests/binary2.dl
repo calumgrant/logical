@@ -14,3 +14,12 @@ error "Red node" if not red node @1.
 error "Red node" if not red node _.
 error "Red" if not red @1.
 error "Node" if not node @1.
+
+error "Error 1" if not red node @1 has edge-to @2.
+error "Error 2" if red node @1 has edge-to @3.
+error "Error 3" if red node @2 has edge-to @2.
+error "Error 4" if not red node @1.
+error "Error 5" if not @1 has edge-to @2.
+error "Error 6" if not red @1 has edge-to @2.
+error "Error 6" if not node @1 has edge-to @2.
+

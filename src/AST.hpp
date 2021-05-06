@@ -8,6 +8,8 @@ class Evaluation;
 
 enum class ComparatorType { lt, lteq, gt, gteq, eq, neq };
 
+std::ostream & operator<<(std::ostream &os, ComparatorType t);
+
 namespace AST
 {
     class Variable;
@@ -73,7 +75,21 @@ namespace AST
     public:
         virtual const Variable * IsVariable() const =0;
         virtual const Value * IsValue() const =0;
-        virtual int CompileEntity(Database & db, Compilation &c, bool & bound) const =0;
+
+        /*
+         Binds the variables in the entity in the compilation object.
+         Returns the variable number of the variable representing this entity.
+         Returns bound=true if the variable is already bound to a value.
+         Returns bound=false if this is the first use of the variable in this evaluation branch.
+         */
+        virtual int BindVariables(Database & db, Compilation & c, bool & bound) =0;
+        
+        /*
+            Produces an evaluation for this entity.
+            If no evaluation is required, just returns `next`
+            If evaluation is required, then the `next` node is used as the next node in the evaluation chain.
+         */
+        virtual std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const;
     };
 
     class Variable : public Entity
@@ -90,7 +106,7 @@ namespace AST
         NamedVariable(const char * name);
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
-        int CompileEntity(Database & db, Compilation &c, bool & bound) const override;
+        int BindVariables(Database & db, Compilation &c, bool & bound) override;
 
         const std::string name;
     };
@@ -99,7 +115,7 @@ namespace AST
     {
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
-        int CompileEntity(Database & db, Compilation &c, bool & bound) const override;
+        int BindVariables(Database & db, Compilation &c, bool & bound) override;
     };
 
     class Value : public Entity
@@ -108,7 +124,7 @@ namespace AST
         const Variable * IsVariable() const override;
         const Value * IsValue() const override;
         virtual ::Entity MakeEntity(Database &db) const =0;
-        int CompileEntity(Database & db, Compilation &c, bool & bound) const override;
+        int BindVariables(Database & db, Compilation &c, bool & bound) override;
     };
 
     class AtString : public Value
@@ -167,7 +183,7 @@ namespace AST
         const Variable * IsVariable() const override;
         const Value * IsValue() const override;
         void Visit(Visitor&) const override;
-        int CompileEntity(Database & db, Compilation &c, bool & bound) const override;
+        int BindVariables(Database & db, Compilation &c, bool & bound) override;
     };
 
     class And : public Clause
@@ -223,6 +239,20 @@ namespace AST
     private:
         std::unique_ptr<Entity> lhs, rhs;
         ComparatorType type;
+    };
+
+    class Range : public Clause
+    {
+    public:
+        Range(Entity * lowerBound, ComparatorType cmp1, Entity * entity, ComparatorType cmp2, Entity * upperBound);
+        void AssertFacts(Database &db) const override;
+        void Visit(Visitor&) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
+        std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
+    private:
+        std::unique_ptr<Entity> lowerBound, entity, upperBound;
+        ComparatorType cmp1, cmp2;
     };
 
     class Predicate : public Node
@@ -345,5 +375,70 @@ namespace AST
         void Compile(Database &db);
         void Visit(Visitor&) const override;
         std::unique_ptr<Clause> lhs, rhs;
+    };
+
+    class BinaryArithmeticEntity : public ArithmeticEntity
+    {
+    protected:
+        BinaryArithmeticEntity(Entity * lhs, Entity * rhs);
+        
+        const Variable * IsVariable() const override;
+        const Value * IsValue() const override;
+        int BindVariables(Database & db, Compilation &c, bool & bound) override;
+        void Visit(Visitor &v) const override;
+
+        std::unique_ptr<Entity> lhs, rhs;
+        int resultSlot, lhsSlot, rhsSlot;
+    };
+
+    class AddEntity : public BinaryArithmeticEntity
+    {
+    public:
+        AddEntity(Entity * lhs, Entity * rhs);
+        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+    };
+
+    class SubEntity : public BinaryArithmeticEntity
+    {
+    public:
+        SubEntity(Entity * lhs, Entity * rhs);
+        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+    };
+
+    class MulEntity : public BinaryArithmeticEntity
+    {
+    public:
+        MulEntity(Entity * lhs, Entity * rhs);
+        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+    };
+
+    class DivEntity : public BinaryArithmeticEntity
+    {
+    public:
+        DivEntity(Entity * lhs, Entity * rhs);
+        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+    };
+
+    class ModEntity : public BinaryArithmeticEntity
+    {
+    public:
+        ModEntity(Entity * lhs, Entity * rhs);
+        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+    };
+
+    class NegateEntity : public ArithmeticEntity
+    {
+    public:
+        NegateEntity(Entity * e);
+        
+        const Variable * IsVariable() const override;
+        const Value * IsValue() const override;
+        int BindVariables(Database & db, Compilation &c, bool & bound) override;
+        void Visit(Visitor &v) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+
+    private:
+        std::unique_ptr<Entity> entity;
+        int resultSlot, slot1;
     };
 }

@@ -1,0 +1,10 @@
+
+error "<" if not 1<2.
+
+test X if 1<=X<10 and X<=5.
+error "test 1" if test X and not 1<=X<=5.
+error "test 2" if test X and (X<1 or X>5).
+error "test 3" if (test X or X=3.14) and (X<1 or X>5).
+error "Compare 4" if 3.14>5.
+
+error "Comparators" if not (1.2 < 1.3 and 1<2 and 1<=1 and 1>=1 and 2!=3).
