@@ -3,6 +3,7 @@
 #include "AST.hpp"
 
 #include <iostream>
+#include <sstream>
 
 Evaluation::~Evaluation()
 {
@@ -581,14 +582,69 @@ ModBBF::ModBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation
 
 void AddBBF::Evaluate(Entity *row)
 {
-    if(row[slot1].type == EntityType::Integer && row[slot2].type == EntityType::Integer)
+    auto t1 = row[slot1].type;
+    auto t2 = row[slot2].type;
+    
+    if(t1 == EntityType::Integer && t2 == EntityType::Integer)
     {
         row[slot3].type = EntityType::Integer;
         row[slot3].i = row[slot1].i + row[slot2].i;
     }
-    else if(row[slot1].type == EntityType::String && row[slot2].type == EntityType::String)
+    else if(t1 == EntityType::String && t2 == EntityType::String)
     {
         row[slot3] = database.AddStrings(row[slot1].i,row[slot2].i);
+    }
+    else if(t1 == EntityType::Float && t2 == EntityType::Float)
+    {
+        row[slot3].type = EntityType::Float;
+        row[slot3].f = row[slot1].f + row[slot2].f;
+    }
+    else if(t1 == EntityType::String || t2 == EntityType::String)
+    {
+        // Convert the other to a string
+        if(t1 == EntityType::Integer)
+        {
+            std::ostringstream ss;
+            ss << row[slot1].i << database.GetString(row[slot2].i);
+            row[slot3] = database.CreateString(ss.str());
+        }
+        else if(t1 == EntityType::Float)
+        {
+            std::ostringstream ss;
+            ss << row[slot1].f << database.GetString(row[slot2].i);
+            row[slot3] = database.CreateString(ss.str());
+
+        }
+        else if(t2 == EntityType::Integer)
+        {
+            std::ostringstream ss;
+            ss << database.GetString(row[slot1].i) << row[slot2].i;
+            row[slot3] = database.CreateString(ss.str());
+        }
+        else if(t2 == EntityType::Float)
+        {
+            std::ostringstream ss;
+            ss << database.GetString(row[slot1].i) << row[slot2].f;
+            row[slot3] = database.CreateString(ss.str());
+        }
+        else
+            return;
+    }
+    else if(t1 == EntityType::Float || t2 == EntityType::Float)
+    {
+        // Convert the other to a float
+        if(t1 == EntityType::Integer)
+        {
+            row[slot3].type = EntityType::Float;
+            row[slot3].f = row[slot1].i + row[slot2].f;
+        }
+        else if(t2 == EntityType::Integer)
+        {
+            row[slot3].type = EntityType::Float;
+            row[slot3].f = row[slot1].f + row[slot2].i;
+        }
+        else
+            return;
     }
     else
     {

@@ -75,7 +75,7 @@ private:
 class PrintRelation : public Predicate
 {
 public:
-    PrintRelation(std::ostream & output, Database&db);
+    PrintRelation(std::ostream & output, Database&db, const std::string &name);
     void Add(const Entity *row) override;
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     int Count() override;

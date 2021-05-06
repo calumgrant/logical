@@ -39,7 +39,7 @@ Relation::~Relation()
 
 Database::Database() : verbose(false), userError(false)
 {
-    unaryRelations["print"] = std::make_shared<PrintRelation>(std::cout, *this);
+    unaryRelations["print"] = std::make_shared<PrintRelation>(std::cout, *this, "print");
     unaryRelations["error"] = std::make_shared<ErrorRelation>(*this);
 }
 

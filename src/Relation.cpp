@@ -38,8 +38,8 @@ int BinaryTable::Count()
     return values.size();
 }
 
-PrintRelation::PrintRelation(std::ostream & output, Database &db) :
-    Predicate("print"), output(output), database(db)
+PrintRelation::PrintRelation(std::ostream & output, Database &db, const std::string & name) :
+    Predicate(name), output(output), database(db)
 {
 }
 
@@ -60,7 +60,7 @@ int PrintRelation::Count()
     return 0;
 }
 
-ErrorRelation::ErrorRelation(Database &db) : PrintRelation(std::cout, db)
+ErrorRelation::ErrorRelation(Database &db) : PrintRelation(std::cout, db, "error")
 {
 }
 
