@@ -1,18 +1,18 @@
 # Work plan
 
 ## Short term
-- `number X has successor X+1, predecessor X-1.`
 - `f X and g X if ...`
 - `exit`
-- Comparators in general
 - Arithmetic
-  - Addition
-  - String addition
   - Other numerical operators: - * / % unary-
 - Prime number sieve
 - Count
 - Sum
 - All
+- Think about predicate-names containing `-`.
+- Problem is negative facts like `print -2.` Try to turn it into an entity.
+- `number X has square X*X.` is not bound yet.
+- `number X has square Y if Y = X*X.` also not bound yet.
 
 ## Binary predicates
 

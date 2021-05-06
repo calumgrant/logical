@@ -79,5 +79,6 @@ add_test(NAME Comparators1 COMMAND logical ../tests/comparators1.dl)
 add_test(NAME Arithmetic1 COMMAND logical ../tests/arithmetic1.dl)
 add_test(NAME Arithmetic2 COMMAND logical ../tests/arithmetic2.dl)
 add_test(NAME Arithmetic3 COMMAND logical ../tests/arithmetic3.dl)
+add_test(NAME Arithmetic4 COMMAND logical ../tests/arithmetic4.dl)
 
 add_test(NAME tutorial COMMAND logical ../samples/tutorial.dl)

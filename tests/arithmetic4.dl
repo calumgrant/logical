@@ -1,0 +1,11 @@
+number X if 0<=X<=10.
+number X has square Y if number X and Y = X*X.
+error "square" if not 5 has square 25.
+
+X has half Y if number X and Y = X/2.0.
+error "half" if not 2 has half 1.0.
+
+error "div" if _ = 3/0.
+error "div2" if not _ = 3/1.
+
+error "neq" if 1!=1.

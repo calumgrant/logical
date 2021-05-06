@@ -660,35 +660,42 @@ void AddBBF::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent+4);
 }
 
-void SubBBF::Evaluate(Entity *row)
+template<typename OpInt, typename OpFloat>
+void BinaryArithmeticEvaluation::Evaluate(Entity * row)
 {
     auto t1 = row[slot1].type;
-    auto t2 = row[slot1].type;
+    auto t2 = row[slot2].type;
     
     if(t1 == EntityType::Integer && t2 == EntityType::Integer)
     {
         row[slot3].type = EntityType::Integer;
-        row[slot3].i = row[slot1].i - row[slot2].i;
+        row[slot3].i = OpInt()(row[slot1].i,row[slot2].i);
     }
     else if(t1 == EntityType::Float && t2 == EntityType::Float)
     {
         row[slot3].type = EntityType::Float;
-        row[slot3].f = row[slot1].f - row[slot2].f;
+        row[slot3].f = OpFloat()(row[slot1].f,row[slot2].f);
     }
     else if(t1 == EntityType::Float && t2 == EntityType::Integer)
     {
         row[slot3].type = EntityType::Float;
-        row[slot3].f = row[slot1].f - row[slot2].i;
+        row[slot3].f = OpFloat()(row[slot1].f, row[slot2].i);
     }
     else if(t1 == EntityType::Integer && t2 == EntityType::Float)
     {
         row[slot3].type = EntityType::Float;
-        row[slot3].f = row[slot1].i - row[slot2].f;
+        row[slot3].f = OpFloat()(row[slot1].i, row[slot2].f);
     }
     else
         return;
     
     next->Evaluate(row);
+
+}
+
+void SubBBF::Evaluate(Entity *row)
+{
+    BinaryArithmeticEvaluation::Evaluate<std::minus<int>, std::minus<float>>(row);
 }
 
 void SubBBF::Explain(Database &db, std::ostream &os, int indent) const
@@ -700,7 +707,7 @@ void SubBBF::Explain(Database &db, std::ostream &os, int indent) const
 
 void MulBBF::Evaluate(Entity *row)
 {
-    next->Evaluate(row);
+    BinaryArithmeticEvaluation::Evaluate<std::multiplies<int>, std::multiplies<float>>(row);
 }
 
 void MulBBF::Explain(Database &db, std::ostream &os, int indent) const
@@ -712,6 +719,33 @@ void MulBBF::Explain(Database &db, std::ostream &os, int indent) const
 
 void DivBBF::Evaluate(Entity *row)
 {
+    auto t1 = row[slot1].type;
+    auto t2 = row[slot2].type;
+    
+    if(t1 == EntityType::Integer && t2 == EntityType::Integer)
+    {
+        row[slot3].type = EntityType::Integer;
+        if(row[slot2].i == 0) return;
+        row[slot3].i = row[slot1].i / row[slot2].i;
+    }
+    else if(t1 == EntityType::Float && t2 == EntityType::Float)
+    {
+        row[slot3].type = EntityType::Float;
+        row[slot3].f = row[slot1].f / row[slot2].f;
+    }
+    else if(t1 == EntityType::Float && t2 == EntityType::Integer)
+    {
+        row[slot3].type = EntityType::Float;
+        row[slot3].f = row[slot1].f / row[slot2].i;
+    }
+    else if(t1 == EntityType::Integer && t2 == EntityType::Float)
+    {
+        row[slot3].type = EntityType::Float;
+        row[slot3].f = row[slot1].i / row[slot2].f;
+    }
+    else
+        return;
+    
     next->Evaluate(row);
 }
 
@@ -724,6 +758,17 @@ void DivBBF::Explain(Database &db, std::ostream &os, int indent) const
 
 void ModBBF::Evaluate(Entity *row)
 {
+    auto t1 = row[slot1].type;
+    auto t2 = row[slot1].type;
+    
+    if(t1 == EntityType::Integer && t2 == EntityType::Integer)
+    {
+        row[slot3].type = EntityType::Integer;
+        if(row[slot2].i == 0) return;
+        row[slot3].i = row[slot1].i % row[slot2].i;
+    }
+    else
+        return;
     next->Evaluate(row);
 }
 

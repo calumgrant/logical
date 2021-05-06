@@ -279,6 +279,9 @@ protected:
     
     int slot1, slot2, slot3;
     std::shared_ptr<Evaluation> next;
+    
+    template<typename OpInt, typename OpFloat>
+    void Evaluate(Entity * row);
 };
 
 class AddBBF : public BinaryArithmeticEvaluation
