@@ -330,3 +330,43 @@ public:
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 };
+
+class DeduplicateBB : public Evaluation
+{
+public:
+    DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    const int slot1, slot2;
+    std::unordered_set<Entity, Entity::Hash> values;
+    const std::shared_ptr<Evaluation> next;
+};
+
+/*
+ Counts the number of times Evaluate has been called.
+ It needs a deduplication guard in front of it.
+ */
+class CountCollector : public Evaluation
+{
+public:
+    CountCollector();
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+    std::size_t Count() const;
+};
+
+/*
+ On an "or" branch, sets the count collected from a previous CountCollector.
+ */
+class CountEvaluation : public Evaluation
+{
+public:
+    CountEvaluation(int slot, const std::shared_ptr<CountCollector> & src, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    int slot;
+    std::shared_ptr<CountCollector> source;
+    std::shared_ptr<Evaluation> next;
+};

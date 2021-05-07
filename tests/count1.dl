@@ -1,0 +1,6 @@
+f X if X = count Y in (1<=Y<=10 or 11<Y<=20).
+
+error "count" if not f 19.
+
+// Can do weird stuff like count X/2 in ().
+

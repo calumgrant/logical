@@ -52,6 +52,7 @@ add_test(NAME UnitTests COMMAND logical-tests)
 
 add_test(NAME Syntax COMMAND logical ../tests/syntax.dl)
 add_test(NAME Sourcecode COMMAND logical ../tests/sourcecode.dl)
+add_test(NAME tutorial COMMAND logical ../samples/tutorial.dl)
 
 add_test(NAME Rule1 COMMAND logical ../tests/rule1.dl)
 add_test(NAME Rule2 COMMAND logical ../tests/rule2.dl)
@@ -83,4 +84,4 @@ add_test(NAME Arithmetic2 COMMAND logical ../tests/arithmetic2.dl)
 add_test(NAME Arithmetic3 COMMAND logical ../tests/arithmetic3.dl)
 add_test(NAME Arithmetic4 COMMAND logical ../tests/arithmetic4.dl)
 
-add_test(NAME tutorial COMMAND logical ../samples/tutorial.dl)
+add_test(NAME Count1 COMMAND logical ../tests/count1.dl)

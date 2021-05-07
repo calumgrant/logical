@@ -545,9 +545,9 @@ AST::ModEntity::ModEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
 {
 }
 
-const AST::Value * AST::BinaryArithmeticEntity::IsValue() const { return nullptr; }
+const AST::Value * AST::ArithmeticEntity::IsValue() const { return nullptr; }
 
-const AST::Variable * AST::BinaryArithmeticEntity::IsVariable() const { return nullptr; }
+const AST::Variable * AST::ArithmeticEntity::IsVariable() const { return nullptr; }
 
 void AST::BinaryArithmeticEntity::Visit(Visitor&v) const
 {
@@ -561,4 +561,18 @@ const AST::Value * AST::NegateEntity::IsValue() const { return nullptr; }
 void AST::NegateEntity::Visit(Visitor &v) const
 {
     entity->Visit(v);
+}
+
+AST::Count::Count(Entity *e, Clause *c) : Aggregate(e, c)
+{
+}
+
+void AST::Aggregate::Visit(Visitor &v) const
+{
+    entity->Visit(v);
+    clause->Visit(v);
+}
+
+AST::Aggregate::Aggregate(Entity *e, Clause *c) : entity(e), clause(c)
+{
 }

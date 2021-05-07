@@ -70,7 +70,7 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
         
     if(entityOpt)
     {
-        eval = entityOpt->Compile(db, eval);
+        eval = entityOpt->Compile(db, c, eval);
     }
 
     if(alreadyBound && bound)
@@ -300,7 +300,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
             if(bound)
             {
                 std::shared_ptr<Evaluation> e = std::make_shared<WriterBB>(db.GetBinaryRelation((*i)->predicate->name), slot, slot2);
-                e = (*i)->entityOpt->Compile(db, e);
+                e = (*i)->entityOpt->Compile(db, c, e);
                 if(result)
                     result = std::make_shared<OrEvaluation>(result, e);
                 else
@@ -422,8 +422,8 @@ std::shared_ptr<Evaluation> AST::Comparator::Compile(Database &db, Compilation &
         eval = std::make_shared<CompareBB>(slot1, type, slot2, eval);
     }
     
-    eval = rhs->Compile(db, eval);
-    eval = lhs->Compile(db, eval);
+    eval = rhs->Compile(db, compilation, eval);
+    eval = lhs->Compile(db, compilation, eval);
     
     return eval;
 }
@@ -596,42 +596,117 @@ int AST::NegateEntity::BindVariables(Database & db, Compilation &c, bool & bound
     return resultSlot;
 }
 
-std::shared_ptr<Evaluation> AST::Entity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::Entity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
 {
     return next;
 }
 
-std::shared_ptr<Evaluation> AST::NegateEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::NegateEntity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
 {
     return std::make_shared<NegateBF>(slot1, resultSlot, next);
 }
 
-std::shared_ptr<Evaluation> AST::AddEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::AddEntity::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
 {
     auto eval = next;
     eval = std::make_shared<AddBBF>(db, lhsSlot, rhsSlot, resultSlot, eval);
-    eval = rhs->Compile(db, eval);
-    eval = lhs->Compile(db, eval);
+    eval = rhs->Compile(db, c, eval);
+    eval = lhs->Compile(db, c, eval);
     return eval;
 }
 
-std::shared_ptr<Evaluation> AST::SubEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::SubEntity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
 {
     return std::make_shared<SubBBF>(lhsSlot, rhsSlot, resultSlot, next);
 }
 
-std::shared_ptr<Evaluation> AST::MulEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::MulEntity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
 {
     // TODO: Repeat a string by multiplying it.
     return std::make_shared<MulBBF>(lhsSlot, rhsSlot, resultSlot, next);
 }
 
-std::shared_ptr<Evaluation> AST::DivEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::DivEntity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
 {
     return std::make_shared<DivBBF>(lhsSlot, rhsSlot, resultSlot, next);
 }
 
-std::shared_ptr<Evaluation> AST::ModEntity::Compile(Database &db, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::ModEntity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
 {
     return std::make_shared<ModBBF>(lhsSlot, rhsSlot, resultSlot, next);
+}
+
+class DummyClause : public AST::Clause
+{
+public:
+    std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override
+    {
+        return std::make_shared<NoneEvaluation>();
+    }
+    
+    void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override {}
+    
+    void Visit(AST::Visitor&) const override {}
+    
+    void AssertFacts(Database &db) const override {}
+};
+
+class CountTerminatorClause : public DummyClause
+{
+public:
+    CountTerminatorClause(AST::Entity & entity, const std::shared_ptr<CountCollector> & next) : entity(entity), next(next) { }
+    
+    
+    std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override
+    {
+            
+        if(result) return result;
+        
+        bool bound;
+        int slot = entity.BindVariables(db, compilation, bound);
+        if(!bound)
+            db.UnboundError("...");
+        
+        result = std::make_shared<DeduplicateBB>(slot, compilation.AddUnnamedVariable(), next);
+        return result;
+    }
+
+private:
+    AST::Entity & entity;
+    const std::shared_ptr<CountCollector> next;
+    
+    std::shared_ptr<Evaluation> result;
+};
+
+std::shared_ptr<Evaluation> AST::Aggregate::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
+{
+    auto collector = std::make_shared<CountCollector>();
+    
+    int slot2 = c.AddUnnamedVariable();
+
+    bool bound;
+    CountTerminatorClause terminator(*entity, collector);
+
+    clause->SetNext(terminator);
+    
+    int branch = c.CreateBranch();
+    auto eval = clause->Compile(db, c);
+    
+    //bool bound2;
+    // !! This should happen in the terminator
+    //int slot3 = entity->BindVariables(db, c, bound2); // Do we care about this??
+    //if(!bound)
+     //   db.UnboundError("...");
+    
+    c.Branch(branch);
+
+    std::shared_ptr<Evaluation> tail = std::make_shared<CountEvaluation>(slot, collector, next);
+    
+    return std::make_shared<OrEvaluation>(eval, tail);
+};
+
+int AST::Aggregate::BindVariables(Database & db, Compilation &c, bool & bound)
+{
+    bound = true;
+    return slot = c.AddUnnamedVariable();
 }

@@ -89,7 +89,7 @@ namespace AST
             If no evaluation is required, just returns `next`
             If evaluation is required, then the `next` node is used as the next node in the evaluation chain.
          */
-        virtual std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const;
+        virtual std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const;
     };
 
     class Variable : public Entity
@@ -174,6 +174,9 @@ namespace AST
 
     class ArithmeticEntity : public Entity
     {
+    public:
+        const Variable * IsVariable() const override;
+        const Value * IsValue() const override;
     };
 
     class NotImplementedEntity : public ArithmeticEntity
@@ -382,8 +385,6 @@ namespace AST
     protected:
         BinaryArithmeticEntity(Entity * lhs, Entity * rhs);
         
-        const Variable * IsVariable() const override;
-        const Value * IsValue() const override;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
         void Visit(Visitor &v) const override;
 
@@ -395,35 +396,35 @@ namespace AST
     {
     public:
         AddEntity(Entity * lhs, Entity * rhs);
-        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class SubEntity : public BinaryArithmeticEntity
     {
     public:
         SubEntity(Entity * lhs, Entity * rhs);
-        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class MulEntity : public BinaryArithmeticEntity
     {
     public:
         MulEntity(Entity * lhs, Entity * rhs);
-        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class DivEntity : public BinaryArithmeticEntity
     {
     public:
         DivEntity(Entity * lhs, Entity * rhs);
-        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class ModEntity : public BinaryArithmeticEntity
     {
     public:
         ModEntity(Entity * lhs, Entity * rhs);
-        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class NegateEntity : public ArithmeticEntity
@@ -435,10 +436,30 @@ namespace AST
         const Value * IsValue() const override;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
         void Visit(Visitor &v) const override;
-        std::shared_ptr<Evaluation> Compile(Database &db, const std::shared_ptr<Evaluation> & next) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const override;
 
     private:
         std::unique_ptr<Entity> entity;
         int resultSlot, slot1;
+    };
+
+    class Aggregate : public ArithmeticEntity
+    {
+    protected:
+        Aggregate(Entity *e, Clause *c);
+        std::unique_ptr<Entity> entity;
+        std::unique_ptr<Clause> clause;
+        
+        int BindVariables(Database & db, Compilation &c, bool & bound) override;
+        void Visit(Visitor &v) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation &c, const std::shared_ptr<Evaluation> & next) const override;
+        
+        int slot;
+    };
+
+    class Count : public Aggregate
+    {
+    public:
+        Count(Entity *e, Clause *c);
     };
 }

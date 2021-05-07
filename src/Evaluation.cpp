@@ -853,3 +853,70 @@ void ModBBF::Explain(Database &db, std::ostream &os, int indent) const
 Evaluation::Evaluation() : callCount(0)
 {
 }
+
+DeduplicateBB::DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
+    slot1(slot1), slot2(slot2), next(next)
+{
+}
+
+void DeduplicateBB::Evaluate(Entity * row)
+{
+    ++callCount;
+    
+    auto i = values.insert(row[slot1]);
+    if(i.second)
+    {
+        row[slot1] = row[slot1];
+        next->Evaluate(row);
+    }
+}
+
+void DeduplicateBB::Explain(Database &db, std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    os << "Deduplicate _" << slot2 << " := _" << slot1;
+    OutputCallCount(os);
+    os << " ->\n";
+    next->Explain(db, os, indent+4);
+}
+
+CountCollector::CountCollector()
+{
+}
+
+void CountCollector::Evaluate(Entity * row)
+{
+    ++callCount;
+}
+
+void CountCollector::Explain(Database &db, std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    os << "Count";
+    OutputCallCount(os);
+    os << std::endl;
+}
+
+CountEvaluation::CountEvaluation(int slot, const std::shared_ptr<CountCollector> & source, const std::shared_ptr<Evaluation> & next) : slot(slot), source(source), next(next)
+{
+}
+
+void CountEvaluation::Evaluate(Entity * row)
+{
+    ++callCount;
+    
+    row[slot].type = EntityType::Integer;
+    row[slot].i = source->Count();
+    next->Evaluate(row);
+}
+
+void CountEvaluation::Explain(Database &db, std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    os << "Assign _" << slot << " := count";
+    OutputCallCount(os);
+    os << " ->\n";
+    next->Explain(db, os, indent+4);
+}
+
+std::size_t CountCollector::Count() const { return callCount; }

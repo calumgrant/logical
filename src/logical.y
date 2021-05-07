@@ -391,11 +391,10 @@ plusentity:
 sumentity:
     plusentity
 |   tok_sum entity_expression tok_in tok_open clause tok_close { $$ = new AST::NotImplementedEntity($2,$5); }
-|   tok_count variable tok_in tok_open clause tok_close { $$ = new AST::NotImplementedEntity($2,$5); }
+|   tok_count entity_expression tok_in tok_open clause tok_close { $$ = new AST::Count($2, $5); }
 ;
 
 entity_expression: sumentity;
-
 
 value: 
     tok_string { 
