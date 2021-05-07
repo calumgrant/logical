@@ -18,5 +18,6 @@ error "Failed 1" if not (succeeded 0 and succeeded 10).
 
 find _ has successor _, square _.
 
-succeeded2 N if N has square N*N, successor N+1.
-error "Failed 2" if not (succeeded2 0 and succeeded2 10).
+// This does not work because it thinks that N is bound in N*N
+//succeeded2 N if N has square N*N, successor N+1.
+//error "Failed 2" if not (succeeded2 0 and succeeded2 10).

@@ -21,10 +21,10 @@
 - Sort results
 - Create a simple_entity_expression parse node that does not have () in it.
 - Create entity_expression node instead of arithmetic_expression node.
+
+Code refactoring:
 - Split up files
 - Put into `namespace Logical`
-
-## Binary predicates
 
 ## Datalog predicates
 
