@@ -17,6 +17,10 @@
 - `error "negative" if not 5 has negative -5.` does not work.
 - `number X is Y` and `number X has sqrt T` on the left hand side of a rule.
 - Queries that work: `find succeeded _ if 1=1.`
+- Deduplicate results
+- Sort results
+- Create a simple_entity_expression parse node that does not have () in it.
+- Create entity_expression node instead of arithmetic_expression node.
 
 ## Binary predicates
 

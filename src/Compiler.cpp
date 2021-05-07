@@ -64,27 +64,29 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
     bool bound = false;
     int slot2 = entityOpt ? entityOpt->BindVariables(db, c, bound) : c.AddUnnamedVariable();
     
-    auto tail = listOpt ? listOpt->Compile(db, c, slot, true, next) : next->Compile(db, c);
+    auto eval = listOpt ? listOpt->Compile(db, c, slot, true, next) : next->Compile(db, c);
     
     auto relation = db.GetBinaryRelation(predicate->name);
     
     if(alreadyBound && bound)
     {
-        return std::make_shared<EvaluateBB>(relation, slot, slot2, tail);
+        eval = std::make_shared<EvaluateBB>(relation, slot, slot2, eval);
     }
     else if(alreadyBound && !bound)
     {
-        return std::make_shared<EvaluateBF>(relation, slot, slot2, tail);
+        eval = std::make_shared<EvaluateBF>(relation, slot, slot2, eval);
     }
     else if(!alreadyBound && bound)
     {
-        return std::make_shared<EvaluateFB>(relation, slot, slot2, tail);
+        eval = std::make_shared<EvaluateFB>(relation, slot, slot2, eval);
     }
     else
     {
-        return std::make_shared<EvaluateFF>(relation, slot, slot2, tail);
+        eval = std::make_shared<EvaluateFF>(relation, slot, slot2, eval);
     }
-        
+    
+    
+    return eval;
 }
 
 std::shared_ptr<Evaluation> AST::NotImplementedClause::Compile(Database &db, Compilation &c)
