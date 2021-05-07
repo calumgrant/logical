@@ -710,3 +710,13 @@ int AST::Aggregate::BindVariables(Database & db, Compilation &c, bool & bound)
     bound = true;
     return slot = c.AddUnnamedVariable();
 }
+
+std::shared_ptr<Evaluation> AST::All::Compile(Database &db, Compilation & compilation)
+{
+    return std::make_shared<NoneEvaluation>();
+}
+
+std::shared_ptr<Evaluation> AST::All::CompileLhs(Database &db, Compilation &compilation)
+{
+    return std::make_shared<NoneEvaluation>();
+}

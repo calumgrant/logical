@@ -1,0 +1,9 @@
+
+P is happy if 
+    parent P and not (child C and not happy2 C).
+
+P is happy2 if 
+    parent P and all (happy3 C) in (P has child C).
+
+//  for all child C has parent P then C is happy.
+//  not (child C has parent P and not (C is happy)).

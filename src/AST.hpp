@@ -44,13 +44,12 @@ namespace AST
     {
     public:
         Clause();
-        virtual void AssertFacts(Database &db) const =0;
 
-        // const?
         Clause * next;
+
         virtual void SetNext(Clause&);
 
-        // ?? Const
+        virtual void AssertFacts(Database &db) const =0;
         virtual std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation)=0;
         virtual std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation)=0;
         virtual void AddRule(Database &db, const std::shared_ptr<Evaluation>&)=0;
@@ -461,5 +460,20 @@ namespace AST
     {
     public:
         Count(Entity *e, Clause *c);
+    };
+
+    class All : public Clause
+    {
+    public:
+        All(Clause * ifPart, Clause * thenPart);
+
+        void Visit(Visitor&) const override;
+        void AssertFacts(Database &db) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
+        std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
+        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
+
+    private:
+        std::unique_ptr<Clause> ifPart, thenPart;
     };
 }

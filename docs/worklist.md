@@ -1,12 +1,27 @@
 # Work plan
 
+All / sum syntax
+
+all X in parent X
+
+all clause in clause
+
+all X has age X and X > 10.
+
+P is happy if
+  for all child C has parent P then C is happy.
+  not (child C has parent P and not (C is happy)).
+
+old if X has age A and A >= 50.
+
+
+
+
+
+
 ## Short term
 - `f X and g X if ...`
 - `exit`
-- Arithmetic
-  - Other numerical operators: - * / % unary-
-- Prime number sieve
-- Count
 - Sum
 - All
 - Think about predicate-names containing `-`.
@@ -22,6 +37,7 @@
 - Create a simple_entity_expression parse node that does not have () in it.
 - Create entity_expression node instead of arithmetic_expression node.
 - How is sum supposed to work if we need to ensure uniqueness? `sum X in `
+- Bug with computed bounds
 
 
 
@@ -59,6 +75,9 @@ Implement memory mapped memory allocator.
 - [ ] Better test support - compare two predicates.
 - [ ] Threading support
 - [ ] Client-server implementation.
+- [ ] Interactive debugger.
+- [ ] Interactive shell.
+- [ ] Command line option to pass code
 
 # Release plan
 
