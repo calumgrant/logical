@@ -22,11 +22,16 @@ enum class ComparatorType;
 class Evaluation
 {
 public:
+    Evaluation();
     virtual ~Evaluation();
     virtual void Evaluate(Entity * row) =0;  // Const
     virtual void Explain(Database &db, std::ostream &os, int indent=4) const =0;
 
     static void Indent(std::ostream &os, int indent=0);
+    void OutputCallCount(std::ostream&) const;
+    
+    // The number of times Evaluate() has been called.
+    std::size_t callCount;
 };
 
 /*

@@ -67,7 +67,12 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
     auto eval = listOpt ? listOpt->Compile(db, c, slot, true, next) : next->Compile(db, c);
     
     auto relation = db.GetBinaryRelation(predicate->name);
-    
+        
+    if(entityOpt)
+    {
+        eval = entityOpt->Compile(db, eval);
+    }
+
     if(alreadyBound && bound)
     {
         eval = std::make_shared<EvaluateBB>(relation, slot, slot2, eval);
@@ -84,8 +89,6 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
     {
         eval = std::make_shared<EvaluateFF>(relation, slot, slot2, eval);
     }
-    
-    
     return eval;
 }
 

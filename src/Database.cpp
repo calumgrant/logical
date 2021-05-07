@@ -7,7 +7,7 @@ std::shared_ptr<Relation> Database::GetUnaryRelation(const std::string & name)
     auto i = unaryRelations.find(name);
     if (i == unaryRelations.end())
     {
-        auto p = std::make_shared<UnaryTable>(name);
+        auto p = std::make_shared<UnaryTable>(*this, name);
         unaryRelations.insert(std::make_pair(name, p));
         return p;
     }
@@ -20,7 +20,7 @@ std::shared_ptr<Relation> Database::GetBinaryRelation(const std::string & name)
     auto i = binaryRelations.find(name);
     if (i==binaryRelations.end())
     {
-        auto p = std::make_shared<BinaryTable>(name);
+        auto p = std::make_shared<BinaryTable>(*this, name);
         binaryRelations.insert(std::make_pair(name, p));
         return p;
     }
@@ -110,7 +110,7 @@ std::shared_ptr<Relation> Database::GetRelation(const std::string &name, int ari
 
     if (i == relations.end())
     {
-        auto r = std::make_shared<TableX>(name);
+        auto r = std::make_shared<TableX>(*this, name);
         relations.insert(std::make_pair(index, r));
         return r;
     }

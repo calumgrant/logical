@@ -43,7 +43,7 @@ public:
 class Predicate : public Relation
 {
 public:
-    Predicate(const std::string &name);
+    Predicate(Database &db, const std::string &name);
     // std::shared_ptr<Relation> data;
 
     // Evaluates all rules if needed
@@ -58,12 +58,14 @@ private:
     bool rulesRun;
     std::vector< std::shared_ptr<Evaluation> > rules;
     std::string name;
+protected:
+    Database &database;
 };
 
 class UnaryTable : public Predicate
 {
 public:
-    UnaryTable(const std::string&name);
+    UnaryTable(Database &db, const std::string&name);
     void Add(const Entity *row) override;
     int Count() override;
     void Query(Entity*row, int columns, Visitor&v) override;
@@ -82,7 +84,6 @@ public:
     void Query(Entity *row, int columns, Visitor&v) override;
 protected:
     std::ostream & output;
-    Database &database;
 };
 
 class ErrorRelation : public PrintRelation
@@ -104,7 +105,7 @@ struct PairHash
 class BinaryTable : public Predicate
 {
 public:
-    BinaryTable(const std::string&name);
+    BinaryTable(Database &db, const std::string&name);
     void Add(const Entity * row) override;
     int Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
@@ -117,7 +118,7 @@ private:
 class TableX : public Predicate
 {
 public:
-    TableX(const std::string&name);
+    TableX(Database &db, const std::string&name);
     int Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
     void Add(const Entity*row) override;

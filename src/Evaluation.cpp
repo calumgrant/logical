@@ -16,6 +16,7 @@ NoneEvaluation::NoneEvaluation()
 
 void NoneEvaluation::Evaluate(Entity * row)
 {
+    ++callCount;
 }
 
 WriterB::WriterB(const std::shared_ptr<Relation> & relation, int slot) : relation(relation), slot(slot)
@@ -24,6 +25,7 @@ WriterB::WriterB(const std::shared_ptr<Relation> & relation, int slot) : relatio
 
 void WriterB::Evaluate(Entity * row)
 {
+    ++callCount;
     relation->Add(row+slot);
 }
 
@@ -35,6 +37,7 @@ OrEvaluation::OrEvaluation(const std::shared_ptr<Evaluation> & lhs, const std::s
 
 void OrEvaluation::Evaluate(Entity * row)
 {
+    ++callCount;
     left->Evaluate(row);
     right->Evaluate(row);
 }
@@ -46,6 +49,7 @@ RuleEvaluation::RuleEvaluation(std::vector<Entity> &&row, const std::shared_ptr<
 
 void RuleEvaluation::Evaluate(Entity*)
 {
+    ++callCount;
     if(!evaluated)
     {
         evaluated = true;
@@ -89,6 +93,7 @@ public:
 
 void EvaluateF::Evaluate(Entity * row)
 {
+    ++callCount;
     UnaryVisitor v(row, slot, *next);
     
     relation.lock()->Query(row+slot, 0, v);
@@ -96,6 +101,7 @@ void EvaluateF::Evaluate(Entity * row)
 
 void EvaluateB::Evaluate(Entity * row)
 {
+    ++callCount;
     UnaryVisitor v(row, slot, *next);
 
     // Bug: We need to get a different relation here.
@@ -111,7 +117,9 @@ void OrEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 void NoneEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "None\n";
+    os << "None";
+    OutputCallCount(os);
+    os << "\n";
 }
 
 void Evaluation::Indent(std::ostream & os, int indent)
@@ -139,7 +147,9 @@ void RuleEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 void WriterB::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Write _" << slot << " into " << relation->Name() << "\n";
+    os << "Write _" << slot << " into " << relation->Name();
+    OutputCallCount(os);
+    os << "\n";
 }
 
 void EvaluateB::Explain(Database &db, std::ostream &os, int indent) const
@@ -147,7 +157,9 @@ void EvaluateB::Explain(Database &db, std::ostream &os, int indent) const
     Indent(os, indent);
     auto r = relation.lock();
     assert(r);
-    os << "Lookup _" << slot << " in " << r->Name() << " ->\n";
+    os << "Lookup _" << slot << " in " << r->Name();
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -156,19 +168,24 @@ void EvaluateF::Explain(Database &db, std::ostream &os, int indent) const
     Indent(os, indent);
     auto r = relation.lock();
     assert(r);
-    os << "Scan " << r->Name() << " into _" << slot << " ->\n";
+    os << "Scan " << r->Name() << " into _" << slot; 
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
 void NotTerminator::Evaluate(Entity * row)
 {
+    ++callCount;
     resultFound = true;
 }
 
 void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Fail next else\n";
+    os << "Fail next else";
+    OutputCallCount(os);
+    os << "\n";
 }
 
 NotEvaluation::NotEvaluation(const std::shared_ptr<NotTerminator> & terminator, const std::shared_ptr<Evaluation> &notBody, const std::shared_ptr<Evaluation> & next) : terminator(terminator), notBody(notBody), next(next)
@@ -177,6 +194,7 @@ NotEvaluation::NotEvaluation(const std::shared_ptr<NotTerminator> & terminator, 
 
 void NotEvaluation::Evaluate(Entity * row)
 {
+    ++callCount;
     terminator->resultFound = false;
     notBody->Evaluate(row);
     if( !terminator->resultFound )
@@ -204,6 +222,7 @@ EqualsBB::EqualsBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & nex
 
 void EqualsBB::Evaluate(Entity *row)
 {
+    ++callCount;
     if(row[slot1] == row[slot2])
         next->Evaluate(row);
 }
@@ -211,7 +230,9 @@ void EqualsBB::Evaluate(Entity *row)
 void EqualsBB::Explain(Database & db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Test _" << slot1 << " == _" << slot2 << " ->\n";
+    os << "Test _" << slot1 << " == _" << slot2;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -222,6 +243,7 @@ EqualsBF::EqualsBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & nex
 
 void EqualsBF::Evaluate(Entity *row)
 {
+    ++callCount;
     row[slot2] = row[slot1];
     next->Evaluate(row);
 }
@@ -229,7 +251,9 @@ void EqualsBF::Evaluate(Entity *row)
 void EqualsBF::Explain(Database & db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Assign _" << slot2 << " := _" << slot1 << " ->\n";
+    os << "Assign _" << slot2 << " := _" << slot1;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -239,6 +263,7 @@ EvaluateBB::EvaluateBB(const std::shared_ptr<Relation> & relation, int slot1, in
 
 void EvaluateBB::Evaluate(Entity * row)
 {
+    ++callCount;
     class Visitor : public Relation::Visitor
     {
     public:
@@ -263,7 +288,9 @@ void EvaluateBB::Evaluate(Entity * row)
 void EvaluateBB::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Lookup (_" << slot1 << ",_" << slot2 << ") in " << relation.lock()->Name() << " ->\n";
+    os << "Lookup (_" << slot1 << ",_" << slot2 << ") in " << relation.lock()->Name();
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -273,6 +300,7 @@ EvaluateBF::EvaluateBF(const std::shared_ptr<Relation> & relation, int slot1, in
 
 void EvaluateBF::Evaluate(Entity * row)
 {
+    ++callCount;
     class Visitor : public Relation::Visitor
     {
     public:
@@ -300,7 +328,9 @@ void EvaluateBF::Evaluate(Entity * row)
 void EvaluateBF::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Join " << relation.lock()->Name() << " column 1 on _" << slot1 << " into _" << slot2 << " ->\n";
+    os << "Join " << relation.lock()->Name() << " column 1 on _" << slot1 << " into _" << slot2;
+    OutputCallCount(os);
+    os << " ->\n";
     
     next->Explain(db, os, indent+4);
 }
@@ -311,6 +341,7 @@ EvaluateFB::EvaluateFB(const std::shared_ptr<Relation> & relation, int slot1, in
 
 void EvaluateFB::Evaluate(Entity * row)
 {
+    ++callCount;
     class Visitor : public Relation::Visitor
     {
     public:
@@ -339,7 +370,9 @@ void EvaluateFB::Evaluate(Entity * row)
 void EvaluateFB::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Join " << relation.lock()->Name() << " column 2 on _" << slot2 << " into _" << slot1 << " ->\n";
+    os << "Join " << relation.lock()->Name() << " column 2 on _" << slot2 << " into _" << slot1;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -349,6 +382,7 @@ EvaluateFF::EvaluateFF(const std::shared_ptr<Relation> & relation, int slot1, in
 
 void EvaluateFF::Evaluate(Entity * row)
 {
+    ++callCount;
     class Visitor : public Relation::Visitor
     {
     public:
@@ -375,7 +409,9 @@ void EvaluateFF::Evaluate(Entity * row)
 void EvaluateFF::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Scan " << relation.lock()->Name() << " into (_" << slot1 << ",_" << slot2 << ") ->\n";
+    os << "Scan " << relation.lock()->Name() << " into (_" << slot1 << ",_" << slot2 << ")";
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -392,6 +428,7 @@ WriterBB::WriterBB(const std::shared_ptr<Relation> & relation, int slot1, int sl
 
 void WriterBB::Evaluate(Entity *row)
 {
+    ++callCount;
     Entity data[2] = { row[slot1], row[slot2] };
     relation.lock()->Add(data);
 }
@@ -399,7 +436,9 @@ void WriterBB::Evaluate(Entity *row)
 void WriterBB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Write (_" << slot1 << ",_" << slot2 << ") into " << relation.lock()->Name() << std::endl;
+    os << "Write (_" << slot1 << ",_" << slot2 << ") into " << relation.lock()->Name();
+    OutputCallCount(os);
+    os << std::endl;
 }
 
 RangeB::RangeB(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> & next) :
@@ -451,6 +490,7 @@ bool Compare(const Entity &e1, const Entity &e2, ComparatorType cmp)
 
 void RangeB::Evaluate(Entity * row)
 {
+    ++callCount;
     if(Compare(row[slot1], row[slot2], cmp1) && Compare(row[slot2], row[slot3], cmp2))
         next->Evaluate(row);
 }
@@ -458,7 +498,9 @@ void RangeB::Evaluate(Entity * row)
 void RangeB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Test _" << slot1 << " " << cmp1 << " _" << slot2 << " and _" << slot2 << " " << cmp2 << " _" << slot3 << " ->\n";
+    os << "Test _" << slot1 << " " << cmp1 << " _" << slot2 << " and _" << slot2 << " " << cmp2 << " _" << slot3;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -469,6 +511,7 @@ RangeU::RangeU(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, i
 
 void RangeU::Evaluate(Entity * row)
 {
+    ++callCount;
     int lowerBound, upperBound;
     
     if(row[slot1].type == EntityType::Integer)
@@ -496,7 +539,9 @@ void RangeU::Evaluate(Entity * row)
 void RangeU::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Scan _" << slot1 << " " << cmp1 << " _" << slot2 << " and _" << slot2 << " " << cmp2 << " _" << slot3 << " ->\n";
+    os << "Scan _" << slot1 << " " << cmp1 << " _" << slot2 << " and _" << slot2 << " " << cmp2 << " _" << slot3;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -507,7 +552,8 @@ CompareBB::CompareBB(int slot1, ComparatorType cmp, int slot2, const std::shared
 
 void CompareBB::Evaluate(Entity *row)
 {
-    // Note: We don't compare strings.
+    ++callCount;
+    // Note: We don't compare strings for inequality.
     // FIXME
     if(Compare(row[slot1], row[slot2], cmp))
         next->Evaluate(row);
@@ -516,7 +562,9 @@ void CompareBB::Evaluate(Entity *row)
 void CompareBB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Test _" << slot1 << cmp << "_" << slot2 << " ->\n";
+    os << "Test _" << slot1 << cmp << "_" << slot2;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -527,6 +575,7 @@ NegateBF::NegateBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & nex
 
 void NegateBF::Evaluate(Entity *row)
 {
+    ++callCount;
     switch(row[slot1].type)
     {
     case EntityType::Integer:
@@ -546,7 +595,9 @@ void NegateBF::Evaluate(Entity *row)
 void NegateBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Calculate _" << slot2 << " := -_" << slot1 << " ->\n";
+    os << "Calculate _" << slot2 << " := -_" << slot1;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -582,6 +633,7 @@ ModBBF::ModBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation
 
 void AddBBF::Evaluate(Entity *row)
 {
+    ++callCount;
     auto t1 = row[slot1].type;
     auto t2 = row[slot2].type;
     
@@ -656,13 +708,17 @@ void AddBBF::Evaluate(Entity *row)
 void AddBBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Calculate _" << slot3 << " := _" << slot1 << " + _" << slot2 << " ->\n";
+    os << "Calculate _" << slot3 << " := _" << slot1 << " + _" << slot2;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
 template<typename OpInt, typename OpFloat>
 void BinaryArithmeticEvaluation::Evaluate(Entity * row)
 {
+    ++callCount;
+    
     auto t1 = row[slot1].type;
     auto t2 = row[slot2].type;
     
@@ -690,7 +746,6 @@ void BinaryArithmeticEvaluation::Evaluate(Entity * row)
         return;
     
     next->Evaluate(row);
-
 }
 
 void SubBBF::Evaluate(Entity *row)
@@ -701,7 +756,9 @@ void SubBBF::Evaluate(Entity *row)
 void SubBBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Calculate _" << slot3 << " := _" << slot1 << " - _" << slot2 << " ->\n";
+    os << "Calculate _" << slot3 << " := _" << slot1 << " - _" << slot2;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
@@ -713,12 +770,21 @@ void MulBBF::Evaluate(Entity *row)
 void MulBBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Calculate _" << slot3 << " := _" << slot1 << " * _" << slot2 << " ->\n";
+    os << "Calculate _" << slot3 << " := _" << slot1 << " * _" << slot2;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
+}
+
+void Evaluation::OutputCallCount(std::ostream & os) const
+{
+    if(callCount>0)
+        os << " (called " << callCount << " times)";
 }
 
 void DivBBF::Evaluate(Entity *row)
 {
+    ++callCount;
     auto t1 = row[slot1].type;
     auto t2 = row[slot2].type;
     
@@ -752,12 +818,15 @@ void DivBBF::Evaluate(Entity *row)
 void DivBBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Calculate _" << slot3 << " := _" << slot1 << " / _" << slot2 << " ->\n";
+    os << "Calculate _" << slot3 << " := _" << slot1 << " / _" << slot2;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }
 
 void ModBBF::Evaluate(Entity *row)
 {
+    ++callCount;
     auto t1 = row[slot1].type;
     auto t2 = row[slot1].type;
     
@@ -775,6 +844,12 @@ void ModBBF::Evaluate(Entity *row)
 void ModBBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Calculate _" << slot3 << " := _" << slot1 << " % _" << slot2 << " ->\n";
+    os << "Calculate _" << slot3 << " := _" << slot1 << " % _" << slot2;
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
+}
+
+Evaluation::Evaluation() : callCount(0)
+{
 }
