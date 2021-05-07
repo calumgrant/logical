@@ -15,7 +15,8 @@
 - `number X has square Y if Y = X*X.` also not bound yet.
 - Tuple counts on all `Evaluate()` methods.
 - `error "negative" if not 5 has negative -5.` does not work.
-
+- `number X is Y` and `number X has sqrt T` on the left hand side of a rule.
+- Queries that work: `find succeeded _ if 1=1.`
 
 ## Binary predicates
 
@@ -29,8 +30,6 @@ Syntax for all, count etc.
 - [ ] count
 - [ ] sum
 - [ ] all
-
-## Ranges
 
 ## Last use optimization
 

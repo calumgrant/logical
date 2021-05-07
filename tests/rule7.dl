@@ -1,0 +1,22 @@
+
+person @1.
+person @2.
+
+@3 has chromosome @xx.
+
+X is female if
+    person X has chromosome @xx.
+
+error "Need to check the left hand side rules" if
+    person @3 or female @3.
+
+N has square N*N, successor N+1 if 
+    0 <= N <= 10.
+
+succeeded N if N has square _, successor _.
+
+error "Failed" if not (succeeded 0 and succeeded 10).
+
+find _ has successor _, square _.
+// This is not implemented yet.
+find succeeded _ if 1=1.

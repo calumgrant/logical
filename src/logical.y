@@ -178,18 +178,30 @@ query:
 
 // Different syntax to distinguish them from variable lists A, B, C
 querybaseclause:
-    unarypredicatelist entity { $$ = new AST::NotImplementedClause($1,$2); }
+    unarypredicatelist entity 
+    {
+        $$ = new AST::EntityIs($2, $1);
+    }
 |   unarypredicatelist entity has_a binarypredicate entity
     {
         $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4, $5, nullptr));
     }
-|   unarypredicatelist entity has_a binarypredicate entity attributes { $$ = new AST::NotImplementedClause($1,$2); }
-|   unarypredicatelist entity attributes { $$ = new AST::NotImplementedClause($1,$2); }
+|   unarypredicatelist entity has_a binarypredicate entity attributes
+    {
+        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4, $5, $6));
+    }
+|   unarypredicatelist entity attributes
+    { 
+        $$ = new AST::EntityHasAttributes($1, $2, $3);
+    }
 |   entity has_a binarypredicate entity
     {
         $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, nullptr));
     }
-|   entity has_a binarypredicate entity attributes { $$ = new AST::NotImplementedClause($1); }
+|   entity has_a binarypredicate entity attributes
+    {
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, $5));
+    }
 ;
 
 queryclause:

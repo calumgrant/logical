@@ -526,6 +526,9 @@ void AST::Clause::Find(Database &db)
     ResultsPrinter p(db);
     SetNext(p);
     auto eval = Compile(db, c);
+
+    if(db.Explain())
+        eval->Explain(db, std::cout);
     
     eval->Evaluate(&c.row[0]);
     std::cout << "Found " << p.Count() << " results\n";
