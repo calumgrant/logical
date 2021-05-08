@@ -46,7 +46,7 @@ public:
     void SyntaxError(const SourceLocation&);
 
     // Variable "name" is not bound to a value
-    void UnboundError(const std::string &name);
+    void UnboundError(const std::string &name, int line, int column);
 
     void NotImplementedError(const SourceLocation&);
     

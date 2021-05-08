@@ -4,6 +4,13 @@
 
 #include "tokens.tab.h"
 // # %option reentrant bison-bridge
+
+int yycolumn=1;
+
+#define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
+    yylloc.first_column = yycolumn; yylloc.last_column = yycolumn + yyleng - 1; \
+    yycolumn += yyleng;
+
 %}
 
 %option nodefault
@@ -61,7 +68,8 @@ _       return tok_underscore;
 [0-9]*\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+  { yylval.fval = atof(yytext); return tok_float; }
 
 \/\/[^\n]*
-[ \r\n\t]+
+\n      { yycolumn = 1; }
+[ \r\t]+
 .
 
 %%

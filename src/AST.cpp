@@ -6,12 +6,20 @@ AST::Node::~Node()
 {
 }
 
-AST::NamedVariable::NamedVariable(const char * name) : name(name)
+AST::NamedVariable::NamedVariable(const char * name, int line, int column) : Variable(line, column), name(name)
 {
 }
 
 AST::String::String(const std::string &p) : value(p) 
 { 
+}
+
+AST::UnnamedVariable::UnnamedVariable(int line, int column) : Variable(line, column)
+{
+}
+
+AST::Variable::Variable(int line, int column) : line(line), column(column)
+{
 }
 
 AST::EntityClause::EntityClause(Entity* entity, UnaryPredicateList* list, UnaryPredicateList * isList, AttributeList * attributes)
@@ -579,20 +587,20 @@ AST::Aggregate::Aggregate(Entity *e, Clause *c) : entity(e), clause(c)
 
 void AST::NamedVariable::UnboundError(Database &db) const
 {
-    db.UnboundError(name);
+    db.UnboundError(name, line, column);
 }
 
 void AST::UnnamedVariable::UnboundError(Database &db) const
 {
-    db.UnboundError("_");
+    db.UnboundError("_", line, column);
 }
 
 void AST::ArithmeticEntity::UnboundError(Database &db) const
 {
-    db.UnboundError("arithmetic_expression");
+    db.UnboundError("arithmetic_expression", 0, 0);
 }
 
 void AST::Value::UnboundError(Database &db) const
 {
-    db.UnboundError("??");  // Shouldn't really get here
+    db.UnboundError("??", 0, 0);  // Shouldn't really get here
 }

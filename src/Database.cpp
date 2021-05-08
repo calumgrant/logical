@@ -28,9 +28,9 @@ std::shared_ptr<Relation> Database::GetBinaryRelation(const std::string & name)
         return i->second;
 }
 
-void Database::UnboundError(const std::string &name)
+void Database::UnboundError(const std::string &name, int line, int column)
 {
-    std::cerr << "Error: " << name << " is unbound.\n";
+    std::cerr << "Error at (" << line << ":" << column << "): " << name << " is unbound.\n";
 }
 
 Relation::~Relation()

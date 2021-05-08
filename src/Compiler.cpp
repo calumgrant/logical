@@ -400,7 +400,8 @@ std::shared_ptr<Evaluation> AST::Comparator::Compile(Database &db, Compilation &
     {
         if(!bound1 && !bound2)
         {
-            db.UnboundError("="); // !! Better error message
+            lhs->UnboundError(db);
+            rhs->UnboundError(db);
             return std::make_shared<NoneEvaluation>();
         }
                 
@@ -415,7 +416,8 @@ std::shared_ptr<Evaluation> AST::Comparator::Compile(Database &db, Compilation &
     {
         if(!bound1 || !bound2)
         {
-            db.UnboundError("="); // !! Better error message
+            if(!bound1) lhs->UnboundError(db);
+            if(!bound2) rhs->UnboundError(db);
             eval = std::make_shared<NoneEvaluation>();
         }
 

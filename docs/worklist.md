@@ -25,6 +25,7 @@ Queries that work: `find succeeded _ if 1=1.`
   - Sort results
 - Bug with computed bounds 1<X<Y+1 for example.
 - `is not` syntax.
+- const fields more
 
 Code refactoring:
 - Split up files

@@ -361,8 +361,8 @@ unarypredicate: tok_identifier { $$ = new AST::UnaryPredicate($1); free($1); }
 binarypredicate: tok_identifier { $$ = new AST::BinaryPredicate($1); free($1); }
 
 variable:
-    tok_identifier { $$ = new AST::NamedVariable($1); free($1); }
-|   tok_underscore { $$ = new AST::UnnamedVariable(); }
+    tok_identifier { $$ = new AST::NamedVariable($1, @1.first_line, @1.first_column); free($1); }
+|   tok_underscore { $$ = new AST::UnnamedVariable(@1.first_line, @1.first_column); }
 ;
 
 entity:

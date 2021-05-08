@@ -96,15 +96,18 @@ namespace AST
     class Variable : public Entity
     {
     public:
+        Variable(int line, int column);
         const Variable * IsVariable() const override;
         virtual const NamedVariable * IsNamedVariable() const =0;
         const Value * IsValue() const override;
+
+        const int line, column;
     };
 
     class NamedVariable : public Variable
     {
     public:
-        NamedVariable(const char * name);
+        NamedVariable(const char * name, int line, int column);
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
@@ -115,6 +118,8 @@ namespace AST
 
     class UnnamedVariable : public Variable
     {
+    public:
+        UnnamedVariable(int line, int column);
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
