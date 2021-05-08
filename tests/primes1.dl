@@ -1,0 +1,9 @@
+ 
+prime N if 2<=N<1000 and not (2<=M<N and N%M=0).
+
+prime2 N if 2<=N<1000 and all (N%M!=0) in 2<=M<N.
+
+error "primes" if 
+    prime N and not prime2 N
+    or
+    prime2 N and not prime N.

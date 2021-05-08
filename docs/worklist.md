@@ -1,49 +1,30 @@
 # Work plan
 
-All / sum syntax
+# Sum syntax
 
-all X in parent X
-
-all clause in clause
-
-all X has age X and X > 10.
-
-P is happy if
-  for all child C has parent P then C is happy.
-  not (child C has parent P and not (C is happy)).
-
-old if X has age A and A >= 50.
-
-
-
-
+```
+sum M, X in money M has value V.
+```
 
 
 ## Short term
 - `f X and g X if ...`
 - `exit`
 - Sum
-- All
+  - How is sum supposed to work if we need to ensure uniqueness? `sum X in `
 - Think about predicate-names containing `-`.
-- Problem is negative facts like `print -2.` Try to turn it into an entity.
-- `number X has square X*X.` is not bound yet.
-- `number X has square Y if Y = X*X.` also not bound yet.
-- Tuple counts on all `Evaluate()` methods.
-- `error "negative" if not 5 has negative -5.` does not work.
-- `number X is Y` and `number X has sqrt T` on the left hand side of a rule.
-- Queries that work: `find succeeded _ if 1=1.`
-- Deduplicate results
-- Sort results
-- Create a simple_entity_expression parse node that does not have () in it.
-- Create entity_expression node instead of arithmetic_expression node.
-- How is sum supposed to work if we need to ensure uniqueness? `sum X in `
-- Bug with computed bounds
+  - Problem is negative facts like `print -2.` Try to turn it into an entity.
+  - `error "negative" if not 5 has negative -5.` does not work.
+- Binding issues
+  - `number X has square X*X.` is not bound yet.
+  - `number X has square Y if Y = X*X.` also not bound yet.
+  - Report the variable name in the unbound case.
+  - Binding tests
+Queries that work: `find succeeded _ if 1=1.`
+  - Deduplicate results
+  - Sort results
+- Bug with computed bounds 1<X<Y+1 for example.
 - `is not` syntax.
-- syntax error should lead to an error code.
-- test for failed bindings.
-- Report the variable name in the unbound case.
-
-
 
 Code refactoring:
 - Split up files
