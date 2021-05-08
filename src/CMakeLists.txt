@@ -85,3 +85,5 @@ add_test(NAME Arithmetic3 COMMAND logical ../tests/arithmetic3.dl)
 add_test(NAME Arithmetic4 COMMAND logical ../tests/arithmetic4.dl)
 
 add_test(NAME Count1 COMMAND logical ../tests/count1.dl)
+
+add_test(NAME All1 COMMAND logical ../tests/all1.dl)

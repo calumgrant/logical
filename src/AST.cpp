@@ -576,12 +576,3 @@ void AST::Aggregate::Visit(Visitor &v) const
 AST::Aggregate::Aggregate(Entity *e, Clause *c) : entity(e), clause(c)
 {
 }
-
-AST::All::All(Clause * ifPart, Clause *thenPart) :
-    ifPart(ifPart), thenPart(thenPart)
-{
-}
-
-void AST::All::Visit(Visitor&) const {}
-void AST::All::AssertFacts(Database &db) const {}
-void AST::All::AddRule(Database &db, const std::shared_ptr<Evaluation>&) {}

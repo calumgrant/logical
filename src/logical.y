@@ -324,11 +324,11 @@ allclause:
     baseclause
 |   tok_all tok_open clause tok_close tok_in allclause 
     {
-        $$ = new AST::All($6, $3);
+        $$ = AST::MakeAll($6, $3);
     }
 |   tok_all tok_open clause tok_close tok_then allclause
     {
-        $$ = new AST::All($3, $6);
+        $$ = AST::MakeAll($3, $6);
     }
 ;
 

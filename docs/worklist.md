@@ -38,6 +38,10 @@ old if X has age A and A >= 50.
 - Create entity_expression node instead of arithmetic_expression node.
 - How is sum supposed to work if we need to ensure uniqueness? `sum X in `
 - Bug with computed bounds
+- `is not` syntax.
+- syntax error should lead to an error code.
+- test for failed bindings.
+- Report the variable name in the unbound case.
 
 
 

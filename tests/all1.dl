@@ -1,9 +1,24 @@
 
-P is happy if 
-    parent P and not (child C and not happy2 C).
+parent @p1.
+parent @p2 has child @c1.
+parent @p2 has child @c2.
+@c1 is happy.
+@c2 is happy.
+
+parent @p3 has child @c1.
+parent @p3 has child @c3.
 
 P is happy2 if 
-    parent P and all (happy3 C) in (P has child C).
+    parent P and not (P has child C and not happy C).
 
-//  for all child C has parent P then C is happy.
-//  not (child C has parent P and not (C is happy)).
+error "p1" if not @p1 is happy2 or not @p2 is happy2.
+error "p3" if @p3 is happy2.
+
+P is happy3 if 
+    parent P and all (happy C) in (P has child C).
+
+error "all p1" if not @p1 is happy3 or not @p2 is happy3.
+error "all p3" if @p3 is happy3.
+
+error "notall" if not all (1=1) in (1=1).
+error "notall" if not all (1=1) in (1=0).

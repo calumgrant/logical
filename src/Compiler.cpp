@@ -658,16 +658,16 @@ public:
     
     
     std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override
-    {
-            
-        if(result) return result;
-        
+    {            
         bool bound;
         int slot = entity.BindVariables(db, compilation, bound);
         if(!bound)
             db.UnboundError("...");
         
-        result = std::make_shared<DeduplicateBB>(slot, compilation.AddUnnamedVariable(), next);
+        // Need to share the counter between all branches for example
+        // count X in (f X or g X)
+        if(!result)
+            result = std::make_shared<DeduplicateBB>(slot, compilation.AddUnnamedVariable(), next);
         return result;
     }
 
@@ -711,12 +711,7 @@ int AST::Aggregate::BindVariables(Database & db, Compilation &c, bool & bound)
     return slot = c.AddUnnamedVariable();
 }
 
-std::shared_ptr<Evaluation> AST::All::Compile(Database &db, Compilation & compilation)
+AST::Clause * AST::MakeAll(Clause * ifPart, Clause * thenPart)
 {
-    return std::make_shared<NoneEvaluation>();
-}
-
-std::shared_ptr<Evaluation> AST::All::CompileLhs(Database &db, Compilation &compilation)
-{
-    return std::make_shared<NoneEvaluation>();
+    return new AST::Not(new AST::And(ifPart, new AST::Not(thenPart)));
 }

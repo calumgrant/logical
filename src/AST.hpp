@@ -218,6 +218,7 @@ namespace AST
     {
     public:
         Not(Clause * c);
+        Not(const std::shared_ptr<Clause> & clause);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
@@ -226,7 +227,8 @@ namespace AST
         void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
         
     private:
-        std::unique_ptr<Clause> clause;
+        // Shared with All
+        std::shared_ptr<Clause> clause;
     };
 
     class Comparator : public Clause
@@ -462,18 +464,5 @@ namespace AST
         Count(Entity *e, Clause *c);
     };
 
-    class All : public Clause
-    {
-    public:
-        All(Clause * ifPart, Clause * thenPart);
-
-        void Visit(Visitor&) const override;
-        void AssertFacts(Database &db) const override;
-        std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
-        std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
-        void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
-
-    private:
-        std::unique_ptr<Clause> ifPart, thenPart;
-    };
+    Clause * MakeAll(Clause * ifPart, Clause * thenPart);
 }
