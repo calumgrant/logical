@@ -74,6 +74,8 @@ namespace AST
     public:
         virtual const Variable * IsVariable() const =0;
         virtual const Value * IsValue() const =0;
+        
+        virtual void UnboundError(Database & db) const =0;
 
         /*
          Binds the variables in the entity in the compilation object.
@@ -106,6 +108,7 @@ namespace AST
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
+        void UnboundError(Database & db) const override;
 
         const std::string name;
     };
@@ -115,6 +118,7 @@ namespace AST
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
+        void UnboundError(Database & db) const override;
     };
 
     class Value : public Entity
@@ -124,6 +128,7 @@ namespace AST
         const Value * IsValue() const override;
         virtual ::Entity MakeEntity(Database &db) const =0;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
+        void UnboundError(Database & db) const override;
     };
 
     class AtString : public Value
@@ -176,6 +181,7 @@ namespace AST
     public:
         const Variable * IsVariable() const override;
         const Value * IsValue() const override;
+        void UnboundError(Database & db) const override;
     };
 
     class NotImplementedEntity : public ArithmeticEntity

@@ -76,7 +76,7 @@ void AST::EntityClause::AssertFacts(Database &db) const
             attributes->Assert(db, e);
     }
     else
-        db.UnboundError("...");
+        entity->UnboundError(db);
 }
 
 
@@ -163,7 +163,7 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
         auto v = entityOpt->IsValue();
         if(!v)
         {
-            db.UnboundError("...");
+            entityOpt->UnboundError(db);
             return;
         }
         ::Entity row[2] = { e, v->MakeEntity(db) };
@@ -207,15 +207,15 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
                 db.GetUnaryRelation(predicate->name)->Add(&e);
             }
             else
-                db.UnboundError("...");
+                entitiesOpt->entities[0]->UnboundError(db);
             return;
         }
     case 2:
         {
             auto v0 = entitiesOpt->entities[0]->IsValue();
             auto v1 = entitiesOpt->entities[1]->IsValue();
-            if(!v0) db.UnboundError("...");
-            if(!v1) db.UnboundError("...");
+            if(!v0) entitiesOpt->entities[0]->UnboundError(db);
+            if(!v1) entitiesOpt->entities[1]->UnboundError(db);
 
             if(v0 && v1)
             {
@@ -575,4 +575,24 @@ void AST::Aggregate::Visit(Visitor &v) const
 
 AST::Aggregate::Aggregate(Entity *e, Clause *c) : entity(e), clause(c)
 {
+}
+
+void AST::NamedVariable::UnboundError(Database &db) const
+{
+    db.UnboundError(name);
+}
+
+void AST::UnnamedVariable::UnboundError(Database &db) const
+{
+    db.UnboundError("_");
+}
+
+void AST::ArithmeticEntity::UnboundError(Database &db) const
+{
+    db.UnboundError("arithmetic_expression");
+}
+
+void AST::Value::UnboundError(Database &db) const
+{
+    db.UnboundError("??");  // Shouldn't really get here
 }

@@ -307,7 +307,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
                     result = e;
             }
             else
-                db.UnboundError("...");
+                (*i)->entityOpt->UnboundError(db);
         }
     }
 
@@ -325,7 +325,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::CompileLhs(Database &db, Compilat
     }
     else
     {
-        db.UnboundError("...");
+        entity->UnboundError(db);
     }
 
     return std::make_shared<NoneEvaluation>();
@@ -548,7 +548,8 @@ std::shared_ptr<Evaluation> AST::Range::Compile(Database &db, Compilation & comp
 
     if(!bound1 || !bound2)
     {
-        db.UnboundError("...");
+        if(!bound1) lowerBound->UnboundError(db);
+        if(!bound2) upperBound->UnboundError(db);
         return std::make_shared<NoneEvaluation>();
     }
 
@@ -575,9 +576,9 @@ int AST::BinaryArithmeticEntity::BindVariables(Database &db, Compilation &c, boo
     bound = true;
     bool bound1, bound2;
     lhsSlot = lhs->BindVariables(db, c, bound1);
-    if(!bound1) db.UnboundError("...");
+    if(!bound1) lhs->UnboundError(db);
     rhsSlot = rhs->BindVariables(db, c, bound2);
-    if(!bound1) db.UnboundError("...");
+    if(!bound1) rhs->UnboundError(db);
 
     resultSlot = c.AddUnnamedVariable();
     
@@ -589,8 +590,7 @@ int AST::NegateEntity::BindVariables(Database & db, Compilation &c, bool & bound
 {
     slot1 = entity->BindVariables(db, c, bound);
     
-    if(!bound)
-        db.UnboundError("...");
+    if(!bound) entity->UnboundError(db);
     bound = true;
     resultSlot = c.AddUnnamedVariable();
     return resultSlot;
@@ -661,8 +661,7 @@ public:
     {            
         bool bound;
         int slot = entity.BindVariables(db, compilation, bound);
-        if(!bound)
-            db.UnboundError("...");
+        if(!bound) entity.UnboundError(db);
         
         // Need to share the counter between all branches for example
         // count X in (f X or g X)
