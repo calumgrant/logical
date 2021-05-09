@@ -112,10 +112,10 @@ find P, S in person P, surname S.
 
 // Quantifiers
 
-person X has money M if M = sum V in (X has cash C and C has value V).
-person X has money sum V in (X has cash C and C has amount V).
+person X has money M if M = sum V over C in (X has cash C and C has value V).
+person X has money sum V over C in (X has cash C and C has amount V).
 person X has coins count C in (X has cash C).
-person X is rich if sum V in (X has cash C and C has value V) > 100.
+person X is rich if sum V over C in (X has cash C and C has value V) > 100.
 
 person X is rich if 
     all (rich X) in X has parent P and rich P.

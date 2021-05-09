@@ -3,9 +3,17 @@
 # Sum syntax
 
 ```
-sum M, X in money M has value V.
+S = sum M, X in money M has value V
+S = sum of X over M in money M has value V.
+
 ```
 
+Must work like `count`, but with an extra field
+
+```
+S = sum Money, Value in money Money has value Value
+S = sum Value in money _ has value Valuex
+```
 
 ## Short term
 - `f X and g X if ...`
@@ -18,29 +26,43 @@ sum M, X in money M has value V.
 - Binding issues
   - `number X has square X*X.` is not bound yet.
   - `number X has square Y if Y = X*X.` also not bound yet.
-  - Report the variable name in the unbound case.
   - Binding tests
-Queries that work: `find succeeded _ if 1=1.`
+Queries that work:
+  - `find succeeded _ if 1=1.`
   - Deduplicate results
   - Sort results
 - Bug with computed bounds 1<X<Y+1 for example.
 - `is not` syntax.
+  - `X is not a person`.
+  - `X has no job`
 - const fields more
+- Output timing information
+- Output number of errors.
+- `not` should fail early (optimization) - see the primes1.dl example
+- `or` join both branches if the same variables are bound in all branches.
+
+- Warning about empty predicates with no facts or rules.
 
 Code refactoring:
 - Split up files
 - Put into `namespace Logical`
 
+# Unresolved issues
+- How does the `with` syntax work
+- How does the `sum` syntax work
+- Putting `-` into identifiers?
+- 
+
 ## Datalog predicates
 
+- nary predicates
+- `with` predicates - how do they work?
 Perhaps mix Datalog syntax with Logical syntax.
 Syntax for all, count etc.
 
 ## Quantifiers
 
-- [ ] count
-- [ ] sum
-- [ ] all
+- [ ] sum- [ ] all
 
 ## Last use optimization
 

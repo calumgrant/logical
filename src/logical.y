@@ -50,10 +50,12 @@
 
 int yylex();
 extern int yylineno;
+extern int yycolumn;
 extern int yyleng;
+
 void yyerror(Database &db, const char*message)
 {
-    std::cerr << message << " at line " << yylineno << std::endl;
+    std::cerr << message << " at line " << yylineno << ":" << yycolumn-yyleng << std::endl;
 }
 
 %}
@@ -394,7 +396,18 @@ plusentity:
 
 sumentity:
     plusentity
-|   tok_sum entity_expression tok_in tok_open clause tok_close { $$ = new AST::NotImplementedEntity($2,$5); }
+|   tok_sum variable tok_identifier variable tok_in tok_open clause tok_close
+    {
+        // A contextual keyword, where tok_identifier should be "over".
+        $$ = new AST::Sum($2, $4, $7);
+        if (strcmp($3, "over"))
+            yyerror(db, "Expecting 'over'");
+        free($3);
+    }
+|   tok_sum variable tok_in tok_open clause tok_close
+    {
+        $$ = new AST::Sum(nullptr, $2, $5);
+    }
 |   tok_count entity_expression tok_in tok_open clause tok_close { $$ = new AST::Count($2, $5); }
 ;
 

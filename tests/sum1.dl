@@ -1,0 +1,14 @@
+value 1.
+value 2.
+
+total X if X = sum V in (value V).
+
+error "sum 1" if not total 3.
+error "sum 2" if 3 is not total.
+
+money @m1 has value 10.
+money @m2 has value 10.
+money @m3 has value 20.
+
+error "error 1" if not sum M in (_ has value M) = 30.
+error "error 2" if not sum V over M in (M has value V) = 40.

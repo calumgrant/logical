@@ -604,3 +604,7 @@ void AST::Value::UnboundError(Database &db) const
 {
     db.UnboundError("??", 0, 0);  // Shouldn't really get here
 }
+
+AST::Sum::Sum(Entity * value, Entity * entity, Clause * clause) : Aggregate(entity, clause), value(value)
+{
+}

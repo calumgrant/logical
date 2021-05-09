@@ -475,5 +475,14 @@ namespace AST
         Count(Entity *e, Clause *c);
     };
 
+    class Sum : public Aggregate
+    {
+    public:
+        Sum(Entity * value, Entity * entity, Clause * clause);
+        
+    private:
+        std::unique_ptr<Entity> value;
+    };
+
     Clause * MakeAll(Clause * ifPart, Clause * thenPart);
 }

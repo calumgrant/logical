@@ -1,7 +1,14 @@
- 
-prime N if 2<=N<1000 and not (2<=M<N and N%M=0).
+primes_count 1000. 
 
-prime2 N if 2<=N<1000 and all (N%M!=0) in 2<=M<N.
+prime N if 
+    primes_count Max and
+    2<=N<=Max and
+    not (2<=M<N and N%M=0).
+
+prime2 N if 
+    primes_count Max and
+    2<=N<=Max and
+    all (N%M!=0) in 2<=M<N.
 
 error "primes" if 
     prime N and not prime2 N
