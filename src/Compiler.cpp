@@ -679,26 +679,17 @@ private:
     std::shared_ptr<Evaluation> result;
 };
 
-std::shared_ptr<Evaluation> AST::Aggregate::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::Count::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
 {
     auto collector = std::make_shared<CountCollector>();
     
-    int slot2 = c.AddUnnamedVariable();
-
-    bool bound;
     CountTerminatorClause terminator(*entity, collector);
 
     clause->SetNext(terminator);
     
     int branch = c.CreateBranch();
     auto eval = clause->Compile(db, c);
-    
-    //bool bound2;
-    // !! This should happen in the terminator
-    //int slot3 = entity->BindVariables(db, c, bound2); // Do we care about this??
-    //if(!bound)
-     //   db.UnboundError("...");
-    
+        
     c.Branch(branch);
 
     std::shared_ptr<Evaluation> tail = std::make_shared<CountEvaluation>(slot, collector, next);
@@ -716,3 +707,55 @@ AST::Clause * AST::MakeAll(Clause * ifPart, Clause * thenPart)
 {
     return new AST::Not(new AST::And(ifPart, new AST::Not(thenPart)));
 }
+
+class SumTerminatorClause : public DummyClause
+{
+public:
+    SumTerminatorClause(int resultSlot, AST::Entity &e, AST::Entity & v) : resultSlot(resultSlot), entity(e), value(v) { }
+    
+    // Where the result is stored.
+    std::shared_ptr<SumCollector> collector;
+    const int resultSlot;
+    AST::Entity & entity, &value;
+    
+    std::shared_ptr<Evaluation> result;
+    
+    std::shared_ptr<Evaluation> Compile(Database & db, Compilation&c) override
+    {
+        // Check the variables
+        bool bound;
+        int entitySlot = entity.BindVariables(db, c, bound);
+        
+        if(!bound)
+            entity.UnboundError(db);
+        
+        int valueSlot = value.BindVariables(db, c, bound);
+        if(!bound)
+            value.UnboundError(db);
+
+        if(!result)
+        {
+            collector = std::make_shared<SumCollector>(valueSlot, resultSlot);
+        
+            result = std::make_shared<DeduplicateBB>(entitySlot, c.AddUnnamedVariable(), collector);
+        }
+        
+        return result;
+    }
+};
+
+std::shared_ptr<Evaluation> AST::Sum::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
+{
+    SumTerminatorClause terminator(slot, entity ? *entity : *value, *value);
+
+    clause->SetNext(terminator);
+    
+    int branch = c.CreateBranch();
+    auto eval = clause->Compile(db, c);
+        
+    c.Branch(branch);
+    
+    std::shared_ptr<Evaluation> tail = std::make_shared<SumEvaluation>(slot, terminator.collector, next);
+    
+    return std::make_shared<OrEvaluation>(eval, tail);
+};

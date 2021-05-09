@@ -458,13 +458,12 @@ namespace AST
     class Aggregate : public ArithmeticEntity
     {
     protected:
-        Aggregate(Entity *e, Clause *c);
-        std::unique_ptr<Entity> entity;
+        Aggregate(Entity *e, Entity * value, Clause *c);
+        std::unique_ptr<Entity> entity, value;
         std::unique_ptr<Clause> clause;
         
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
         void Visit(Visitor &v) const override;
-        std::shared_ptr<Evaluation> Compile(Database &db, Compilation &c, const std::shared_ptr<Evaluation> & next) const override;
         
         int slot;
     };
@@ -473,15 +472,14 @@ namespace AST
     {
     public:
         Count(Entity *e, Clause *c);
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation &c, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class Sum : public Aggregate
     {
     public:
-        Sum(Entity * value, Entity * entity, Clause * clause);
-        
-    private:
-        std::unique_ptr<Entity> value;
+        Sum(Entity * entity, Entity * value, Clause * clause);
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation &c, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     Clause * MakeAll(Clause * ifPart, Clause * thenPart);

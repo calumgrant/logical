@@ -571,7 +571,7 @@ void AST::NegateEntity::Visit(Visitor &v) const
     entity->Visit(v);
 }
 
-AST::Count::Count(Entity *e, Clause *c) : Aggregate(e, c)
+AST::Count::Count(Entity *e, Clause *c) : Aggregate(e, nullptr, c)
 {
 }
 
@@ -581,7 +581,7 @@ void AST::Aggregate::Visit(Visitor &v) const
     clause->Visit(v);
 }
 
-AST::Aggregate::Aggregate(Entity *e, Clause *c) : entity(e), clause(c)
+AST::Aggregate::Aggregate(Entity *e, Entity * v, Clause *c) : entity(e), value(v), clause(c)
 {
 }
 
@@ -605,6 +605,6 @@ void AST::Value::UnboundError(Database &db) const
     db.UnboundError("??", 0, 0);  // Shouldn't really get here
 }
 
-AST::Sum::Sum(Entity * value, Entity * entity, Clause * clause) : Aggregate(entity, clause), value(value)
+AST::Sum::Sum(Entity * entity, Entity * value, Clause * clause) : Aggregate(entity, value, clause)
 {
 }

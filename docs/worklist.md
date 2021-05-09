@@ -42,6 +42,7 @@ Queries that work:
 - `or` join both branches if the same variables are bound in all branches.
 
 - Warning about empty predicates with no facts or rules.
+- Optimization: Tables should assume a single type, then fall back onto polymorphic behaviour which is slower.
 
 Code refactoring:
 - Split up files

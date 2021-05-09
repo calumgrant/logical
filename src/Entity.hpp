@@ -47,4 +47,47 @@ struct Entity
             return e.hash();
         }
     };
+    
+    Entity & operator+=(const Entity & other)
+    {
+        switch(type)
+        {
+            case EntityType::None:
+                *this = other;
+                break;
+            case EntityType::Integer:
+                switch(other.type)
+                {
+                    case EntityType::Integer:
+                        i += other.i;
+                        break;
+                    case EntityType::Float:
+                        type = EntityType::Float;
+                        f = i + other.f;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case EntityType::Float:
+                switch(other.type)
+                {
+                    case EntityType::Integer:
+                        f += other.i;
+                        break;
+                    case EntityType::Float:
+                        f += other.f;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            default:
+                break;
+        }
+        
+        // Anything else fails silently.
+        // We should perhaps warn about this instead.
+        return *this;
+    }
 };

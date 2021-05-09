@@ -399,7 +399,7 @@ sumentity:
 |   tok_sum variable tok_identifier variable tok_in tok_open clause tok_close
     {
         // A contextual keyword, where tok_identifier should be "over".
-        $$ = new AST::Sum($2, $4, $7);
+        $$ = new AST::Sum($4, $2, $7);
         if (strcmp($3, "over"))
             yyerror(db, "Expecting 'over'");
         free($3);
