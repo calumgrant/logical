@@ -26,6 +26,7 @@ Database.GetRelation(projection)
 
 ## Short term
 - The `Unique` evaluations do not need a "target" slot at all.
+- Use two column deduplication for sum.
 - Implement Datalog syntax
   - unary and binary relations
   - all and cound syntax

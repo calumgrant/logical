@@ -91,3 +91,12 @@ struct Entity
         return *this;
     }
 };
+
+struct PairHash
+{
+    int operator()(const std::pair<Entity, Entity> &value) const
+    {
+        Entity::Hash h;
+        return h(value.first) * 13 + h(value.second);
+    }
+};

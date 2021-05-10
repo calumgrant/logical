@@ -854,12 +854,12 @@ Evaluation::Evaluation() : callCount(0)
 {
 }
 
-DeduplicateBB::DeduplicateBB(int slot1, const std::shared_ptr<Evaluation> & next) :
+DeduplicateB::DeduplicateB(int slot1, const std::shared_ptr<Evaluation> & next) :
     slot1(slot1), next(next)
 {
 }
 
-void DeduplicateBB::Evaluate(Entity * row)
+void DeduplicateB::Evaluate(Entity * row)
 {
     ++callCount;
     
@@ -870,7 +870,7 @@ void DeduplicateBB::Evaluate(Entity * row)
     }
 }
 
-void DeduplicateBB::Explain(Database &db, std::ostream &os, int indent) const
+void DeduplicateB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Deduplicate _" << slot1;
@@ -878,6 +878,32 @@ void DeduplicateBB::Explain(Database &db, std::ostream &os, int indent) const
     os << " ->\n";
     next->Explain(db, os, indent+4);
 }
+
+DeduplicateBB::DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
+    slot1(slot1), slot2(slot2), next(next)
+{
+}
+
+void DeduplicateBB::Evaluate(Entity * row)
+{
+    ++callCount;
+    
+    auto i = values.insert(std::make_pair(row[slot1], row[slot2]));
+    if(i.second)
+    {
+        next->Evaluate(row);
+    }
+}
+
+void DeduplicateBB::Explain(Database &db, std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    os << "Deduplicate (_" << slot1 << ",_" << slot2 << ")";
+    OutputCallCount(os);
+    os << " ->\n";
+    next->Explain(db, os, indent+4);
+}
+
 
 CountCollector::CountCollector()
 {

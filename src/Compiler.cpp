@@ -668,7 +668,7 @@ public:
         // Need to share the counter between all branches for example
         // count X in (f X or g X)
         if(!result)
-            result = std::make_shared<DeduplicateBB>(slot, next);
+            result = std::make_shared<DeduplicateB>(slot, next);
         return result;
     }
 
@@ -735,9 +735,8 @@ public:
 
         if(!result)
         {
-            collector = std::make_shared<SumCollector>(valueSlot, resultSlot);
-        
-            result = std::make_shared<DeduplicateBB>(entitySlot, collector);
+            collector = std::make_shared<SumCollector>(valueSlot, resultSlot);        
+            result = std::make_shared<DeduplicateBB>(entitySlot, resultSlot, collector);
         }
         
         return result;
