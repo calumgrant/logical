@@ -1,6 +1,8 @@
 #include <string>
 #include <vector>
 
+#include "Entity.hpp"
+
 class Database;
 class Entity;
 class Compilation;
@@ -19,18 +21,14 @@ namespace AST
     class Visitor
     {
     public:
-        virtual void OnPredicate(const std::string&);
-        virtual void OnUnaryPredicate(const std::string&);
-        virtual void OnBinaryPredicate(const std::string&);
+        virtual void OnPredicate(int nameId);
+        virtual void OnUnaryPredicate(int nameId);
+        virtual void OnBinaryPredicate(int nameId);
 
-        virtual void OnVariable(const std::string&);
+        virtual void OnVariable(int nameId);
         virtual void OnUnnamedVariable();
 
-        virtual void OnString(const std::string & value);
-        virtual void OnAtString(const std::string & value);
-        virtual void OnInteger(int value);
-        virtual void OnFloat(double value);
-        virtual void OnBool(bool value);
+        virtual void OnValue(const ::Entity & value);
     };
 
     class Node
@@ -107,13 +105,13 @@ namespace AST
     class NamedVariable : public Variable
     {
     public:
-        NamedVariable(const char * name, int line, int column);
+        NamedVariable(int nameId, int line, int column);
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
         void UnboundError(Database & db) const override;
 
-        const std::string name;
+        const int nameId;
     };
 
     class UnnamedVariable : public Variable
@@ -129,56 +127,15 @@ namespace AST
     class Value : public Entity
     {
     public:
+        Value(const ::Entity & entity);
         const Variable * IsVariable() const override;
         const Value * IsValue() const override;
-        virtual ::Entity MakeEntity(Database &db) const =0;
+        const ::Entity &GetValue() const;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
         void UnboundError(Database & db) const override;
-    };
-
-    class AtString : public Value
-    {
-    public:
-        AtString(const char*v);
-        ::Entity MakeEntity(Database &db) const override;
-        void Visit(Visitor&) const override;
-        const std::string value;
-    };
-
-    class String : public Value
-    {
-    public:
-        String(const std::string &p);
-        ::Entity MakeEntity(Database &db) const override;
-        void Visit(Visitor&) const override;
-        const std::string value;
-    };
-
-    class Integer : public Value
-    {
-    public:
-        Integer(int i);
-        ::Entity MakeEntity(Database &db) const override;
-        const int value;
-        void Visit(Visitor&) const override;
-    };
-
-    class Float : public Value
-    {
-    public:
-        Float(double v);
-        ::Entity MakeEntity(Database &db) const override;
-        const double value;
-        void Visit(Visitor&) const override;
-    };
-
-    class Bool : public Value
-    {
-    public:
-        Bool(bool b);
-        ::Entity MakeEntity(Database &db) const override;
-        const bool value;
-        void Visit(Visitor&) const override;
+        void Visit(Visitor &v) const override;
+    private:
+        ::Entity value;
     };
 
     class ArithmeticEntity : public Entity
@@ -273,24 +230,24 @@ namespace AST
     class Predicate : public Node
     {
     public:
-        Predicate(const char * name);
+        Predicate(int nameId);
         void Visit(Visitor&) const override;
-        std::string name;
+        const int nameId;
     };
 
     class UnaryPredicate : public Node
     {
     public:
-        UnaryPredicate(const char * name);
+        UnaryPredicate(int nameId);
         void Assert(Database &db, const ::Entity &e) const;
         void Visit(Visitor&) const override;
-        std::string name;
+        const int nameId;
     };
 
     class BinaryPredicate : public Predicate
     {
     public:
-        BinaryPredicate(const char * name);
+        BinaryPredicate(int nameId);
         void Visit(Visitor&) const override;
     };
 

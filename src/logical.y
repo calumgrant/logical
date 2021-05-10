@@ -7,7 +7,6 @@
 }
 
 %locations
-// %pure-parser
 %define api.pure full
 %param { yyscan_t scanner }
 
@@ -40,8 +39,7 @@
 %type<binarypredicate> binarypredicate
 %type<attributes> attributes
 %type<comparator> comparator
-%type<sval> tok_identifier tok_atstring tok_string
-%type<ival> tok_integer
+%type<ival> tok_integer tok_identifier tok_atstring tok_string
 %type<fval> tok_float
 %type<rule> datalog_rule rule
 
@@ -51,11 +49,6 @@
 #include "tokens.tab.h"
 #include <memory>
 #include <iostream>
-
-// int yylex();
-//extern int yylineno;
-//extern int yycolumn;
-//extern int yyleng;
 
 typedef void * yyscan_t;
 
@@ -179,7 +172,7 @@ query:
 |   tok_find predicate tok_dot
     {
         std::unique_ptr<AST::Predicate> predicate($2);
-        db.Find(predicate->name);
+        db.Find(predicate->nameId);
     }
 |   tok_find queryclause tok_if clause tok_dot
 |   tok_find variablelist tok_in clause tok_dot
@@ -365,12 +358,12 @@ attributes:
 |   attributes tok_comma binarypredicate entity_expression { $$ = new AST::AttributeList($3, $4, $1); }
 ;
 
-predicate: tok_identifier { $$ = new AST::Predicate($1); free($1); }
-unarypredicate: tok_identifier { $$ = new AST::UnaryPredicate($1); free($1); }
-binarypredicate: tok_identifier { $$ = new AST::BinaryPredicate($1); free($1); }
+predicate: tok_identifier { $$ = new AST::Predicate($1); }
+unarypredicate: tok_identifier { $$ = new AST::UnaryPredicate($1); }
+binarypredicate: tok_identifier { $$ = new AST::BinaryPredicate($1); }
 
 variable:
-    tok_identifier { $$ = new AST::NamedVariable($1, @1.first_line, @1.first_column); free($1); }
+    tok_identifier { $$ = new AST::NamedVariable($1, @1.first_line, @1.first_column); }
 |   tok_underscore { $$ = new AST::UnnamedVariable(@1.first_line, @1.first_column); }
 ;
 
@@ -407,9 +400,8 @@ sumentity:
     {
         // A contextual keyword, where tok_identifier should be "over".
         $$ = new AST::Sum($4, $2, $7);
-        if (strcmp($3, "over"))
+        if ($3 != db.GetStringId("over"))
             yyerror(&yylloc, scanner, db, "Expecting 'over'");
-        free($3);
     }
 |   tok_sum variable tok_in tok_open clause tok_close
     {
@@ -421,47 +413,15 @@ sumentity:
 entity_expression: sumentity;
 
 value: 
-    tok_string { 
-        std::string value;
-        // TODO: Do this in the scanner
-        for(int i=1; i<strlen($1)-1; ++i)
-        {
-            if($1[i]=='\\')
-            {
-                ++i;
-                switch($1[i])
-                {
-                case 'r':
-                    value.push_back('\r');
-                    break;
-                case 'n':
-                    value.push_back('\n');
-                    break;
-                case 't':
-                    value.push_back('\t');
-                    break;
-                case '\\':
-                    value.push_back('\\');
-                    break;
-                case '"':
-                    value.push_back('"');
-                    break;
-                default:
-                    yyerror(&yylloc, scanner, db, "Invalid escape character");
-                    break;
-                }
-            }
-            else
-                value.push_back($1[i]);
-        }
-        free($1);
-        $$ = new AST::String(value);
+    tok_string
+    {
+        $$ = new AST::Value(Entity(EntityType::String, $1));
     }
-|   tok_atstring { $$ = new AST::AtString($1+1); free($1); }
-|   tok_integer { $$ = new AST::Integer($1); }
-|   tok_float   { $$ = new AST::Float($1); }
-|   tok_true    { $$ = new AST::Bool(true); }
-|   tok_false   { $$ = new AST::Bool(false); }
+|   tok_atstring { $$ = new AST::Value(Entity(EntityType::AtString, $1)); }
+|   tok_integer { $$ = new AST::Value(Entity(EntityType::Integer, $1)); }
+|   tok_float   { $$ = new AST::Value(Entity(EntityType::Float, $1)); }
+|   tok_true    { $$ = new AST::Value(Entity(EntityType::Boolean, 1)); }
+|   tok_false   { $$ = new AST::Value(Entity(EntityType::Boolean, 0)); }
 ;
 
 %%

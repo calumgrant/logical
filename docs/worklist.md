@@ -22,6 +22,7 @@ Implementation:
 
 
 ## Short term
+- Change the lexer to return a string id from the string pool.
 - Implement Datalog syntax
   - unary and binary relations
   - all and cound syntax

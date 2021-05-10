@@ -17,7 +17,7 @@ public:
     Compilation(const Compilation&) = delete;
     ~Compilation();
 
-    int AddVariable(const std::string &name, bool & alreadyBound);
+    int AddVariable(int name, bool & alreadyBound);
     int AddValue(const Entity &e);
     int AddUnnamedVariable();
     
@@ -28,11 +28,11 @@ public:
 private:
     
     // The stack of bound variables, that can be rewound.
-    std::vector<std::string> boundVariables;
+    std::vector<int> boundVariables;
 
     // The variables bound in the current branch
-    std::unordered_set<std::string> boundVariables2;
+    std::unordered_set<int> boundVariables2;
 
     // This only grows
-    std::unordered_map<std::string, int> variables;
+    std::unordered_map<int, int> variables;
 };

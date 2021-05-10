@@ -6,6 +6,7 @@
 
 void yyrestart (FILE *input_file ,yyscan_t yyscanner );
 int yylex_init (yyscan_t* scanner);
+int yylex_init_extra (Database *, yyscan_t* scanner);
 int yylex_destroy (yyscan_t yyscanner );
 void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
@@ -37,7 +38,8 @@ int main(int argc, char**argv)
         {
             yyscan_t scanner;
 
-            yylex_init(&scanner);
+//             yylex_init(&scanner);
+            yylex_init_extra(&db, &scanner);
 
             yyset_in(f, scanner);
             // yyin = f;

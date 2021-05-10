@@ -35,7 +35,7 @@ public:
     
     virtual void AddRule(const std::shared_ptr<Evaluation> & rule) =0;
     
-    virtual const std::string & Name() const =0;
+    virtual int Name() const =0;
     
     virtual void RunRules() =0;
 };
@@ -43,7 +43,7 @@ public:
 class Predicate : public Relation
 {
 public:
-    Predicate(Database &db, const std::string &name);
+    Predicate(Database &db, int name);
     // std::shared_ptr<Relation> data;
 
     // Evaluates all rules if needed
@@ -53,11 +53,11 @@ public:
     void RunRules() override;
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     void MakeDirty();
-    const std::string & Name() const override;
+    int Name() const override;
 private:
     bool rulesRun;
     std::vector< std::shared_ptr<Evaluation> > rules;
-    std::string name;
+    int name;
 protected:
     Database &database;
 };
@@ -65,7 +65,7 @@ protected:
 class UnaryTable : public Predicate
 {
 public:
-    UnaryTable(Database &db, const std::string&name);
+    UnaryTable(Database &db, int nameId);
     void Add(const Entity *row) override;
     int Count() override;
     void Query(Entity*row, int columns, Visitor&v) override;
@@ -77,7 +77,7 @@ private:
 class PrintRelation : public Predicate
 {
 public:
-    PrintRelation(std::ostream & output, Database&db, const std::string &name);
+    PrintRelation(std::ostream & output, Database&db, int name);
     void Add(const Entity *row) override;
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     int Count() override;
@@ -96,7 +96,7 @@ public:
 class BinaryTable : public Predicate
 {
 public:
-    BinaryTable(Database &db, const std::string&name);
+    BinaryTable(Database &db, int name);
     void Add(const Entity * row) override;
     int Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
@@ -109,7 +109,7 @@ private:
 class TableX : public Predicate
 {
 public:
-    TableX(Database &db, const std::string&name);
+    TableX(Database &db, int name);
     int Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
     void Add(const Entity*row) override;

@@ -23,6 +23,12 @@ struct RelationHash
     {
         return std::hash<std::string>()(p.first)+p.second;
     }
+
+    int operator()(const std::pair<int, int> &p) const
+    {
+        return p.first * 97 + p.second;
+    }
+
 };
 
 class Database
@@ -39,6 +45,10 @@ public:
     Entity Create(bool b) { return Entity { EntityType::Boolean, b}; }
     
     Entity AddStrings(int id1, int id2);
+    
+    int GetStringId(const std::string&s);
+    int GetAtStringId(const std::string&s);
+    int GetStringLiteral(const char * literal);
 
     void Add(const std::string & table, const Entity &entityId);
     void Add(const std::string & table, const Entity &entityId1, const Entity &entity);
@@ -50,14 +60,14 @@ public:
 
     void NotImplementedError(const SourceLocation&);
     
-    std::shared_ptr<Relation> GetUnaryRelation(const std::string &name);
-    std::shared_ptr<Relation> GetBinaryRelation(const std::string &name);
-    std::shared_ptr<Relation> GetRelation(const std::string &name, int arity);
+    std::shared_ptr<Relation> GetUnaryRelation(int nameId);
+    std::shared_ptr<Relation> GetBinaryRelation(int nameId);
+    std::shared_ptr<Relation> GetRelation(int nameId, int arity);
 
     const std::string &GetString(int id) const;
     const std::string &GetAtString(int id) const;
 
-    void Find(const std::string & unaryPredicateName);
+    void Find(int unaryPredicateId);
 
     void Print(const Entity &e, std::ostream &os) const;
     
@@ -76,9 +86,9 @@ public:
     bool UserErrorReported() const;
 
 private:
-    std::unordered_map< std::string, std::shared_ptr<Relation> > unaryRelations;
-    std::unordered_map< std::string, std::shared_ptr<Relation> > binaryRelations;
-    std::unordered_map< std::pair<std::string, int>, std::shared_ptr<Relation>, RelationHash> relations;
+    std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
+    std::unordered_map< int, std::shared_ptr<Relation> > binaryRelations;
+    std::unordered_map< std::pair<int, int>, std::shared_ptr<Relation>, RelationHash> relations;
 
     StringTable strings, atstrings;
     

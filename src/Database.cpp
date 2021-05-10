@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-std::shared_ptr<Relation> Database::GetUnaryRelation(const std::string & name)
+std::shared_ptr<Relation> Database::GetUnaryRelation(int name)
 {
     auto i = unaryRelations.find(name);
     if (i == unaryRelations.end())
@@ -15,7 +15,7 @@ std::shared_ptr<Relation> Database::GetUnaryRelation(const std::string & name)
         return i->second;
 }
 
-std::shared_ptr<Relation> Database::GetBinaryRelation(const std::string & name)
+std::shared_ptr<Relation> Database::GetBinaryRelation(int name)
 {
     auto i = binaryRelations.find(name);
     if (i==binaryRelations.end())
@@ -39,8 +39,9 @@ Relation::~Relation()
 
 Database::Database() : verbose(false), userError(false)
 {
-    unaryRelations["print"] = std::make_shared<PrintRelation>(std::cout, *this, "print");
-    unaryRelations["error"] = std::make_shared<ErrorRelation>(*this);
+    int print = GetStringId("print");
+    unaryRelations[print] = std::make_shared<PrintRelation>(std::cout, *this, print);
+    unaryRelations[GetStringId("error")] = std::make_shared<ErrorRelation>(*this);
 }
 
 Database::~Database()
@@ -96,7 +97,7 @@ const std::string &Database::GetAtString(int id) const
     return atstrings.GetString(id);
 }
 
-std::shared_ptr<Relation> Database::GetRelation(const std::string &name, int arity)
+std::shared_ptr<Relation> Database::GetRelation(int name, int arity)
 {
     switch(arity)
     {
@@ -118,7 +119,7 @@ std::shared_ptr<Relation> Database::GetRelation(const std::string &name, int ari
         return i->second;
 }
 
-void Database::Find(const std::string & unaryPredicateName)
+void Database::Find(int unaryPredicateName)
 {
     class Tmp : public Relation::Visitor
     {
@@ -158,6 +159,45 @@ bool Database::Explain() const
     return verbose;
 }
 
+int Database::GetStringLiteral(const char *literal)
+{
+    int len = strlen(literal)-1;
+    std::string value;
+    // TODO: Do this in the scanner
+    for(int i=1; i<len; ++i)
+    {
+        if(literal[i]=='\\')
+        {
+            ++i;
+            switch(literal[i])
+            {
+            case 'r':
+                value.push_back('\r');
+                break;
+            case 'n':
+                value.push_back('\n');
+                break;
+            case 't':
+                value.push_back('\t');
+                break;
+            case '\\':
+                value.push_back('\\');
+                break;
+            case '"':
+                value.push_back('"');
+                break;
+            default:
+                // TODO: db.SyntaxError();
+                break;
+            }
+        }
+        else
+            value.push_back(literal[i]);
+    }
+    
+    return GetStringId(value);
+}
+
 bool Database::UserErrorReported() const
 {
     return userError;
@@ -171,4 +211,14 @@ void Database::ReportUserError()
 Entity Database::AddStrings(int id1, int id2)
 {
     return CreateString(GetString(id1) + GetString(id2));
+}
+
+int Database::GetStringId(const std::string &str)
+{
+    return strings.GetId(str);
+}
+
+int Database::GetAtStringId(const std::string &str)
+{
+    return atstrings.GetId(str);
 }

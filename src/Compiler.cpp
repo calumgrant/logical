@@ -66,7 +66,7 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
     
     auto eval = listOpt ? listOpt->Compile(db, c, slot, true, next) : next->Compile(db, c);
     
-    auto relation = db.GetBinaryRelation(predicate->name);
+    auto relation = db.GetBinaryRelation(predicate->nameId);
         
     if(entityOpt)
     {
@@ -132,7 +132,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
     {
         for(int i = predicates->list.size()-1; i>=0; --i)
         {
-            auto relation = db.GetUnaryRelation(predicates->list[i]->name);
+            auto relation = db.GetUnaryRelation(predicates->list[i]->nameId);
             if(i>0 || bound)
                 eval = std::make_shared<EvaluateB>(relation, slot, eval);
             else
@@ -151,7 +151,7 @@ Compilation::~Compilation()
 {
 }
 
-int Compilation::AddVariable(const std::string &name, bool &alreadybound)
+int Compilation::AddVariable(int name, bool &alreadybound)
 {
     auto i = variables.find(name);
     auto j = boundVariables2.find(name);
@@ -283,7 +283,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
     {
         for(auto & i : predicates->list)
         {
-            auto e = std::make_shared<WriterB>(db.GetUnaryRelation(i->name), slot);
+            auto e = std::make_shared<WriterB>(db.GetUnaryRelation(i->nameId), slot);
             if(result)
                 result = std::make_shared<OrEvaluation>(result, e);
             else
@@ -299,7 +299,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
             int slot2 = (*i)->entityOpt->BindVariables(db, c, bound);
             if(bound)
             {
-                std::shared_ptr<Evaluation> e = std::make_shared<WriterBB>(db.GetBinaryRelation((*i)->predicate->name), slot, slot2);
+                std::shared_ptr<Evaluation> e = std::make_shared<WriterBB>(db.GetBinaryRelation((*i)->predicate->nameId), slot, slot2);
                 e = (*i)->entityOpt->Compile(db, c, e);
                 if(result)
                     result = std::make_shared<OrEvaluation>(result, e);
@@ -379,12 +379,12 @@ void AST::EntityClause::AddRule(Database &db, const std::shared_ptr<Evaluation> 
     if(predicates)
     {
         for(auto &i : predicates->list)
-            db.GetUnaryRelation(i->name)->AddRule(rule);
+            db.GetUnaryRelation(i->nameId)->AddRule(rule);
     }
     
     for(auto p = &attributes; *p; p=&(*p)->listOpt)
     {
-        db.GetBinaryRelation((*p)->predicate->name)->AddRule(rule);
+        db.GetBinaryRelation((*p)->predicate->nameId)->AddRule(rule);
     }
 }
 
@@ -444,7 +444,7 @@ void AST::Comparator::AddRule(Database &db, const std::shared_ptr<Evaluation>&)
 
 int AST::NamedVariable::BindVariables(Database &db, Compilation &c, bool &bound)
 {
-    return c.AddVariable(name, bound);
+    return c.AddVariable(nameId, bound);
 }
 
 int AST::UnnamedVariable::BindVariables(Database &db, Compilation &c, bool &bound)
@@ -462,7 +462,7 @@ int AST::NotImplementedEntity::BindVariables(Database &db, Compilation &c, bool 
 int AST::Value::BindVariables(Database &db, Compilation &c, bool &bound)
 {
     bound = true;
-    return c.AddValue(MakeEntity(db));
+    return c.AddValue(GetValue());
 }
 
 class ResultsPrinterEval : public Evaluation

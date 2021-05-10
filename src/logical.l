@@ -3,14 +3,13 @@
 #define register
 
 #include "tokens.tab.h"
-// # %option reentrant bison-bridge
+#include "Database.hpp"
 
-// int yycolumn=1;
+#define YY_EXTRA_TYPE Database*
 
 #define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno; \
     yylloc->first_column = yycolumn; yylloc->last_column = yycolumn + yyleng - 1; \
     yycolumn += yyleng;
-
 %}
 
 %option nodefault
@@ -60,11 +59,11 @@ with    return tok_with;
 %       return tok_mod;
 
 _       return tok_underscore;
-[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+ { yylval->sval = strdup(yytext); return tok_identifier; }
+[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+ { yylval->ival = yyextra->GetStringId(yytext); return tok_identifier; }
 
-@[a-zA-Z_\-0-9]*    { yylval->sval = strdup(yytext); return tok_atstring; }
+@[a-zA-Z_\-0-9]*    { yylval->ival = yyextra->GetAtStringId(yytext); return tok_atstring; }
 [0-9]+            { yylval->ival = atoi(yytext); return tok_integer; }
-\"([^"\\]|\\.)*\"   { yylval->sval = strdup(yytext); return tok_string; }
+\"([^"\\]|\\.)*\"   { yylval->ival = yyextra->GetStringLiteral(yytext); return tok_string; }
 
 [0-9]*\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+  { yylval->fval = atof(yytext); return tok_float; }
 

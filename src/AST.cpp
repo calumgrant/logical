@@ -6,12 +6,12 @@ AST::Node::~Node()
 {
 }
 
-AST::NamedVariable::NamedVariable(const char * name, int line, int column) : Variable(line, column), name(name)
+AST::NamedVariable::NamedVariable(int nameId, int line, int column) : Variable(line, column), nameId(nameId)
 {
 }
 
-AST::String::String(const std::string &p) : value(p) 
-{ 
+AST::Value::Value(const ::Entity &v) : value(v)
+{
 }
 
 AST::UnnamedVariable::UnnamedVariable(int line, int column) : Variable(line, column)
@@ -37,11 +37,11 @@ AST::EntityIsPredicate::EntityIsPredicate(Entity* entity, UnaryPredicateList* li
 }
 
 
-AST::Predicate::Predicate(const char * name) : name(name) { }
+AST::Predicate::Predicate(int nameId) : nameId(nameId) { }
 
-AST::UnaryPredicate::UnaryPredicate(const char * name) : name(name) { }
+AST::UnaryPredicate::UnaryPredicate(int nameId) : nameId(nameId) { }
 
-AST::BinaryPredicate::BinaryPredicate(const char * name) : Predicate(name) { }
+AST::BinaryPredicate::BinaryPredicate(int nameId) : Predicate(nameId) { }
 
 AST::UnaryPredicateList::UnaryPredicateList(UnaryPredicate * p)
 {
@@ -53,28 +53,12 @@ void AST::UnaryPredicateList::Append(UnaryPredicate * p)
     list.push_back(std::unique_ptr<UnaryPredicate>(p));
 }
 
-AST::Bool::Bool(bool b) : value(b)
-{    
-}
-
-AST::Integer::Integer(int v) : value(v)
-{
-}
-
-AST::Float::Float(double d) : value(d)
-{
-}
-
-AST::AtString::AtString(const char * v) : value(v)
-{   
-}
-
 void AST::EntityClause::AssertFacts(Database &db) const
 {
     auto v = entity->IsValue();
     if(v)
     {
-        ::Entity e(v->MakeEntity(db));
+        auto & e(v->GetValue());
         if(predicates)
             predicates->Assert(db, e);  // Bug: These should be on the right hand side?
         if(isPredicates)
@@ -103,7 +87,7 @@ void AST::NotImplementedClause::AssertFacts(Database & db) const
 
 void AST::UnaryPredicate::Assert(Database &db, const ::Entity &e) const
 {
-    db.GetUnaryRelation(name)->Add(&e);
+    db.GetUnaryRelation(nameId)->Add(&e);
 }
 
 void AST::UnaryPredicateList::Assert(Database &db, const ::Entity &e) const
@@ -115,32 +99,6 @@ void AST::UnaryPredicateList::Assert(Database &db, const ::Entity &e) const
 const AST::Variable * AST::Value::IsVariable() const { return nullptr; }
 
 const AST::Value * AST::Value::IsValue() const { return this; }
-
-
-Entity AST::Bool::MakeEntity(Database &db) const
-{
-    return db.Create(value);
-}
-
-Entity AST::Float::MakeEntity(Database &db) const
-{
-    return db.CreateFloat(value);
-}
-
-Entity AST::String::MakeEntity(Database &db) const
-{
-    return db.CreateString(value);
-}
-
-Entity AST::Integer::MakeEntity(Database &db) const
-{
-    return db.CreateInt(value);
-}
-
-Entity AST::AtString::MakeEntity(Database &db) const
-{
-    return db.CreateAt(value);
-}
 
 const AST::Variable * AST::Variable::IsVariable() const { return this; }
 
@@ -174,8 +132,8 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
             entityOpt->UnboundError(db);
             return;
         }
-        ::Entity row[2] = { e, v->MakeEntity(db) };
-        auto table = db.GetBinaryRelation(predicate->name);
+        ::Entity row[2] = { e, v->GetValue() };
+        auto table = db.GetBinaryRelation(predicate->nameId);
 
         table->Add(row);
     }
@@ -211,8 +169,8 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
             auto v = entitiesOpt->entities[0]->IsValue();
             if(v)
             {
-                ::Entity e = v->MakeEntity(db);
-                db.GetUnaryRelation(predicate->name)->Add(&e);
+                ::Entity e = v->GetValue();
+                db.GetUnaryRelation(predicate->nameId)->Add(&e);
             }
             else
                 entitiesOpt->entities[0]->UnboundError(db);
@@ -227,18 +185,18 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
 
             if(v0 && v1)
             {
-                ::Entity row[2] = { v0->MakeEntity(db), v1->MakeEntity(db) };
-                db.GetBinaryRelation(predicate->name)->Add(row);
+                ::Entity row[2] = { v0->GetValue(), v1->GetValue() };
+                db.GetBinaryRelation(predicate->nameId)->Add(row);
             }
 
             return;
         }
     }
 
-    auto relation = db.GetRelation(predicate->name, arity);
+    auto relation = db.GetRelation(predicate->nameId, arity);
 
     // TODO: Add the data 
-    std::cout << "TODO: Assert Datalog predicate " << predicate->name << "/" << arity << ".\n";
+    std::cout << "TODO: Assert Datalog predicate " << predicate->nameId << "/" << arity << ".\n";
 }
 
 AST::NotImplementedEntity::NotImplementedEntity(AST::Node *n1, AST::Node *n2)
@@ -258,12 +216,12 @@ AST::Rule::Rule(AST::Clause * lhs, AST::Clause * rhs) :
 
 void AST::NamedVariable::Visit(Visitor&v) const
 {
-    v.OnVariable(name);
+    v.OnVariable(nameId);
 }
 
 void AST::UnaryPredicate::Visit(Visitor&v) const
 {
-    v.OnUnaryPredicate(name);
+    v.OnUnaryPredicate(nameId);
 }
 
 void AST::UnnamedVariable::Visit(Visitor&v) const
@@ -277,11 +235,11 @@ void AST::DatalogPredicate::Visit(Visitor&v) const
     if(entitiesOpt) entitiesOpt->Visit(v);
 }
 
-void AST::Visitor::OnVariable(const std::string&)
+void AST::Visitor::OnVariable(int)
 {
 }
 
-void AST::Visitor::OnUnaryPredicate(const std::string&)
+void AST::Visitor::OnUnaryPredicate(int)
 {
 }
 
@@ -313,31 +271,6 @@ void AST::And::Visit(Visitor&v) const
     rhs->Visit(v);
 }
 
-void AST::Bool::Visit(Visitor&v) const
-{
-    v.OnBool(value);
-}
-
-void AST::String::Visit(Visitor&v) const
-{
-    v.OnString(value);
-}
-
-void AST::AtString::Visit(Visitor&v) const
-{
-    v.OnAtString(value);
-}
-
-void AST::Float::Visit(Visitor&v) const
-{
-    v.OnFloat(value);
-}
-
-void AST::Integer::Visit(Visitor&v) const
-{
-    v.OnInteger(value);
-}
-
 void AST::NotImplementedEntity::Visit(Visitor&v) const
 {
 }
@@ -348,29 +281,9 @@ void AST::EntityList::Visit(Visitor&v) const
         e->Visit(v);
 }
 
-void AST::Visitor::OnFloat(double value)
-{
-}
-
-void AST::Visitor::OnString(const std::string&)
-{
-}
-
-void AST::Visitor::OnAtString(const std::string&)
-{
-}
-
-void AST::Visitor::OnBool(bool)
-{
-}
-
-void AST::Visitor::OnInteger(int)
-{
-}
-
 void AST::Predicate::Visit(Visitor&v) const
 {
-    v.OnPredicate(name);
+    v.OnPredicate(nameId);
 }
 
 void AST::AttributeList::Visit(Visitor &v) const
@@ -380,16 +293,16 @@ void AST::AttributeList::Visit(Visitor &v) const
     if(entityOpt) entityOpt->Visit(v);
 }
 
-void AST::Visitor::OnPredicate(const std::string &name)
+void AST::Visitor::OnPredicate(int name)
 {
 }
 
 void AST::BinaryPredicate::Visit(Visitor&v) const
 {
-    v.OnBinaryPredicate(name);
+    v.OnBinaryPredicate(nameId);
 }
 
-void AST::Visitor::OnBinaryPredicate(const std::string &name)
+void AST::Visitor::OnBinaryPredicate(int name)
 {
 }
 
@@ -587,7 +500,7 @@ AST::Aggregate::Aggregate(Entity *e, Entity * v, Clause *c) : entity(e), value(v
 
 void AST::NamedVariable::UnboundError(Database &db) const
 {
-    db.UnboundError(name, line, column);
+    db.UnboundError(db.GetString(nameId), line, column);
 }
 
 void AST::UnnamedVariable::UnboundError(Database &db) const
@@ -607,4 +520,18 @@ void AST::Value::UnboundError(Database &db) const
 
 AST::Sum::Sum(Entity * entity, Entity * value, Clause * clause) : Aggregate(entity, value, clause)
 {
+}
+
+void AST::Visitor::OnValue(const ::Entity&)
+{
+}
+
+void AST::Value::Visit(Visitor &v) const
+{
+    v.OnValue(value);
+}
+
+const ::Entity & AST::Value::GetValue() const
+{
+    return value;
 }
