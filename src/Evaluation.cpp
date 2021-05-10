@@ -147,7 +147,7 @@ void RuleEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 void WriterB::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Write _" << slot << " into " << relation->Name();
+    os << "Write _" << slot << " into " << db.GetString(relation->Name());
     OutputCallCount(os);
     os << "\n";
 }
@@ -168,7 +168,7 @@ void EvaluateF::Explain(Database &db, std::ostream &os, int indent) const
     Indent(os, indent);
     auto r = relation.lock();
     assert(r);
-    os << "Scan " << r->Name() << " into _" << slot; 
+    os << "Scan " << db.GetString(r->Name()) << " into _" << slot;
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -409,7 +409,7 @@ void EvaluateFF::Evaluate(Entity * row)
 void EvaluateFF::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Scan " << relation.lock()->Name() << " into (_" << slot1 << ",_" << slot2 << ")";
+    os << "Scan " << db.GetString(relation.lock()->Name()) << " into (_" << slot1 << ",_" << slot2 << ")";
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -436,7 +436,7 @@ void WriterBB::Evaluate(Entity *row)
 void WriterBB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Write (_" << slot1 << ",_" << slot2 << ") into " << relation.lock()->Name();
+    os << "Write (_" << slot1 << ",_" << slot2 << ") into " << db.GetString(relation.lock()->Name());
     OutputCallCount(os);
     os << std::endl;
 }
