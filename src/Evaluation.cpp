@@ -854,8 +854,8 @@ Evaluation::Evaluation() : callCount(0)
 {
 }
 
-DeduplicateBB::DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), next(next)
+DeduplicateBB::DeduplicateBB(int slot1, const std::shared_ptr<Evaluation> & next) :
+    slot1(slot1), next(next)
 {
 }
 
@@ -866,7 +866,6 @@ void DeduplicateBB::Evaluate(Entity * row)
     auto i = values.insert(row[slot1]);
     if(i.second)
     {
-        row[slot1] = row[slot1];
         next->Evaluate(row);
     }
 }
@@ -874,7 +873,7 @@ void DeduplicateBB::Evaluate(Entity * row)
 void DeduplicateBB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Deduplicate _" << slot2 << " := _" << slot1;
+    os << "Deduplicate _" << slot1;
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);

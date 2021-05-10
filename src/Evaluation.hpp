@@ -334,11 +334,11 @@ public:
 class DeduplicateBB : public Evaluation
 {
 public:
-    DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
+    DeduplicateBB(int slot1, const std::shared_ptr<Evaluation> & next);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
-    const int slot1, slot2;
+    const int slot1;
     std::unordered_set<Entity, Entity::Hash> values;
     const std::shared_ptr<Evaluation> next;
 };

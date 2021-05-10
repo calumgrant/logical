@@ -1,25 +1,43 @@
 # Work plan
 
-# Sum syntax
+person @p1 with clothing "Coat", red 255, green 255, blue 128.
+person @p1 with clothing "Pants", red 0, green 0, blue 255.
 
-```
-S = sum M, X in money M has value V
-S = sum of X over M in money M has value V.
+Is this any better than the "has" syntax. Should the "Has" syntax work for this?
 
-```
+- The "comma" creates a tuple that is not binary.
 
-Must work like `count`, but with an extra field
+Open questions:
+1. Can we project these easily? E.g. `person A has red R`. So, each time we create a tuple, we also create a projection. The name of the projection is `clothing:red` or `clothing:red:green:blue` where the order of the columns does not matter - the same name cannot be repeated, but `clothing:red` and `red:clothing` mean the same thing.
+2. Projections can queried individually, for example `@p1 has red R`
+3. Projections are populated by rules, and are evaluated lazily.
+4. For a large tuple, there are 2^n projections, which isn't exactly great. So, all projections are computed lazily, and need `Database` support.
 
-```
-S = sum Money, Value in money Money has value Value
-S = sum Value in money _ has value Valuex
-```
+
+Createa a projection
+`person _ has red R, green G.`
+
+
+
+Database.GetRelation(projection)
+- Creates a relation if it does not exist
+- Adds rules to all necessary projections. The rule `A` has a projection to `A-x`.
+  - EvaluateFs -> WriterBs
 
 ## Short term
+- The `Unique` evaluations do not need a "target" slot at all.
+- Implement Datalog syntax
+  - unary and binary relations
+  - all and cound syntax
+  - tests for these
+  - n-ary relations
+    - n-ary tables
+    - efficient join orders.
+  - how to name arbitrary n-ary tuples from Datalog that are compatible with logical?
+- Think about `with` syntax
+  - Solution 1: construct an nary predicate using `:`. You must specify all of the fields
 - `f X and g X if ...`
 - `exit`
-- Sum
-  - How is sum supposed to work if we need to ensure uniqueness? `sum X in `
 - Think about predicate-names containing `-`.
   - Problem is negative facts like `print -2.` Try to turn it into an entity.
   - `error "negative" if not 5 has negative -5.` does not work.
@@ -40,6 +58,7 @@ Queries that work:
 - Output number of errors.
 - `not` should fail early (optimization) - see the primes1.dl example
 - `or` join both branches if the same variables are bound in all branches.
+- Ressurect the ramp and persist projects. Probably persist mainly.
 
 - Warning about empty predicates with no facts or rules.
 - Optimization: Tables should assume a single type, then fall back onto polymorphic behaviour which is slower.
@@ -50,9 +69,7 @@ Code refactoring:
 
 # Unresolved issues
 - How does the `with` syntax work
-- How does the `sum` syntax work
 - Putting `-` into identifiers?
-- 
 
 ## Datalog predicates
 
