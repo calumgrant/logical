@@ -18,7 +18,7 @@ Facts define the data to reason about.
 aggressive cat @Tom.
 @Tom is an aggressive cat.
 
-// Attributes define binary predicates
+// Attributes define n-ary predicates
 large dog @Pluto has name "Pluto", colour @brown.
 colour @brown has red 168, green 109, blue 50.  // List of attributes (binary predicates)
 colour @red, red 255, green 0, blue 0.  // Omitting the "has"
@@ -26,7 +26,7 @@ colour @red, red 255, green 0, blue 0.  // Omitting the "has"
 Entities are values that can be stored in predicates. They can be strings (`"Tom"`), at-strings (`@Tom`), integers (`123`), floats (`3.14`) or Boolean (`true`|`false`).
 
 # Rules
-There is no distinction between extensionals and intensionals in Logical. All predicates can have both facts and rules. Predicates with no facts or rules are taken to be empty.
+There is no distinction between extensionals and intensionals in Logical. All predicates can have both facts and rules. Predicates with no facts or rules are empty.
 
 Simple rules:
 ```
@@ -68,4 +68,8 @@ prime N if
 
 Count and sum:
 
-## Rules with side-effects
+## Builtin predicates
+
+```
+print "Hello, world!".
+```

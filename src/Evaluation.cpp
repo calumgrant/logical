@@ -979,7 +979,7 @@ void SumEvaluation::Evaluate(Entity * row)
 void SumEvaluation::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Collect sum _" << slot;
+    os << "Collect aggregate _" << slot;
     OutputCallCount(os);
     os << " ->\n";
     

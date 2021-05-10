@@ -1,32 +1,27 @@
 # Work plan
 
-person @p1 with clothing "Coat", red 255, green 255, blue 128.
-person @p1 with clothing "Pants", red 0, green 0, blue 255.
+## Thining about n-ary predicates and projections
 
-Is this any better than the "has" syntax. Should the "Has" syntax work for this?
+Conclusions:
+1. We use the `has ,` syntax to create n-ary predicates.
+2. They automatically project to smaller predicates as needed.
 
-- The "comma" creates a tuple that is not binary.
+Implementation:
+- Database::GetRelation(const std::vector<string> & parts)
+- If it's a new relation
+  - Look for existing relations to add rules to. Find all relations where we are a superset, and create a rule from ourselves to the subset. Find all relations where we are a subset, and create a rule from the superset to ourselves.
+  - Ensure we don't add ourselves twice.
 
-Open questions:
-1. Can we project these easily? E.g. `person A has red R`. So, each time we create a tuple, we also create a projection. The name of the projection is `clothing:red` or `clothing:red:green:blue` where the order of the columns does not matter - the same name cannot be repeated, but `clothing:red` and `red:clothing` mean the same thing.
-2. Projections can queried individually, for example `@p1 has red R`
-3. Projections are populated by rules, and are evaluated lazily.
-4. For a large tuple, there are 2^n projections, which isn't exactly great. So, all projections are computed lazily, and need `Database` support.
+- Data structure:
+  unordered_multimap<string, Relation> to look up relation parts.
+- Use Relation::ProjectsTo(const Relation&) to detect the interrelationship.
+  std::vector<int> to contain the "set" of name parts. (Using the string pool).
 
+- Datalog interop:
+  - Datalog predicates do not 
 
-Createa a projection
-`person _ has red R, green G.`
-
-
-
-Database.GetRelation(projection)
-- Creates a relation if it does not exist
-- Adds rules to all necessary projections. The rule `A` has a projection to `A-x`.
-  - EvaluateFs -> WriterBs
 
 ## Short term
-- The `Unique` evaluations do not need a "target" slot at all.
-- Use two column deduplication for sum.
 - Implement Datalog syntax
   - unary and binary relations
   - all and cound syntax
@@ -35,6 +30,8 @@ Database.GetRelation(projection)
     - n-ary tables
     - efficient join orders.
   - how to name arbitrary n-ary tuples from Datalog that are compatible with logical?
+- Index all relation names and variables using entities, not strings?
+  - Do this in the lexer and parser as well.
 - Think about `with` syntax
   - Solution 1: construct an nary predicate using `:`. You must specify all of the fields
 - `f X and g X if ...`

@@ -735,8 +735,11 @@ public:
 
         if(!result)
         {
-            collector = std::make_shared<SumCollector>(valueSlot, resultSlot);        
-            result = std::make_shared<DeduplicateBB>(entitySlot, resultSlot, collector);
+            collector = std::make_shared<SumCollector>(valueSlot, resultSlot);
+            if (entitySlot == valueSlot)
+                result = std::make_shared<DeduplicateB>(entitySlot, collector);
+            else
+                result = std::make_shared<DeduplicateBB>(entitySlot, valueSlot, collector);
         }
         
         return result;
