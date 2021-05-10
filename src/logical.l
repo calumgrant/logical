@@ -5,16 +5,17 @@
 #include "tokens.tab.h"
 // # %option reentrant bison-bridge
 
-int yycolumn=1;
+// int yycolumn=1;
 
-#define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; \
-    yylloc.first_column = yycolumn; yylloc.last_column = yycolumn + yyleng - 1; \
+#define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno; \
+    yylloc->first_column = yycolumn; yylloc->last_column = yycolumn + yyleng - 1; \
     yycolumn += yyleng;
 
 %}
 
 %option nodefault
 %option yylineno
+%option reentrant bison-bridge bison-locations
 
 %%
 
@@ -59,13 +60,13 @@ with    return tok_with;
 %       return tok_mod;
 
 _       return tok_underscore;
-[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+ { yylval.sval = strdup(yytext); return tok_identifier; }
+[a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+ { yylval->sval = strdup(yytext); return tok_identifier; }
 
-@[a-zA-Z_\-0-9]*    { yylval.sval = strdup(yytext); return tok_atstring; }
-[0-9]+            { yylval.ival = atoi(yytext); return tok_integer; }
-\"([^"\\]|\\.)*\"   { yylval.sval = strdup(yytext); return tok_string; }
+@[a-zA-Z_\-0-9]*    { yylval->sval = strdup(yytext); return tok_atstring; }
+[0-9]+            { yylval->ival = atoi(yytext); return tok_integer; }
+\"([^"\\]|\\.)*\"   { yylval->sval = strdup(yytext); return tok_string; }
 
-[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+  { yylval.fval = atof(yytext); return tok_float; }
+[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+  { yylval->fval = atof(yytext); return tok_float; }
 
 \/\/[^\n]*
 \n      { yycolumn = 1; }

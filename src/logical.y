@@ -3,10 +3,14 @@
 
 %code requires {
     #include <AST.hpp>
+    typedef void * yyscan_t;
 }
 
 %locations
 // %pure-parser
+%define api.pure full
+%param { yyscan_t scanner }
+
 %parse-param { Database &db };
 
 %union
@@ -48,15 +52,18 @@
 #include <memory>
 #include <iostream>
 
-int yylex();
-extern int yylineno;
-extern int yycolumn;
-extern int yyleng;
+// int yylex();
+//extern int yylineno;
+//extern int yycolumn;
+//extern int yyleng;
 
-void yyerror(Database &db, const char*message)
-{
-    std::cerr << message << " at line " << yylineno << ":" << yycolumn-yyleng << std::endl;
-}
+typedef void * yyscan_t;
+
+  int yylex(YYSTYPE* yylvalp, YYLTYPE* yyllocp, yyscan_t scanner);
+  void yyerror(YYLTYPE* yyllocp, yyscan_t unused, Database &db, const char* message)
+  {
+    std::cerr << message << " at line " << yyllocp->first_line << ":" << yyllocp->first_column << std::endl;
+  }
 
 %}
 
@@ -401,7 +408,7 @@ sumentity:
         // A contextual keyword, where tok_identifier should be "over".
         $$ = new AST::Sum($4, $2, $7);
         if (strcmp($3, "over"))
-            yyerror(db, "Expecting 'over'");
+            yyerror(&yylloc, scanner, db, "Expecting 'over'");
         free($3);
     }
 |   tok_sum variable tok_in tok_open clause tok_close
@@ -416,7 +423,8 @@ entity_expression: sumentity;
 value: 
     tok_string { 
         std::string value;
-        for(int i=1; i<yyleng-1; ++i)
+        // TODO: Do this in the scanner
+        for(int i=1; i<strlen($1)-1; ++i)
         {
             if($1[i]=='\\')
             {
@@ -439,7 +447,7 @@ value:
                     value.push_back('"');
                     break;
                 default:
-                    yyerror(db, "Invalid escape character");
+                    yyerror(&yylloc, scanner, db, "Invalid escape character");
                     break;
                 }
             }
