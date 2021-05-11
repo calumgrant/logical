@@ -681,7 +681,7 @@ private:
 
 std::shared_ptr<Evaluation> AST::Count::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
 {
-    auto collector = std::make_shared<CountCollector>();
+    auto collector = std::make_shared<CountCollector>(slot);
     
     CountTerminatorClause terminator(*entity, collector);
 
@@ -691,10 +691,8 @@ std::shared_ptr<Evaluation> AST::Count::Compile(Database &db, Compilation&c, con
     auto eval = clause->Compile(db, c);
         
     c.Branch(branch);
-
-    std::shared_ptr<Evaluation> tail = std::make_shared<CountEvaluation>(slot, collector, next);
     
-    return std::make_shared<OrEvaluation>(eval, tail);
+    return std::make_shared<Load>(slot, db.CreateInt(0), std::make_shared<OrEvaluation>(eval, next));
 };
 
 int AST::Aggregate::BindVariables(Database & db, Compilation &c, bool & bound)

@@ -905,43 +905,23 @@ void DeduplicateBB::Explain(Database &db, std::ostream &os, int indent) const
 }
 
 
-CountCollector::CountCollector()
+CountCollector::CountCollector(int slot) : slot(slot)
 {
 }
 
 void CountCollector::Evaluate(Entity * row)
 {
     ++callCount;
+    row[slot].type = EntityType::Integer;
+    ++row[slot].i;
 }
 
 void CountCollector::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Count";
+    os << "Increment _" << slot;
     OutputCallCount(os);
     os << std::endl;
-}
-
-CountEvaluation::CountEvaluation(int slot, const std::shared_ptr<CountCollector> & source, const std::shared_ptr<Evaluation> & next) : slot(slot), source(source), next(next)
-{
-}
-
-void CountEvaluation::Evaluate(Entity * row)
-{
-    ++callCount;
-    
-    row[slot].type = EntityType::Integer;
-    row[slot].i = source->Count();
-    next->Evaluate(row);
-}
-
-void CountEvaluation::Explain(Database &db, std::ostream &os, int indent) const
-{
-    Indent(os, indent);
-    os << "Assign _" << slot << " := count";
-    OutputCallCount(os);
-    os << " ->\n";
-    next->Explain(db, os, indent+4);
 }
 
 std::size_t CountCollector::Count() const { return callCount; }
@@ -983,5 +963,27 @@ void SumEvaluation::Explain(Database &db, std::ostream &os, int indent) const
     OutputCallCount(os);
     os << " ->\n";
     
+    next->Explain(db, os, indent+4);
+}
+
+Load::Load(int slot, const Entity &v, const std::shared_ptr<Evaluation> & next) :
+    slot(slot), value(v), next(next)
+{
+}
+
+void Load::Evaluate(Entity * locals)
+{
+    ++callCount;
+    locals[slot] = value;
+    next->Evaluate(locals);
+}
+
+void Load::Explain(Database &db, std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    os << "Load _" << slot << " := ";
+    db.PrintQuoted(value, os);
+    OutputCallCount(os);
+    os << " ->\n";
     next->Explain(db, os, indent+4);
 }

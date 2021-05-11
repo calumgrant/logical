@@ -363,25 +363,12 @@ private:
 class CountCollector : public Evaluation
 {
 public:
-    CountCollector();
+    CountCollector(int slot);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     std::size_t Count() const;
-};
-
-/*
- On an "or" branch, sets the count collected from a previous CountCollector.
- */
-class CountEvaluation : public Evaluation
-{
 public:
-    CountEvaluation(int slot, const std::shared_ptr<CountCollector> & src, const std::shared_ptr<Evaluation> & next);
-    void Evaluate(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-private:
-    int slot;
-    std::shared_ptr<CountCollector> source;
-    std::shared_ptr<Evaluation> next;
+    const int slot;
 };
 
 class SumCollector : public Evaluation
@@ -413,7 +400,19 @@ private:
 class Load : public Evaluation
 {
 public:
-    Load(int slot, const Entity &e, const std::shared_ptr<Evaluation> & next);
+    Load(int slot, const Entity &value, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    const int slot;
+    Entity value;
+    const std::shared_ptr<Evaluation> next;
+};
+
+class NotNone : public Evaluation
+{
+public:
+    NotNone(int slot, const std::shared_ptr<Evaluation> & next);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
