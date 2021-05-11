@@ -20,6 +20,7 @@ add_library(logiccore
     Database.cpp Database.hpp
     StringTable.cpp StringTable.hpp
     Entity.hpp
+    CompoundName.cpp CompoundName.hpp
     Table.cpp Table.hpp
     Evaluation.cpp Evaluation.hpp
     Compiler.cpp Compiler.hpp

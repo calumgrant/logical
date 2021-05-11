@@ -116,3 +116,4 @@ public:
     int arity;
     std::vector<Entity> data;
 };
+

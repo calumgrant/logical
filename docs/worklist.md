@@ -18,8 +18,23 @@ Implementation:
   std::vector<int> to contain the "set" of name parts. (Using the string pool).
 
 ## Short term
+- Refactor aggregates
+  - Communicate via variables
+  - Have an initialiser step.
+  - Implement a "check" evaluation
+  - Have Evaluations for constants?
+  - Not: Initialize the variable to 0, then set it to "None"
+  - Sum: Initialize a variable to 0. (via constants).
+  - Count: Initialize the count to 0 (via constants)
+- Implement n-ary predicates
+  - Refactor `has` grammar into a vector
+  - Implement `CompoundName` which is a vector of int. - Tests
+  - `Database::getCompoundRelation(CompoundName)` to get the relation and implement the rules
+  - Implement n-ary tables
+  - Query n-ary relations.
+    - Efficient indexing?
+    - Arbitrary joins
 - File operations
-  - `Database::ReadFile()`
   - `Database::ReadBinary()`
   - `Database::WriteBinary()`
 - Implement Datalog syntax

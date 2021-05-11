@@ -41,7 +41,7 @@ eof ::= 0x00
 
 The string table is used to map indexes to strings. Strings are used for relation names, and for string constants in queries and data.
 
-The at-string table is similar to the string table, and is stored in the same way. Strings are stored without the enclosing quotes or a preceding `@`.
+The at-string table is similar to the string table, and is stored in the same way. Strings are stored without the enclosing quotes or a preceding `@`. Control codes like `\n` are stored as their ASCII values and are not escaped.
 
 ```
 stringsopt ::= | 0x01 string-table
@@ -63,14 +63,14 @@ string-char ::= any byte except 0x00
 
 A *entity* is an item of data that can be stored in a table or in a local variable. Recall that the basic data types of Logical are integers, strings, at-strings, Booleans and floating point. Strings and at-strings are considered to be different, thus `"a"` and `@a` are considered to be different. The empty string `""` and the empty at-string `@` are valid data.
 
-Strings and at-strings are stored as indexes into the string-table or at-string table. Strings are encoded in UTF-8. Strings are compared for equality based on byte sequence, so if there are alternative encodings for the same string, then they will be considered to be different for the purposes of rule evaluation. If identical strings appear in two different indexes in the string table, then they will be considered to be identical.
+Strings and at-strings are stored as indexes into the string-table or at-string table. Strings are encoded in UTF-8. Strings are compared for equality based on byte sequence, so if there are alternative encodings for the same string, then they will be considered to be different for the purposes of rule evaluation. If identical strings appear in two different indexes in the string table, then they are considered to be identical.
 
-Entites are encoded as a byte representing the entity type, followed by additional data depending on the entity type. Small integers are encoded as a single byte.
+Entites are encoded as a byte representing the entity type, followed by additional data depending on the entity type. Small integers are encoded as a single byte. If the type is in the range 0x00 - 0xdf, then the type is interpreted as an integer value.
 
 ```
 entity ::= integer | boolean | string | atstring | float | char | byte | none
 
-integer ::= i8 (in the range 0x00 - 0xef) | int16 | int32 | int64
+integer ::= i8 (in the range 0x00 - 0xdf) | int16 | int32 | int64
 int16 ::= 0xff i16
 int32 ::= 0xfe i32
 int64 ::= 0xfd i64

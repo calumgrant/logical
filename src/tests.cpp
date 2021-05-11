@@ -3,8 +3,10 @@
 #include "Table.hpp"
 #include "Compiler.hpp"
 #include "Entity.hpp"
+#include "CompoundName.hpp"
 
 #undef _NDEBUG
+#undef NDEBUG
 #include <cassert>
 #include <iostream>
 
@@ -98,6 +100,22 @@ int main()
         assert(!bound);
         slot = c.AddVariable(x, bound);
         assert(bound);
+    }
+    
+    {
+        std::vector<int> l1 { 1, 2, 3 }, l2 {3, 2, 1, 3}, l3{1}, l4{1,3}, l5{}, l6{2,3,4};
+        CompoundName name1(l1), name2(l2), name3(l3), name4(l4), name5(l5), name6(l6);
+        assert(name1 == name2);
+        assert(name1 <= name2);
+        assert(name3 <= l1);
+        assert(name5 <= name5);
+        assert(name1 <= name1);
+        assert(name5 <= name3);
+        assert(name5 <= name1);
+        assert(name3 <= name4);
+        assert(name1 <= name2);
+        assert(!(name1 <= name6));
+        assert(!(name6 <= name1));
     }
 
     std::cout << "Tests passed\n";

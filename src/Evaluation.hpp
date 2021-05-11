@@ -409,3 +409,14 @@ private:
     std::shared_ptr<SumCollector> collector;
     std::shared_ptr<Evaluation> next;
 };
+
+class Load : public Evaluation
+{
+public:
+    Load(int slot, const Entity &e, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    const int slot;
+    const std::shared_ptr<Evaluation> next;
+};

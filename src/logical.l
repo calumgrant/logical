@@ -61,7 +61,7 @@ with    return tok_with;
 _       return tok_underscore;
 [a-zA-Z][a-zA-Z0-9_]*|_[a-zA-Z0-9_]+ { yylval->ival = yyextra->GetStringId(yytext); return tok_identifier; }
 
-@[a-zA-Z_\-0-9]*    { yylval->ival = yyextra->GetAtStringId(yytext); return tok_atstring; }
+@[a-zA-Z_\-0-9]*    { yylval->ival = yyextra->GetAtStringId(yytext+1); return tok_atstring; }
 [0-9]+            { yylval->ival = atoi(yytext); return tok_integer; }
 \"([^"\\]|\\.)*\"   { yylval->ival = yyextra->GetStringLiteral(yytext); return tok_string; }
 
