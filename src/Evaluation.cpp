@@ -926,14 +926,14 @@ void CountCollector::Explain(Database &db, std::ostream &os, int indent) const
 
 std::size_t CountCollector::Count() const { return callCount; }
 
-SumCollector::SumCollector(int slot, int sumSlot) : slot(slot), sumSlot(sumSlot), sum(EntityType::Integer, 0)
+SumCollector::SumCollector(int slot, int sumSlot) : slot(slot), sumSlot(sumSlot)
 {
 }
 
 void SumCollector::Evaluate(Entity * row)
 {
     ++callCount;
-    sum += row[slot];
+    row[sumSlot] += row[slot];
 }
 
 void SumCollector::Explain(Database &db, std::ostream &os, int indent) const
@@ -942,28 +942,6 @@ void SumCollector::Explain(Database &db, std::ostream &os, int indent) const
     os << "Sum _" << slot << " into _" << sumSlot;
     OutputCallCount(os);
     std::cout << std::endl;
-}
-
-SumEvaluation::SumEvaluation(int slot, const std::shared_ptr<SumCollector> & collector, const std::shared_ptr<Evaluation> & next) :
-    slot(slot), collector(collector), next(next)
-{
-}
-
-void SumEvaluation::Evaluate(Entity * row)
-{
-    ++callCount;
-    row[slot] = collector->sum;
-    next->Evaluate(row);
-}
-
-void SumEvaluation::Explain(Database &db, std::ostream &os, int indent) const
-{
-    Indent(os, indent);
-    os << "Collect aggregate _" << slot;
-    OutputCallCount(os);
-    os << " ->\n";
-    
-    next->Explain(db, os, indent+4);
 }
 
 Load::Load(int slot, const Entity &v, const std::shared_ptr<Evaluation> & next) :

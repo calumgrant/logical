@@ -379,22 +379,8 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
     const Entity & Sum() const;
 
-    // Polymorphic - could be float or int.
-    Entity sum;
 private:
     const int slot, sumSlot; // The slot where the value is to sum.
-};
-
-class SumEvaluation : public Evaluation
-{
-public:
-    SumEvaluation(int slot, const std::shared_ptr<SumCollector> & collector, const std::shared_ptr<Evaluation> & next);
-    void Evaluate(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-private:
-    int slot;
-    std::shared_ptr<SumCollector> collector;
-    std::shared_ptr<Evaluation> next;
 };
 
 class Load : public Evaluation

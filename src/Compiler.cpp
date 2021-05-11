@@ -755,7 +755,5 @@ std::shared_ptr<Evaluation> AST::Sum::Compile(Database &db, Compilation&c, const
         
     c.Branch(branch);
     
-    std::shared_ptr<Evaluation> tail = std::make_shared<SumEvaluation>(slot, terminator.collector, next);
-    
-    return std::make_shared<OrEvaluation>(eval, tail);
+    return std::make_shared<Load>(slot, db.CreateInt(0), std::make_shared<OrEvaluation>(eval, next));
 };
