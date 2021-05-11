@@ -77,6 +77,7 @@ Queries that work:
 Code refactoring:
 - Split up files
 - Put into `namespace Logical`
+- Slim down the header files, for example split up relation.hpp
 
 # Unresolved issues
 - Putting `-` into identifiers?

@@ -118,7 +118,7 @@ std::shared_ptr<Relation> Database::GetRelation(int name, int arity)
 
     if (i == relations.end())
     {
-        auto r = std::make_shared<TableX>(*this, name);
+        auto r = std::make_shared<Table>(*this, name, arity);
         relations.insert(std::make_pair(index, r));
         return r;
     }

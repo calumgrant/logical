@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Entity.hpp"
+#include "CompoundName.hpp"
+
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
@@ -106,14 +108,44 @@ private:
     std::unordered_multimap<Entity, Entity, Entity::Hash> map1, map2;
 };
 
-class TableX : public Predicate
+class Table : public Predicate
 {
 public:
-    TableX(Database &db, int name);
+    Table(Database &db, int name, int arity);
     int Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
     void Add(const Entity*row) override;
-    int arity;
+    
+    class Comparer
+    {
+        Entity::Hash hasher;
+    public:
+        Comparer(const std::vector<Entity>&base, int arity);
+        
+        int operator()(std::size_t element) const
+        {
+            int h = hasher(base[element]);
+            for(auto i = element+1; i!=element+arity; ++i)
+                h = h * 17 + hasher(base[i]);
+            return h;
+        }
+        
+        bool operator()(std::size_t element1, std::size_t element2) const
+        {
+            for(auto i = 0; i<arity; ++i)
+            {
+                if(base[element1+i] < base[element2+1]) return true;
+                if(base[element2+i] < base[element1+1]) return false;
+            }
+            return false; // Equal
+        }
+    private:
+        const int arity;
+        const std::vector<Entity> & base;
+    };
+    
+    const int arity;
     std::vector<Entity> data;
+    std::unordered_set<std::size_t, Comparer, Comparer> hash;
 };
 

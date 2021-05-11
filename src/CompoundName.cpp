@@ -3,9 +3,7 @@
 CompoundName::CompoundName(const std::vector<int> & list) : parts(list)
 {
     std::sort(parts.begin(), parts.end());
-
     auto end = std::unique(parts.begin(), parts.end());
-    
     parts.erase(end, parts.end());
 }
 

@@ -70,7 +70,7 @@ void ErrorRelation::Add(const Entity * row)
     database.ReportUserError();
 }
 
-int TableX::Count()
+int Table::Count()
 {
     return 0;
 }
@@ -155,12 +155,12 @@ void BinaryTable::Query(Entity * row, int bound, Visitor&v)
     // todo
 }
 
-void TableX::Query(Entity * row, int, Visitor&v)
+void Table::Query(Entity * row, int, Visitor&v)
 {
     // todo
 }
 
-void TableX::Add(const Entity *row)
+void Table::Add(const Entity *row)
 {
 }
 
@@ -201,11 +201,15 @@ BinaryTable::BinaryTable(Database &db, int name) : Predicate(db, name)
 {
 }
 
-TableX::TableX(Database &db, int name) : Predicate(db, name)
+Table::Table(Database &db, int name, int arity) : Predicate(db, name), arity(arity), hash({}, 100, Comparer(data, arity), Comparer(data, arity))
 {
 }
 
 int Predicate::Name() const
 {
     return name;
+}
+
+Table::Comparer::Comparer(const std::vector<Entity> & base, int arity) : base(base), arity(arity)
+{    
 }

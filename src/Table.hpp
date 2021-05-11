@@ -3,7 +3,7 @@
 #include <unordered_set>
 
 template<typename T, typename Hash = std::hash<T>, typename Alloc = std::allocator<T> >
-class Table
+class TableXX
 {
 public:
 
@@ -13,7 +13,7 @@ public:
     typedef const column_type* row_type;
     typedef std::size_t size_type;
 
-    Table(size_type columns);
+    TableXX(size_type columns);
 
     void add(row_type d)
     {

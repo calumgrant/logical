@@ -99,4 +99,6 @@ private:
     
     bool verbose;
     bool userError;
+    
+    std::unordered_map<CompoundName, std::shared_ptr<Relation>, CompoundName::Hash> tables;
 };
