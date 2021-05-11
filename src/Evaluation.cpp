@@ -174,40 +174,22 @@ void EvaluateF::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent+4);
 }
 
+NotTerminator::NotTerminator(int slot) : slot(slot)
+{
+}
+
 void NotTerminator::Evaluate(Entity * row)
 {
     ++callCount;
-    resultFound = true;
+    row[slot].type = EntityType::None;
 }
 
 void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Fail next else";
+    os << "Assign _" << slot << " := true";
     OutputCallCount(os);
     os << "\n";
-}
-
-NotEvaluation::NotEvaluation(const std::shared_ptr<NotTerminator> & terminator, const std::shared_ptr<Evaluation> &notBody, const std::shared_ptr<Evaluation> & next) : terminator(terminator), notBody(notBody), next(next)
-{
-}
-
-void NotEvaluation::Evaluate(Entity * row)
-{
-    ++callCount;
-    terminator->resultFound = false;
-    notBody->Evaluate(row);
-    if( !terminator->resultFound )
-        next->Evaluate(row);
-}
-
-void NotEvaluation::Explain(Database &db, std::ostream & os, int indent) const
-{
-    notBody->Explain(db, os, indent);
-
-    Indent(os, indent);
-    os << "Else ->\n";
-    next->Explain(db, os, indent+4);
 }
 
 BinaryEvaluation::BinaryEvaluation(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
@@ -961,6 +943,26 @@ void Load::Explain(Database &db, std::ostream &os, int indent) const
     Indent(os, indent);
     os << "Load _" << slot << " := ";
     db.PrintQuoted(value, os);
+    OutputCallCount(os);
+    os << " ->\n";
+    next->Explain(db, os, indent+4);
+}
+
+NotNone::NotNone(int slot, const std::shared_ptr<Evaluation> & next) : slot(slot), next(next)
+{
+}
+
+void NotNone::Evaluate(Entity *row)
+{
+    ++callCount;
+    if(row[slot].type != EntityType::None)
+        next->Evaluate(row);
+}
+
+void NotNone::Explain(Database &db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Check _" << slot << " is not None";
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);

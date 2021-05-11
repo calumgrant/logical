@@ -256,9 +256,11 @@ public:
 
 std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compilation)
 {
+    int slot = compilation.AddUnnamedVariable();
+    
     int branch = compilation.CreateBranch();
 
-    auto terminator = std::make_shared<NotTerminator>();
+    auto terminator = std::make_shared<NotTerminator>(slot);
     
     compilation.Branch(branch);
     auto nextEval = next->Compile(db, compilation);
@@ -268,7 +270,8 @@ std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compil
     clause->SetNext(handler);
     auto bodyEval = clause->Compile(db, compilation);
 
-    return std::make_shared<NotEvaluation>(terminator, bodyEval, nextEval);
+    return std::make_shared<Load>(slot, ::Entity(EntityType::Boolean,1),
+                                  std::make_shared<OrEvaluation>(bodyEval, std::make_shared<NotNone>(slot, nextEval)));
 }
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Compilation &c)

@@ -136,25 +136,13 @@ public:
 class NotTerminator : public Evaluation
 {
 public:
-    // True iff Evaluate was called.
-    // NotEvaluation::Evaluate must set this to false,
-    // then checks this.
-    bool resultFound;
+    NotTerminator(int slot);
     
     // TODO: Signal early termination if possible.
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
-};
-
-class NotEvaluation : public Evaluation
-{
-public:
-    NotEvaluation(const std::shared_ptr<NotTerminator> & terminator, const std::shared_ptr<Evaluation> &notBody, const std::shared_ptr<Evaluation> & next);
-    void Evaluate(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
-    std::shared_ptr<NotTerminator> terminator;
-    std::shared_ptr<Evaluation> notBody, next;
+    const int slot;
 };
 
 class BinaryEvaluation : public Evaluation
