@@ -4,11 +4,47 @@
 #include "Compiler.hpp"
 #include "Entity.hpp"
 #include "CompoundName.hpp"
+#include "Binary.hpp"
 
 #undef _NDEBUG
 #undef NDEBUG
 #include <cassert>
 #include <iostream>
+#include <sstream>
+
+void TestSerialization(const Entity &e)
+{
+    char buffer[20] = {0};
+    char * p = buffer;
+    WriteBinaryEntity(e, p, p+20);
+    p = buffer;
+    auto e4 = ReadBinaryEntity(p, p+20);
+ 
+    if(!(e == e4))
+    {
+        p = buffer;
+        WriteBinaryEntity(e, p, p+20);
+        p = buffer;
+        e4 = ReadBinaryEntity(p, p+20);
+    }
+    
+    std::stringstream ss;
+    std::ostream_iterator<char> it{ss};
+    WriteBinaryEntity(e, it);
+    auto str = ss.str();
+    auto len = str.size();
+    std::istreambuf_iterator<char> ii{ss};
+    auto e2 = ReadBinaryEntity(ii);
+    if(!(e == e2))
+    {
+        std::stringstream ss;
+        std::ostream_iterator<char> it{ss};
+        WriteBinaryEntity(e, it);
+        std::istreambuf_iterator<char> ii{ss};
+        auto e3 = ReadBinaryEntity(ii);
+    }
+    assert(e == e2);
+}
 
 int main()
 {
@@ -116,6 +152,14 @@ int main()
         assert(name1 <= name2);
         assert(!(name1 <= name6));
         assert(!(name6 <= name1));
+    }
+    
+    {
+        TestSerialization(Entity{EntityType::Integer, -992});
+        for(int i=-1000; i<1000; ++i)
+            TestSerialization(Entity{EntityType::Integer, i});
+        
+        //
     }
 
     std::cout << "Tests passed\n";

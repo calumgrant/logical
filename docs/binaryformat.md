@@ -2,13 +2,11 @@
 
 Logical supports a compiled format for its data and rules, which makes loading and running them a lot faster. Each file is self-contained and can be loaded independently.
 
-## Data types
+## Numeric data types
 
-Integers are stored in little-endian format. Signed integers are stored in twos-complement arithmetic. Integer operations operate on twos-complement integers that may silently overflow. Floating point numbers are stored in IEEE 754 format.
+Integers are stored in little-endian format. Signed integers are stored in twos-complement format. Integer operations operate on twos-complement integers that may silently overflow. Floating point numbers are stored in IEEE 754 format.
 
-Strings and at-strings are stored as indexes into the string and at-string table.
-
-The basic data types are as follows:
+The basic numeric types are as follows:
 
  - `i8`
  - `u8`
@@ -61,11 +59,11 @@ string-char ::= any byte except 0x00
 
 ## Entity format
 
-A *entity* is an item of data that can be stored in a table or in a local variable. Recall that the basic data types of Logical are integers, strings, at-strings, Booleans and floating point. Strings and at-strings are considered to be different, thus `"a"` and `@a` are considered to be different. The empty string `""` and the empty at-string `@` are valid data.
+A *entity* is an item of data that can be stored in a table or in a local variable. Recall that the basic data types of Logical are integers, strings, at-strings, Booleans and floating point. Strings and at-strings are considered to be different, thus `"a"` and `@a` are considered to be different. The empty string `""` and the empty at-string `@` are valid.
 
 Strings and at-strings are stored as indexes into the string-table or at-string table. Strings are encoded in UTF-8. Strings are compared for equality based on byte sequence, so if there are alternative encodings for the same string, then they will be considered to be different for the purposes of rule evaluation. If identical strings appear in two different indexes in the string table, then they are considered to be identical.
 
-Entites are encoded as a byte representing the entity type, followed by additional data depending on the entity type. Small integers are encoded as a single byte. If the type is in the range 0x00 - 0xdf, then the type is interpreted as an integer value.
+Entites are encoded as a byte representing the entity type, followed by additional data depending on the entity type. Small integers are encoded as a single byte. If the first byte is in the range 0x00 - 0xdf, then the byte is interpreted as an integer value.
 
 ```
 entity ::= integer | boolean | string | atstring | float | char | byte | none
@@ -105,7 +103,7 @@ Note that the `byte`, `char` and `none` types are not supported by the Logical l
 
 ## Data tables
 
-Relation names are stored in the string table.
+Relation names are stored in the string table, and referenced using an index into the string table.
 
 ```
 dataopt ::= | data
@@ -114,6 +112,7 @@ data ::= tabledata | data tabledata
 
 tabledata ::= 0x03 relation arity rowcount entities
 
+// The relation name is an index into the string table.
 relation ::= u32
 
 arity ::= u8
@@ -131,6 +130,7 @@ rules ::= rule | rules rule
 
 rule ::= 0x04 locals instructions end
 
+// The number of local variables
 locals ::= u8
 
 end ::= 0x10
@@ -179,17 +179,67 @@ unaryop ::= u8
 binaryop ::= u8
 ```
 
-Unary ops: eq.bb, eq.bf neq ...
-
-Unresolved: `join` instruction.
-
 ## Instructions
 
-- `eq.bb` variable variable. Compares two values and succeeds if they are equal.
-- `eq.bf` variable variable. Assigns the second variable to the first.
-- `lt.bb` variable variable. Succeeds if the first 
-- `add.bbb` variable va
-- `add.bbf`
+Notation:
+- `b` suffix indicates that the operation requires a bound (assigned) variable.
+- `f` indicates that the operation requires an unbound (unassigned) variable.
+- `B` a set of bound (assigned) variables
+- `F` a set of unbound (unassigned) variables (that become assigned by the operation)
+
+File sections:
+- `strings`
+- `atstrings`
+- `data`
+- `rules`
+- `queries`
+
+Relations:
+
+- `read.F` - Reads values from a predicate.
+- `write.B` - Writes the values into a predicate.
+- `join.BF` - Queries a predicate, and assigns the results to the output variables.
+- `exists.F` - Checks that the given values 
+
+Comparisons:
+
+- `eq.bb v1 v2` - Checks if `v1==v2`.
+- `eq.bf v1 v2` - Assigns `v2 = v1`.
+- `lt.bb v1 v2` - Checks `v1 < v2`.
+- `neq.bb` - Checks that `v1 != v2`.
+- `lteq.bb`
+- `gt.bb`
+- `gteq.bb`
+
+Numerical computations:
+
+- `add.bbb v1 v2 v3` - Checks if `v3=v1+v2`
+- `add.bbf` - Assigns `v3=v1+v2`.
+- `range.lt.lt.bbb v1 v2 v3`
+- `range.lt.lteq.bbb v1 v2 v3`
+- `range.lteq.lt.bbb v1 v2 v3`
+- `range.lteq.lteq.bbb v1 v2 v3`
+- `range.lt.lt.bbf v1 v2 v3`
+- `range.lt.lteq.bbf v1 v2 v3`
+- `range.lteq.lt.bbf v1 v2 v3`
+- `range.lteq.lteq.bbf v1 v2 v3`
+
+Aggregates:
+
+- `sum.bf v1 v2` - Sums the values in `v1` and stores them in `v2`
+- `strictsum.bf v1 v2`
+- `count.f v1` - Counts the number of calls and stores the result in `v1`.
+- `not.f v1` - Stores a valid value in `v1`.
+- `strictcount.f`
+- `max.bf`
+- `min.bf`
+- `check.b` - Checks that the variable has been assigned to. If not, fails.
+- `dedupliate.B` - Ensures that the given set of variables is unique.
+
+Control flow:
+- `branch`
+- `join`
+- `label`
 
 ## Execution model
 

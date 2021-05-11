@@ -9,7 +9,9 @@ enum class EntityType
     String,
     Float,
     AtString,
-    Boolean
+    Boolean,
+    Char,
+    Byte
 };
 
 // Something that's stored in the database
@@ -20,6 +22,7 @@ struct Entity
     {
         int i;
         float f;
+        char ch[4];
     };
 
     Entity() : type(EntityType::None) { }
@@ -100,3 +103,4 @@ struct PairHash
         return h(value.first) * 13 + h(value.second);
     }
 };
+

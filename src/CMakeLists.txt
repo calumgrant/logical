@@ -17,6 +17,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(logiccore 
     AST.cpp AST.hpp
+    Binary.hpp Binary.cpp
     Database.cpp Database.hpp
     StringTable.cpp StringTable.hpp
     Entity.hpp

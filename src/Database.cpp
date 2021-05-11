@@ -77,6 +77,10 @@ void Database::Print(const Entity &e, std::ostream &os) const
     case EntityType::AtString:
         os << "@" << GetAtString(e.i);
         break;
+    case EntityType::Char:
+    case EntityType::Byte:
+        os << e.i;
+        break;
     }
 }
 
