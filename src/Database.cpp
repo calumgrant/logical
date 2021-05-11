@@ -1,6 +1,13 @@
 #include "Database.hpp"
+#include "tokens.tab.h"
 
 #include <iostream>
+
+void yyrestart (FILE *input_file ,yyscan_t yyscanner );
+int yylex_init (yyscan_t* scanner);
+int yylex_init_extra (Database *, yyscan_t* scanner);
+int yylex_destroy (yyscan_t yyscanner );
+void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
 std::shared_ptr<Relation> Database::GetUnaryRelation(int name)
 {
@@ -221,4 +228,25 @@ int Database::GetStringId(const std::string &str)
 int Database::GetAtStringId(const std::string &str)
 {
     return atstrings.GetId(str);
+}
+
+int Database::ReadFile(const char *filename)
+{
+    FILE * f = fopen(filename, "r");
+
+    if(f)
+    {
+        yyscan_t scanner;
+
+        yylex_init_extra(this, &scanner);
+
+        yyset_in(f, scanner);
+        yyrestart(f, scanner);
+        int p = yyparse(scanner, *this);
+        fclose(f);
+        if(p) return 128;
+        yylex_destroy(scanner);
+    }
+
+    return 0;
 }

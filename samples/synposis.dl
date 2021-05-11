@@ -1,0 +1,15 @@
+// Defining a single unary predicate
+"Fred" is a person.
+3.14 is a number.
+
+// Combined predicates define many predicates in the same statement
+@Mickey is a large mouse.
+@Mini is a small red mouse.
+aggressive cat @Tom.
+@Tom is an aggressive cat.
+
+// Attributes define n-ary predicates
+large dog @Pluto has name "Pluto", colour @brown.
+colour @brown has red 168, green 109, blue 50.  // List of attributes (binary predicates)
+colour @red, red 255, green 0, blue 0.  // Omitting the "has"
+

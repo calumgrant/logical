@@ -1,28 +1,27 @@
 # Work plan
 
-## Thining about n-ary predicates and projections
+## Thinking about n-ary predicates and projections
 
 Conclusions:
 1. We use the `has ,` syntax to create n-ary predicates.
 2. They automatically project to smaller predicates as needed.
 
 Implementation:
-- Database::GetRelation(const std::vector<string> & parts)
+- Database::GetRelation(const std::vector<int> & parts)
 - If it's a new relation
   - Look for existing relations to add rules to. Find all relations where we are a superset, and create a rule from ourselves to the subset. Find all relations where we are a subset, and create a rule from the superset to ourselves.
   - Ensure we don't add ourselves twice.
 
 - Data structure:
-  unordered_multimap<string, Relation> to look up relation parts.
+  unordered_multimap<int, Relation> to look up relation parts.
 - Use Relation::ProjectsTo(const Relation&) to detect the interrelationship.
   std::vector<int> to contain the "set" of name parts. (Using the string pool).
 
-- Datalog interop:
-  - Datalog predicates do not 
-
-
 ## Short term
-- Change the lexer to return a string id from the string pool.
+- File operations
+  - `Database::ReadFile()`
+  - `Database::ReadBinary()`
+  - `Database::WriteBinary()`
 - Implement Datalog syntax
   - unary and binary relations
   - all and cound syntax
@@ -31,8 +30,6 @@ Implementation:
     - n-ary tables
     - efficient join orders.
   - how to name arbitrary n-ary tuples from Datalog that are compatible with logical?
-- Index all relation names and variables using entities, not strings?
-  - Do this in the lexer and parser as well.
 - Think about `with` syntax
   - Solution 1: construct an nary predicate using `:`. You must specify all of the fields
 - `f X and g X if ...`
@@ -67,7 +64,6 @@ Code refactoring:
 - Put into `namespace Logical`
 
 # Unresolved issues
-- How does the `with` syntax work
 - Putting `-` into identifiers?
 
 ## Datalog predicates
@@ -76,10 +72,6 @@ Code refactoring:
 - `with` predicates - how do they work?
 Perhaps mix Datalog syntax with Logical syntax.
 Syntax for all, count etc.
-
-## Quantifiers
-
-- [ ] sum- [ ] all
 
 ## Last use optimization
 
@@ -103,6 +95,7 @@ Implement memory mapped memory allocator.
 - [ ] Interactive debugger.
 - [ ] Interactive shell.
 - [ ] Command line option to pass code
+- [ ] A compiled bytecode for Datalog.
 
 # Release plan
 

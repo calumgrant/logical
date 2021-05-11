@@ -36,6 +36,11 @@ class Database
 public:
     Database();
     ~Database();
+    
+    // File operations
+    int ReadFile(const char * filename);
+    void ReadBinary(const char * filename);
+    void WriteBinary(const char * filename);
 
     // Create entities
     Entity CreateString(const std::string&s) { return Entity { EntityType::String, strings.GetId(s) }; }
