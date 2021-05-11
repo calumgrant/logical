@@ -201,7 +201,7 @@ BinaryTable::BinaryTable(Database &db, int name) : Predicate(db, name)
 {
 }
 
-Table::Table(Database &db, int name, int arity) : Predicate(db, name), arity(arity), hash({}, 100, Comparer(data, arity), Comparer(data, arity))
+Table::Table(Database &db, int name, int arity) : Predicate(db, name), arity(arity), hash({}, 100, Comparer(data, arity, -1), Comparer(data, arity, -1))
 {
 }
 
@@ -210,6 +210,6 @@ int Predicate::Name() const
     return name;
 }
 
-Table::Comparer::Comparer(const std::vector<Entity> & base, int arity) : base(base), arity(arity)
+Table::Comparer::Comparer(const std::vector<Entity> & base, int arity, int mask) : base(base), arity(arity), mask(mask)
 {    
 }

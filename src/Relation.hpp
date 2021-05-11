@@ -120,13 +120,16 @@ public:
     {
         Entity::Hash hasher;
     public:
-        Comparer(const std::vector<Entity>&base, int arity);
+        Comparer(const std::vector<Entity>&base, int arity, int mask);
         
         int operator()(std::size_t element) const
         {
             int h = hasher(base[element]);
-            for(auto i = element+1; i!=element+arity; ++i)
-                h = h * 17 + hasher(base[i]);
+            for(auto i = 1; i!=arity; ++i)
+            {
+                if(mask & (1<<i))
+                    h = h * 17 + hasher(base[element + i]);
+            }
             return h;
         }
         
@@ -134,13 +137,16 @@ public:
         {
             for(auto i = 0; i<arity; ++i)
             {
-                if(base[element1+i] < base[element2+1]) return true;
-                if(base[element2+i] < base[element1+1]) return false;
+                if(mask & (1<<i))
+                {
+                    if(base[element1+i] < base[element2+1]) return true;
+                    if(base[element2+i] < base[element1+1]) return false;
+                }
             }
             return false; // Equal
         }
     private:
-        const int arity;
+        const int arity, mask;
         const std::vector<Entity> & base;
     };
     

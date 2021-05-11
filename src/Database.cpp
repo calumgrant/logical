@@ -250,3 +250,48 @@ int Database::ReadFile(const char *filename)
 
     return 0;
 }
+
+std::shared_ptr<Relation> Database::GetRelation(const CompoundName &cn)
+{
+    auto t = tables.find(cn);
+    
+    if(t != tables.end()) return t->second;
+    
+    // Find all tables that contain this one:
+    /*
+     Algorithm:
+     for each name, look up names in "names", and create a set.
+     This finds all possibly-related names.
+     */
+    
+    std::unordered_set<CompoundName, CompoundName::Hash> subsets, supersets;
+    
+    for(auto i : cn.parts)
+    {
+        auto m = names.equal_range(i);
+        for(auto j=m.first; j!=m.second; ++j)
+        {
+            if(cn <= j->second) supersets.insert(j->second);
+            if(j->second <= cn) subsets.insert(j->second);
+        }
+    }
+    
+    // Create the appropriate mappings to the subsets
+    auto relation = std::make_shared<Table>(*this, cn.parts[0], cn.parts.size()+1);
+    
+    for(auto & superset : supersets)
+    {
+        std::cout << "TODO: Create a map from superset\n";
+    }
+
+    for(auto & subset : subsets)
+    {
+        std::cout << "TODO: Create a map from subset\n";
+    }
+
+    
+    tables[cn] = relation;
+    for(auto i : cn.parts) names.insert(std::make_pair(i, cn));
+    return relation;
+}
+

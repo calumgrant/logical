@@ -68,6 +68,7 @@ public:
     std::shared_ptr<Relation> GetUnaryRelation(int nameId);
     std::shared_ptr<Relation> GetBinaryRelation(int nameId);
     std::shared_ptr<Relation> GetRelation(int nameId, int arity);
+    std::shared_ptr<Relation> GetRelation(const CompoundName &cn);
 
     const std::string &GetString(int id) const;
     const std::string &GetAtString(int id) const;
@@ -101,4 +102,7 @@ private:
     bool userError;
     
     std::unordered_map<CompoundName, std::shared_ptr<Relation>, CompoundName::Hash> tables;
+    
+    // Names, indexed on their first column
+    std::unordered_multimap<int, CompoundName> names;
 };

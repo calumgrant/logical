@@ -22,6 +22,6 @@ public:
             return h;
         }
     };
-private:
+
     std::vector<int> parts;
 };
