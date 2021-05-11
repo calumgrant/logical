@@ -1,5 +1,7 @@
 #pragma once
 
+#include <numeric>
+
 class Entity;
 
 void WriteBinaryEntity(const Entity &e, std::ostreambuf_iterator<char> & output);

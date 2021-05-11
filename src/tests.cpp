@@ -155,11 +155,33 @@ int main()
     }
     
     {
-        TestSerialization(Entity{EntityType::Integer, -992});
         for(int i=-1000; i<1000; ++i)
             TestSerialization(Entity{EntityType::Integer, i});
+        TestSerialization(Entity{EntityType::Integer, 16324});
+        TestSerialization(Entity{EntityType::Integer, 0xffff});
+        TestSerialization(Entity{EntityType::Integer, 0x1ffff});
+        TestSerialization(Entity{EntityType::Integer, 0x7fffffff});
+        TestSerialization(Entity{EntityType::Integer, (int)0xafffffff});
         
-        //
+        TestSerialization(Entity{EntityType::Float, 3.14f});
+        TestSerialization(Entity{EntityType::Float, -1.0f});
+
+        TestSerialization(Entity{EntityType::Boolean, true});
+        TestSerialization(Entity{EntityType::Boolean, false});
+        
+        TestSerialization(Entity{EntityType::String, 0});
+        TestSerialization(Entity{EntityType::String, 0x7f00});
+        TestSerialization(Entity{EntityType::String, 0x8000});
+        TestSerialization(Entity{EntityType::String, 0xffff});
+        TestSerialization(Entity{EntityType::String, 0x10000});
+        TestSerialization(Entity{EntityType::String, -1});
+
+        TestSerialization(Entity{EntityType::AtString, 0});
+        TestSerialization(Entity{EntityType::AtString, 0x7f00});
+        TestSerialization(Entity{EntityType::AtString, 0x8000});
+        TestSerialization(Entity{EntityType::AtString, 0xffff});
+        TestSerialization(Entity{EntityType::AtString, 0x10000});
+        TestSerialization(Entity{EntityType::AtString, -1});
     }
 
     std::cout << "Tests passed\n";

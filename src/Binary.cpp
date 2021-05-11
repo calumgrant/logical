@@ -34,16 +34,49 @@ int ReadInt(InputIterator &it, const InputIterator & end)
     }
     if(N==2)
     {
-        std::int16_t b0 = (unsigned char)*it++;
-        std::int16_t b1 = (unsigned char)*it++;
+        int b0 = (unsigned char)*it++;
+        int b1 = (unsigned char)*it++;
         return (std::int16_t)((b1<<8) | b0);
     }
-    int b0 = *it++;
-    int b1 = *it++;
-    int b2 = *it++;
-    int b3 = *it++;
+    unsigned char b0 = *it++;
+    unsigned char b1 = *it++;
+    unsigned char b2 = *it++;
+    unsigned char b3 = *it++;
 
-    return b3<<24 | b2<<16 | b1<<8 | b0;
+    return (b3<<24) | (b2<<16) | (b1<<8) | b0;
+}
+
+template<int N, typename InputIterator>
+int ReadUInt(InputIterator &it, const InputIterator & end)
+{
+    if(it == end) return -1;
+    
+    if(N==1)
+    {
+        return (char)(unsigned char)(*it++);
+    }
+    if(N==2)
+    {
+        auto b0 = (unsigned char)*it++;
+        auto b1 = (unsigned char)*it++;
+        return ((b1<<8) | b0);
+    }
+    unsigned char b0 = *it++;
+    unsigned char b1 = *it++;
+    unsigned char b2 = *it++;
+    unsigned char b3 = *it++;
+
+    return (b3<<24) | (b2<<16) | (b1<<8) | b0;
+}
+
+
+template<int N, typename OutputIterator>
+void WriteInt(int i, OutputIterator &it)
+{
+    *it++ = (unsigned char)i;
+    if(N>1) *it++ = (unsigned char)(i>>8);
+    if(N>2) *it++ = (unsigned char)(i>>16);
+    if(N>3) *it++ = (unsigned char)(i>>24);
 }
 
 template<typename InputIterator>
@@ -87,13 +120,13 @@ Entity ReadEntity(InputIterator &it, const InputIterator &end)
             return result;
         }
     case EntityOpCode::AtString32:
-        return Entity(EntityType::AtString, ReadInt<4>(it, end));
+        return Entity(EntityType::AtString, ReadUInt<4>(it, end));
     case EntityOpCode::AtString16:
-        return Entity(EntityType::AtString, ReadInt<2>(it, end));
+        return Entity(EntityType::AtString, ReadUInt<2>(it, end));
     case EntityOpCode::String32:
-        return Entity(EntityType::String, ReadInt<4>(it, end));
+        return Entity(EntityType::String, ReadUInt<4>(it, end));
     case EntityOpCode::String16:
-        return Entity(EntityType::String, ReadInt<2>(it, end));
+        return Entity(EntityType::String, ReadUInt<2>(it, end));
     case EntityOpCode::False:
         return Entity(EntityType::Boolean, 0);
     case EntityOpCode::True:
@@ -107,23 +140,6 @@ Entity ReadEntity(InputIterator &it, const InputIterator &end)
     default:
         return Entity(EntityType::Integer, (int)(char)a);
     }
-}
-
-template<int N, typename OutputIterator>
-void WriteInt(int i, OutputIterator &it)
-{
-    std::uint8_t b[4] = { (std::uint8_t)i, (std::uint8_t)(i>>8), (std::uint8_t)(i>>16), (std::uint8_t)(i>>24) };
-    
-    *it++ = b[0];
-    if(N>1) *it++ = b[1];
-    if(N>2) *it++ = b[2];
-    if(N>3) *it++ = b[3];
-    return;
-    
-    *it++ = (unsigned char)(i & 0xff);
-    if(N>1) *it++ = (unsigned char)((i>>8) & 0xff);
-    if(N>2) *it++ = (unsigned char)((i>>16) & 0xff);
-    if(N>3) *it++ = (unsigned char)((i>>24) & 0xff);
 }
 
 template<typename OutputIterator>
@@ -161,7 +177,7 @@ void WriteEntity(const Entity &e, OutputIterator &it)
         }
         else
         {
-            *it++ = (unsigned char)EntityOpCode::String16;
+            *it++ = (unsigned char)EntityOpCode::String32;
             WriteInt<4>(e.i, it);
         }
         break;
@@ -173,7 +189,7 @@ void WriteEntity(const Entity &e, OutputIterator &it)
         }
         else
         {
-            *it++ = (unsigned char)EntityOpCode::AtString16;
+            *it++ = (unsigned char)EntityOpCode::AtString32;
             WriteInt<4>(e.i, it);
         }
         break;
