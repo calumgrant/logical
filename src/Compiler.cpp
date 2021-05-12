@@ -335,7 +335,9 @@ std::shared_ptr<Evaluation> AST::EntityClause::CompileLhs(Database &db, Compilat
     int slot = entity->BindVariables(db, c, bound);
     if(bound)
     {
-        return WritePredicates(db, c, slot);
+        auto eval = WritePredicates(db, c, slot);
+        eval = entity->Compile(db, c, eval);
+        return eval;
     }
     else
     {
@@ -643,25 +645,41 @@ std::shared_ptr<Evaluation> AST::AddEntity::Compile(Database &db, Compilation&c,
     return eval;
 }
 
-std::shared_ptr<Evaluation> AST::SubEntity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::SubEntity::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
 {
-    return std::make_shared<SubBBF>(lhsSlot, rhsSlot, resultSlot, next);
+    auto eval = next;
+    eval = std::make_shared<SubBBF>(lhsSlot, rhsSlot, resultSlot, eval);
+    eval = rhs->Compile(db, c, eval);
+    eval = lhs->Compile(db, c, eval);
+    return eval;
 }
 
-std::shared_ptr<Evaluation> AST::MulEntity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::MulEntity::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
 {
     // TODO: Repeat a string by multiplying it.
-    return std::make_shared<MulBBF>(lhsSlot, rhsSlot, resultSlot, next);
+    auto eval = next;
+    eval = std::make_shared<MulBBF>(lhsSlot, rhsSlot, resultSlot, next);
+    eval = rhs->Compile(db, c, eval);
+    eval = lhs->Compile(db, c, eval);
+    return eval;
 }
 
-std::shared_ptr<Evaluation> AST::DivEntity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::DivEntity::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
 {
-    return std::make_shared<DivBBF>(lhsSlot, rhsSlot, resultSlot, next);
+    auto eval = next;
+    eval = std::make_shared<DivBBF>(lhsSlot, rhsSlot, resultSlot, next);
+    eval = rhs->Compile(db, c, eval);
+    eval = lhs->Compile(db, c, eval);
+    return eval;
 }
 
-std::shared_ptr<Evaluation> AST::ModEntity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::ModEntity::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
 {
-    return std::make_shared<ModBBF>(lhsSlot, rhsSlot, resultSlot, next);
+    auto eval = next;
+    eval = std::make_shared<ModBBF>(lhsSlot, rhsSlot, resultSlot, next);
+    eval = rhs->Compile(db, c, eval);
+    eval = lhs->Compile(db, c, eval);
+    return eval;
 }
 
 class DummyClause : public AST::Clause

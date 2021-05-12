@@ -4,9 +4,7 @@
 
 Conclusions:
 1. We use the `has ,` syntax to create n-ary predicates.
-2. They automatically project to smaller predicates as nee
-
-ded.
+2. They automatically project to smaller predicates as needed.
 
 Implementation:
 - Database::GetRelation(const std::vector<int> & parts)
@@ -20,6 +18,7 @@ Implementation:
   std::vector<int> to contain the "set" of name parts. (Using the string pool).
 
 ## Short term
+- Don't say "iteration", just put call count in "Evaluate..." message.
 - Refactor aggregates
   - Have Evaluations for constants?
   - Suprious assignment in rule5.dl

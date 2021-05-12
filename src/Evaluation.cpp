@@ -51,8 +51,8 @@ void RuleEvaluation::Evaluate(Entity*)
 {
     ++callCount;
 // !! Remove this and use a size instead.
-//    row = std::vector<Entity>(row.size());
-    evaluation->Evaluate(&row[0]);
+    std::vector<Entity> locals(row.size());
+    evaluation->Evaluate(&locals[0]);
 }
 
 EvaluateB::EvaluateB(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
@@ -128,7 +128,9 @@ void Evaluation::Indent(std::ostream & os, int indent)
 void RuleEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Evaluate with " << row.size() << " variables ->\n";
+    os << "Evaluate with " << row.size() << " variables";
+    OutputCallCount(os);
+    os << " ->\n";
     evaluation->Explain(db, os, indent+4);
 }
 

@@ -206,8 +206,6 @@ void Predicate::RunRules()
             p->Evaluate(nullptr);
             if(database.Explain())
             {
-                if(recursive)
-                    std::cout << "Iteration " << iteration << std::endl;  // TODO: Log delta size
                 p->Explain(database, std::cout, 0);
             }
         }

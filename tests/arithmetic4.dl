@@ -1,6 +1,8 @@
 number X if 0<=X<=10.
+print 1.
 number X has square Y if number X and Y = X*X.
 error "square" if not 5 has square 25.
+print 2.
 
 X has half Y if number X and Y = X/2.0.
 error "half" if not 2 has half 1.0.
