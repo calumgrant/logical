@@ -43,18 +43,14 @@ void OrEvaluation::Evaluate(Entity * row)
 }
 
 RuleEvaluation::RuleEvaluation(std::vector<Entity> &&row, const std::shared_ptr<Evaluation> & eval) :
-    row(row), evaluation(eval), evaluated(false)
+    row(row), evaluation(eval)
 {
 }
 
 void RuleEvaluation::Evaluate(Entity*)
 {
     ++callCount;
-    if(!evaluated)
-    {
-        evaluated = true;
-        evaluation->Evaluate(&row[0]);
-    }
+    evaluation->Evaluate(&row[0]);
 }
 
 EvaluateB::EvaluateB(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
@@ -157,7 +153,7 @@ void EvaluateB::Explain(Database &db, std::ostream &os, int indent) const
     Indent(os, indent);
     auto r = relation.lock();
     assert(r);
-    os << "Lookup _" << slot << " in " << r->Name();
+    os << "Lookup _" << slot << " in " << db.GetString(r->Name());
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -187,7 +183,7 @@ void NotTerminator::Evaluate(Entity * row)
 void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Assign _" << slot << " := true";
+    os << "Assign _" << slot << " := None";
     OutputCallCount(os);
     os << "\n";
 }
@@ -352,7 +348,7 @@ void EvaluateFB::Evaluate(Entity * row)
 void EvaluateFB::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Join " << relation.lock()->Name() << " column 2 on _" << slot2 << " into _" << slot1;
+    os << "Join " << db.GetString(relation.lock()->Name()) << " column 2 on _" << slot2 << " into _" << slot1;
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);

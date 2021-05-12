@@ -64,15 +64,15 @@ int main()
     auto test = db.GetStringId("test");
     auto r1 = db.GetUnaryRelation(test);
     r1->Add(&e1);
-    assert(r1->Count() == 1);
+    assert(r1->GetCount() == 1);
 
     auto r2 = db.GetBinaryRelation(test);
     Entity row1[2] = { e1, e1 };
     r2->Add(row1);
-    assert(r2->Count() == 1);
+    assert(r2->GetCount() == 1);
     Entity row2[2] = { e1, e1 };
     r2->Add(row2);
-    assert(r2->Count() == 1);
+    assert(r2->GetCount() == 1);
 
     x = db.GetStringId("x"), y = db.GetStringId("y");
     auto z = db.GetStringId("z");

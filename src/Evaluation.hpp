@@ -109,7 +109,6 @@ private:
     
     // Local data, pre-initialised with constants
     std::vector<Entity> row;
-    bool evaluated;
 };
 
 class OrEvaluation : public Evaluation

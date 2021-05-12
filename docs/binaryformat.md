@@ -69,34 +69,34 @@ Entites are encoded as a byte representing the entity type, followed by addition
 entity ::= integer | boolean | string | atstring | float | char | byte | none
 
 integer ::= i8 (in the range 0x00 - 0xdf) | int16 | int32 | int64
-int16 ::= 0xff i16
-int32 ::= 0xfe i32
-int64 ::= 0xfd i64
+int16 ::= 0x8f i16
+int32 ::= 0x8e i32
+int64 ::= 0x8d i64
 
 boolean: true | false
-true ::= 0xfc
-false ::= 0xfb
+true ::= 0x8c
+false ::= 0x8b
 
 string ::= string16 | string32
-string16 ::= 0xfa u16
-string32 ::= 0xf9 u32
+string16 ::= 0x8a u16
+string32 ::= 0x89 u32
 
 atstring ::= atstring16 | atstring32
-atstring16 ::= 0xf8 u16
-atstring32 ::= 0xf7 u32
+atstring16 ::= 0x88 u16
+atstring32 ::= 0x87 u32
 
 float ::= float32 | float64
-float32 ::= 0xf6 f32
-float64 ::= 0xf5 f64
+float32 ::= 0x86 f32
+float64 ::= 0x85 f64
 
 char ::= char8 | char16 | char32
-char8 ::= 0xf4 u8
-char16 ::= 0xf3 u16
-char32 ::= 0xf2 u32
+char8 ::= 0x84 u8
+char16 ::= 0x83 u16
+char32 ::= 0x82 u32
 
-byte ::= 0xf1 u8
+byte ::= 0x81 u8
 
-none ::= 0xf0
+none ::= 0x80
 ```
 
 Note that the `byte`, `char` and `none` types are not supported by the Logical language, and are reserved for future use.
@@ -128,49 +128,51 @@ entities ::= entity | entities entity
 rulesopt ::= | rules
 rules ::= rule | rules rule
 
-rule ::= 0x04 locals instructions end
+rule ::= op-rule locals instruction-group op-end
 
 // The number of local variables
 locals ::= u8
 
 end ::= 0x10
+op-rule ::= 0x04
 
-instructions ::= instruction | instructions instruction
+instruction-group ::= seq-instructions term-instruction  | or instruction-group instruction-group
 
-instruction ::=
+seq-instructions ::= seq-instruction | seq-instructions seq-instruction
+
+term-instruction ::= write | join | aggregate
+
+seq-instruction ::=
     assign 
 |   load
 |   read
-|   write
 |   or
 |   deduplicate
-|   aggregate
 |   unary
 |   binary
 |   check
 |   label
-|   join
 
-load ::= 0x20 variable entity
+load ::= op-load variable entity
 
 variable ::= u8
 variable{*n} ::= variable ... variable (repeated n times)
 
 read ::= scan | join
-scan ::= 0x21 relation arity{=n} variable{*n}
-join ::= 0x22 relation arity{=n} variable{*n} variable{*n}
-write ::= 0x23 relation arity{=n} variable{*n}
-or ::= 0x24
-deduplicate ::= 0x25 u8{=n} variable{*n}
+scan ::= op-scan relation arity{=n} variable{*n}
+join ::= op-join relation arity{=n} variable{*n} variable{*n}
+write ::= op-write relation arity{=n} variable{*n}
+or ::= op_or
+deduplicate ::= op-dedup u8{=n} variable{*n}
 aggregate ::= count | sum | min | max | not
-count ::= 0x25 variable
-sum ::= 0x26 variable variable
-max ::= 0x27 variable variable
-not ::= 0x28 variable
-check ::= 0x29 variable
-min ::= 0x2a variable variable
-label ::= 0x2b u8
-join ::= 0x2c u8
+count ::= op-count variable
+sum ::= op-sum variable variable
+max ::= op-max variable variable
+not ::= op-not variable
+check ::= op-check variable
+min ::= op-min variable variable
+label ::= op-label u8
+join ::= op-join u8
 
 unary ::= unaryop variable variable
 binary ::= binaryop variable variable variable
@@ -211,7 +213,7 @@ Comparisons:
 - `gt.bb`
 - `gteq.bb`
 
-Numerical computations:
+Numerical and string computations:
 
 - `add.bbb v1 v2 v3` - Checks if `v3=v1+v2`
 - `add.bbf` - Assigns `v3=v1+v2`.
@@ -238,7 +240,7 @@ Aggregates:
 
 Control flow:
 - `branch`
-- `join`
+- `join label`
 - `label`
 
 ## Execution model

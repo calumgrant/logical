@@ -180,7 +180,7 @@ query:
 
 // Different syntax to distinguish them from variable lists A, B, C
 querybaseclause:
-    unarypredicatelist entity 
+    unarypredicatelist entity
     {
         $$ = new AST::EntityIs($2, $1);
     }

@@ -26,15 +26,13 @@ void BinaryTable::Add(const Entity * row)
     }
 }
 
-int UnaryTable::Count()
+std::size_t UnaryTable::Count()
 {
-    RunRules();
     return values.size();
 }
 
-int BinaryTable::Count()
+std::size_t BinaryTable::Count()
 {
-    RunRules();
     return values.size();
 }
 
@@ -55,7 +53,7 @@ void PrintRelation::AddRule(const std::shared_ptr<Evaluation> & eval)
     eval->Evaluate(nullptr);
 }
 
-int PrintRelation::Count()
+std::size_t PrintRelation::Count()
 {
     return 0;
 }
@@ -70,9 +68,9 @@ void ErrorRelation::Add(const Entity * row)
     database.ReportUserError();
 }
 
-int Table::Count()
+std::size_t Table::Count()
 {
-    return 0;
+    return hash.size();
 }
 
 void UnaryTable::Query(Entity * row, int columns, Visitor &v)
@@ -164,7 +162,9 @@ void Table::Add(const Entity *row)
 {
 }
 
-Predicate::Predicate(Database &db, int name) : rulesRun(false), name(name), database(db)
+Predicate::Predicate(Database &db, int name) :
+    rulesRun(false), name(name), database(db),
+    evaluating(false), recursive(false), sizeAtLastRecursiveCall(0)
 {
 }
 
@@ -183,13 +183,39 @@ void Predicate::RunRules()
 {
     if(rulesRun) return;
     
-    for(auto & p : rules)
+    if(evaluating)
     {
-        p->Evaluate(nullptr);
-        if(database.Explain())
-            p->Explain(database, std::cout, 0);
+        if(!recursive)
+        {
+            recursive = true;
+            sizeAtLastRecursiveCall = Count();
+        }
+        return;
     }
+        
+    evaluating = true;
     
+    std::size_t iteration = 1;
+    
+    do
+    {
+        sizeAtLastRecursiveCall = Count();
+        recursive = false;
+        for(auto & p : rules)
+        {
+            p->Evaluate(nullptr);
+            if(database.Explain())
+            {
+                if(recursive)
+                    std::cout << "Iteration " << iteration << std::endl;  // TODO: Log delta size
+                p->Explain(database, std::cout, 0);
+            }
+        }
+        ++iteration;
+    }
+    while (recursive && Count()>sizeAtLastRecursiveCall);
+    
+    evaluating = false;
     rulesRun = true;
 }
 
@@ -212,4 +238,10 @@ int Predicate::Name() const
 
 Table::Comparer::Comparer(const std::vector<Entity> & base, int arity, int mask) : base(base), arity(arity), mask(mask)
 {    
+}
+
+std::size_t Relation::GetCount()
+{
+    RunRules();
+    return Count();
 }

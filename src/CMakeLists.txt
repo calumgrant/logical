@@ -91,3 +91,7 @@ add_test(NAME Sum1 COMMAND logical ../tests/sum1.dl)
 
 add_test(NAME All1 COMMAND logical ../tests/all1.dl)
 add_test(NAME Primes1 COMMAND logical ../tests/primes1.dl)
+
+add_test(NAME Recursion1 COMMAND logical ../tests/recursion1.dl)
+add_test(NAME Recursion2 COMMAND logical ../tests/recursion2.dl)
+add_test(NAME Recursion3 COMMAND logical ../tests/recursion3.dl)

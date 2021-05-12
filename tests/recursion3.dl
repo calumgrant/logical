@@ -1,0 +1,21 @@
+
+X has parent Y if 0<=X<=100 and Y=X*2 and 0<=Y<=100.
+
+X has ancestor Y if
+    X has parent Y
+    or
+    X has parent Z and Z has ancestor Y.
+
+X has ancestor2 Y if
+    X has parent Y
+    or
+    X has ancestor2 Z and Z has parent Y.
+
+error "recursion 1" if not 2 has ancestor 64.
+error "recursion 2" if not 2 has ancestor2 64.
+error "differences" if
+    X has ancestor Y and not X has ancestor2 Y
+    or
+    X has ancestor2 Y and not X has ancestor Y.
+
+error "count" if not count X in (3 has ancestor X) = 5.

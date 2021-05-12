@@ -1,0 +1,6 @@
+
+f 1.
+f X if f X.
+f 2 if f 1.
+
+error "f" if not f 1 or not f 2.

@@ -19,13 +19,8 @@ Implementation:
 
 ## Short term
 - Refactor aggregates
-  - Communicate via variables
-  - Have an initialiser step.
-  - Implement a "check" evaluation
   - Have Evaluations for constants?
-  - Not: Initialize the variable to 0, then set it to "None"
-  - Sum: Initialize a variable to 0. (via constants).
-  - Count: Initialize the count to 0 (via constants)
+  - Suprious assignment in rule5.dl
 - Implement n-ary predicates
   - Refactor `has` grammar into a vector
   - Implement `CompoundName` which is a vector of int. - Tests
@@ -52,6 +47,7 @@ Implementation:
 - Think about predicate-names containing `-`.
   - Problem is negative facts like `print -2.` Try to turn it into an entity.
   - `error "negative" if not 5 has negative -5.` does not work.
+  - Expressions like `foo X+1` doesn't parse yet, as it could be `foo (X)` which then becomes a Datalog predicate....
 - Binding issues
   - `number X has square X*X.` is not bound yet.
   - `number X has square Y if Y = X*X.` also not bound yet.
@@ -70,6 +66,7 @@ Queries that work:
 - `not` should fail early (optimization) - see the primes1.dl example
 - `or` join both branches if the same variables are bound in all branches.
 - Ressurect the ramp and persist projects. Probably persist mainly.
+- The indent should be 1, not 4.
 
 - Warning about empty predicates with no facts or rules.
 - Optimization: Tables should assume a single type, then fall back onto polymorphic behaviour which is slower.
@@ -79,8 +76,34 @@ Code refactoring:
 - Put into `namespace Logical`
 - Slim down the header files, for example split up relation.hpp
 
+## Recursion
+
+- Error on negative recursion
+ - How to even detect it
+ - Have a flag called 'Evaluating', as well as a parity.
+ - Probably want some kind of static analysis to be honest.
+ - When can we use the delta??
+
+When recursion is detected, the predicate is tagged with "recursive evaluation". Then, the rules of the predicate are reevaluated until there are no more results.
+
+
+
+- Can we avoid unnecessary branches in the recursive step??
+- Can we just use the deltas??
+
+- 
+
+
+
+## Semi-naive evaluation
+
+- Can we use context when compiling a rule?
+  - Yes! When we call eval, we know which variables are already bound
+
 # Unresolved issues
 - Putting `-` into identifiers?
+- Semi-naive evaluation where some of the variables are already bound.
+- Recursion. Needs to work with semi-naive evaluation.
 
 ## Datalog predicates
 
@@ -112,6 +135,7 @@ Implement memory mapped memory allocator.
 - [ ] Interactive shell.
 - [ ] Command line option to pass code
 - [ ] A compiled bytecode for Datalog.
+- [ ] Resources limits - memory, time and tuple-counts.
 
 # Release plan
 

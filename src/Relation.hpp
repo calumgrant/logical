@@ -30,8 +30,6 @@ public:
     // Insert a row into this table.
     virtual void Add(const Entity * row) =0;
 
-    // Returns the number of rows.
-    virtual int Count() =0;
 
     virtual ~Relation();
     
@@ -40,6 +38,11 @@ public:
     virtual int Name() const =0;
     
     virtual void RunRules() =0;
+    
+    std::size_t GetCount();
+protected:
+    // Returns the number of rows.
+    virtual std::size_t Count() =0;
 };
 
 class Predicate : public Relation
@@ -60,6 +63,11 @@ private:
     bool rulesRun;
     std::vector< std::shared_ptr<Evaluation> > rules;
     int name;
+    
+    // The number of
+    bool evaluating;
+    bool recursive;
+    std::size_t sizeAtLastRecursiveCall;
 protected:
     Database &database;
 };
@@ -69,7 +77,7 @@ class UnaryTable : public Predicate
 public:
     UnaryTable(Database &db, int nameId);
     void Add(const Entity *row) override;
-    int Count() override;
+    std::size_t Count() override;
     void Query(Entity*row, int columns, Visitor&v) override;
 private:
     std::unordered_set<Entity, Entity::Hash> values;
@@ -82,7 +90,7 @@ public:
     PrintRelation(std::ostream & output, Database&db, int name);
     void Add(const Entity *row) override;
     void AddRule(const std::shared_ptr<Evaluation> &) override;
-    int Count() override;
+    std::size_t Count() override;
     void Query(Entity *row, int columns, Visitor&v) override;
 protected:
     std::ostream & output;
@@ -100,7 +108,7 @@ class BinaryTable : public Predicate
 public:
     BinaryTable(Database &db, int name);
     void Add(const Entity * row) override;
-    int Count() override;
+    std::size_t Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
 private:
     // This representation is inefficient - fixme.
@@ -112,7 +120,7 @@ class Table : public Predicate
 {
 public:
     Table(Database &db, int name, int arity);
-    int Count() override;
+    std::size_t Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
     void Add(const Entity*row) override;
     
