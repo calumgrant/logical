@@ -134,7 +134,9 @@ namespace AST
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
         void UnboundError(Database & db) const override;
         void Visit(Visitor &v) const override;
+        std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const override;
     private:
+        int slot;
         ::Entity value;
     };
 

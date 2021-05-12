@@ -4,7 +4,9 @@
 
 Conclusions:
 1. We use the `has ,` syntax to create n-ary predicates.
-2. They automatically project to smaller predicates as needed.
+2. They automatically project to smaller predicates as nee
+
+ded.
 
 Implementation:
 - Database::GetRelation(const std::vector<int> & parts)
@@ -67,6 +69,8 @@ Queries that work:
 - `or` join both branches if the same variables are bound in all branches.
 - Ressurect the ramp and persist projects. Probably persist mainly.
 - The indent should be 1, not 4.
+- Nicer closure syntax.
+
 
 - Warning about empty predicates with no facts or rules.
 - Optimization: Tables should assume a single type, then fall back onto polymorphic behaviour which is slower.

@@ -50,6 +50,8 @@ RuleEvaluation::RuleEvaluation(std::vector<Entity> &&row, const std::shared_ptr<
 void RuleEvaluation::Evaluate(Entity*)
 {
     ++callCount;
+// !! Remove this and use a size instead.
+//    row = std::vector<Entity>(row.size());
     evaluation->Evaluate(&row[0]);
 }
 
@@ -127,16 +129,6 @@ void RuleEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
     os << "Evaluate with " << row.size() << " variables ->\n";
-    for(int i=0; i<row.size(); ++i)
-    {
-        if(row[i].type != EntityType::None)
-        {
-            Indent(os, indent+4);
-            os << "_" << i << " = ";
-            db.PrintQuoted(row[i], os);
-            os << std::endl;
-        }
-    }
     evaluation->Explain(db, os, indent+4);
 }
 
@@ -306,7 +298,7 @@ void EvaluateBF::Evaluate(Entity * row)
 void EvaluateBF::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Join " << relation.lock()->Name() << " column 1 on _" << slot1 << " into _" << slot2;
+    os << "Join " << db.GetString(relation.lock()->Name()) << " column 1 on _" << slot1 << " into _" << slot2;
     OutputCallCount(os);
     os << " ->\n";
     

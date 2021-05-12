@@ -89,6 +89,12 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
     {
         eval = std::make_shared<EvaluateFF>(relation, slot, slot2, eval);
     }
+
+    if(entityOpt)
+    {
+        eval = entityOpt->Compile(db, c, eval);
+    }
+
     return eval;
 }
 
@@ -137,8 +143,12 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
                 eval = std::make_shared<EvaluateB>(relation, slot, eval);
             else
                 eval = std::make_shared<EvaluateF>(relation, slot, eval);
+            
+            eval = entity->Compile(db, compilation, eval);
         }
     }
+
+    eval = entity->Compile(db, compilation, eval);
 
     return eval;
 }
@@ -286,7 +296,8 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
     {
         for(auto & i : predicates->list)
         {
-            auto e = std::make_shared<WriterB>(db.GetUnaryRelation(i->nameId), slot);
+            std::shared_ptr<Evaluation> e = std::make_shared<WriterB>(db.GetUnaryRelation(i->nameId), slot);
+            e = entity->Compile(db, c, e);
             if(result)
                 result = std::make_shared<OrEvaluation>(result, e);
             else
@@ -465,7 +476,13 @@ int AST::NotImplementedEntity::BindVariables(Database &db, Compilation &c, bool 
 int AST::Value::BindVariables(Database &db, Compilation &c, bool &bound)
 {
     bound = true;
-    return c.AddValue(GetValue());
+    slot = c.AddValue(GetValue());
+    return slot;
+}
+
+std::shared_ptr<Evaluation> AST::Value::Compile(Database &db, Compilation &c, const std::shared_ptr<Evaluation> & next) const
+{
+    return std::make_shared<Load>(slot, value, next);
 }
 
 class ResultsPrinterEval : public Evaluation
@@ -558,16 +575,22 @@ std::shared_ptr<Evaluation> AST::Range::Compile(Database &db, Compilation & comp
         return std::make_shared<NoneEvaluation>();
     }
 
-    auto nextEval = next->Compile(db, compilation);
+    auto eval = next->Compile(db, compilation);
 
     if(bound3)
     {
-        return std::make_shared<RangeB>(slot1, cmp1, slot3, cmp2, slot2, nextEval);
+        eval = std::make_shared<RangeB>(slot1, cmp1, slot3, cmp2, slot2, eval);
     }
     else
     {
-        return std::make_shared<RangeU>(slot1, cmp1, slot3, cmp2, slot2, nextEval);
+        eval = std::make_shared<RangeU>(slot1, cmp1, slot3, cmp2, slot2, eval);
     }
+    
+    eval = entity->Compile(db, compilation, eval);
+    eval = upperBound->Compile(db, compilation, eval);
+    eval = lowerBound->Compile(db, compilation, eval);
+    
+    return eval;
 }
 
 std::shared_ptr<Evaluation> AST::Range::CompileLhs(Database &db, Compilation &compilation)
