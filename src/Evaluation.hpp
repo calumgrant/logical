@@ -100,15 +100,15 @@ private:
 class RuleEvaluation : public Evaluation
 {
 public:
-    RuleEvaluation(std::vector<Entity> && compilation, const std::shared_ptr<Evaluation> &eval);
+    RuleEvaluation(int locals, const std::shared_ptr<Evaluation> &eval);
 
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
     std::shared_ptr<Evaluation> evaluation;
     
-    // Local data, pre-initialised with constants
-    std::vector<Entity> row;
+    // The number of local variables
+    int locals;
 };
 
 class OrEvaluation : public Evaluation

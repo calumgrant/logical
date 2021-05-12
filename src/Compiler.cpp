@@ -44,7 +44,7 @@ void AST::Rule::Compile(Database &db)
 
     auto evaluation = rhs->Compile(db, compilation);
     
-    evaluation = std::make_shared<RuleEvaluation>(std::move(compilation.row), evaluation);
+    evaluation = std::make_shared<RuleEvaluation>(compilation.locals, evaluation);
     
     if(db.Explain())
     {
@@ -153,7 +153,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
     return eval;
 }
 
-Compilation::Compilation()
+Compilation::Compilation() : locals(0)
 {
 }
 
@@ -180,8 +180,7 @@ int Compilation::AddVariable(int name, bool &alreadybound)
     }
     else
     {
-        auto size = row.size();
-        row.push_back(Entity());
+        auto size = locals++;
         variables[name] = size;
         boundVariables2.insert(name);
         boundVariables.push_back(name);
@@ -207,16 +206,12 @@ void Compilation::Branch(int branch)
 
 int Compilation::AddUnnamedVariable()
 {
-    auto size = row.size();
-    row.push_back(Entity());
-    return size;
+    return locals++;
 }
 
 int Compilation::AddValue(const Entity &e)
 {
-    auto size = row.size();
-    row.push_back(e);
-    return size;
+    return locals++;
 }
 
 std::shared_ptr<Evaluation> AST::Or::Compile(Database &db, Compilation & compilation)
@@ -528,7 +523,7 @@ public:
     
     std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override
     {
-        return printer = std::make_shared<ResultsPrinterEval>(db, compilation.row.size());
+        return printer = std::make_shared<ResultsPrinterEval>(db, compilation.locals);
     }
     
     std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override
@@ -556,7 +551,8 @@ void AST::Clause::Find(Database &db)
     SetNext(p);
     auto eval = Compile(db, c);
 
-    eval->Evaluate(&c.row[0]);
+    std::vector<::Entity> row(c.locals);
+    eval->Evaluate(&row[0]);
     if(db.Explain())
         eval->Explain(db, std::cout);
     

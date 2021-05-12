@@ -24,7 +24,7 @@ public:
     int CreateBranch();
     void Branch(int branch);
     
-    std::vector<Entity> row;
+    int locals;
 private:
     
     // The stack of bound variables, that can be rewound.
