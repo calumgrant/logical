@@ -142,9 +142,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
             if(i>0 || bound)
                 eval = std::make_shared<EvaluateB>(relation, slot, eval);
             else
-                eval = std::make_shared<EvaluateF>(relation, slot, eval);
-            
-            eval = entity->Compile(db, compilation, eval);
+                eval = std::make_shared<EvaluateF>(relation, slot, eval);            
         }
     }
 
@@ -292,7 +290,6 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
         for(auto & i : predicates->list)
         {
             std::shared_ptr<Evaluation> e = std::make_shared<WriterB>(db.GetUnaryRelation(i->nameId), slot);
-            e = entity->Compile(db, c, e);
             if(result)
                 result = std::make_shared<OrEvaluation>(result, e);
             else
