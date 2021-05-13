@@ -3,9 +3,22 @@
 // This is the query syntax
 
 person @p1 has name "Fred".
+person @p2 has name "Alex", age 30, colour @red.
+person @p2 has name "Alex", colour @red, age 30.
+
+error 1 if count X in (X has age 30) != 1.
+
+error 1 if count X in (X has age 30, name "Alex") != 1.
+
+
+person @p2 has name "Alex", age 30, colour @green.
+
+
+// This is invalid
+// person @p3 has name "Alex", name "Fred".
 
 if
-    person Person has name Name
+    Person has name Name
 then
     query "Query 1" has
     Person Person,
@@ -13,3 +26,5 @@ then
 
 query "Query 2" has Person Person, Name Name if
     person Person has name Name.
+
+query "primes" has prime P if P is a prime.

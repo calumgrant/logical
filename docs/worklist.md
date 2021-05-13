@@ -2,15 +2,18 @@
 
 ## Short term
 - Implement n-ary predicates
-  - Refactor `has` grammar into a vector
+  - Assert facts
+  - Query
+  - Assign right hand side.
   - `Database::getCompoundRelation(CompoundName)` to get the relation and implement the rules
   - Implement n-ary tables
   - Query n-ary relations.
     - Efficient indexing?
     - Arbitrary joins
 - Implement `query` predicate.
-- Total number of evaluations count.
-  probably best just to have a `static`
+- Report duplicate attributes a bit better.
+- Count total number of rows stored.
+- Warning on undefined predicates.
 - Remove the AST `Visit` functions
 - File operations
   - `Database::ReadBinary()`
@@ -60,6 +63,9 @@ Queries that work:
 
 - Warning about empty predicates with no facts or rules.
 - Optimization: Tables should assume a single type, then fall back onto polymorphic behaviour which is slower.
+- Free intermediate tables, for example tables used for deduplicating.
+- Is the deduplicating logic even sound?? Surely other variables can change too? So we need to deduplicate lots of variables, not just the ones in the sum.
+- Problem with adding rules on demand if a predicate is already being evaluated.
 
 Code refactoring:
 - Split up files

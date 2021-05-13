@@ -4,7 +4,6 @@
 class CompoundName
 {
 public:
-    CompoundName(std::vector<int> && parts);
     CompoundName(const std::vector<int> & parts);
     
     bool operator==(const CompoundName & other) const;
@@ -22,6 +21,9 @@ public:
             return h;
         }
     };
+    
+    // Map from the input position to the output position.
+    std::vector<int> mapFromInputToOutput;
 
     std::vector<int> parts;
 };

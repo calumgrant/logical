@@ -2,9 +2,27 @@
 
 CompoundName::CompoundName(const std::vector<int> & list) : parts(list)
 {
+    mapFromInputToOutput.reserve(parts.size());
+    
     std::sort(parts.begin(), parts.end());
     auto end = std::unique(parts.begin(), parts.end());
     parts.erase(end, parts.end());
+    
+    for(auto i : list)
+    {
+        // Search for i.
+        // TODO: Use a binary search to avoid quadratic algorithm
+        for(int j=0; j<parts.size(); ++j)
+        {
+            if(i == parts[j])
+            {
+                mapFromInputToOutput.push_back(j);
+                break;
+            }
+        }
+    }
+    
+    assert(mapFromInputToOutput.size() == list.size());
 }
 
 bool CompoundName::operator==(const CompoundName & other) const

@@ -7,6 +7,7 @@ class Database;
 class Entity;
 class Compilation;
 class Evaluation;
+class CompoundName;
 
 enum class ComparatorType { lt, lteq, gt, gteq, eq, neq };
 
@@ -287,6 +288,8 @@ namespace AST
         void Assert(Database &db, const ::Entity &e) const;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database & db, Compilation &c, int slot, bool alreadyBound, Clause *next);
+
+        CompoundName GetCompoundName() const;
     };
 
     /*

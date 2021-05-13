@@ -75,6 +75,8 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
     }
 
     auto eval = next->Compile(db, c);
+        
+    auto compoundRelation = db.GetRelation(GetCompoundName());
 
     for(int i=attributes.size()-1; i>=0; --i)
     {

@@ -286,14 +286,13 @@ std::shared_ptr<Relation> Database::GetRelation(const CompoundName &cn)
     
     for(auto & superset : supersets)
     {
-        std::cout << "TODO: Create a map from superset\n";
+        CreateProjection(superset, cn);
     }
 
     for(auto & subset : subsets)
     {
-        std::cout << "TODO: Create a map from subset\n";
+        CreateProjection(cn, subset);
     }
-
     
     tables[cn] = relation;
     for(auto i : cn.parts) names.insert(std::make_pair(i, cn));
@@ -303,4 +302,9 @@ std::shared_ptr<Relation> Database::GetRelation(const CompoundName &cn)
 std::size_t Database::GlobalCallCount()
 {
     return Evaluation::GlobalCallCount();
+}
+
+void Database::CreateProjection(const CompoundName &from, const CompoundName &to)
+{
+    std::cout << "Create a projection from " << from.parts.size() << " to " << to.parts.size() << std::endl;
 }

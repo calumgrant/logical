@@ -132,8 +132,8 @@ public:
         
         int operator()(std::size_t element) const
         {
-            int h = hasher(base[element]);
-            for(auto i = 1; i!=arity; ++i)
+            int h = 0;
+            for(auto i = 0; i<arity; ++i)
             {
                 if(mask & (1<<i))
                     h = h * 17 + hasher(base[element + i]);
@@ -147,11 +147,10 @@ public:
             {
                 if(mask & (1<<i))
                 {
-                    if(base[element1+i] < base[element2+1]) return true;
-                    if(base[element2+i] < base[element1+1]) return false;
+                    if(base[element1+i] != base[element2+i]) return false;
                 }
             }
-            return false; // Equal
+            return true; // Equal
         }
     private:
         const int arity, mask;
@@ -160,6 +159,12 @@ public:
     
     const int arity;
     std::vector<Entity> data;
-    std::unordered_set<std::size_t, Comparer, Comparer> hash;
+    typedef std::unordered_set<std::size_t, Comparer, Comparer> index_type;
+    index_type hash;
+    
+    // Map from mask to index.
+    typedef std::unordered_multiset<std::size_t, Comparer, Comparer> map_type;
+    std::unordered_map<int, map_type> indexes;
+    map_type & GetIndex(int mask);
 };
 

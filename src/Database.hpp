@@ -107,4 +107,6 @@ private:
     
     // Names, indexed on their first column
     std::unordered_multimap<int, CompoundName> names;
+    
+    void CreateProjection(const CompoundName &from, const CompoundName & to);
 };

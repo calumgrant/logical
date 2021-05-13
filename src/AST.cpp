@@ -124,6 +124,13 @@ AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateList * unaryPredicat
 
 void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
 {
+    auto compoundName = GetCompoundName();
+    auto relation = db.GetRelation(compoundName);
+    
+    std::vector<::Entity> entities(attributes.size()+1);
+    entities[0] = e;
+    
+    int index = 0;
     for(auto & attribute : attributes)
     {
         if(attribute.entityOpt)
@@ -134,12 +141,24 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
                 attribute.entityOpt->UnboundError(db);
                 return;
             }
+            entities[compoundName.mapFromInputToOutput[index]] = v->GetValue();
             ::Entity row[2] = { e, v->GetValue() };
             auto table = db.GetBinaryRelation(attribute.predicate->nameId);
 
             table->Add(row);
         }
+                     
+        ++index;
     }
+    
+    if(attributes.size() > compoundName.parts.size())
+    {
+        // TODO: A better error
+        std::cout << "Duplicate attribute is invalid\n";
+        db.ReportUserError();
+    }
+
+    relation->Add(&entities[0]);
 }
 
 AST::EntityList::EntityList(Entity *e)
@@ -542,4 +561,12 @@ const ::Entity & AST::Value::GetValue() const
 void AST::AttributeList::Add(BinaryPredicate * p, Entity *e)
 {
     attributes.push_back(Attribute {std::unique_ptr<BinaryPredicate>(p), std::unique_ptr<Entity>(e)});
+}
+
+CompoundName AST::AttributeList::GetCompoundName() const
+{
+    std::vector<int> name;
+    name.reserve(attributes.size());
+    for(auto &a : attributes) name.push_back(a.predicate->nameId);
+    return CompoundName(std::move(name));
 }

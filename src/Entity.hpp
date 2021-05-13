@@ -30,6 +30,7 @@ struct Entity
     Entity(EntityType t, float f) : type(t), f(f) { }
 
     bool operator==(const Entity & other) const { return type == other.type && i == other.i; }
+    bool operator!=(const Entity & other) const { return !(*this == other); }
 
     int hash() const { return (int)type * 0x10001 + i; }
 
