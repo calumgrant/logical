@@ -8,6 +8,10 @@
   - Query n-ary relations.
     - Efficient indexing?
     - Arbitrary joins
+- Implement `query` predicate.
+- Total number of evaluations count.
+  probably best just to have a `static`
+- Remove the AST `Visit` functions
 - File operations
   - `Database::ReadBinary()`
   - `Database::WriteBinary()`
@@ -20,7 +24,6 @@
     - efficient join orders.
   - how to name arbitrary n-ary tuples from Datalog that are compatible with logical?
 - Inefficient to run `if 1<=X<=100 then X is c and X is b.` as it's evaluated twice.
-- `f X and g X if ...`
 - `exit`
 - Think about predicate-names containing `-`.
   - Problem is negative facts like `print -2.` Try to turn it into an entity.
@@ -46,7 +49,14 @@ Queries that work:
 - Ressurect the ramp and persist projects. Probably persist mainly.
 - The indent should be 1, not 4.
 - Nicer closure syntax.
-
+- Find syntax? `query X if` is evaluated and displayed immediately.
+  - `query X if foo X.`
+  - `query X has name Y if`
+  - `if 1<=X<100 then find X has attribute X+1.`
+  - `query "name" has item X, child Y if Y has parent X`
+  - `if Y has parent X then query "name" has item X, child Y.`
+  - It would be nicer in general to just use the same syntax.
+  - Queries are run at the end, after all rules have been defined.
 
 - Warning about empty predicates with no facts or rules.
 - Optimization: Tables should assume a single type, then fall back onto polymorphic behaviour which is slower.

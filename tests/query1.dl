@@ -1,0 +1,15 @@
+
+
+// This is the query syntax
+
+person @p1 has name "Fred".
+
+if
+    person Person has name Name
+then
+    query "Query 1" has
+    Person Person,
+    Name Name.
+
+query "Query 2" has Person Person, Name Name if
+    person Person has name Name.

@@ -112,9 +112,9 @@ void AST::And::AssertFacts(Database &db) const
     rhs->AssertFacts(db);
 }
 
-AST::AttributeList::AttributeList(BinaryPredicate * predicate, Entity * entityOpt, AttributeList *listOpt) :
-    predicate(predicate), entityOpt(entityOpt), listOpt(listOpt)
+AST::AttributeList::AttributeList(BinaryPredicate * predicate, Entity * entityOpt)
 {
+    Add(predicate, entityOpt);
 }
 
 AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateList * unaryPredicatesOpt, Entity * entity, AttributeList * attributes, HasType has) :
@@ -124,21 +124,22 @@ AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateList * unaryPredicat
 
 void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
 {
-    if(entityOpt)
+    for(auto & attribute : attributes)
     {
-        auto v = entityOpt->IsValue();
-        if(!v)
+        if(attribute.entityOpt)
         {
-            entityOpt->UnboundError(db);
-            return;
+            auto v = attribute.entityOpt->IsValue();
+            if(!v)
+            {
+                attribute.entityOpt->UnboundError(db);
+                return;
+            }
+            ::Entity row[2] = { e, v->GetValue() };
+            auto table = db.GetBinaryRelation(attribute.predicate->nameId);
+
+            table->Add(row);
         }
-        ::Entity row[2] = { e, v->GetValue() };
-        auto table = db.GetBinaryRelation(predicate->nameId);
-
-        table->Add(row);
     }
-
-    if(listOpt) listOpt->Assert(db, e);
 }
 
 AST::EntityList::EntityList(Entity *e)
@@ -288,9 +289,11 @@ void AST::Predicate::Visit(Visitor&v) const
 
 void AST::AttributeList::Visit(Visitor &v) const
 {
-    if(listOpt) listOpt->Visit(v);
-    predicate->Visit(v);
-    if(entityOpt) entityOpt->Visit(v);
+    for(auto & a : attributes)
+    {
+        a.predicate->Visit(v);
+        if(a.entityOpt) a.entityOpt->Visit(v);
+    }
 }
 
 void AST::Visitor::OnPredicate(int name)
@@ -534,4 +537,9 @@ void AST::Value::Visit(Visitor &v) const
 const ::Entity & AST::Value::GetValue() const
 {
     return value;
+}
+
+void AST::AttributeList::Add(BinaryPredicate * p, Entity *e)
+{
+    attributes.push_back(Attribute {std::unique_ptr<BinaryPredicate>(p), std::unique_ptr<Entity>(e)});
 }

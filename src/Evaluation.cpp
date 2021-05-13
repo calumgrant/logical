@@ -510,7 +510,7 @@ void RangeU::Evaluate(Entity * row)
 void RangeU::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "For _" << slot1 << " " << cmp1 << " _" << slot2 << " to _" << slot2 << " " << cmp2 << " _" << slot3;
+    os << "For _" << slot1 << " " << cmp1 << " _" << slot2 << " " << cmp2 << " _" << slot3;
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -964,6 +964,7 @@ NotInB::NotInB(int slot, const std::shared_ptr<Relation> & relation, const std::
 
 void NotInB::Evaluate(Entity * row)
 {
+    ++callCount;
     class Visitor : public Relation::Visitor
     {
     public:

@@ -59,40 +59,58 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compila
     return std::make_shared<NoneEvaluation>();
 }
 
-std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilation &c, int slot, bool alreadyBound, AST::Clause * next)
+std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilation &c, int slot, bool lhsBound, AST::Clause * next)
 {
-    bool bound = false;
-    int slot2 = entityOpt ? entityOpt->BindVariables(db, c, bound) : c.AddUnnamedVariable();
-    
-    auto eval = listOpt ? listOpt->Compile(db, c, slot, true, next) : next->Compile(db, c);
-    
-    auto relation = db.GetBinaryRelation(predicate->nameId);
+    for(auto &a : attributes)
+    {
+        if(a.entityOpt)
+        {
+            a.slot = a.entityOpt->BindVariables(db, c, a.bound);
+        }
+        else
+        {
+            a.slot = c.AddUnnamedVariable();
+            a.bound = false;
+        }
+    }
+
+    auto eval = next->Compile(db, c);
+
+    for(int i=attributes.size()-1; i>=0; --i)
+    {
+        auto &a = attributes[i];
+        auto relation = db.GetBinaryRelation(a.predicate->nameId);
         
-    if(entityOpt)
-    {
-        eval = entityOpt->Compile(db, c, eval);
-    }
+        // The first lhs is potentially unbound
+        // All of the others are bound
+        auto bound = lhsBound || i!=0;
+            
+        if(a.entityOpt)
+        {
+            eval = a.entityOpt->Compile(db, c, eval);
+        }
 
-    if(alreadyBound && bound)
-    {
-        eval = std::make_shared<EvaluateBB>(relation, slot, slot2, eval);
-    }
-    else if(alreadyBound && !bound)
-    {
-        eval = std::make_shared<EvaluateBF>(relation, slot, slot2, eval);
-    }
-    else if(!alreadyBound && bound)
-    {
-        eval = std::make_shared<EvaluateFB>(relation, slot, slot2, eval);
-    }
-    else
-    {
-        eval = std::make_shared<EvaluateFF>(relation, slot, slot2, eval);
-    }
+        if(bound && a.bound)
+        {
+            eval = std::make_shared<EvaluateBB>(relation, slot, a.slot, eval);
+        }
+        else if(bound && !a.bound)
+        {
+            eval = std::make_shared<EvaluateBF>(relation, slot, a.slot, eval);
+        }
+        else if(!bound && a.bound)
+        {
+            eval = std::make_shared<EvaluateFB>(relation, slot, a.slot, eval);
+        }
+        else
+        {
+            eval = std::make_shared<EvaluateFF>(relation, slot, a.slot, eval);
+        }
 
-    if(entityOpt)
-    {
-        eval = entityOpt->Compile(db, c, eval);
+        if(a.entityOpt)
+        {
+            eval = a.entityOpt->Compile(db, c, eval);
+        }
     }
 
     return eval;
@@ -327,21 +345,22 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
     
     if(attributes)
     {
-        for(auto i = &attributes; *i; i = &(*i)->listOpt)
+        for(auto &a : attributes->attributes)
         {
             bool bound;
-            int slot2 = (*i)->entityOpt->BindVariables(db, c, bound);
+            // !! This looks like a bug if entityOpt is nullptr
+            int slot2 = a.entityOpt->BindVariables(db, c, bound);
             if(bound)
             {
-                std::shared_ptr<Evaluation> e = std::make_shared<WriterBB>(db.GetBinaryRelation((*i)->predicate->nameId), slot, slot2);
-                e = (*i)->entityOpt->Compile(db, c, e);
+                std::shared_ptr<Evaluation> e = std::make_shared<WriterBB>(db.GetBinaryRelation(a.predicate->nameId), slot, slot2);
+                e = a.entityOpt->Compile(db, c, e);
                 if(result)
                     result = std::make_shared<OrEvaluation>(result, e);
                 else
                     result = e;
             }
             else
-                (*i)->entityOpt->UnboundError(db);
+                a.entityOpt->UnboundError(db);
         }
     }
 
@@ -419,9 +438,12 @@ void AST::EntityClause::AddRule(Database &db, const std::shared_ptr<Evaluation> 
             db.GetUnaryRelation(i->nameId)->AddRule(rule);
     }
     
-    for(auto p = &attributes; *p; p=&(*p)->listOpt)
+    if(attributes)
     {
-        db.GetBinaryRelation((*p)->predicate->nameId)->AddRule(rule);
+        for(auto & a : attributes->attributes)
+        {
+            db.GetBinaryRelation(a.predicate->nameId)->AddRule(rule);
+        }
     }
 }
 

@@ -268,14 +268,22 @@ namespace AST
         std::vector< std::unique_ptr<UnaryPredicate> > list;
     };
 
+    struct Attribute
+    {
+        std::unique_ptr<BinaryPredicate> predicate;
+        std::unique_ptr<Entity> entityOpt;
+        int slot;
+        bool bound;
+    };
+
     class AttributeList : public Node
     {
     public:
-        AttributeList(BinaryPredicate * predicate, Entity * entityOpt, AttributeList* listOpt);
-        std::unique_ptr<AttributeList> listOpt;  // ?? Not sure if this should be nullable
-        std::unique_ptr<BinaryPredicate> predicate;
-        std::unique_ptr<Entity> entityOpt;
-
+        AttributeList(BinaryPredicate * predicate, Entity * entityOpt);
+        
+        void Add(BinaryPredicate * predicate, Entity * entityOpt);
+        
+        std::vector<Attribute> attributes;
         void Assert(Database &db, const ::Entity &e) const;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database & db, Compilation &c, int slot, bool alreadyBound, Clause *next);
