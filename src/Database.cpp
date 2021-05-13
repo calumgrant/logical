@@ -1,4 +1,5 @@
 #include "Database.hpp"
+#include "Evaluation.hpp"
 #include "tokens.tab.h"
 
 #include <iostream>
@@ -299,3 +300,7 @@ std::shared_ptr<Relation> Database::GetRelation(const CompoundName &cn)
     return relation;
 }
 
+std::size_t Database::GlobalCallCount()
+{
+    return Evaluation::GlobalCallCount();
+}

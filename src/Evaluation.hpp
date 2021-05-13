@@ -30,8 +30,20 @@ public:
     static void Indent(std::ostream &os, int indent=0);
     void OutputCallCount(std::ostream&) const;
     
+    static std::size_t GlobalCallCount();
+    static void SetGlobalCallCountLimit(std::size_t limit);
+protected:
+    // Returns false if the global call count has been exceeded
+    bool IncrementCallCount()
+    {
+        ++callCount;
+        return ++globalCallCount >= globalCallCountLimit;
+    }
+private:
     // The number of times Evaluate() has been called.
     std::size_t callCount;
+    static std::size_t globalCallCount;
+    static std::size_t globalCallCountLimit;
 };
 
 /*
@@ -365,7 +377,6 @@ public:
     CountCollector(int slot);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
-    std::size_t Count() const;
 public:
     const int slot;
 };

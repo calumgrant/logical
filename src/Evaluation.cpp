@@ -16,7 +16,7 @@ NoneEvaluation::NoneEvaluation()
 
 void NoneEvaluation::Evaluate(Entity * row)
 {
-    ++callCount;
+    IncrementCallCount();
 }
 
 WriterB::WriterB(const std::shared_ptr<Relation> & relation, int slot) : relation(relation), slot(slot)
@@ -25,7 +25,8 @@ WriterB::WriterB(const std::shared_ptr<Relation> & relation, int slot) : relatio
 
 void WriterB::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
+
     relation->Add(row+slot);
 }
 
@@ -37,7 +38,7 @@ OrEvaluation::OrEvaluation(const std::shared_ptr<Evaluation> & lhs, const std::s
 
 void OrEvaluation::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     left->Evaluate(row);
     right->Evaluate(row);
 }
@@ -49,7 +50,7 @@ RuleEvaluation::RuleEvaluation(int locals, const std::shared_ptr<Evaluation> & e
 
 void RuleEvaluation::Evaluate(Entity*)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     std::vector<Entity> row(locals);
     evaluation->Evaluate(&row[0]);
 }
@@ -90,7 +91,7 @@ public:
 
 void EvaluateF::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     UnaryVisitor v(row, slot, *next);
     
     relation.lock()->Query(row+slot, 0, v);
@@ -98,7 +99,7 @@ void EvaluateF::Evaluate(Entity * row)
 
 void EvaluateB::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     UnaryVisitor v(row, slot, *next);
 
     // Bug: We need to get a different relation here.
@@ -169,7 +170,7 @@ NotTerminator::NotTerminator(int slot) : slot(slot)
 
 void NotTerminator::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     row[slot].type = EntityType::None;
 }
 
@@ -193,7 +194,7 @@ EqualsBB::EqualsBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & nex
 
 void EqualsBB::Evaluate(Entity *row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     if(row[slot1] == row[slot2])
         next->Evaluate(row);
 }
@@ -214,7 +215,7 @@ EqualsBF::EqualsBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & nex
 
 void EqualsBF::Evaluate(Entity *row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     row[slot2] = row[slot1];
     next->Evaluate(row);
 }
@@ -234,7 +235,7 @@ EvaluateBB::EvaluateBB(const std::shared_ptr<Relation> & relation, int slot1, in
 
 void EvaluateBB::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     class Visitor : public Relation::Visitor
     {
     public:
@@ -271,7 +272,7 @@ EvaluateBF::EvaluateBF(const std::shared_ptr<Relation> & relation, int slot1, in
 
 void EvaluateBF::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     class Visitor : public Relation::Visitor
     {
     public:
@@ -312,7 +313,7 @@ EvaluateFB::EvaluateFB(const std::shared_ptr<Relation> & relation, int slot1, in
 
 void EvaluateFB::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     class Visitor : public Relation::Visitor
     {
     public:
@@ -353,7 +354,7 @@ EvaluateFF::EvaluateFF(const std::shared_ptr<Relation> & relation, int slot1, in
 
 void EvaluateFF::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     class Visitor : public Relation::Visitor
     {
     public:
@@ -399,7 +400,7 @@ WriterBB::WriterBB(const std::shared_ptr<Relation> & relation, int slot1, int sl
 
 void WriterBB::Evaluate(Entity *row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     Entity data[2] = { row[slot1], row[slot2] };
     relation.lock()->Add(data);
 }
@@ -461,7 +462,7 @@ bool Compare(const Entity &e1, const Entity &e2, ComparatorType cmp)
 
 void RangeB::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     if(Compare(row[slot1], row[slot2], cmp1) && Compare(row[slot2], row[slot3], cmp2))
         next->Evaluate(row);
 }
@@ -482,7 +483,7 @@ RangeU::RangeU(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, i
 
 void RangeU::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     int lowerBound, upperBound;
     
     if(row[slot1].type == EntityType::Integer)
@@ -523,7 +524,7 @@ CompareBB::CompareBB(int slot1, ComparatorType cmp, int slot2, const std::shared
 
 void CompareBB::Evaluate(Entity *row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     // Note: We don't compare strings for inequality.
     // FIXME
     if(Compare(row[slot1], row[slot2], cmp))
@@ -546,7 +547,7 @@ NegateBF::NegateBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & nex
 
 void NegateBF::Evaluate(Entity *row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     switch(row[slot1].type)
     {
     case EntityType::Integer:
@@ -604,7 +605,7 @@ ModBBF::ModBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation
 
 void AddBBF::Evaluate(Entity *row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     auto t1 = row[slot1].type;
     auto t2 = row[slot2].type;
     
@@ -688,8 +689,8 @@ void AddBBF::Explain(Database &db, std::ostream &os, int indent) const
 template<typename OpInt, typename OpFloat>
 void BinaryArithmeticEvaluation::Evaluate(Entity * row)
 {
-    ++callCount;
-    
+    if(IncrementCallCount()) return;
+
     auto t1 = row[slot1].type;
     auto t2 = row[slot2].type;
     
@@ -755,7 +756,7 @@ void Evaluation::OutputCallCount(std::ostream & os) const
 
 void DivBBF::Evaluate(Entity *row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     auto t1 = row[slot1].type;
     auto t2 = row[slot2].type;
     
@@ -797,7 +798,7 @@ void DivBBF::Explain(Database &db, std::ostream &os, int indent) const
 
 void ModBBF::Evaluate(Entity *row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     auto t1 = row[slot1].type;
     auto t2 = row[slot1].type;
     
@@ -832,8 +833,8 @@ DeduplicateB::DeduplicateB(int slot1, const std::shared_ptr<Evaluation> & next) 
 
 void DeduplicateB::Evaluate(Entity * row)
 {
-    ++callCount;
-    
+    if(IncrementCallCount()) return;
+
     auto i = values.insert(row[slot1]);
     if(i.second)
     {
@@ -857,8 +858,8 @@ DeduplicateBB::DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluat
 
 void DeduplicateBB::Evaluate(Entity * row)
 {
-    ++callCount;
-    
+    if(IncrementCallCount()) return;
+
     auto i = values.insert(std::make_pair(row[slot1], row[slot2]));
     if(i.second)
     {
@@ -882,7 +883,7 @@ CountCollector::CountCollector(int slot) : slot(slot)
 
 void CountCollector::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     row[slot].type = EntityType::Integer;
     ++row[slot].i;
 }
@@ -895,15 +896,13 @@ void CountCollector::Explain(Database &db, std::ostream &os, int indent) const
     os << std::endl;
 }
 
-std::size_t CountCollector::Count() const { return callCount; }
-
 SumCollector::SumCollector(int slot, int sumSlot) : slot(slot), sumSlot(sumSlot)
 {
 }
 
 void SumCollector::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     row[sumSlot] += row[slot];
 }
 
@@ -922,7 +921,7 @@ Load::Load(int slot, const Entity &v, const std::shared_ptr<Evaluation> & next) 
 
 void Load::Evaluate(Entity * locals)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     locals[slot] = value;
     next->Evaluate(locals);
 }
@@ -943,7 +942,7 @@ NotNone::NotNone(int slot, const std::shared_ptr<Evaluation> & next) : slot(slot
 
 void NotNone::Evaluate(Entity *row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     if(row[slot].type != EntityType::None)
         next->Evaluate(row);
 }
@@ -964,7 +963,7 @@ NotInB::NotInB(int slot, const std::shared_ptr<Relation> & relation, const std::
 
 void NotInB::Evaluate(Entity * row)
 {
-    ++callCount;
+    if(IncrementCallCount()) return;
     class Visitor : public Relation::Visitor
     {
     public:
@@ -983,4 +982,12 @@ void NotInB::Explain(Database &db, std::ostream & os, int indent) const
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
+}
+
+std::size_t Evaluation::globalCallCount = 0;
+std::size_t Evaluation::globalCallCountLimit = -1;
+
+std::size_t Evaluation::GlobalCallCount()
+{
+    return globalCallCount;
 }

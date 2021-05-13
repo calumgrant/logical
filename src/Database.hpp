@@ -90,6 +90,8 @@ public:
 
     void ReportUserError();
     bool UserErrorReported() const;
+    
+    static std::size_t GlobalCallCount();
 
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;

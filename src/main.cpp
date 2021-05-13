@@ -31,6 +31,9 @@ int main(int argc, char**argv)
         }
     }
     
+    if(verbose)
+        std::cout << "Total evaluation steps = " << Database::GlobalCallCount() << std::endl;
+    
     if(db.UserErrorReported())
         return 1;
 
