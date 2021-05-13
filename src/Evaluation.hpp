@@ -209,6 +209,18 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
 };
 
+class NotInB : public Evaluation
+{
+public:
+    NotInB(int slot, const std::shared_ptr<Relation> & relation, const std::shared_ptr<Evaluation> &next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    const int slot;
+    const std::weak_ptr<Relation> relation;
+    const std::shared_ptr<Evaluation> next;
+};
+
 class WriterBB : public Evaluation
 {
 public:

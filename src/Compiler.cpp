@@ -110,13 +110,15 @@ std::shared_ptr<Evaluation> AST::And::Compile(Database &db, Compilation &c)
 
 std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation &compilation)
 {
-    /*
-        Two cases:
-        1) It's bound, either as a variable, or by a value
-        2) It's unbound, by a named or an unnamed variable
-    */
     bool bound = false;
     int slot = entity->BindVariables(db, compilation, bound);
+    
+    if(!bound && is == IsType::isnot)
+    {
+        // Handle the case `<unbound> is not foo`
+        entity->UnboundError(db);
+        return std::make_shared<NoneEvaluation>();
+    }
     
     assert(next);
     std::shared_ptr<Evaluation> eval;
@@ -133,16 +135,42 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
     {
         eval = next->Compile(db, compilation);
     }
+    
+    /*
+     Convert X is not a foo into
+        NotInB.
+     
+     Compile `X is not a foo bar` into an `IsNot`
+        `X is foo bar` into `not (X is foo and X is bar)` into `X is not foo or X is not bar`
+        
+     */
 
     if(predicates)
     {
-        for(int i = predicates->list.size()-1; i>=0; --i)
+        if(is == IsType::is)
         {
-            auto relation = db.GetUnaryRelation(predicates->list[i]->nameId);
-            if(i>0 || bound)
-                eval = std::make_shared<EvaluateB>(relation, slot, eval);
+            for(int i = predicates->list.size()-1; i>=0; --i)
+            {
+                auto relation = db.GetUnaryRelation(predicates->list[i]->nameId);
+                if(i>0 || bound)
+                    eval = std::make_shared<EvaluateB>(relation, slot, eval);
+                else
+                    eval = std::make_shared<EvaluateF>(relation, slot, eval);
+            }
+        }
+        else
+        {
+            // isnot
+            if(predicates->list.size() == 1)
+            {
+                auto relation = db.GetUnaryRelation(predicates->list[0]->nameId);
+                eval = std::make_shared<NotInB>(slot, relation, eval);
+            }
             else
-                eval = std::make_shared<EvaluateF>(relation, slot, eval);            
+            {
+                // TODO: Use ExistsF.
+                std::cout << "Unhandled: is not a foo bar\n";
+            }
         }
     }
 

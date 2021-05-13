@@ -510,7 +510,7 @@ void RangeU::Evaluate(Entity * row)
 void RangeU::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Scan _" << slot1 << " " << cmp1 << " _" << slot2 << " and _" << slot2 << " " << cmp2 << " _" << slot3;
+    os << "For _" << slot1 << " " << cmp1 << " _" << slot2 << " to _" << slot2 << " " << cmp2 << " _" << slot3;
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -952,6 +952,33 @@ void NotNone::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
     os << "Check _" << slot << " is not None";
+    OutputCallCount(os);
+    os << " ->\n";
+    next->Explain(db, os, indent+4);
+}
+
+NotInB::NotInB(int slot, const std::shared_ptr<Relation> & relation, const std::shared_ptr<Evaluation> & next) :
+    slot(slot), relation(relation), next(next)
+{
+}
+
+void NotInB::Evaluate(Entity * row)
+{
+    class Visitor : public Relation::Visitor
+    {
+    public:
+        bool found = false;
+        void OnRow(const Entity *) override { found = true; }
+    } visitor;
+    relation.lock()->Query(row+slot, 1, visitor);
+    
+    if(!visitor.found) next->Evaluate(row);
+}
+
+void NotInB::Explain(Database &db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Lookup _" << slot << " is not in " << db.GetString(relation.lock()->Name());
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
