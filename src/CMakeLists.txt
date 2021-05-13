@@ -63,9 +63,12 @@ add_test(NAME Rule4 COMMAND logical ../tests/rule4.dl)
 add_test(NAME Rule5 COMMAND logical ../tests/rule5.dl)
 add_test(NAME Rule6 COMMAND logical ../tests/rule6.dl)
 add_test(NAME Rule7 COMMAND logical ../tests/rule7.dl)
+add_test(NAME Rule8 COMMAND logical ../tests/rule8.dl)
 
 add_test(NAME Not1 COMMAND logical ../tests/not1.dl)
 add_test(NAME Not2 COMMAND logical ../tests/not2.dl)
+
+add_test(NAME IsNot1 COMMAND logical ../tests/isnot1.dl)
 
 add_test(NAME Or1 COMMAND logical ../tests/or1.dl)
 add_test(NAME Or2 COMMAND logical ../tests/or2.dl)

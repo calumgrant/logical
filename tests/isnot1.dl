@@ -1,0 +1,5 @@
+foo 1.
+
+bar X if 1<=X<=5 and X is not foo.
+
+error "is not" if bar 1.

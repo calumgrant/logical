@@ -52,8 +52,8 @@ print "....".
 @fred has first_name "Fred", surname "Brooks", age 99.
 
 // Ternary or more relations
-person @fred has a child "Bill" with position 0, age 10.
-@fred has a child "Mary" with position 1, age 8.
+person @fred has a child "Bill", position 0, age 10.
+@fred has a child "Mary", position 1, age 8.
 
 // Same as:
 child_position_age(@fred, "Mary", 1, 8).

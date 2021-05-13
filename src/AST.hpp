@@ -10,6 +10,11 @@ class Evaluation;
 
 enum class ComparatorType { lt, lteq, gt, gteq, eq, neq };
 
+enum class IsType { is, isnot };
+
+enum class HasType { has, hasnot };
+
+
 std::ostream & operator<<(std::ostream &os, ComparatorType t);
 
 namespace AST
@@ -285,7 +290,7 @@ namespace AST
     class EntityClause : public Clause
     {
     public:
-        EntityClause(Entity* entity, UnaryPredicateList* predicates, UnaryPredicateList *isPredicates = nullptr, AttributeList * attributes = nullptr);
+        EntityClause(Entity* entity, UnaryPredicateList* predicates, UnaryPredicateList *isPredicates = nullptr, AttributeList * attributes = nullptr, IsType is = IsType::is, HasType has=HasType::has);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
@@ -294,6 +299,8 @@ namespace AST
     private:
         std::shared_ptr<Evaluation> WritePredicates(Database &db, Compilation &c, int slot);
 
+        const IsType is;
+        const HasType has;
         std::unique_ptr<Entity> entity;
         std::unique_ptr<UnaryPredicateList> predicates;
         std::unique_ptr<UnaryPredicateList> isPredicates;
@@ -303,7 +310,7 @@ namespace AST
     class EntityIs : public EntityClause
     {
     public:
-        EntityIs(Entity* entity, UnaryPredicateList* list);
+        EntityIs(Entity* entity, UnaryPredicateList* list, IsType is);
     };
 
     class EntityIsPredicate : public EntityClause
@@ -316,7 +323,7 @@ namespace AST
     class EntityHasAttributes : public EntityClause
     {
     public:
-        EntityHasAttributes(UnaryPredicateList * unarypredicatesOpt, Entity*entity, AttributeList*attributes);
+        EntityHasAttributes(UnaryPredicateList * unarypredicatesOpt, Entity*entity, AttributeList*attributes, HasType has);
     };
 
     class EntityList : public Node

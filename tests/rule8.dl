@@ -1,0 +1,4 @@
+f 2 and g 3 if 1=1.
+
+error "f" if not f 2.
+error "g" if not g 3.

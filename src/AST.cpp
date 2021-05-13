@@ -22,12 +22,12 @@ AST::Variable::Variable(int line, int column) : line(line), column(column)
 {
 }
 
-AST::EntityClause::EntityClause(Entity* entity, UnaryPredicateList* list, UnaryPredicateList * isList, AttributeList * attributes)
-    : entity(entity), predicates(list), isPredicates(isList), attributes(attributes)
+AST::EntityClause::EntityClause(Entity* entity, UnaryPredicateList* list, UnaryPredicateList * isList, AttributeList * attributes, IsType is, HasType has)
+    : entity(entity), is(is), has(has), predicates(list), isPredicates(isList), attributes(attributes)
 {
 }
 
-AST::EntityIs::EntityIs(Entity * entity, UnaryPredicateList * list) : EntityClause(entity, list)
+AST::EntityIs::EntityIs(Entity * entity, UnaryPredicateList * list, IsType is) : EntityClause(entity, list, nullptr, nullptr, is)
 {
 }
 
@@ -117,8 +117,8 @@ AST::AttributeList::AttributeList(BinaryPredicate * predicate, Entity * entityOp
 {
 }
 
-AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateList * unaryPredicatesOpt, Entity * entity, AttributeList * attributes) :
-    EntityClause(entity, unaryPredicatesOpt, nullptr, attributes)
+AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateList * unaryPredicatesOpt, Entity * entity, AttributeList * attributes, HasType has) :
+    EntityClause(entity, unaryPredicatesOpt, nullptr, attributes, IsType::is, has)
 {
 }
 

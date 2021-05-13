@@ -23,6 +23,8 @@
     AST::UnaryPredicate* unarypredicate;
     AST::BinaryPredicate* binarypredicate;
     ComparatorType comparator;
+    IsType is;
+    HasType has;
     AST::AttributeList* attributes;
     int ival;
     char *sval;
@@ -42,6 +44,8 @@
 %type<ival> tok_integer tok_identifier tok_atstring tok_string
 %type<fval> tok_float
 %type<rule> datalog_rule rule
+%type<is> is_a
+%type<has> has_a
 
 %{
 #include <Database.hpp>
@@ -63,7 +67,7 @@ typedef void * yyscan_t;
 %token tok_identifier tok_atstring tok_string tok_integer tok_float tok_underscore
 %token tok_if tok_and tok_has tok_or tok_not tok_a tok_an tok_no tok_is tok_dot tok_then tok_find tok_sum tok_in tok_all
 %token tok_open tok_close tok_comma tok_colondash tok_semicolon tok_equals tok_notequals tok_questiondash tok_lt tok_gt tok_lteq tok_gteq
-%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count tok_with
+%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count
 
 %%
 
@@ -182,27 +186,27 @@ query:
 querybaseclause:
     unarypredicatelist entity
     {
-        $$ = new AST::EntityIs($2, $1);
+        $$ = new AST::EntityIs($2, $1, IsType::is);
     }
 |   unarypredicatelist entity has_a binarypredicate entity
     {
-        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4, $5, nullptr));
+        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4, $5, nullptr), $3);
     }
 |   unarypredicatelist entity has_a binarypredicate entity attributes
     {
-        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4, $5, $6));
+        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4, $5, $6), $3);
     }
 |   unarypredicatelist entity attributes
     { 
-        $$ = new AST::EntityHasAttributes($1, $2, $3);
+        $$ = new AST::EntityHasAttributes($1, $2, $3, HasType::has);
     }
 |   entity has_a binarypredicate entity
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, nullptr));
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, nullptr), $2);
     }
 |   entity has_a binarypredicate entity attributes
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, $5));
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, $5), $2);
     }
 ;
 
@@ -236,7 +240,7 @@ rule:
 ;
 
 baseclause:
-    entity is_a unarypredicatelist { $$ = new AST::EntityIs($1, $3); }
+    entity is_a unarypredicatelist { $$ = new AST::EntityIs($1, $3, $2); }
 |   entity is_a value { $$ = new AST::NotImplementedClause($1, $3); }
 |   unarypredicatelist entity is_a unarypredicatelist { $$ = new AST::EntityIsPredicate($2, $1, $4); }
 |   entity_expression comparator entity_expression 
@@ -249,48 +253,36 @@ baseclause:
         // This would allow 1>=X>=2 which we don't really want.
         $$ = new AST::Range($1, $2, $3, $4, $5);
     }
-|   unarypredicatelist entity { $$ = new AST::EntityIs($2, $1); }
-|   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr, nullptr)); }
+|   unarypredicatelist entity { $$ = new AST::EntityIs($2, $1, IsType::is); }
+|   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr, nullptr), $2); }
 |   entity tok_comma binarypredicate
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr, nullptr));
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr, nullptr), HasType::has);
     }
 |   unarypredicatelist entity has_a binarypredicate entity_expression
     { 
         $$ = new AST::EntityHasAttributes($1, $2,
-            new AST::AttributeList($4, $5, nullptr));
-    }
-|   unarypredicatelist entity has_a binarypredicate entity_expression tok_with withlist
-    {
-        $$ = new AST::NotImplementedClause();
+            new AST::AttributeList($4, $5, nullptr), $3);
     }
 |   unarypredicatelist entity has_a binarypredicate entity_expression attributes
     { 
-        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4, $5, $6));
+        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4, $5, $6), $3);
     }
 |   unarypredicatelist entity attributes 
     { 
-        $$ = new AST::EntityHasAttributes($1, $2, $3);
+        $$ = new AST::EntityHasAttributes($1, $2, $3, HasType::has);
     }
 |   entity has_a binarypredicate entity_expression
     { 
-        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, nullptr));
-    }
-|   entity has_a binarypredicate entity_expression tok_with withlist
-    { 
-        $$ = new AST::NotImplementedClause();
-    }
-|   entity is_a unarypredicate tok_with withlist
-    { 
-        $$ = new AST::NotImplementedClause();
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, nullptr), $2);
     }
 |   entity has_a binarypredicate entity_expression attributes
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, $5));
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4, $5), $2);
     }
 |   entity attributes
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, $2);
+        $$ = new AST::EntityHasAttributes(nullptr, $1, $2, HasType::has);
     }
 |   tok_open clause tok_close { $$=$2; }
 ;
@@ -300,26 +292,21 @@ unarypredicatelist:
 |   unarypredicatelist unarypredicate { $$=$1; $$->Append($2); }
 ;
 
-withlist:
-    unarypredicate entity
-|   withlist tok_comma unarypredicate entity
-;
-
 has_a:
-    tok_has
-|   tok_has tok_a
-|   tok_has tok_an
-|   tok_has tok_no
+    tok_has { $$ = HasType::has; }
+|   tok_has tok_a { $$ = HasType::has; }
+|   tok_has tok_an { $$ = HasType::has; }
+|   tok_has tok_no { $$ = HasType::hasnot; }
 ;
 
 is_a:
-    tok_is
-|   tok_is tok_a
-|   tok_is tok_an
-|   tok_in
-|   tok_is tok_not
-|   tok_is tok_not tok_a
-|   tok_is tok_not tok_an
+    tok_is { $$ = IsType::is; }
+|   tok_is tok_a { $$ = IsType::is; }
+|   tok_is tok_an { $$ = IsType::is; }
+|   tok_in { $$ = IsType::is; }
+|   tok_is tok_not { $$ = IsType::isnot; }
+|   tok_is tok_not tok_a { $$ = IsType::isnot; }
+|   tok_is tok_not tok_an { $$ = IsType::isnot; }
 ;
 
 allclause:

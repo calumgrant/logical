@@ -18,7 +18,7 @@ parameter @m1-0, position 0, method @m1, name "x", type @c1.
 parameter @m1-1 has position 1, method @m1, name "y", type @string.
 
 // a 5-ary predicate.
-@m2-2 is a parameter with position 2, method @m1, name "z", type @float.
+parameter @m2-2 has position 2, method @m1, name "z", type @float.
 
 // Source code
 

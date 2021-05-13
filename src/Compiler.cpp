@@ -349,6 +349,12 @@ std::shared_ptr<Evaluation> AST::And::CompileLhs(Database &db, Compilation &c)
     return std::make_shared<OrEvaluation>(lhs->CompileLhs(db, c), rhs->CompileLhs(db, c));
 }
 
+void AST::And::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
+{
+    lhs->AddRule(db, rule);
+    rhs->AddRule(db, rule);
+}
+
 std::shared_ptr<Evaluation> AST::Or::CompileLhs(Database &db, Compilation &c)
 {
     return std::make_shared<NoneEvaluation>();
@@ -367,11 +373,6 @@ void AST::DatalogPredicate::AddRule(Database &db, const std::shared_ptr<Evaluati
 
 void AST::NotImplementedClause::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
 {
-}
-
-void AST::And::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
-{
-    // ??
 }
 
 void AST::Or::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)

@@ -1,30 +1,8 @@
 # Work plan
 
-## Thinking about n-ary predicates and projections
-
-Conclusions:
-1. We use the `has ,` syntax to create n-ary predicates.
-2. They automatically project to smaller predicates as needed.
-
-Implementation:
-- Database::GetRelation(const std::vector<int> & parts)
-- If it's a new relation
-  - Look for existing relations to add rules to. Find all relations where we are a superset, and create a rule from ourselves to the subset. Find all relations where we are a subset, and create a rule from the superset to ourselves.
-  - Ensure we don't add ourselves twice.
-
-- Data structure:
-  unordered_multimap<int, Relation> to look up relation parts.
-- Use Relation::ProjectsTo(const Relation&) to detect the interrelationship.
-  std::vector<int> to contain the "set" of name parts. (Using the string pool).
-
 ## Short term
-- Don't say "iteration", just put call count in "Evaluate..." message.
-- Refactor aggregates
-  - Have Evaluations for constants?
-  - Suprious assignment in rule5.dl
 - Implement n-ary predicates
   - Refactor `has` grammar into a vector
-  - Implement `CompoundName` which is a vector of int. - Tests
   - `Database::getCompoundRelation(CompoundName)` to get the relation and implement the rules
   - Implement n-ary tables
   - Query n-ary relations.
@@ -35,14 +13,13 @@ Implementation:
   - `Database::WriteBinary()`
 - Implement Datalog syntax
   - unary and binary relations
-  - all and cound syntax
+  - all and count syntax
   - tests for these
   - n-ary relations
     - n-ary tables
     - efficient join orders.
   - how to name arbitrary n-ary tuples from Datalog that are compatible with logical?
-- Think about `with` syntax
-  - Solution 1: construct an nary predicate using `:`. You must specify all of the fields
+- Inefficient to run `if 1<=X<=100 then X is c and X is b.` as it's evaluated twice.
 - `f X and g X if ...`
 - `exit`
 - Think about predicate-names containing `-`.
@@ -57,7 +34,7 @@ Queries that work:
   - `find succeeded _ if 1=1.`
   - Deduplicate results
   - Sort results
-- Bug with computed bounds 1<X<Y+1 for example.
+- Missing input files are not displayed as errors.
 - `is not` syntax.
   - `X is not a person`.
   - `X has no job`
@@ -86,17 +63,8 @@ Code refactoring:
  - Have a flag called 'Evaluating', as well as a parity.
  - Probably want some kind of static analysis to be honest.
  - When can we use the delta??
-
-When recursion is detected, the predicate is tagged with "recursive evaluation". Then, the rules of the predicate are reevaluated until there are no more results.
-
-
-
 - Can we avoid unnecessary branches in the recursive step??
 - Can we just use the deltas??
-
-- 
-
-
 
 ## Semi-naive evaluation
 
