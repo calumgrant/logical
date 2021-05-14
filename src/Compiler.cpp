@@ -88,11 +88,6 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
         // The first lhs is potentially unbound
         // All of the others are bound
         auto bound = lhsBound || i!=0;
-            
-        if(a.entityOpt)
-        {
-            eval = a.entityOpt->Compile(db, c, eval);
-        }
 
         if(bound && a.bound)
         {
