@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Database.hpp"
+#include <chrono>
 
 int main(int argc, char**argv)
 {
@@ -11,6 +12,8 @@ int main(int argc, char**argv)
 
     int verbose=0;
     Database db;
+    
+    auto startTime = std::chrono::system_clock::now();
 
     for(int i=1; i<argc; ++i)
     {
@@ -31,8 +34,15 @@ int main(int argc, char**argv)
         }
     }
     
+    auto endTime = std::chrono::system_clock::now();
+    
     if(verbose)
-        std::cout << "Total evaluation steps = " << Database::GlobalCallCount() << std::endl;
+    {
+        std::cout << "Evaluation steps = " << Database::GlobalCallCount() << std::endl;
+        std::cout << "Evaluation time  = " << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() << " us\n";
+    }
+    
+    
     
     if(db.UserErrorReported())
         return 1;

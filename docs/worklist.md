@@ -1,18 +1,19 @@
 # Work plan
 
 ## Short term
-- Spurious load in `range3.dl`
 - Exact evaluation time.  (Up until results display)
 - Compound names aren't displayed properly in Explain.
 - Bug in recursion3: Turns out that "equal-range" breaks when you add more data to the table.
   - Need to make Table::Query and Table::Add reentrant.
 - Number of evaluations aren't being displayed. Display evaluation after running surely??
+- Create a `VariableInfo` structure
+  - slot
+  - bound
+  - last use?
 - Implement n-ary predicates
   - Assert facts
+  - Assert rules
   - Query
-  - Assign right hand side.
-  - `Database::getCompoundRelation(CompoundName)` to get the relation and implement the rules
-  - Implement n-ary tables
   - Query n-ary relations.
     - Efficient indexing?
     - Arbitrary joins
