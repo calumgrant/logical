@@ -1,4 +1,5 @@
 #include "Relation.hpp"
+#include "Database.hpp"
 
 #include <iostream>
 
@@ -11,6 +12,16 @@ Table::Table(Database &db, int name, int arity) :
 
 void Table::Add(const Entity *row)
 {
+    /*
+    std::cout << "Writing (";
+    for(int i=0; i<arity; ++i)
+    {
+        if(i>0) std::cout << ", ";
+        database.PrintQuoted(row[i], std::cout);
+    }
+    std::cout << ") into " << database.GetString(Name()) << std::endl;
+     */
+    
     for(int i=0; i<arity; ++i)
         assert(row[i].type != EntityType::None);
     
@@ -76,6 +87,7 @@ void Table::Query(Entity * row, int mask, Visitor&v)
     
     if(mask==0)
     {
+        // Unclear if we need reentrancy guard here.
         auto r = reentrancy.Enter();
         for(int s=0; s<data.size(); s+=arity)
             v.OnRow(&data[s]);

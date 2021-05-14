@@ -132,7 +132,7 @@ public:
     Increase Enter() { return Increase(depth); }
     bool IsZero() const { return depth==0; }
 private:
-    int depth;
+    int depth = 0;
 };
 
 

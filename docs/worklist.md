@@ -2,8 +2,7 @@
 
 ## Short term
 - Compound names aren't displayed properly in Explain.
-- Bug in recursion3: Turns out that "equal-range" breaks when you add more data to the table.
-  - Need to make Table::Query and Table::Add reentrant.
+- Fix bug in Table - can't reproduce it in Debug mode!!
 - Create a `VariableInfo` structure
   - slot
   - bound
