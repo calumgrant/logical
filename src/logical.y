@@ -188,27 +188,17 @@ querybaseclause:
     {
         $$ = new AST::EntityIs($2, $1, IsType::is);
     }
-|   unarypredicatelist entity has_a binarypredicate entity
+|   unarypredicatelist entity has_a attributes
     {
-        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4, $5), $3);
+        $$ = new AST::EntityHasAttributes($1, $2, $4, $3);
     }
-|   unarypredicatelist entity has_a binarypredicate entity attributes
-    {
-        $6->Add($4,$5);
-        $$ = new AST::EntityHasAttributes($1, $2, $6, $3);
-    }
-|   unarypredicatelist entity attributes
+|   unarypredicatelist entity tok_comma attributes
     { 
-        $$ = new AST::EntityHasAttributes($1, $2, $3, HasType::has);
+        $$ = new AST::EntityHasAttributes($1, $2, $4, HasType::has);
     }
-|   entity has_a binarypredicate entity
+|   entity has_a attributes
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4), $2);
-    }
-|   entity has_a binarypredicate entity attributes
-    {
-        $5->Add($3, $4);
-        $$ = new AST::EntityHasAttributes(nullptr, $1, $5, $2);
+        $$ = new AST::EntityHasAttributes(nullptr, $1, $3, $2);
     }
 ;
 
@@ -261,32 +251,21 @@ baseclause:
     {
         $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr), HasType::has);
     }
-|   unarypredicatelist entity has_a binarypredicate entity_expression
+|   unarypredicatelist entity has_a attributes
     { 
-        $$ = new AST::EntityHasAttributes($1, $2,
-            new AST::AttributeList($4, $5), $3);
+        $$ = new AST::EntityHasAttributes($1, $2, $4, $3);
     }
-|   unarypredicatelist entity has_a binarypredicate entity_expression attributes
-    {
-        $6->Add($4, $5);
-        $$ = new AST::EntityHasAttributes($1, $2, $6, $3);
-    }
-|   unarypredicatelist entity attributes 
+|   unarypredicatelist entity tok_comma attributes 
     { 
-        $$ = new AST::EntityHasAttributes($1, $2, $3, HasType::has);
+        $$ = new AST::EntityHasAttributes($1, $2, $4, HasType::has);
     }
-|   entity has_a binarypredicate entity_expression
-    { 
-        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, $4), $2);
-    }
-|   entity has_a binarypredicate entity_expression attributes
+|   entity has_a attributes
     {
-        $5->Add($3, $4);
-        $$ = new AST::EntityHasAttributes(nullptr, $1, $5, $2);
+        $$ = new AST::EntityHasAttributes(nullptr, $1, $3, $2);
     }
-|   entity attributes
+|   entity tok_comma attributes
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, $2, HasType::has);
+        $$ = new AST::EntityHasAttributes(nullptr, $1, $3, HasType::has);
     }
 |   tok_open clause tok_close { $$=$2; }
 ;
@@ -345,7 +324,7 @@ clause: orclause;
 // Example: person x has name y, surname z
 
 attributes:
-    tok_comma binarypredicate entity_expression { $$ = new AST::AttributeList($2, $3); }
+    binarypredicate entity_expression { $$ = new AST::AttributeList($1, $2); }
 |   attributes tok_comma binarypredicate entity_expression
     {
         $1->Add($3, $4);

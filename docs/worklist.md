@@ -1,8 +1,34 @@
 # Work plan
 
+Could it be confusing to ask
+
+```
+@1 has name "a".
+@1 has age 30.
+
+large mouse @1 with name "a", age 30, full name "boo".
+
+if @1 with name "a", age 30 then print "success".
+
+function @f1 has argument 0, name "x", type @int.
+
+if
+  builtin function f has narrow integer argument 0, dangerous name _
+then
+  query "Bad function" has
+  item f,
+  description "This is really bad and don't do it.".
+```
+
+
+
+
+
 ## Short term
+- Think again about compound names. Isn't it confusing
+- What does a compound attribute name mean?
+  - Constraints the type
 - Compound names aren't displayed properly in Explain.
-- Fix bug in Table - can't reproduce it in Debug mode!!
 - Create a `VariableInfo` structure
   - slot
   - bound
@@ -15,6 +41,8 @@
     - Efficient indexing?
     - Arbitrary joins
 - Implement `query` predicate.
+- What about object-orientation?
+- Warn on empty predicates
 - Perhaps have an Evaluation::SetRow() so that it's possible to store the row?
 - Report duplicate attributes a bit better.
 - Count total number of rows stored.
@@ -72,11 +100,14 @@ Queries that work:
 - Free intermediate tables, for example tables used for deduplicating.
 - Is the deduplicating logic even sound?? Surely other variables can change too? So we need to deduplicate lots of variables, not just the ones in the sum.
 - Problem with adding rules on demand if a predicate is already being evaluated.
+- Could `large mouse @mickey` actually mean `large-mouse @mickey`
 
 Code refactoring:
 - Split up files
 - Put into `namespace Logical`
 - Slim down the header files, for example split up relation.hpp
+
+## Class system
 
 ## Recursion
 
