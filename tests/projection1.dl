@@ -1,0 +1,7 @@
+0 has successor 1.
+1 has successor 2, predecessor 0.
+2 has successor 3, predecessor 1.
+3 has predecessor 2.
+
+find _ has successor _.
+find _ has predecessor _.

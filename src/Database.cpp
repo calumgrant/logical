@@ -28,7 +28,10 @@ std::shared_ptr<Relation> Database::GetBinaryRelation(int name)
     auto i = binaryRelations.find(name);
     if (i==binaryRelations.end())
     {
-        auto p = std::make_shared<BinaryTable>(*this, name);
+        std::vector<int> cn(1);
+        cn[0] = name;
+        
+        auto p = GetRelation(cn);
         binaryRelations.insert(std::make_pair(name, p));
         return p;
     }
@@ -307,19 +310,16 @@ std::size_t Database::GlobalCallCount()
 
 void Database::CreateProjection(const CompoundName &from, const CompoundName &to)
 {
-    std::cout << "Create a projection from " << from.parts.size() << " to " << to.parts.size() << std::endl;
-    
     // Map from input positions to output positions.
-    std::vector<int> projection(to.parts.size());
-    std::vector<int> cols(from.parts.size());
+    std::vector<int> projection(to.parts.size()+1);
+    std::vector<int> cols(from.parts.size()+1);
     
-    for(int i=0; i<from.parts.size(); ++i) cols[i] = i;
-    
+    for(int i=0; i<=from.parts.size(); ++i) cols[i] = i;
     
     for(int i=0, j=0; j<to.parts.size(); ++j)
     {
         while(from.parts[i] < to.parts[j]) ++i;
-        projection[j] = i;
+        projection[j+1] = i+1;
     }
     
     auto writer = std::make_shared<Writer>(tables[to], projection);

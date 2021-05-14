@@ -51,6 +51,8 @@ void PrintRelation::AddRule(const std::shared_ptr<Evaluation> & eval)
 {
     // Run the rule immediately.
     eval->Evaluate(nullptr);
+    if( database.Explain() )
+        eval->Explain(database, std::cout, 0);
 }
 
 std::size_t PrintRelation::Count()
@@ -177,6 +179,15 @@ Table::map_type & Table::GetIndex(int mask)
 
 void Table::Query(Entity * row, int mask, Visitor&v)
 {
+    RunRules();
+    
+    if(mask==0)
+    {
+        for(int s=0; s<data.size(); s+=arity)
+            v.OnRow(&data[s]);
+        return;
+    }
+    
     auto s = data.size();
     data.insert(data.end(), row, row+arity);
     
@@ -255,6 +266,9 @@ void Predicate::RunRules()
     
     std::size_t iteration = 1;
     
+    if(database.Explain())
+        std::cout << "Evaluating " << database.GetString(Name()) << std::endl;
+
     do
     {
         sizeAtLastRecursiveCall = Count();

@@ -141,12 +141,9 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
                 attribute.entityOpt->UnboundError(db);
                 return;
             }
-            entities[compoundName.mapFromInputToOutput[index]] = v->GetValue();
-            ::Entity row[2] = { e, v->GetValue() };
-            auto table = db.GetBinaryRelation(attribute.predicate->nameId);
-
-            table->Add(row);
+            entities[compoundName.mapFromInputToOutput[index]+1] = v->GetValue();
         }
+        // TODO: Else report error
                      
         ++index;
     }

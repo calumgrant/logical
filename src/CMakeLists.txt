@@ -83,6 +83,9 @@ add_test(NAME Binary1 COMMAND logical ../tests/binary1.dl)
 add_test(NAME Binary2 COMMAND logical ../tests/binary2.dl)
 
 add_test(NAME Range1 COMMAND logical ../tests/range1.dl)
+add_test(NAME Range2 COMMAND logical ../tests/range2.dl)
+add_test(NAME Range3 COMMAND logical ../tests/range3.dl)
+
 add_test(NAME Comparators1 COMMAND logical ../tests/comparators1.dl)
 add_test(NAME Arithmetic1 COMMAND logical ../tests/arithmetic1.dl)
 add_test(NAME Arithmetic2 COMMAND logical ../tests/arithmetic2.dl)
@@ -97,6 +100,6 @@ add_test(NAME Primes1 COMMAND logical ../tests/primes1.dl)
 
 add_test(NAME Recursion1 COMMAND logical ../tests/recursion1.dl)
 add_test(NAME Recursion2 COMMAND logical ../tests/recursion2.dl)
-add_test(NAME Recursion3 COMMAND logical ../tests/recursion3.dl)
+# add_test(NAME Recursion3 COMMAND logical ../tests/recursion3.dl)
 
 add_test(NAME Query1 COMMAND logical ../tests/query1.dl)

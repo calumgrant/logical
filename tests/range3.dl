@@ -1,0 +1,4 @@
+X has pair Y if 1<=X<=10 and 1<=Y<=10.
+
+error "cp 1" if not 1 has pair 1.
+error "cp 2" if not 10 has pair 10.

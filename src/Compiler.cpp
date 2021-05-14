@@ -46,10 +46,12 @@ void AST::Rule::Compile(Database &db)
     
     evaluation = std::make_shared<RuleEvaluation>(compilation.locals, evaluation);
     
+    /*
     if(db.Explain())
     {
         evaluation->Explain(db, std::cout, 0);
     }
+    */
     
     lhs->AddRule(db, evaluation);
 }

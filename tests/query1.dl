@@ -7,9 +7,9 @@ person @p2 has name "Alex", age 30, colour @red.
 person @p2 has name "Alex", colour @red, age 30.
 person @p2 has name "Alex", colour @green, age 30.
 
-error 1 if count X in (X has age 30) != 1.
+// error 1 if count X in (X has age 30) != 1.
 
-error 1 if count X in (X has age 30, name "Alex") != 1.
+// error 1 if count X in (X has age 30, name "Alex") != 1.
 
 
 person @p2 has name "Alex", age 30, colour @green.

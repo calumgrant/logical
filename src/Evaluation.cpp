@@ -260,7 +260,7 @@ void EvaluateBB::Evaluate(Entity * row)
 void EvaluateBB::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Lookup (_" << slot1 << ",_" << slot2 << ") in " << relation.lock()->Name();
+    os << "Lookup (_" << slot1 << ",_" << slot2 << ") in " << db.GetString(relation.lock()->Name());
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -1030,6 +1030,7 @@ void Reader::Explain(Database &db, std::ostream &os, int indent) const
         if(i>0) os << ",_";
         os << slots[i];
     }
+    os << ")";
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -1064,12 +1065,13 @@ void Writer::Evaluate(Entity * row)
 void Writer::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Writer " << db.GetString(relation.lock()->Name()) << " into (_";
+    os << "Write " << db.GetString(relation.lock()->Name()) << " into (_";
     for(int i=0; i<slots.size(); ++i)
     {
         if(i>0) os << ",_";
         os << slots[i];
     }
+    os << ")";
     OutputCallCount(os);
     os << std::endl;
 }
