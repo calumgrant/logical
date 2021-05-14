@@ -991,3 +991,86 @@ std::size_t Evaluation::GlobalCallCount()
 {
     return globalCallCount;
 }
+
+Reader::Reader(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next) :
+    relation(relation), slots(slots), next(next)
+{
+    assert(slots.size()>1);
+}
+
+void Reader::Evaluate(Entity * row)
+{
+    if(IncrementCallCount()) return;
+    
+    class Visitor : public Relation::Visitor
+    {
+    public:
+        void OnRow(const Entity * data) override
+        {
+            for(int i=0; i<reader.slots.size(); ++i)
+                row[reader.slots[i]] = data[i];
+            reader.next->Evaluate(row);
+        }
+        
+        Visitor(Reader & reader, Entity * row) : reader(reader), row(row) { }
+        Reader & reader;
+        Entity * row;
+    };
+    
+    Visitor visitor { *this, row };
+    relation.lock()->Query(nullptr, 0, visitor);
+}
+
+void Reader::Explain(Database &db, std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    os << "Read from " << db.GetString(relation.lock()->Name()) << " into (_";
+    for(int i=0; i<slots.size(); ++i)
+    {
+        if(i>0) os << ",_";
+        os << slots[i];
+    }
+    OutputCallCount(os);
+    os << " ->\n";
+    next->Explain(db, os, indent+4);
+}
+
+Writer::Writer(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots) :
+    relation(relation), slots(slots)
+{
+    assert(slots.size()>0);
+    slot = slots[0];
+    contiguous = true;
+    for(int i=1; i<slots.size(); ++i)
+        if(slots[i] != slot+i) { contiguous = false; break; }
+}
+
+void Writer::Evaluate(Entity * row)
+{
+    if(IncrementCallCount()) return;
+
+    if(contiguous)
+        relation.lock()->Add(row + slot);
+    else
+    {
+        // Assemble the data into a vector
+        std::vector<Entity> data(slots.size());
+        for(int i=0; i<slots.size(); ++i)
+            data[i] = row[slots[i]];
+        relation.lock()->Add(&data[0]);
+    }
+}
+
+void Writer::Explain(Database &db, std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    os << "Writer " << db.GetString(relation.lock()->Name()) << " into (_";
+    for(int i=0; i<slots.size(); ++i)
+    {
+        if(i>0) os << ",_";
+        os << slots[i];
+    }
+    OutputCallCount(os);
+    os << std::endl;
+}
+

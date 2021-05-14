@@ -11,6 +11,7 @@
     - Efficient indexing?
     - Arbitrary joins
 - Implement `query` predicate.
+- Perhaps have an Evaluation::SetRow() so that it's possible to store the row?
 - Report duplicate attributes a bit better.
 - Count total number of rows stored.
 - Warning on undefined predicates.

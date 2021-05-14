@@ -284,6 +284,8 @@ std::shared_ptr<Relation> Database::GetRelation(const CompoundName &cn)
     // Create the appropriate mappings to the subsets
     auto relation = std::make_shared<Table>(*this, cn.parts[0], cn.parts.size()+1);
     
+    tables[cn] = relation;
+
     for(auto & superset : supersets)
     {
         CreateProjection(superset, cn);
@@ -294,7 +296,6 @@ std::shared_ptr<Relation> Database::GetRelation(const CompoundName &cn)
         CreateProjection(cn, subset);
     }
     
-    tables[cn] = relation;
     for(auto i : cn.parts) names.insert(std::make_pair(i, cn));
     return relation;
 }
@@ -307,4 +308,25 @@ std::size_t Database::GlobalCallCount()
 void Database::CreateProjection(const CompoundName &from, const CompoundName &to)
 {
     std::cout << "Create a projection from " << from.parts.size() << " to " << to.parts.size() << std::endl;
+    
+    // Map from input positions to output positions.
+    std::vector<int> projection(to.parts.size());
+    std::vector<int> cols(from.parts.size());
+    
+    for(int i=0; i<from.parts.size(); ++i) cols[i] = i;
+    
+    
+    for(int i=0, j=0; j<to.parts.size(); ++j)
+    {
+        while(from.parts[i] < to.parts[j]) ++i;
+        projection[j] = i;
+    }
+    
+    auto writer = std::make_shared<Writer>(tables[to], projection);
+    
+    auto reader = std::make_shared<Reader>(tables[from], cols, writer);
+    
+    auto eval = std::make_shared<RuleEvaluation>(cols.size(), reader);
+    
+    tables[to]->AddRule(eval);
 }

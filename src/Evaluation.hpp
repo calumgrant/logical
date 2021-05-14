@@ -415,3 +415,33 @@ private:
     const int slot;
     const std::shared_ptr<Evaluation> next;
 };
+
+class Reader : public Evaluation
+{
+public:
+    Reader(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    std::weak_ptr<Relation> relation;
+    std::vector<int> slots;
+    std::shared_ptr<Evaluation> next;
+};
+
+class Writer : public Evaluation
+{
+public:
+    Writer(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    std::weak_ptr<Relation> relation;
+    std::vector<int> slots;
+    
+    int slot;
+    bool contiguous;  // Optimization
+};
+
+class Join : public Evaluation
+{
+};
