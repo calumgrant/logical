@@ -285,7 +285,12 @@ std::shared_ptr<Relation> Database::GetRelation(const CompoundName &cn)
     }
     
     // Create the appropriate mappings to the subsets
-    auto relation = std::make_shared<Table>(*this, cn.parts[0], cn.parts.size()+1);
+    std::shared_ptr<Relation> relation;
+    
+    if (cn.parts.size()==1)
+        relation = std::make_shared<BinaryTable>(*this, cn.parts[0]);
+    else
+        relation = std::make_shared<Table>(*this, cn.parts[0], cn.parts.size()+1);
     
     tables[cn] = relation;
 

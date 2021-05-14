@@ -155,81 +155,6 @@ void BinaryTable::Query(Entity * row, int bound, Visitor&v)
     // todo
 }
 
-Table::map_type & Table::GetIndex(int mask)
-{
-    auto i = indexes.find(mask);
-    if(i != indexes.end())
-    {
-        return i->second;
-    }
-    
-    // Create an index
-    
-    map_type it({}, 100, Comparer(data, arity, mask), Comparer(data, arity, mask));
-    
-    auto &index = indexes.insert(std::make_pair(mask, it)).first->second;
-    
-    for(auto i=0; i<data.size(); i+=arity)
-    {
-        index.insert(i);
-    }
-    
-    return index;
-}
-
-void Table::Query(Entity * row, int mask, Visitor&v)
-{
-    RunRules();
-    
-    if(mask==0)
-    {
-        for(int s=0; s<data.size(); s+=arity)
-            v.OnRow(&data[s]);
-        return;
-    }
-    
-    auto s = data.size();
-    data.insert(data.end(), row, row+arity);
-    
-    if(mask == -1)
-    {
-        auto i = hash.find(s);
-        data.resize(s);
-        
-        if (i != hash.end())
-            v.OnRow(&data[*i]);
-        return;
-    }
-    else
-    {
-        auto result = GetIndex(mask).equal_range(s);
-        data.resize(s);
-
-        for(auto i = result.first; i!=result.second; ++i)
-        {
-            v.OnRow(&data[*i]);
-        }
-    }
-}
-
-void Table::Add(const Entity *row)
-{
-    auto s = data.size();
-    data.insert(data.end(), row, row+arity);
-    
-    auto i = hash.insert(s);
-    if(!i.second)
-    {
-        // It was duplicated, so remove it.
-        data.resize(s);
-    }
-    
-    // Insert into all other indexes
-    for(auto & index : indexes)
-    {
-        index.second.insert(s);
-    }
-}
 
 Predicate::Predicate(Database &db, int name) :
     rulesRun(false), name(name), database(db),
@@ -275,6 +200,10 @@ void Predicate::RunRules()
         recursive = false;
         for(auto & p : rules)
         {
+            if(database.Explain())
+            {
+                p->Explain(database, std::cout, 0);
+            }
             p->Evaluate(nullptr);
             if(database.Explain())
             {
@@ -294,10 +223,6 @@ UnaryTable::UnaryTable(Database &db, int name) : Predicate(db, name)
 }
 
 BinaryTable::BinaryTable(Database &db, int name) : Predicate(db, name)
-{
-}
-
-Table::Table(Database &db, int name, int arity) : Predicate(db, name), arity(arity), hash({}, 100, Comparer(data, arity, -1), Comparer(data, arity, -1))
 {
 }
 

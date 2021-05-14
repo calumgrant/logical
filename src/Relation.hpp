@@ -116,6 +116,26 @@ private:
     std::unordered_multimap<Entity, Entity, Entity::Hash> map1, map2;
 };
 
+class Depth
+{
+public:
+    class Increase
+    {
+    public:
+        Increase(int&p) : ptr(p) { ++ptr; }
+        ~Increase() { --ptr; }
+        Increase(const Increase&)=delete;
+    private:
+        int & ptr;
+    };
+    
+    Increase Enter() { return Increase(depth); }
+    bool IsZero() const { return depth==0; }
+private:
+    int depth;
+};
+
+
 class Table : public Predicate
 {
 public:
@@ -166,5 +186,11 @@ public:
     typedef std::unordered_multiset<std::size_t, Comparer, Comparer> map_type;
     std::unordered_map<int, map_type> indexes;
     map_type & GetIndex(int mask);
+    
+    // A count of the number times we have called Query in a nested way.
+    // If reentrantDepth is 0, we can safely add rules directly to the table.
+    Depth reentrancy;
+    std::vector<Entity> delta_data;
+    index_type delta_hash;
 };
 

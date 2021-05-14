@@ -19,3 +19,10 @@ error "differences" if
     X has ancestor2 Y and not X has ancestor Y.
 
 error "count" if not count X in (3 has ancestor X) = 5.
+
+if 
+    3 has ancestor X
+then
+    print X.
+
+find 3 has ancestor _.

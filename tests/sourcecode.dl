@@ -46,3 +46,24 @@ expression e is arithmetic_expression if
 // Source locations
 location @l0, file "/home/calum/foo.c", start_line 0, end_line 0, start_column 1, end_column 10.
 
+//class AnyStdStringType extends Type {
+//  AnyStdStringType() {
+//    exists(Namespace std |
+//      std.getName() = "std" and
+//      std.getADeclaration() = this
+//    ) and
+//    this.getName().matches("basic\\_string<%")
+//  }
+//}
+
+
+if
+    this is a Type and
+    std is a Namespace and
+    std has name "std" and
+    std has a declaration this and
+    this has name Name and
+    "basic\\_string<%" has a match Name 
+then
+    this is an AnyStdStringType.
+

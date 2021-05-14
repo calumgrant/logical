@@ -1,0 +1,11 @@
+
+
+error "Successor" if A has successor B and not B has predecessor A.
+error "Successor1" if A has successor B and not B has predecessor A and A has successor _ and _ has successor B.
+
+red node @1 has edge_to @2.
+
+find _ has edge_to _.
+
+error "Error 1" if not red node @1 has edge_to @2.
+

@@ -39,7 +39,7 @@ int main(int argc, char**argv)
     if(verbose)
     {
         std::cout << "Evaluation steps = " << Database::GlobalCallCount() << std::endl;
-        std::cout << "Evaluation time  = " << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() << " us\n";
+        std::cout << "Evaluation time  = " << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() << " µs\n";
     }
     
     
