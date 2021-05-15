@@ -1,0 +1,9 @@
+N has square N*N, successor N+1 if 
+    0 <= N <= 10.
+
+error "square" if not 5 has square 25.
+
+//error "successor" if not 5 has successor 6.
+
+//error "1" if not 5 has successor 6, square 25.
+//error "2" if not 5 has square 25, successor 6.

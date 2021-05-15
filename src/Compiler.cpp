@@ -78,38 +78,32 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
 
     auto eval = next->Compile(db, c);
         
-    auto compoundRelation = db.GetRelation(GetCompoundName());
-
-    for(int i=attributes.size()-1; i>=0; --i)
+    auto cn = GetCompoundName();
+    auto compoundRelation = db.GetRelation(cn);
+    
+    std::vector<int> inputs(cn.parts.size() + 1), outputs(cn.parts.size()+1);
+    if(lhsBound)
+        inputs[0] = slot, outputs[0] = -1;
+    else
+        inputs[0] = -1, outputs[0] = slot;
+    
+    for(int i=0; i<cn.parts.size(); ++i)
     {
-        auto &a = attributes[i];
-        auto relation = db.GetBinaryRelation(a.predicate->nameId);
-        
-        // The first lhs is potentially unbound
-        // All of the others are bound
-        auto bound = lhsBound || i!=0;
-
-        if(bound && a.bound)
-        {
-            eval = std::make_shared<EvaluateBB>(relation, slot, a.slot, eval);
-        }
-        else if(bound && !a.bound)
-        {
-            eval = std::make_shared<EvaluateBF>(relation, slot, a.slot, eval);
-        }
-        else if(!bound && a.bound)
-        {
-            eval = std::make_shared<EvaluateFB>(relation, slot, a.slot, eval);
-        }
+        // TODO: If the variable is not used, then the output should be -1.
+        if(attributes[i].bound)
+            inputs[i+1] = attributes[i].slot,
+            outputs[i+1] = -1;
         else
-        {
-            eval = std::make_shared<EvaluateFF>(relation, slot, a.slot, eval);
-        }
-
+            inputs[i+1] = -1,
+            outputs[i+1] = attributes[i].slot;
+    }
+    
+    eval = std::make_shared<Join>(db.GetRelation(cn), std::move(inputs), std::move(outputs), eval);
+    
+    for(auto &a : attributes)
+    {
         if(a.entityOpt)
-        {
             eval = a.entityOpt->Compile(db, c, eval);
-        }
     }
 
     return eval;

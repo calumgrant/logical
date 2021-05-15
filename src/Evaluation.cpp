@@ -1,6 +1,7 @@
 #include "Evaluation.hpp"
 #include "Database.hpp"
 #include "AST.hpp"
+#include "Colours.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -27,7 +28,7 @@ void WriterB::Evaluate(Entity * row)
 {
     if(IncrementCallCount()) return;
 
-    relation->Add(row+slot);
+    relation.lock()->Add(row+slot);
 }
 
 
@@ -137,7 +138,10 @@ void RuleEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 void WriterB::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Write _" << slot << " into " << db.GetString(relation->Name());
+    os << "Write ";
+    OutputVariable(os, slot);
+    os << " into ";
+    OutputRelation(os, db, relation.lock());
     OutputCallCount(os);
     os << "\n";
 }
@@ -147,7 +151,10 @@ void EvaluateB::Explain(Database &db, std::ostream &os, int indent) const
     Indent(os, indent);
     auto r = relation.lock();
     assert(r);
-    os << "Lookup _" << slot << " in " << db.GetString(r->Name());
+    os << "Lookup ";
+    OutputVariable(os, slot);
+    os << " in ";
+    OutputRelation(os, db, r);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -158,7 +165,10 @@ void EvaluateF::Explain(Database &db, std::ostream &os, int indent) const
     Indent(os, indent);
     auto r = relation.lock();
     assert(r);
-    os << "Scan " << db.GetString(r->Name()) << " into _" << slot;
+    os << "Scan ";
+    OutputRelation(os, db, r);
+    os << " into ";
+    OutputVariable(os, slot);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -177,7 +187,10 @@ void NotTerminator::Evaluate(Entity * row)
 void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Assign _" << slot << " := None";
+    os << "Assign ";
+    OutputVariable(os, slot);
+    os << " := ";
+    db.PrintQuoted(Entity(), os);
     OutputCallCount(os);
     os << "\n";
 }
@@ -728,7 +741,12 @@ void SubBBF::Evaluate(Entity *row)
 void SubBBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Calculate _" << slot3 << " := _" << slot1 << " - _" << slot2;
+    os << "Calculate ";
+    OutputVariable(os, slot3);
+    os << " := ";
+    OutputVariable(os, slot1);
+    os << " - ";
+    OutputVariable(os, slot2);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -929,7 +947,9 @@ void Load::Evaluate(Entity * locals)
 void Load::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Load _" << slot << " := ";
+    os << "Load ";
+    OutputVariable(os, slot);
+    os << " := ";
     db.PrintQuoted(value, os);
     OutputCallCount(os);
     os << " ->\n";
@@ -950,7 +970,10 @@ void NotNone::Evaluate(Entity *row)
 void NotNone::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Check _" << slot << " is not None";
+    os << "Check ";
+    OutputVariable(os, slot);
+    os << " is not ";
+    db.PrintQuoted(Entity(), os);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -1024,11 +1047,13 @@ void Reader::Evaluate(Entity * row)
 void Reader::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Read from " << db.GetString(relation.lock()->Name()) << " into (_";
+    os << "Read from ";
+    OutputRelation(os, db, relation.lock());
+    os << " into (";
     for(int i=0; i<slots.size(); ++i)
     {
-        if(i>0) os << ",_";
-        os << slots[i];
+        if(i>0) os << ",";
+        OutputVariable(os, slots[i]);
     }
     os << ")";
     OutputCallCount(os);
@@ -1065,14 +1090,99 @@ void Writer::Evaluate(Entity * row)
 void Writer::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Write (_";
+    os << "Write (";
     for(int i=0; i<slots.size(); ++i)
     {
-        if(i>0) os << ",_";
-        os << slots[i];
+        if(i>0) os << ",";
+        OutputVariable(os, slots[i]);
     }
-    os << ") into " << db.GetString(relation.lock()->Name());
+    os << ") into ";
+    OutputRelation(os, db, relation.lock());
     OutputCallCount(os);
     os << std::endl;
 }
 
+Join::Join(const std::shared_ptr<Relation> & relation, std::vector<int> && inputs, std::vector<int> && outputs, const std::shared_ptr<Evaluation> & next) : relation(relation), inputs(inputs), outputs(outputs), next(next)
+{
+    assert(inputs.size() == outputs.size());
+    assert(relation->Arity() == inputs.size());
+    mask = 0;
+    int shift = 1;
+    for(auto v : this->inputs)
+    {
+        if(v != -1) mask |= shift;
+        shift <<= 1;
+    }
+}
+
+void Join::Evaluate(Entity * locals)
+{
+    if(IncrementCallCount()) return;
+
+    class Visitor : public Relation::Visitor
+    {
+    public:
+        Visitor(Entity * locals, std::vector<int> & outputs, const std::shared_ptr<Evaluation> & next) :
+            locals(locals), outputs(outputs), next(next)
+        {
+        }
+        void OnRow(const Entity * row) override
+        {
+            for(int i=0; i<outputs.size(); ++i)
+                if(outputs[i] != -1)
+                    locals[outputs[i]] = row[i];
+            next->Evaluate(locals);
+        }
+        Entity * locals;
+        const std::vector<int> & outputs;
+        std::shared_ptr<Evaluation> next;
+    } visitor(locals, outputs, next);
+    
+    std::vector<Entity> data(inputs.size());
+    for(int i=0; i<inputs.size(); ++i)
+        if(inputs[i] != -1)
+        {
+            data[i] = locals[inputs[i]];
+        }
+    
+    relation.lock()->Query(&data[0], mask, visitor);
+}
+
+void Evaluation::OutputVariable(std::ostream & os, int variable)
+{
+    os << Colours::Variable << "_" << variable << Colours::Normal;
+}
+
+void Evaluation::OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> & relation)
+{
+    os << Colours::Relation << db.GetString(relation->Name()) << Colours::Normal;
+}
+
+void Join::Explain(Database &db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Join with ";
+    OutputRelation(os, db, relation.lock());
+    os << " (";
+    for(int i=0; i<inputs.size(); ++i)
+    {
+        if(i>0) os << ",";
+        if(inputs[i] != -1)
+            OutputVariable(os, inputs[i]);
+        else
+            os << "_";
+    }
+    os << ") -> (";
+    for(int i=0; i<outputs.size(); ++i)
+    {
+        if(i>0) os << ",";
+        if(outputs[i] != -1)
+            OutputVariable(os, outputs[i]);
+        else
+            os << "_";
+    }
+    os << ")";
+    OutputCallCount(os);
+    os << " ->\n";
+    next->Explain(db, os, indent+4);
+}

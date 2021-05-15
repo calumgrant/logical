@@ -1,6 +1,7 @@
 #include "Database.hpp"
 #include "Evaluation.hpp"
 #include "tokens.tab.h"
+#include "Colours.hpp"
 
 #include <iostream>
 
@@ -90,6 +91,8 @@ void Database::Print(const Entity &e, std::ostream &os) const
 
 void Database::PrintQuoted(const Entity &e, std::ostream &os) const
 {
+    os << Colours::Value;
+
     if(e.type == EntityType::String)
     {
         os << '\"';
@@ -100,6 +103,7 @@ void Database::PrintQuoted(const Entity &e, std::ostream &os) const
     {
         Print(e, os);
     }
+    os << Colours::Normal;
 }
 
 const std::string &Database::GetString(int id) const
@@ -316,6 +320,7 @@ std::size_t Database::GlobalCallCount()
 
 void Database::CreateProjection(const CompoundName &from, const CompoundName &to)
 {
+    /*
     std::cout << "Create a projection from ";
     for(auto a : from.parts)
         std::cout << GetString(a) << "-" << a << " ";
@@ -323,7 +328,7 @@ void Database::CreateProjection(const CompoundName &from, const CompoundName &to
     for(auto a : to.parts)
         std::cout << GetString(a) << "-" << a << " ";
     std::cout << std::endl;
-
+    */
     
     // Map from input positions to output positions.
     std::vector<int> projection(to.parts.size()+1);

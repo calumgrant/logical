@@ -103,6 +103,7 @@ void Table::Query(Entity * row, int mask, Visitor&v)
         
         if(mask == -1)
         {
+            // TODO: Also if mask is (1<<arity-1)
             auto s = data.size();
             data.insert(data.end(), row, row+arity);
             auto i = hash.find(s);

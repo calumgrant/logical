@@ -2,6 +2,9 @@
 
 ## Short term
 - Compound names aren't displayed properly in Explain.
+- Colour-code the output explanations.
+  - Refactor this properly
+- Remove `NotTerminator` and not terminator to use a `Load None`
 - Create a `VariableInfo` structure
   - slot
   - bound
@@ -169,6 +172,7 @@ Implement memory mapped memory allocator.
 - Avoid reevaluation of base case in recursion.
 - Inline predicates sometimes.
 - Use datatypes, for example if a variable has just one type then the calculation could be faster.
+- Lay out the locals to make querying more efficient.
 
 # Release plan
 

@@ -28,6 +28,9 @@ public:
     virtual void Explain(Database &db, std::ostream &os, int indent=4) const =0;
 
     static void Indent(std::ostream &os, int indent=0);
+    static void OutputVariable(std::ostream & os, int variable);
+    static void OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> & relation);
+
     void OutputCallCount(std::ostream&) const;
     
     static std::size_t GlobalCallCount();
@@ -105,7 +108,7 @@ public:
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
-    std::shared_ptr<Relation> relation;
+    std::weak_ptr<Relation> relation;
     int slot;
 };
 
@@ -444,4 +447,14 @@ private:
 
 class Join : public Evaluation
 {
+public:
+    // -1 in an input or output means "unused"
+    Join(const std::shared_ptr<Relation> & relation, std::vector<int> && inputs, std::vector<int> && outputs, const std::shared_ptr<Evaluation> & next);
+    void Evaluate(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    std::weak_ptr<Relation> relation;
+    std::vector<int> inputs, outputs;
+    std::shared_ptr<Evaluation> next;
+    int mask;
 };

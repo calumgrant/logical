@@ -198,7 +198,9 @@ void Predicate::RunRules()
     std::size_t iteration = 1;
     
     if(database.Explain())
-        std::cout << "Evaluating " << database.GetString(Name()) << std::endl;
+    {
+        std::cout << "Evaluating " << database.GetString(Name()) << "/" << Arity() << std::endl;
+    }
 
     do
     {
@@ -206,10 +208,6 @@ void Predicate::RunRules()
         recursive = false;
         for(auto & p : rules)
         {
-            if(database.Explain())
-            {
-                p->Explain(database, std::cout, 0);
-            }
             p->Evaluate(nullptr);
             if(database.Explain())
             {

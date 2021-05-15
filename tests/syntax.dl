@@ -114,6 +114,7 @@ find P, S in person P, surname S.
 // Quantifiers
 
 1 has cash 2.
+2 has value 3.
 person X has money M if M = sum V over C in (X has cash C and C has value V).
 person X has money sum V over C in (X has cash C and C has amount V).
 person X has coins count C in (X has cash C).
