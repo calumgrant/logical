@@ -1,7 +1,9 @@
+// Projecting facts
+
 0 has successor 1.
 1 has successor 2, predecessor 0.
 2 has successor 3, predecessor 1.
 3 has predecessor 2.
 
-find _ has successor _.
-find _ has predecessor _.
+error "p1" if count X in (X has a successor) != 3.
+error "p2" if count X in (X has a predecessor) != 3.

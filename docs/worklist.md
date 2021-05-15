@@ -1,46 +1,37 @@
 # Work plan
 
-Could it be confusing to ask
-
-```
-@1 has name "a".
-@1 has age 30.
-
-large mouse @1 with name "a", age 30, full name "boo".
-
-if @1 with name "a", age 30 then print "success".
-
-function @f1 has argument 0, name "x", type @int.
-
-if
-  builtin function f has narrow integer argument 0, dangerous name _
-then
-  query "Bad function" has
-  item f,
-  description "This is really bad and don't do it.".
-```
-
-
-
-
-
 ## Short term
-- Think again about compound names. Isn't it confusing
-- What does a compound attribute name mean?
-  - Constraints the type
 - Compound names aren't displayed properly in Explain.
 - Create a `VariableInfo` structure
   - slot
   - bound
   - last use?
+- `expect` predicate - number of evaluation steps. Prints a message
+- `steps` predicate - gets the current number of evaluation steps
+  `if S is steps then print "Currently at " + S + " steps".`
+  `print "..." if steps S.`
+- Adding strings to ints??
+- Reporting options
+  - `-q` for quiet
+  - `-v` for verbose
+  - By default, display steps and time, and number of results and number of errors.
+  
+  Found 123 results.
+  Evaluation finished with 1 errors.
+  Evaluation finished.
+  - Parser error recovery with `.`
 - Implement n-ary predicates
-  - Assert facts
   - Assert rules
   - Query
   - Query n-ary relations.
     - Efficient indexing?
     - Arbitrary joins
 - Implement `query` predicate.
+  result p has message "Unused parameter." if p is a parameter and parameter has no use.
+  find result -> Looks at all tuples involving result as well.
+
+  
+   if X is a parent
 - What about object-orientation?
 - Warn on empty predicates
 - Perhaps have an Evaluation::SetRow() so that it's possible to store the row?
@@ -101,6 +92,7 @@ Queries that work:
 - Is the deduplicating logic even sound?? Surely other variables can change too? So we need to deduplicate lots of variables, not just the ones in the sum.
 - Problem with adding rules on demand if a predicate is already being evaluated.
 - Could `large mouse @mickey` actually mean `large-mouse @mickey`
+- Has with no entity? For example `query has message "Hello"` if `query` is unbound then it's taken to be a predicate name???
 
 Code refactoring:
 - Split up files
@@ -160,6 +152,23 @@ Implement memory mapped memory allocator.
 - [ ] Command line option to pass code
 - [ ] A compiled bytecode for Datalog.
 - [ ] Resources limits - memory, time and tuple-counts.
+- [ ] MySQL connector.
+- [ ] Dynamic-linked libraries
+- [ ] Reading external data.
+
+# Optimizer
+- Avoid duplicate loads. If two constants share the same value on the same path then make one an alias for the other.
+- Lift constants out of loops.
+- Optimize variable layout, for example reuse local variables 
+- Avoid duplicate tests, if a condition is always true (or false).
+- Last use optimization - detect when a variable is not used and remove it. Turn joins into exists.
+- Join identical paths
+- Remove "NoneEvaluations"
+- Push context
+- Join orderer, based on sizes of tables.
+- Avoid reevaluation of base case in recursion.
+- Inline predicates sometimes.
+- Use datatypes, for example if a variable has just one type then the calculation could be faster.
 
 # Release plan
 

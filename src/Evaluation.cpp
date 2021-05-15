@@ -1065,13 +1065,13 @@ void Writer::Evaluate(Entity * row)
 void Writer::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Write " << db.GetString(relation.lock()->Name()) << " into (_";
+    os << "Write (_";
     for(int i=0; i<slots.size(); ++i)
     {
         if(i>0) os << ",_";
         os << slots[i];
     }
-    os << ")";
+    os << ") into " << db.GetString(relation.lock()->Name());
     OutputCallCount(os);
     os << std::endl;
 }

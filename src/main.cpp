@@ -2,25 +2,56 @@
 #include "Database.hpp"
 #include <chrono>
 
+enum class ErrorCode : int
+{
+    Ok,
+    SyntaxError,
+    FileNotFound,
+    ReportedError,
+    InvalidArgs
+};
+
 int main(int argc, char**argv)
 {
     if(argc==1)
     {
         std::cout << "Usage: logical <filename> ...\n";
-        return 127;
+        return (int)ErrorCode::InvalidArgs;
     }
 
-    int verbose=0;
+    int verbose = 0;
+    bool quiet = false;
     Database db;
+    int errors = 0;
     
     auto startTime = std::chrono::system_clock::now();
 
     for(int i=1; i<argc; ++i)
     {
+        if(argv[i][0] == '-')
+        {
+            switch(argv[i][1])
+            {
+                case 'v':
+                    verbose = true;
+                    db.SetVerbose(true);
+                    break;
+                case 'q':
+                    quiet = true;
+                    break;
+                default:
+                    std::cerr << "Unknown option: " << argv[i] << std::endl;
+                    return (int)ErrorCode::InvalidArgs;
+                    break;
+            }
+        }
+    }
+    
+    for(int i=1; i<argc; ++i)
+    {
+        if(argv[i][0]=='-') continue;
         if(strcmp(argv[i], "-v")==0)
         {
-            verbose = true;
-            db.SetVerbose(true);
             continue;
         }
         if(verbose) std::cout << "Reading " << argv[i] << std::endl;
@@ -30,22 +61,25 @@ int main(int argc, char**argv)
         if(r)
         {
             std::cerr << "Failed to read " << argv[i] << std::endl;
-            return r;
+            return (int)ErrorCode::FileNotFound;
         }
     }
     
     auto endTime = std::chrono::system_clock::now();
     
-    if(verbose)
+    if(!quiet)
     {
+        std::cout << "Found " << db.NumberOfResults() << " results\n";
         std::cout << "Evaluation steps = " << Database::GlobalCallCount() << std::endl;
         std::cout << "Evaluation time  = " << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() << " µs\n";
+        if(db.UserErrorReported())
+            std::cout << "Evaluation completed with " << db.NumberOfErrors() << " errors\n";
+        else
+            std::cout << "Evaluation completed successfully\n";
     }
     
-    
-    
     if(db.UserErrorReported())
-        return 1;
+        return (int)ErrorCode::ReportedError;
 
-    return 0;
+    return (int)ErrorCode::Ok;
 }

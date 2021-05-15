@@ -94,6 +94,7 @@ person X is old if X has age A and A>=80.
 person X is young if not X is old.
 
 // Queries
+1 has radius 2, diameter 3.
 find person P.
 find person.
 find circle C, radius R.
@@ -112,6 +113,7 @@ find P, S in person P, surname S.
 
 // Quantifiers
 
+1 has cash 2.
 person X has money M if M = sum V over C in (X has cash C and C has value V).
 person X has money sum V over C in (X has cash C and C has amount V).
 person X has coins count C in (X has cash C).

@@ -344,23 +344,39 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
     
     if(attributes)
     {
-        for(auto &a : attributes->attributes)
+        auto cn = attributes->GetCompoundName();
+        
+        auto relation = db.GetRelation(cn);
+        
+        std::vector<int> slots(cn.parts.size()+1);
+        slots[0] = slot;
+        for(int i=0; i<cn.parts.size(); ++i)
         {
             bool bound;
-            // !! This looks like a bug if entityOpt is nullptr
-            int slot2 = a.entityOpt->BindVariables(db, c, bound);
-            if(bound)
+            auto & entity = attributes->attributes[i].entityOpt;
+            if(!entity)
             {
-                std::shared_ptr<Evaluation> e = std::make_shared<WriterBB>(db.GetBinaryRelation(a.predicate->nameId), slot, slot2);
-                e = a.entityOpt->Compile(db, c, e);
-                if(result)
-                    result = std::make_shared<OrEvaluation>(result, e);
-                else
-                    result = e;
+                return std::make_shared<NoneEvaluation>();
             }
-            else
-                a.entityOpt->UnboundError(db);
+            slots[cn.mapFromInputToOutput[i]+1] = entity->BindVariables(db, c, bound);
+            if(!bound)
+            {
+                entity->UnboundError(db);
+                return std::make_shared<NoneEvaluation>();
+            }
         }
+        
+        std::shared_ptr<Evaluation> e = std::make_shared<Writer>(relation, slots);
+
+        for(auto &a : attributes->attributes)
+        {
+            e = a.entityOpt->Compile(db, c, e);
+        }
+
+        if(result)
+            result = std::make_shared<OrEvaluation>(result, e);
+        else
+            result = e;
     }
 
     if(!result) result = std::make_shared<NoneEvaluation>();
@@ -439,10 +455,7 @@ void AST::EntityClause::AddRule(Database &db, const std::shared_ptr<Evaluation> 
     
     if(attributes)
     {
-        for(auto & a : attributes->attributes)
-        {
-            db.GetBinaryRelation(a.predicate->nameId)->AddRule(rule);
-        }
+        db.GetRelation(attributes->GetCompoundName())->AddRule(rule);
     }
 }
 

@@ -1,0 +1,14 @@
+// Projecting using rules
+
+// Projecting facts
+
+number N has successor N+1, predecessor N-1 if 1<=N<=5.
+
+find number _ has successor _, predecessor _.
+
+item @1 has successor N+1, predecessor N-1 if 1<=N<=10.
+
+error "item" if not item @1.
+
+find item _ has predecessor _.
+// find item _ has successor _, predecessor _.

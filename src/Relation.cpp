@@ -165,6 +165,12 @@ Predicate::Predicate(Database &db, int name) :
 void Predicate::AddRule(const std::shared_ptr<Evaluation> & rule)
 {
     rules.push_back(rule);
+    if(rulesRun)
+    {
+        // ?? What happens if it's recursive??
+        // Generally it isn't as it came from a projection.
+        rule->Evaluate(nullptr);
+    }
     MakeDirty();
 }
 
@@ -218,6 +224,11 @@ void Predicate::RunRules()
     rulesRun = true;
 }
 
+bool Predicate::HasRules() const
+{
+    return !rules.empty();
+}
+
 UnaryTable::UnaryTable(Database &db, int name) : Predicate(db, name)
 {
 }
@@ -239,4 +250,19 @@ std::size_t Relation::GetCount()
 {
     RunRules();
     return Count();
+}
+
+int UnaryTable::Arity() const
+{
+    return 1;
+}
+
+int BinaryTable::Arity() const
+{
+    return 2;
+}
+
+int PrintRelation::Arity() const
+{
+    return 1;
 }

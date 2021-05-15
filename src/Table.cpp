@@ -83,6 +83,12 @@ Table::map_type & Table::GetIndex(int mask)
 
 void Table::Query(Entity * row, int mask, Visitor&v)
 {
+    if(!HasRules() && data.empty())
+    {
+        database.WarningEmptyRelation(*this);
+        return;
+    }
+    
     RunRules();
     
     if(mask==0)
@@ -137,3 +143,7 @@ void Table::Query(Entity * row, int mask, Visitor&v)
     }
 }
 
+int Table::Arity() const
+{
+    return arity;
+}

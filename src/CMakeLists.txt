@@ -102,4 +102,7 @@ add_test(NAME Recursion1 COMMAND logical ../tests/recursion1.dl)
 add_test(NAME Recursion2 COMMAND logical ../tests/recursion2.dl)
 add_test(NAME Recursion3 COMMAND logical ../tests/recursion3.dl)
 
+add_test(NAME Projection1 COMMAND logical ../tests/projection1.dl)
+add_test(NAME Projection2 COMMAND logical ../tests/projection2.dl)
+
 add_test(NAME Query1 COMMAND logical ../tests/query1.dl)

@@ -93,6 +93,11 @@ public:
     
     static std::size_t GlobalCallCount();
 
+    int NumberOfErrors() const;
+    int NumberOfResults() const;
+    
+    void WarningEmptyRelation(Relation&);
+
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
     std::unordered_map< int, std::shared_ptr<Relation> > binaryRelations;
@@ -100,8 +105,9 @@ private:
 
     StringTable strings, atstrings;
     
-    bool verbose;
-    bool userError;
+    bool verbose = false;
+    int errorCount = 0;
+    std::size_t resultCount = 0;
     
     std::unordered_map<CompoundName, std::shared_ptr<Relation>, CompoundName::Hash> tables;
     

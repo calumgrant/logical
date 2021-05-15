@@ -91,5 +91,24 @@ query
 if
     potentiallyDangerousFunction f has message M, location L.
 
+if
+    call is a FunctionCall and 
+    target is a Function and
+    call has Target target and
+    potentiallyDangerousFunction target has message message
+then
+    query "Potentially dangerous function" has
+    element call,
+    message message.
+
+query "Potentially dangerous function" has
+    element call,
+    message message
+if
+    call is a FunctionCall and 
+    target is a Function and
+    call has Target target and
+    potentiallyDangerousFunction target has message message.
+
 
 find potentiallyDangerousFunction.

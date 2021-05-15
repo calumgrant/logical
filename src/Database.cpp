@@ -48,7 +48,7 @@ Relation::~Relation()
 {
 }
 
-Database::Database() : verbose(false), userError(false)
+Database::Database() : verbose(false)
 {
     int print = GetStringId("print");
     unaryRelations[print] = std::make_shared<PrintRelation>(std::cout, *this, print);
@@ -215,12 +215,12 @@ int Database::GetStringLiteral(const char *literal)
 
 bool Database::UserErrorReported() const
 {
-    return userError;
+    return NumberOfErrors()>0;
 }
 
 void Database::ReportUserError()
 {
-    userError = true;
+    ++errorCount;
 }
 
 Entity Database::AddStrings(int id1, int id2)
@@ -254,9 +254,10 @@ int Database::ReadFile(const char *filename)
         fclose(f);
         if(p) return 128;
         yylex_destroy(scanner);
+        return 0;
     }
 
-    return 0;
+    return 1;
 }
 
 std::shared_ptr<Relation> Database::GetRelation(const CompoundName &cn)
@@ -315,6 +316,15 @@ std::size_t Database::GlobalCallCount()
 
 void Database::CreateProjection(const CompoundName &from, const CompoundName &to)
 {
+    std::cout << "Create a projection from ";
+    for(auto a : from.parts)
+        std::cout << GetString(a) << "-" << a << " ";
+    std::cout << "to ";
+    for(auto a : to.parts)
+        std::cout << GetString(a) << "-" << a << " ";
+    std::cout << std::endl;
+
+    
     // Map from input positions to output positions.
     std::vector<int> projection(to.parts.size()+1);
     std::vector<int> cols(from.parts.size()+1);
@@ -334,4 +344,20 @@ void Database::CreateProjection(const CompoundName &from, const CompoundName &to
     auto eval = std::make_shared<RuleEvaluation>(cols.size(), reader);
     
     tables[to]->AddRule(eval);
+}
+
+int Database::NumberOfErrors() const
+{
+    return errorCount;
+}
+
+int Database::NumberOfResults() const
+{
+    return resultCount;
+}
+
+void Database::WarningEmptyRelation(Relation & relation)
+{
+    ++errorCount;
+    std::cerr << "Warning: Querying empty relation '" << GetString(relation.Name()) << "/" << relation.Arity() << "'\n";
 }

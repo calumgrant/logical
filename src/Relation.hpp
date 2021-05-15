@@ -38,6 +38,7 @@ public:
     virtual int Name() const =0;
     
     virtual void RunRules() =0;
+    virtual int Arity() const =0;
     
     std::size_t GetCount();
 protected:
@@ -59,6 +60,7 @@ public:
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     void MakeDirty();
     int Name() const override;
+    bool HasRules() const;
 private:
     bool rulesRun;
     std::vector< std::shared_ptr<Evaluation> > rules;
@@ -79,6 +81,7 @@ public:
     void Add(const Entity *row) override;
     std::size_t Count() override;
     void Query(Entity*row, int columns, Visitor&v) override;
+    int Arity() const override;
 private:
     std::unordered_set<Entity, Entity::Hash> values;
     std::shared_ptr<Relation> index;
@@ -92,6 +95,7 @@ public:
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     std::size_t Count() override;
     void Query(Entity *row, int columns, Visitor&v) override;
+    int Arity() const override;
 protected:
     std::ostream & output;
 };
@@ -110,6 +114,7 @@ public:
     void Add(const Entity * row) override;
     std::size_t Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
+    int Arity() const override;
 private:
     // This representation is inefficient - fixme.
     std::unordered_set<std::pair<Entity, Entity>, PairHash> values;
@@ -143,7 +148,8 @@ public:
     std::size_t Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
     void Add(const Entity*row) override;
-    
+    int Arity() const override;
+
     class Comparer
     {
         Entity::Hash hasher;
