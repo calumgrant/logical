@@ -187,7 +187,7 @@ void NotTerminator::Evaluate(Entity * row)
 void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Assign ";
+    os << "Load ";
     OutputVariable(os, slot);
     os << " := ";
     db.PrintQuoted(Entity(), os);
@@ -236,7 +236,7 @@ void EqualsBF::Evaluate(Entity *row)
 void EqualsBF::Explain(Database & db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Load ";
+    os << "Assign ";
     OutputVariable(os, slot2);
     os << " := ";
     OutputVariable(os, slot1);

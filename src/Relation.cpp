@@ -202,7 +202,9 @@ void Predicate::RunRules()
     
     if(database.Explain())
     {
-        std::cout << "Evaluating " << Colours::Relation << database.GetString(Name()) << Colours::Normal << "/" << Arity() << std::endl;
+        std::cout << "Evaluating " << rules.size() << " rules in "
+            << Colours::Relation << database.GetString(Name()) << Colours::Normal
+            << "/" << Arity() << std::endl;
     }
 
     do

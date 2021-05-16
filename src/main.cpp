@@ -66,6 +66,8 @@ int main(int argc, char**argv)
         }
     }
     
+    db.RunQueries();
+    
     auto endTime = std::chrono::system_clock::now();
     
     if(!quiet)

@@ -368,3 +368,8 @@ void Database::WarningEmptyRelation(Relation & relation)
 //    ++errorCount;
     std::cerr << Colours::Error << "Warning: Querying empty relation '" << GetString(relation.Name()) << "/" << relation.Arity() << "'\n" << Colours::Normal;
 }
+
+void Database::RunQueries()
+{
+    
+}

@@ -97,6 +97,8 @@ public:
     int NumberOfResults() const;
     
     void WarningEmptyRelation(Relation&);
+    
+    void RunQueries();
 
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
