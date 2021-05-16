@@ -10,6 +10,8 @@ person @p2 has name "Alex", age 30, colour @green.
 // This is invalid
 // person @p3 has name "Alex", name "Fred".
 
+person "Joe" has name "Bloggs".
+
 if
     Person has name Name
 then
@@ -23,4 +25,9 @@ query "Query 2" has Person Person, Name Name if
 2 is a prime.
 query "primes" has prime P if P is a prime.
 
-find query.
+query "Unused parameter" has entity E, name N, line 20, file "C:\\foo.c" if
+    E=@f1 and N = "function1" or
+    E=@f2 and N = "function2" or
+    E=@f3 and N = "main".
+
+// query "Unused parameter" has entity E, name N if 1=1.

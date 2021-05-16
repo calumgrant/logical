@@ -41,6 +41,12 @@ public:
     virtual int Arity() const =0;
     
     std::size_t GetCount();
+    
+    virtual void AddAttribute(const std::shared_ptr<Relation> & attribute) =0;
+
+    
+    virtual void VisitAttributes(const std::function<void(Relation&)> &) const =0;
+    
 protected:
     // Returns the number of rows.
     virtual std::size_t Count() =0;
@@ -61,6 +67,9 @@ public:
     void MakeDirty();
     int Name() const override;
     bool HasRules() const;
+    
+    void AddAttribute(const std::shared_ptr<Relation> & attribute) override;
+    void VisitAttributes(const std::function<void(Relation&)> &) const override;
 private:
     bool rulesRun = false;
     std::vector< std::shared_ptr<Evaluation> > rules;
@@ -70,6 +79,7 @@ private:
     bool evaluating;
     bool recursive;
     std::size_t sizeAtLastRecursiveCall;
+    std::unordered_set<std::shared_ptr<Relation>> attributes;
 protected:
     Database &database;
 };

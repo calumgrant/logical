@@ -5,6 +5,11 @@
 - Test soundness of projections
 - Bug: We find an empty rule when attempting to add new rules to an existing query, for example when creating a projection.
 
+- Queries
+How to find all rules relating to the query relation??
+Iterate all rules in the predicate.
+
+
 - Compound names aren't displayed properly in Explain.
 - Colour-code the output explanations.
   - Refactor this properly

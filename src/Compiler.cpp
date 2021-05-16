@@ -450,7 +450,13 @@ void AST::EntityClause::AddRule(Database &db, const std::shared_ptr<Evaluation> 
     
     if(attributes)
     {
-        db.GetRelation(attributes->GetCompoundName())->AddRule(rule);
+        auto relation = db.GetRelation(attributes->GetCompoundName());
+        relation->AddRule(rule);
+        if(predicates)
+        {
+            for(auto &i : predicates->list)
+                db.GetUnaryRelation(i->nameId)->AddAttribute(relation);
+        }
     }
 }
 

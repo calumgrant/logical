@@ -99,6 +99,7 @@ public:
     void WarningEmptyRelation(Relation&);
     
     void RunQueries();
+    void AddResult(const Entity * row, int arity);
 
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
@@ -115,6 +116,8 @@ private:
     
     // Names, indexed on their first column
     std::unordered_multimap<int, CompoundName> names;
+
+    std::shared_ptr<Relation> queryPredicate;
     
     void CreateProjection(const CompoundName &from, const CompoundName & to);
 };

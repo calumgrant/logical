@@ -51,6 +51,9 @@ Relation::~Relation()
 
 Database::Database() : verbose(false)
 {
+    int queryId = GetStringId("query");
+    queryPredicate = GetUnaryRelation(queryId);
+    
     int print = GetStringId("print");
     unaryRelations[print] = std::make_shared<PrintRelation>(std::cout, *this, print);
     unaryRelations[GetStringId("error")] = std::make_shared<ErrorRelation>(*this);
@@ -371,5 +374,59 @@ void Database::WarningEmptyRelation(Relation & relation)
 
 void Database::RunQueries()
 {
+    class QueryVisitor : public Relation::Visitor
+    {
+    public:
+        QueryVisitor(Database & db, int arity) : database(db), arity(arity) {}
+        
+        void OnRow(const Entity * row) override
+        {
+            database.AddResult(row, arity);
+        }
+        Database & database;
+        
+        const int arity;
+    };
+        
+    class Visitor : public Relation::Visitor
+    {
+    public:
+        Visitor(Database & db) : database(db) {}
+        std::size_t queries = 0;
+        Database & database;
+
+        void OnRow(const Entity * data) override
+        {
+            ++queries;
+            std::cout << Colours::Relation;
+            database.Print(data[0], std::cout);
+            std::cout << Colours::Normal << " has results:\n";
+
+            // Join with all attributes in the
+            database.queryPredicate->VisitAttributes([&](Relation&r) {
+                QueryVisitor qv(database, r.Arity());
+                std::vector<Entity> row(r.Arity());
+                row[0] = data[0];
+                r.Query(&row[0], 1, qv);
+            });
+            
+        }
+    } visitor(*this);
     
+    queryPredicate->Query(nullptr, 0, visitor);
+}
+
+void Database::AddResult(const Entity * row, int arity)
+{
+    ++resultCount;
+    
+    std::cout << "\t";
+    for(int i=1; i<arity; ++i)
+    {
+        if(i>1) std::cout << ", ";
+        std::cout << Colours::Value;
+        Print(row[i], std::cout);
+        std::cout << Colours::Normal;
+    }
+    std::cout << std::endl;
 }

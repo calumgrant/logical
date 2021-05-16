@@ -269,3 +269,13 @@ int PrintRelation::Arity() const
 {
     return 1;
 }
+
+void Predicate::AddAttribute(const std::shared_ptr<Relation> & attribute)
+{
+    attributes.insert(attribute);
+}
+
+void Predicate::VisitAttributes(const std::function<void(Relation&)> & visitor) const
+{
+    for(auto &r : attributes) visitor(*r);
+}
