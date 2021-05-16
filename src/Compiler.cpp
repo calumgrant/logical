@@ -89,13 +89,14 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
     
     for(int i=0; i<cn.parts.size(); ++i)
     {
+        auto m = 1 + cn.mapFromInputToOutput[i];
         // TODO: If the variable is not used, then the output should be -1.
         if(attributes[i].bound)
-            inputs[i+1] = attributes[i].slot,
-            outputs[i+1] = -1;
+            inputs[m] =  attributes[i].slot,
+            outputs[m] = -1;
         else
-            inputs[i+1] = -1,
-            outputs[i+1] = attributes[i].slot;
+            inputs[m] = -1,
+            outputs[m] = attributes[i].slot;
     }
     
     eval = std::make_shared<Join>(db.GetRelation(cn), std::move(inputs), std::move(outputs), eval);

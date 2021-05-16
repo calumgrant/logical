@@ -236,7 +236,10 @@ void EqualsBF::Evaluate(Entity *row)
 void EqualsBF::Explain(Database & db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
-    os << "Assign _" << slot2 << " := _" << slot1;
+    os << "Load ";
+    OutputVariable(os, slot2);
+    os << " := ";
+    OutputVariable(os, slot1);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -768,7 +771,9 @@ void MulBBF::Explain(Database &db, std::ostream &os, int indent) const
 
 void Evaluation::OutputCallCount(std::ostream & os) const
 {
-    if(callCount>0)
+    if(callCount==1)
+        os << " (called " << callCount << " time)";
+    else if(callCount>1)
         os << " (called " << callCount << " times)";
 }
 
@@ -863,7 +868,8 @@ void DeduplicateB::Evaluate(Entity * row)
 void DeduplicateB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Deduplicate _" << slot1;
+    os << "Deduplicate ";
+    OutputVariable(os, slot1);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -909,7 +915,8 @@ void CountCollector::Evaluate(Entity * row)
 void CountCollector::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Increment _" << slot;
+    os << "Increment ";
+    OutputVariable(os, slot);
     OutputCallCount(os);
     os << std::endl;
 }
@@ -1160,8 +1167,15 @@ void Evaluation::OutputRelation(std::ostream &os, Database &db, const std::share
 
 void Join::Explain(Database &db, std::ostream & os, int indent) const
 {
+    int inCount=0, outCount=0;
+    for(auto a : inputs) if(a!=-1) ++ inCount;
+    for(auto a : outputs) if(a!=-1) ++ outCount;
+    
     Indent(os, indent);
-    os << "Join with ";
+    if(inCount==0) os << "Scan ";
+    else if(outCount==0) os << "Probe ";
+    else os << "Join ";
+    
     OutputRelation(os, db, relation.lock());
     os << " (";
     for(int i=0; i<inputs.size(); ++i)

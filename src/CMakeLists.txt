@@ -21,6 +21,7 @@ add_library(logiccore
     Database.cpp Database.hpp
     StringTable.cpp StringTable.hpp
     Entity.hpp
+    Colours.hpp
     CompoundName.cpp CompoundName.hpp
     Table.cpp Table.hpp
     Evaluation.cpp Evaluation.hpp
@@ -105,5 +106,6 @@ add_test(NAME Recursion3 COMMAND logical ../tests/recursion3.dl)
 add_test(NAME Projection1 COMMAND logical ../tests/projection1.dl)
 add_test(NAME Projection2 COMMAND logical ../tests/projection2.dl)
 add_test(NAME Projection3 COMMAND logical ../tests/projection3.dl)
+add_test(NAME Projection4 COMMAND logical ../tests/projection4.dl)
 
 add_test(NAME Query1 COMMAND logical ../tests/query1.dl)

@@ -1,27 +1,28 @@
 # Work plan
 
 ## Short term
+- Use `typedef int Id`
+- Test soundness of projections
+- Bug: We find an empty rule when attempting to add new rules to an existing query, for example when creating a projection.
+
 - Compound names aren't displayed properly in Explain.
 - Colour-code the output explanations.
   - Refactor this properly
-- Remove `NotTerminator` and not terminator to use a `Load None`
+- Warning empty relation:
+  - Create a line number
+  - Make it red.
 - Create a `VariableInfo` structure
   - slot
   - bound
   - last use?
+- Colouration options: Use termcap, and work on windows.
+- Syntax errors - Count in the error count.
 - `expect` predicate - number of evaluation steps. Prints a message
 - `steps` predicate - gets the current number of evaluation steps
   `if S is steps then print "Currently at " + S + " steps".`
   `print "..." if steps S.`
+- Debug steps: expect... to expect a certain number of results, or a certain number of evaluation steps.
 - Adding strings to ints??
-- Reporting options
-  - `-q` for quiet
-  - `-v` for verbose
-  - By default, display steps and time, and number of results and number of errors.
-  
-  Found 123 results.
-  Evaluation finished with 1 errors.
-  Evaluation finished.
   - Parser error recovery with `.`
 - Implement n-ary predicates
   - Assert rules
@@ -36,6 +37,10 @@
   
    if X is a parent
 - What about object-orientation?
+- Column names in `find` or `query`
+- Embedding Logical
+- Extending Logical
+- Optimization passes
 - Warn on empty predicates
 - Perhaps have an Evaluation::SetRow() so that it's possible to store the row?
 - Report duplicate attributes a bit better.
@@ -80,6 +85,8 @@ Queries that work:
 - Ressurect the ramp and persist projects. Probably persist mainly.
 - The indent should be 1, not 4.
 - Nicer closure syntax.
+- Installer
+- Build and test on github actions
 - Find syntax? `query X if` is evaluated and displayed immediately.
   - `query X if foo X.`
   - `query X has name Y if`
@@ -92,6 +99,7 @@ Queries that work:
 - Warning about empty predicates with no facts or rules.
 - Optimization: Tables should assume a single type, then fall back onto polymorphic behaviour which is slower.
 - Free intermediate tables, for example tables used for deduplicating.
+- Or just delete the rules?
 - Is the deduplicating logic even sound?? Surely other variables can change too? So we need to deduplicate lots of variables, not just the ones in the sum.
 - Problem with adding rules on demand if a predicate is already being evaluated.
 - Could `large mouse @mickey` actually mean `large-mouse @mickey`

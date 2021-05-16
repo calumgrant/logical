@@ -62,7 +62,7 @@ public:
     int Name() const override;
     bool HasRules() const;
 private:
-    bool rulesRun;
+    bool rulesRun = false;
     std::vector< std::shared_ptr<Evaluation> > rules;
     int name;
     

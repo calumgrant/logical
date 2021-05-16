@@ -1,5 +1,6 @@
-#include <iostream>
 #include "Database.hpp"
+#include "Colours.hpp"
+#include <iostream>
 #include <chrono>
 
 enum class ErrorCode : int
@@ -73,7 +74,7 @@ int main(int argc, char**argv)
         std::cout << "Evaluation steps = " << Database::GlobalCallCount() << std::endl;
         std::cout << "Evaluation time  = " << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() << " µs\n";
         if(db.UserErrorReported())
-            std::cout << "Evaluation completed with " << db.NumberOfErrors() << " errors\n";
+            std::cout << Colours::Error << "Evaluation completed with " << db.NumberOfErrors() << " errors\n" << Colours::Normal;
         else
             std::cout << "Evaluation completed successfully\n";
     }

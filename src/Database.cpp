@@ -150,7 +150,9 @@ void Database::Find(int unaryPredicateName)
         void OnRow(const Entity *e) override
         {
             std::cout << "\t";
+            std::cout << Colours::Value;
             db.Print(*e, std::cout);
+            std::cout << Colours::Normal;
             std::cout << std::endl;
             ++count;
         }
@@ -363,6 +365,6 @@ int Database::NumberOfResults() const
 
 void Database::WarningEmptyRelation(Relation & relation)
 {
-    ++errorCount;
-    std::cerr << "Warning: Querying empty relation '" << GetString(relation.Name()) << "/" << relation.Arity() << "'\n";
+//    ++errorCount;
+    std::cerr << Colours::Error << "Warning: Querying empty relation '" << GetString(relation.Name()) << "/" << relation.Arity() << "'\n" << Colours::Normal;
 }

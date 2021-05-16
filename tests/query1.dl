@@ -1,5 +1,3 @@
-
-
 // This is the query syntax
 
 person @p1 has name "Fred".
@@ -7,13 +5,7 @@ person @p2 has name "Alex", age 30, colour @red.
 person @p2 has name "Alex", colour @red, age 30.
 person @p2 has name "Alex", colour @green, age 30.
 
-// error 1 if count X in (X has age 30) != 1.
-
-// error 1 if count X in (X has age 30, name "Alex") != 1.
-
-
 person @p2 has name "Alex", age 30, colour @green.
-
 
 // This is invalid
 // person @p3 has name "Alex", name "Fred".
@@ -28,4 +20,7 @@ then
 query "Query 2" has Person Person, Name Name if
     person Person has name Name.
 
+2 is a prime.
 query "primes" has prime P if P is a prime.
+
+find query.

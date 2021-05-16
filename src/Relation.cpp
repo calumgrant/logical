@@ -1,5 +1,6 @@
 #include "Database.hpp"
 #include "Evaluation.hpp"
+#include "Colours.hpp"
 
 #include <iostream>
 
@@ -47,6 +48,14 @@ void PrintRelation::Add(const Entity * row)
     output << std::endl;
 }
 
+void ErrorRelation::Add(const Entity * row)
+{
+    output << Colours::Error << "Error: ";
+    PrintRelation::Add(row);
+    output << Colours::Normal;
+    database.ReportUserError();
+}
+
 void PrintRelation::AddRule(const std::shared_ptr<Evaluation> & eval)
 {
     // Run the rule immediately.
@@ -62,12 +71,6 @@ std::size_t PrintRelation::Count()
 
 ErrorRelation::ErrorRelation(Database &db) : PrintRelation(std::cout, db, db.GetStringId("error"))
 {
-}
-
-void ErrorRelation::Add(const Entity * row)
-{
-    PrintRelation::Add(row);
-    database.ReportUserError();
 }
 
 std::size_t Table::Count()
@@ -199,7 +202,7 @@ void Predicate::RunRules()
     
     if(database.Explain())
     {
-        std::cout << "Evaluating " << database.GetString(Name()) << "/" << Arity() << std::endl;
+        std::cout << "Evaluating " << Colours::Relation << database.GetString(Name()) << Colours::Normal << "/" << Arity() << std::endl;
     }
 
     do
