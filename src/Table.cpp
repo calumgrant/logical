@@ -1,5 +1,6 @@
 #include "Relation.hpp"
 #include "Database.hpp"
+#include "RelationImpl.hpp"
 
 #include <iostream>
 

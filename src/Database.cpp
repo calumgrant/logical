@@ -2,6 +2,8 @@
 #include "Evaluation.hpp"
 #include "tokens.tab.h"
 #include "Colours.hpp"
+#include "RelationImpl.hpp"
+#include "EvaluationImpl.hpp"
 
 #include <iostream>
 

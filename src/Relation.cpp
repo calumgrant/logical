@@ -1,6 +1,7 @@
 #include "Database.hpp"
 #include "Evaluation.hpp"
 #include "Colours.hpp"
+#include "RelationImpl.hpp"
 
 #include <iostream>
 

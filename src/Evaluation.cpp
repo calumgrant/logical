@@ -2,6 +2,7 @@
 #include "Database.hpp"
 #include "AST.hpp"
 #include "Colours.hpp"
+#include "EvaluationImpl.hpp"
 
 #include <iostream>
 #include <sstream>
