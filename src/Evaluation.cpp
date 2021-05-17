@@ -1162,7 +1162,19 @@ void Evaluation::OutputVariable(std::ostream & os, int variable)
 
 void Evaluation::OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> & relation)
 {
-    os << Colours::Relation << db.GetString(relation->Name()) << Colours::Normal;
+    os << Colours::Relation;
+    if(auto cn = relation->GetCompoundName())
+    {
+        os << "has:";
+        for(int i=0; i<cn->parts.size(); ++i)
+        {
+            if(i>0) os << ":";
+            os << db.GetString(cn->parts[i]);
+        }
+    }
+    else
+        os << db.GetString(relation->Name());
+    os << Colours::Normal;
 }
 
 void Join::Explain(Database &db, std::ostream & os, int indent) const

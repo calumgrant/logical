@@ -37,6 +37,8 @@ public:
     
     virtual int Name() const =0;
     
+    virtual const CompoundName * GetCompoundName() const; // Horrid name/interface
+    
     virtual void RunRules() =0;
     virtual int Arity() const =0;
     
@@ -154,11 +156,12 @@ private:
 class Table : public Predicate
 {
 public:
-    Table(Database &db, int name, int arity);
+    Table(Database &db, const CompoundName &name, int arity);
     std::size_t Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
     void Add(const Entity*row) override;
     int Arity() const override;
+    const CompoundName * GetCompoundName() const override;
 
     class Comparer
     {
@@ -208,5 +211,7 @@ public:
     Depth reentrancy;
     std::vector<Entity> delta_data;
     index_type delta_hash;
+    
+    const CompoundName name;
 };
 

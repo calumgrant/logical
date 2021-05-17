@@ -133,7 +133,9 @@ std::shared_ptr<Relation> Database::GetRelation(int name, int arity)
 
     if (i == relations.end())
     {
-        auto r = std::make_shared<Table>(*this, name, arity);
+        std::vector<int> p = { name };
+        CompoundName cn(p);
+        auto r = std::make_shared<Table>(*this, cn, arity);
         relations.insert(std::make_pair(index, r));
         return r;
     }
@@ -300,7 +302,7 @@ std::shared_ptr<Relation> Database::GetRelation(const CompoundName &cn)
     //if (cn.parts.size()==1)
     //    relation = std::make_shared<BinaryTable>(*this, cn.parts[0]);
     //else
-        relation = std::make_shared<Table>(*this, cn.parts[0], cn.parts.size()+1);
+        relation = std::make_shared<Table>(*this, cn, cn.parts.size()+1);
     
     tables[cn] = relation;
 
@@ -377,15 +379,20 @@ void Database::RunQueries()
     class QueryVisitor : public Relation::Visitor
     {
     public:
-        QueryVisitor(Database & db, int arity) : database(db), arity(arity) {}
+        QueryVisitor(Database & db, int arity, const CompoundName & cn) : database(db), arity(arity), cn(cn), sortedRow(arity) {}
         
         void OnRow(const Entity * row) override
         {
-            database.AddResult(row, arity);
+            sortedRow[0] = row[0];
+            for(int i=1; i<arity; ++i)
+                sortedRow[i] = row[cn.mapFromInputToOutput[i-1]+1];
+            database.AddResult(sortedRow.data(), arity);
         }
         Database & database;
         
         const int arity;
+        const CompoundName & cn;
+        std::vector<Entity> sortedRow;
     };
         
     class Visitor : public Relation::Visitor
@@ -404,7 +411,7 @@ void Database::RunQueries()
 
             // Join with all attributes in the
             database.queryPredicate->VisitAttributes([&](Relation&r) {
-                QueryVisitor qv(database, r.Arity());
+                QueryVisitor qv(database, r.Arity(), *r.GetCompoundName());
                 std::vector<Entity> row(r.Arity());
                 row[0] = data[0];
                 r.Query(&row[0], 1, qv);

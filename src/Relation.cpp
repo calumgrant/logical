@@ -279,3 +279,9 @@ void Predicate::VisitAttributes(const std::function<void(Relation&)> & visitor) 
 {
     for(auto &r : attributes) visitor(*r);
 }
+
+const CompoundName * Relation::GetCompoundName() const
+{
+    return nullptr;
+}
+

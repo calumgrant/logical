@@ -1,3 +1,5 @@
+line 9.  // This will permute the results order
+
 // This is the query syntax
 
 person @p1 has name "Fred".
@@ -13,7 +15,7 @@ person @p2 has name "Alex", age 30, colour @green.
 person "Joe" has name "Bloggs".
 
 if
-    Person has name Name
+    person Person has name Name
 then
     query "Query 1" has
     Person Person,
@@ -24,7 +26,6 @@ query "Query 2" has Person Person, Name Name if
 
 2 is a prime.
 query "primes" has prime P if P is a prime.
-
 query "Unused parameter" has entity E, name N, line 20, file "C:\\foo.c" if
     E=@f1 and N = "function1" or
     E=@f2 and N = "function2" or

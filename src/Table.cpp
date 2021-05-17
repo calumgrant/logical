@@ -3,10 +3,11 @@
 
 #include <iostream>
 
-Table::Table(Database &db, int name, int arity) :
-    Predicate(db, name), arity(arity),
+Table::Table(Database &db, const CompoundName & cn, int arity) :
+    Predicate(db, cn.parts[0]), arity(arity),
     hash({}, 100, Comparer(data, arity, -1), Comparer(data, arity, -1)),
-    delta_hash({}, 100, Comparer(delta_data, arity, -1), Comparer(delta_data, arity, -1))
+    delta_hash({}, 100, Comparer(delta_data, arity, -1), Comparer(delta_data, arity, -1)),
+    name(cn)
 {
 }
 
@@ -147,4 +148,9 @@ void Table::Query(Entity * row, int mask, Visitor&v)
 int Table::Arity() const
 {
     return arity;
+}
+
+const CompoundName * Table::GetCompoundName() const
+{
+    return &name;
 }

@@ -14,3 +14,5 @@ error "primes" if
     prime N and not prime2 N
     or
     prime2 N and not prime N.
+
+query "Prime numbers < 50" has result P if prime P and P<50.

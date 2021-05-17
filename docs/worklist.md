@@ -1,57 +1,60 @@
 # Work plan
 
+find person P has name N and
+
 ## Short term
+
+- Better results
+ - Sort the results
+ - Deduplicate the results
+ - Store a compound name in a relation.
+   - Use it to sort the coluns in the query.
+   - Compound names aren't displayed properly in Explain.
+ - `find` should also log number of results
+  - Expect a certain number of results. If not, report an error.
+     `expect 100.`
+  - Implement `find X,Y,Z in`.
+- Column names in `find` and `query`. Keep the ordering consistent with the source query.
+- Implement a resultset. It's just a table with a writer. The table stores the results.
+- Consider synthesising an ID for `has:Person:Name`
+
+## Refactoring
+- Implement a `ChainedEvaluation` class that exposes `Next`?
 - Use `typedef int Id`
-- Test soundness of projections
-- Bug: We find an empty rule when attempting to add new rules to an existing query, for example when creating a projection.
-
-- Queries
-How to find all rules relating to the query relation??
-Iterate all rules in the predicate.
-
-
-- Compound names aren't displayed properly in Explain.
-- Colour-code the output explanations.
-  - Refactor this properly
-- Warning empty relation:
-  - Create a line number
-  - Make it red.
 - Create a `VariableInfo` structure
   - slot
   - bound
   - last use?
-- Colouration options: Use termcap, and work on windows.
+- Remove the AST `Visit` functions
+- const fields more
+- Split up files
+- Put into `namespace Logical`
+- Slim down the header files, for example split up relation.hpp
+
+- Bug: We find an empty rule when attempting to add new rules to an existing query, for example when creating a projection.
+
+- Colour-code the output explanations.
+  - Finish all of the evaluation types (!=, +, )
+  - Refactor this properly
+  - Colouration options: Use termcap, and work on Windows.
+- Warning empty relation:
+  - Create a line number
+  - Make it red.
 - Syntax errors - Count in the error count.
 - `expect` predicate - number of evaluation steps. Prints a message
 - `steps` predicate - gets the current number of evaluation steps
   `if S is steps then print "Currently at " + S + " steps".`
   `print "..." if steps S.`
 - Debug steps: expect... to expect a certain number of results, or a certain number of evaluation steps.
-- Adding strings to ints??
   - Parser error recovery with `.`
-- Implement n-ary predicates
-  - Assert rules
-  - Query
-  - Query n-ary relations.
-    - Efficient indexing?
-    - Arbitrary joins
-- Implement `query` predicate.
-  result p has message "Unused parameter." if p is a parameter and parameter has no use.
-  find result -> Looks at all tuples involving result as well.
-
-  
-   if X is a parent
-- What about object-orientation?
-- Column names in `find` or `query`
 - Embedding Logical
 - Extending Logical
 - Optimization passes
-- Warn on empty predicates
-- Perhaps have an Evaluation::SetRow() so that it's possible to store the row?
+- Perhaps have an `Evaluation::SetRow()` so that it's possible to store the row?
 - Report duplicate attributes a bit better.
 - Count total number of rows stored.
+- Count total number of predicates.
 - Warning on undefined predicates.
-- Remove the AST `Visit` functions
 - File operations
   - `Database::ReadBinary()`
   - `Database::WriteBinary()`
@@ -74,17 +77,10 @@ Iterate all rules in the predicate.
   - `number X has square X*X.` is not bound yet.
   - `number X has square Y if Y = X*X.` also not bound yet.
   - Binding tests
-Queries that work:
-  - `find succeeded _ if 1=1.`
-  - Deduplicate results
-  - Sort results
 - Missing input files are not displayed as errors.
 - `is not` syntax.
   - `X is not a person`.
   - `X has no job`
-- const fields more
-- Output timing information
-- Output number of errors.
 - `not` should fail early (optimization) - see the primes1.dl example
 - `or` join both branches if the same variables are bound in all branches.
 - Ressurect the ramp and persist projects. Probably persist mainly.
@@ -92,30 +88,12 @@ Queries that work:
 - Nicer closure syntax.
 - Installer
 - Build and test on github actions
-- Find syntax? `query X if` is evaluated and displayed immediately.
-  - `query X if foo X.`
-  - `query X has name Y if`
-  - `if 1<=X<100 then find X has attribute X+1.`
-  - `query "name" has item X, child Y if Y has parent X`
-  - `if Y has parent X then query "name" has item X, child Y.`
-  - It would be nicer in general to just use the same syntax.
-  - Queries are run at the end, after all rules have been defined.
-
-- Warning about empty predicates with no facts or rules.
 - Optimization: Tables should assume a single type, then fall back onto polymorphic behaviour which is slower.
 - Free intermediate tables, for example tables used for deduplicating.
 - Or just delete the rules?
 - Is the deduplicating logic even sound?? Surely other variables can change too? So we need to deduplicate lots of variables, not just the ones in the sum.
 - Problem with adding rules on demand if a predicate is already being evaluated.
-- Could `large mouse @mickey` actually mean `large-mouse @mickey`
-- Has with no entity? For example `query has message "Hello"` if `query` is unbound then it's taken to be a predicate name???
 
-Code refactoring:
-- Split up files
-- Put into `namespace Logical`
-- Slim down the header files, for example split up relation.hpp
-
-## Class system
 
 ## Recursion
 
