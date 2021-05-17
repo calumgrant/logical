@@ -2,6 +2,12 @@
 
 ## Short term
 
+- Closures:
+  - `call reaches a Successor succ`
+  - `x reaches a parent y`
+  - Think about + vs * keyword
+  - Implementation? 
+
 - Time each predicate.
 - Better results
  - Sort the results
@@ -10,9 +16,9 @@
      `expect 100.`
   - Implement `find X,Y,Z in`.
 - Column names in `find` and `query`.
-- Think about CSV output.
 - Implement a resultset. It's just a table with a writer. The table stores the results.
 - Consider synthesising an ID for `has:Person:Name`
+- Log filename in errors.
 
 ## Refactoring
 - Implement a `ChainedEvaluation` class that exposes `Next`?
@@ -63,7 +69,7 @@
   - n-ary relations
     - n-ary tables
     - efficient join orders.
-  - how to name arbitrary n-ary tuples from Datalog that are compatible with logical?
+  - how to name arbitrary n-ary tuples from Datalog that are compatible with logical? Use `:` to access them.
 - Inefficient to run `if 1<=X<=100 then X is c and X is b.` as it's evaluated twice.
 - `exit`
 - Think about predicate-names containing `-`.

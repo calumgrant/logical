@@ -45,7 +45,7 @@
 %type<fval> tok_float
 %type<rule> datalog_rule rule
 %type<is> is_a
-%type<has> has_a
+%type<has> has_a reaches
 
 %{
 #include <Database.hpp>
@@ -67,7 +67,7 @@ typedef void * yyscan_t;
 %token tok_identifier tok_atstring tok_string tok_integer tok_float tok_underscore
 %token tok_if tok_and tok_has tok_or tok_not tok_a tok_an tok_no tok_is tok_dot tok_then tok_find tok_sum tok_in tok_all
 %token tok_open tok_close tok_comma tok_colondash tok_semicolon tok_equals tok_notequals tok_questiondash tok_lt tok_gt tok_lteq tok_gteq
-%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count
+%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count tok_reaches
 
 %%
 
@@ -255,6 +255,10 @@ baseclause:
     { 
         $$ = new AST::EntityHasAttributes($1, $2, $4, $3);
     }
+|   unarypredicatelist entity reaches binarypredicate entity_expression
+    { 
+        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4,$5), $3);
+    }
 |   unarypredicatelist entity tok_comma attributes 
     { 
         $$ = new AST::EntityHasAttributes($1, $2, $4, HasType::has);
@@ -262,6 +266,10 @@ baseclause:
 |   entity has_a attributes
     {
         $$ = new AST::EntityHasAttributes(nullptr, $1, $3, $2);
+    }
+|   entity reaches binarypredicate entity_expression
+    {
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3,$4), $2);
     }
 |   entity tok_comma attributes
     {
@@ -290,6 +298,13 @@ is_a:
 |   tok_is tok_not { $$ = IsType::isnot; }
 |   tok_is tok_not tok_a { $$ = IsType::isnot; }
 |   tok_is tok_not tok_an { $$ = IsType::isnot; }
+;
+
+reaches:
+    tok_reaches { $$ = HasType::reaches; }
+|   tok_reaches tok_a { $$ = HasType::reaches; }
+|   tok_reaches tok_an { $$ = HasType::reaches; }
+|   tok_reaches tok_no { $$ = HasType::reachesno; }
 ;
 
 allclause:

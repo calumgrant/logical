@@ -32,6 +32,7 @@ is      return tok_is;
 no      return tok_no;
 not     return tok_not;
 or      return tok_or;
+reaches return tok_reaches;
 sum     return tok_sum;
 then    return tok_then;
 true    return tok_true;

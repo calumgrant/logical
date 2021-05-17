@@ -1,0 +1,44 @@
+
+import "cpp".
+import "semmle.code.cpp.dataflow.EscapesTree".
+import "semmle.code.cpp.commons.Exclusions".
+import "semmle.code.cpp.models.interfaces.Alias".
+
+this is MemsetFunction if
+    this is Function and
+    (
+        this has GlobalOrStdOrBsName "memset" or
+        this has GlobalOrStdName "wmemset" or
+        this has GlobalName N and (N = "bzero" or N = "__builtin_memset")
+    ).
+
+escaped is isNonEscapingArgument if
+    escaped is Expr and 
+    call is Call and
+    call has Target aliasFunction and 
+    aliasFunction is AliasFunction and
+    call has argument arg, position i and
+    escaped has Unconverted arg and
+    (
+        aliasFunction has parameterNeverEscapes i
+        or
+        aliasFunction has parameterEscapesOnlyViaReturn i and
+        (call is ExprInVoidContext or call has Conversion conv and conv is a BoolConversion)
+    ).
+
+if
+    call is a FunctionCall and
+    v is a LocalVariable and
+    memset is a MemsetFunction and
+    not call is FromMacroDefinition and
+    all (escape is NonEscapingArgument) in (v has an Access access and access has EscapesTree escape) and
+    not (v has an Access access and call reaches a Successor access) and
+    c is a Compilation and
+    c has a CompiledFile file and
+    call has File file and
+    not c has an argument "-fno-builtin-memset" and
+    memset has name name
+then
+    query "cs/memset2" has 
+    item call,
+    message "Call to " + name + " may be deleted by the compiler.".

@@ -1,0 +1,7 @@
+
+S is string if 1<=N<=1000000 and S = "" + N.
+
+C is Count if 
+    C = count S in (string S).
+
+find Count.

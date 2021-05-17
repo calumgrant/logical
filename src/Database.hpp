@@ -16,6 +16,9 @@ class Error
 
 };
 
+typedef int StringId;
+typedef int Arity;
+typedef int RelationId;
 
 class Database
 {
@@ -32,13 +35,13 @@ public:
     Entity CreateAt(const std::string &s) { return Entity { EntityType::AtString, GetAtStringId(s) }; }
     Entity Create(bool b) const { return Entity { EntityType::Boolean, b}; }
     
-    Entity AddStrings(int id1, int id2);
+    Entity AddStrings(StringId id1, StringId id2);
     
-    virtual int GetStringId(const std::string&s) =0;
-    virtual int GetAtStringId(const std::string&s) =0;
+    virtual StringId GetStringId(const std::string&s) =0;
+    virtual StringId GetAtStringId(const std::string&s) =0;
     int GetStringLiteral(const char * literal);
-    virtual const std::string &GetString(int id) const =0;
-    virtual const std::string &GetAtString(int id) const =0;
+    virtual const std::string &GetString(StringId id) const =0;
+    virtual const std::string &GetAtString(StringId id) const =0;
 
     void Add(const std::string & table, const Entity &entityId);
     void Add(const std::string & table, const Entity &entityId1, const Entity &entity);
@@ -50,16 +53,16 @@ public:
 
     void NotImplementedError(const SourceLocation&);
     
-    virtual std::shared_ptr<Relation> GetUnaryRelation(int nameId) =0;
-    virtual std::shared_ptr<Relation> GetBinaryRelation(int nameId) =0;
-    virtual std::shared_ptr<Relation> GetRelation(int nameId, int arity) =0;
+    virtual std::shared_ptr<Relation> GetUnaryRelation(StringId nameId) =0;
+    virtual std::shared_ptr<Relation> GetBinaryRelation(StringId nameId) =0;
+    virtual std::shared_ptr<Relation> GetRelation(StringId nameId, Arity arity) =0;
     virtual std::shared_ptr<Relation> GetRelation(const CompoundName &cn) =0;
 
     virtual void Find(int unaryPredicateId) =0;
 
     void Print(const Entity &e, std::ostream &os) const;
     
-    // Same as Print, but put quotes around strings.
+    // Same as Print, but put quotes around strings and escapes control characters.
     void PrintQuoted(const Entity &e, std::ostream &os) const;
 
     // Logs an error for invalid left hand side clause
