@@ -5,6 +5,7 @@
 #include "Entity.hpp"
 #include "CompoundName.hpp"
 #include "Binary.hpp"
+#include "DatabaseImpl.hpp"
 
 #undef _NDEBUG
 #undef NDEBUG
@@ -58,7 +59,7 @@ int main()
     assert(st.GetString(0) == "hello");
     assert(st.GetString(1) == "hello2");
 
-    Database db;
+    DatabaseImpl db;
     auto e1 = db.CreateInt(0);
 
     auto test = db.GetStringId("test");

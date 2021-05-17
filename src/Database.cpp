@@ -4,6 +4,7 @@
 #include "Colours.hpp"
 #include "RelationImpl.hpp"
 #include "EvaluationImpl.hpp"
+#include "DatabaseImpl.hpp"
 
 #include <iostream>
 
@@ -13,7 +14,7 @@ int yylex_init_extra (Database *, yyscan_t* scanner);
 int yylex_destroy (yyscan_t yyscanner );
 void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
-std::shared_ptr<Relation> Database::GetUnaryRelation(int name)
+std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
 {
     auto i = unaryRelations.find(name);
     if (i == unaryRelations.end())
@@ -26,7 +27,7 @@ std::shared_ptr<Relation> Database::GetUnaryRelation(int name)
         return i->second;
 }
 
-std::shared_ptr<Relation> Database::GetBinaryRelation(int name)
+std::shared_ptr<Relation> DatabaseImpl::GetBinaryRelation(int name)
 {
     auto i = binaryRelations.find(name);
     if (i==binaryRelations.end())
@@ -51,7 +52,7 @@ Relation::~Relation()
 {
 }
 
-Database::Database() : verbose(false)
+DatabaseImpl::DatabaseImpl() : verbose(false)
 {
     int queryId = GetStringId("query");
     queryPredicate = GetUnaryRelation(queryId);
@@ -61,7 +62,7 @@ Database::Database() : verbose(false)
     unaryRelations[GetStringId("error")] = std::make_shared<ErrorRelation>(*this);
 }
 
-Database::~Database()
+DatabaseImpl::~DatabaseImpl()
 {
 }
 
@@ -101,6 +102,7 @@ void Database::PrintQuoted(const Entity &e, std::ostream &os) const
     if(e.type == EntityType::String)
     {
         os << '\"';
+        // TODO: Escape the characters
         Print(e, os);
         os << '\"';
     }
@@ -111,17 +113,17 @@ void Database::PrintQuoted(const Entity &e, std::ostream &os) const
     os << Colours::Normal;
 }
 
-const std::string &Database::GetString(int id) const
+const std::string &DatabaseImpl::GetString(int id) const
 {
     return strings.GetString(id);
 }
 
-const std::string &Database::GetAtString(int id) const
+const std::string &DatabaseImpl::GetAtString(int id) const
 {
     return atstrings.GetString(id);
 }
 
-std::shared_ptr<Relation> Database::GetRelation(int name, int arity)
+std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
 {
     switch(arity)
     {
@@ -145,7 +147,7 @@ std::shared_ptr<Relation> Database::GetRelation(int name, int arity)
         return i->second;
 }
 
-void Database::Find(int unaryPredicateName)
+void DatabaseImpl::Find(int unaryPredicateName)
 {
     class Tmp : public Relation::Visitor
     {
@@ -173,12 +175,12 @@ void Database::InvalidLhs()
     std::cerr << "Invalid left hand side of a rule.\n";
 }
 
-void Database::SetVerbose(bool v)
+void DatabaseImpl::SetVerbose(bool v)
 {
     verbose = v;
 }
 
-bool Database::Explain() const
+bool DatabaseImpl::Explain() const
 {
     return verbose;
 }
@@ -187,7 +189,7 @@ int Database::GetStringLiteral(const char *literal)
 {
     int len = strlen(literal)-1;
     std::string value;
-    // TODO: Do this in the scanner
+    value.reserve(len);
     for(int i=1; i<len; ++i)
     {
         if(literal[i]=='\\')
@@ -227,7 +229,7 @@ bool Database::UserErrorReported() const
     return NumberOfErrors()>0;
 }
 
-void Database::ReportUserError()
+void DatabaseImpl::ReportUserError()
 {
     ++errorCount;
 }
@@ -237,12 +239,12 @@ Entity Database::AddStrings(int id1, int id2)
     return CreateString(GetString(id1) + GetString(id2));
 }
 
-int Database::GetStringId(const std::string &str)
+int DatabaseImpl::GetStringId(const std::string &str)
 {
     return strings.GetId(str);
 }
 
-int Database::GetAtStringId(const std::string &str)
+int DatabaseImpl::GetAtStringId(const std::string &str)
 {
     return atstrings.GetId(str);
 }
@@ -269,7 +271,7 @@ int Database::ReadFile(const char *filename)
     return 1;
 }
 
-std::shared_ptr<Relation> Database::GetRelation(const CompoundName &cn)
+std::shared_ptr<Relation> DatabaseImpl::GetRelation(const CompoundName &cn)
 {
     auto t = tables.find(cn);
     
@@ -323,7 +325,7 @@ std::size_t Database::GlobalCallCount()
     return Evaluation::GlobalCallCount();
 }
 
-void Database::CreateProjection(const CompoundName &from, const CompoundName &to)
+void DatabaseImpl::CreateProjection(const CompoundName &from, const CompoundName &to)
 {
     /*
     std::cout << "Create a projection from ";
@@ -356,12 +358,12 @@ void Database::CreateProjection(const CompoundName &from, const CompoundName &to
     tables[to]->AddRule(eval);
 }
 
-int Database::NumberOfErrors() const
+int DatabaseImpl::NumberOfErrors() const
 {
     return errorCount;
 }
 
-int Database::NumberOfResults() const
+int DatabaseImpl::NumberOfResults() const
 {
     return resultCount;
 }
@@ -372,12 +374,12 @@ void Database::WarningEmptyRelation(Relation & relation)
     std::cerr << Colours::Error << "Warning: Querying empty relation '" << GetString(relation.Name()) << "/" << relation.Arity() << "'\n" << Colours::Normal;
 }
 
-void Database::RunQueries()
+void DatabaseImpl::RunQueries()
 {
     class QueryVisitor : public Relation::Visitor
     {
     public:
-        QueryVisitor(Database & db, int arity, const CompoundName & cn) : database(db), arity(arity), cn(cn), sortedRow(arity) {}
+        QueryVisitor(DatabaseImpl & db, int arity, const CompoundName & cn) : database(db), arity(arity), cn(cn), sortedRow(arity) {}
         
         void OnRow(const Entity * row) override
         {
@@ -386,7 +388,7 @@ void Database::RunQueries()
                 sortedRow[i] = row[cn.mapFromInputToOutput[i-1]+1];
             database.AddResult(sortedRow.data(), arity, false);
         }
-        Database & database;
+        DatabaseImpl & database;
         
         const int arity;
         const CompoundName & cn;
@@ -396,9 +398,9 @@ void Database::RunQueries()
     class Visitor : public Relation::Visitor
     {
     public:
-        Visitor(Database & db) : database(db) {}
+        Visitor(DatabaseImpl & db) : database(db) {}
         std::size_t queries = 0;
-        Database & database;
+        DatabaseImpl & database;
 
         void OnRow(const Entity * data) override
         {
@@ -421,7 +423,7 @@ void Database::RunQueries()
     queryPredicate->Query(nullptr, 0, visitor);
 }
 
-void Database::AddResult(const Entity * row, int arity, bool displayFirstColumn)
+void DatabaseImpl::AddResult(const Entity * row, int arity, bool displayFirstColumn)
 {
     ++resultCount;
     
@@ -438,4 +440,9 @@ void Database::AddResult(const Entity * row, int arity, bool displayFirstColumn)
         std::cout << Colours::Normal;
     }
     std::cout << std::endl;
+}
+
+bool DatabaseImpl::AnsiHighlightingEnabled() const
+{
+    return true;
 }

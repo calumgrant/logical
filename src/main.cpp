@@ -1,5 +1,7 @@
 #include "Database.hpp"
 #include "Colours.hpp"
+#include "DatabaseImpl.hpp"
+
 #include <iostream>
 #include <chrono>
 
@@ -22,7 +24,7 @@ int main(int argc, char**argv)
 
     int verbose = 0;
     bool quiet = false;
-    Database db;
+    DatabaseImpl db;
     int errors = 0;
     
     auto startTime = std::chrono::system_clock::now();
