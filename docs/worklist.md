@@ -1,20 +1,16 @@
 # Work plan
 
-find person P has name N and
-
 ## Short term
 
+- Time each predicate.
 - Better results
  - Sort the results
  - Deduplicate the results
- - Store a compound name in a relation.
-   - Use it to sort the coluns in the query.
-   - Compound names aren't displayed properly in Explain.
- - `find` should also log number of results
   - Expect a certain number of results. If not, report an error.
      `expect 100.`
   - Implement `find X,Y,Z in`.
-- Column names in `find` and `query`. Keep the ordering consistent with the source query.
+- Column names in `find` and `query`.
+- Think about CSV output.
 - Implement a resultset. It's just a table with a writer. The table stores the results.
 - Consider synthesising an ID for `has:Person:Name`
 
@@ -25,6 +21,7 @@ find person P has name N and
   - slot
   - bound
   - last use?
+  - With pretty printing?
 - Remove the AST `Visit` functions
 - const fields more
 - Split up files
@@ -34,7 +31,7 @@ find person P has name N and
 - Bug: We find an empty rule when attempting to add new rules to an existing query, for example when creating a projection.
 
 - Colour-code the output explanations.
-  - Finish all of the evaluation types (!=, +, )
+  - Finish all of the evaluation types
   - Refactor this properly
   - Colouration options: Use termcap, and work on Windows.
 - Warning empty relation:
@@ -118,9 +115,8 @@ find person P has name N and
 ## Datalog predicates
 
 - nary predicates
-- `with` predicates - how do they work?
-Perhaps mix Datalog syntax with Logical syntax.
-Syntax for all, count etc.
+- Perhaps mix Datalog syntax with Logical syntax.
+- Syntax for all, count etc.
 
 ## Last use optimization
 
@@ -151,6 +147,7 @@ Implement memory mapped memory allocator.
 - [ ] Reading external data.
 
 # Optimizer
+- JIT optimizer - create the basic predicate, then optimize based on table sizes.
 - Avoid duplicate loads. If two constants share the same value on the same path then make one an alias for the other.
 - Lift constants out of loops.
 - Optimize variable layout, for example reuse local variables 

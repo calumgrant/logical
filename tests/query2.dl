@@ -7,3 +7,7 @@ person 2 has name "Joe", age 45.
 
 find P,N,A in person P has name N, age A and A>40.
 
+find person.
+find person _.
+find person _ has name _, age _.
+find person _ has age _, name _.

@@ -527,7 +527,12 @@ void RangeU::Evaluate(Entity * row)
 void RangeU::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "For _" << slot1 << " " << cmp1 << " _" << slot2 << " " << cmp2 << " _" << slot3;
+    os << "For ";
+    OutputVariable(os, slot1);
+    os << " " << cmp1 << " ";
+    OutputVariable(os, slot2);
+    os << " " << cmp2 << " ";
+    OutputVariable(os, slot3);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -550,7 +555,10 @@ void CompareBB::Evaluate(Entity *row)
 void CompareBB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Test _" << slot1 << cmp << "_" << slot2;
+    os << "Test ";
+    OutputVariable(os, slot1);
+    os << " " << cmp << " ";
+    OutputVariable(os, slot2);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -696,7 +704,12 @@ void AddBBF::Evaluate(Entity *row)
 void AddBBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Calculate _" << slot3 << " := _" << slot1 << " + _" << slot2;
+    os << "Calculate ";
+    OutputVariable(os, slot3);
+    os << " := ";
+    OutputVariable(os, slot1);
+    os << " + ";
+    OutputVariable(os, slot2);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);

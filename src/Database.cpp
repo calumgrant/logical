@@ -154,11 +154,7 @@ void Database::Find(int unaryPredicateName)
 
         void OnRow(const Entity *e) override
         {
-            std::cout << "\t";
-            std::cout << Colours::Value;
-            db.Print(*e, std::cout);
-            std::cout << Colours::Normal;
-            std::cout << std::endl;
+            db.AddResult(e, 1, true);
             ++count;
         }
     };
@@ -386,7 +382,7 @@ void Database::RunQueries()
             sortedRow[0] = row[0];
             for(int i=1; i<arity; ++i)
                 sortedRow[i] = row[cn.mapFromInputToOutput[i-1]+1];
-            database.AddResult(sortedRow.data(), arity);
+            database.AddResult(sortedRow.data(), arity, false);
         }
         Database & database;
         
@@ -423,14 +419,18 @@ void Database::RunQueries()
     queryPredicate->Query(nullptr, 0, visitor);
 }
 
-void Database::AddResult(const Entity * row, int arity)
+void Database::AddResult(const Entity * row, int arity, bool displayFirstColumn)
 {
     ++resultCount;
     
     std::cout << "\t";
-    for(int i=1; i<arity; ++i)
+    bool isFirst = true;
+    for(int i=displayFirstColumn ? 0 : 1; i<arity; ++i)
     {
-        if(i>1) std::cout << ", ";
+        if (isFirst)
+            isFirst = false;
+        else
+            std::cout << ", ";
         std::cout << Colours::Value;
         Print(row[i], std::cout);
         std::cout << Colours::Normal;

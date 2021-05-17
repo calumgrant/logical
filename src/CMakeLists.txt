@@ -18,15 +18,16 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 add_library(logiccore 
     AST.cpp AST.hpp
     Binary.hpp Binary.cpp
-    Database.cpp Database.hpp
+    Database.cpp Database.hpp DatabaseImpl.hpp
     StringTable.cpp StringTable.hpp
     Entity.hpp
     Colours.hpp
     CompoundName.cpp CompoundName.hpp
+    Fwd.hpp
     Table.cpp Table.hpp
-    Evaluation.cpp Evaluation.hpp
+    Evaluation.cpp Evaluation.hpp EvaluationImpl.hpp
     Compiler.cpp Compiler.hpp
-    Relation.cpp Relation.hpp
+    Relation.cpp Relation.hpp RelationImpl.hpp
     Allocator.cpp Allocator.hpp
     ${BISON_MyParser_OUTPUTS}
     ${FLEX_MyScanner_OUTPUTS})

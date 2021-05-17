@@ -551,13 +551,7 @@ public:
     
     void Evaluate(Entity * row) override
     {
-        std::cout << "\t";
-        for(int i=0; i<rowSize; ++i)
-        {
-            if(i>0) std::cout << ", ";
-            database.PrintQuoted(row[i], std::cout);
-        }
-        std::cout << std::endl;
+        database.AddResult(row, rowSize, true);
         ++count;
     }
     

@@ -5,6 +5,7 @@
 
 #include "StringTable.hpp"
 #include "Relation.hpp"
+#include "Colours.hpp"
 
 class SourceLocation
 {
@@ -44,10 +45,10 @@ public:
 
     // Create entities
     Entity CreateString(const std::string&s) { return Entity { EntityType::String, strings.GetId(s) }; }
-    Entity CreateInt(int i) { return Entity { EntityType::Integer, i}; }
-    Entity CreateFloat(float f) { return Entity { EntityType::Float, f}; }
-    Entity CreateAt(const std::string &s)  { return Entity { EntityType::AtString, atstrings.GetId(s) }; }
-    Entity Create(bool b) { return Entity { EntityType::Boolean, b}; }
+    Entity CreateInt(int i) const { return Entity { EntityType::Integer, i}; }
+    Entity CreateFloat(float f) const { return Entity { EntityType::Float, f}; }
+    Entity CreateAt(const std::string &s) { return Entity { EntityType::AtString, atstrings.GetId(s) }; }
+    Entity Create(bool b) const { return Entity { EntityType::Boolean, b}; }
     
     Entity AddStrings(int id1, int id2);
     
@@ -99,7 +100,12 @@ public:
     void WarningEmptyRelation(Relation&);
     
     void RunQueries();
-    void AddResult(const Entity * row, int arity);
+    
+    void AddResult(const Entity * row, int arity, bool displayFirstColumn);
+    
+    // Gets the ANSI colour sequence for the given highlight, if appropriate for the platform.
+    // Otherwise returns the empty string.
+    const char * Highlight(Colours::TextHighlight highlight);
 
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
