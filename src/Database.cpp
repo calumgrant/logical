@@ -472,9 +472,9 @@ void Database::SetEvaluationLimit(std::size_t limit)
 
 void DatabaseImpl::CheckErrors()
 {
-    if(Evaluation::GlobalCallCount() >= Evaluation::GetGlobalCallCountLimit())
+    if(Evaluation::GlobalCallCount() > Evaluation::GetGlobalCallCountLimit())
     {
-        Error("Error: Evaluation step limit reached");
+        Error("Error: Evaluation terminated because step limit is reached");
     }
     
     if(expectedResults != -1 && NumberOfResults() != expectedResults)

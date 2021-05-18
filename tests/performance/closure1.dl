@@ -1,3 +1,6 @@
+expected-results 6.
+evaluation-step-limit 726082.
+
 x is a number if 0<=x<=100.
 
 x has successor x+1 if x is a number.

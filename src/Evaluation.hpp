@@ -52,7 +52,7 @@ protected:
     bool IncrementCallCount()
     {
         ++callCount;
-        return ++globalCallCount >= globalCallCountLimit;
+        return ++globalCallCount > globalCallCountLimit;
     }
 private:
     // The number of times Evaluate() has been called.

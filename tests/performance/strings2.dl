@@ -1,3 +1,5 @@
+expected-results 1.
+evaluation-step-limit 6996010.
 
 S is string if 1<=N<=1000 and 1<=M<1000 and S = N + "-" + M.
 
