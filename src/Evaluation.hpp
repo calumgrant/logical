@@ -33,6 +33,7 @@ public:
     
     static std::size_t GlobalCallCount();
     static void SetGlobalCallCountLimit(std::size_t limit);
+    static std::size_t GetGlobalCallCountLimit();
     
     // Options for analysis
     

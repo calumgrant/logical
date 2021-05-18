@@ -39,7 +39,7 @@ std::size_t BinaryTable::Count()
 }
 
 PrintRelation::PrintRelation(std::ostream & output, Database &db, int name) :
-    Predicate(db, name), output(output)
+    SpecialPredicate(db, name), output(output)
 {
 }
 
@@ -57,7 +57,7 @@ void ErrorRelation::Add(const Entity * row)
     database.ReportUserError();
 }
 
-void PrintRelation::AddRule(const std::shared_ptr<Evaluation> & eval)
+void SpecialPredicate::AddRule(const std::shared_ptr<Evaluation> & eval)
 {
     // Run the rule immediately.
     eval->Evaluate(nullptr);
@@ -65,7 +65,27 @@ void PrintRelation::AddRule(const std::shared_ptr<Evaluation> & eval)
         eval->Explain(database, std::cout, 0);
 }
 
-std::size_t PrintRelation::Count()
+ExpectedResults::ExpectedResults(Database &db, RelationId name) : SpecialPredicate(db, name)
+{
+}
+
+void ExpectedResults::Add(const Entity * data)
+{
+    if(data->type != EntityType::Integer)
+        database.Error("Invalid type for expected-results");
+    
+    database.SetExpectedResults(data->i);
+}
+
+void EvaluationStepLimit::Add(const Entity * data)
+{
+    if(data->type != EntityType::Integer)
+        database.Error("Invalid type for evaluation-step-limit");
+    
+    database.SetEvaluationLimit(data->i);
+}
+
+std::size_t SpecialPredicate::Count()
 {
     return 0;
 }
@@ -104,7 +124,7 @@ void UnaryTable::Query(Entity * row, int columns, Visitor &v)
     }
 }
 
-void PrintRelation::Query(Entity * row, int, Visitor&)
+void SpecialPredicate::Query(Entity * row, int, Visitor&)
 {
     // Empty relation.
 }
@@ -239,6 +259,14 @@ BinaryTable::BinaryTable(Database &db, int name) : Predicate(db, name)
 {
 }
 
+SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name)
+{
+}
+
+EvaluationStepLimit::EvaluationStepLimit(Database &db, RelationId name) : SpecialPredicate(db, name)
+{
+}
+
 int Predicate::Name() const
 {
     return name;
@@ -264,7 +292,7 @@ int BinaryTable::Arity() const
     return 2;
 }
 
-int PrintRelation::Arity() const
+int SpecialPredicate::Arity() const
 {
     return 1;
 }

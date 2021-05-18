@@ -166,4 +166,8 @@ delete _.
 
 delete person P if P has surname "Smith".
 
+evaluation-step-limit 141.
+expected-results 36.
+expected-errors 0.
+
 print "Syntax test passed".

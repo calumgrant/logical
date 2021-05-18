@@ -1,3 +1,5 @@
+expected-results 5.
+evaluation-step-limit 3665.
 
 X has parent Y if 0<=X<=100 and Y=X*2 and 0<=Y<=100.
 

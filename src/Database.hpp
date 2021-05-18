@@ -85,4 +85,10 @@ public:
     virtual bool AnsiHighlightingEnabled() const =0;
     
     virtual int NumberOfErrors() const =0;
+    
+    virtual void SetExpectedResults(int count) =0;
+    void Error(const char*message);
+    void SetEvaluationLimit(std::size_t count);
+    
+    bool EvaluationLimitExceeded();
 };

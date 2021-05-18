@@ -60,6 +60,12 @@ DatabaseImpl::DatabaseImpl() : verbose(false)
     int print = GetStringId("print");
     unaryRelations[print] = std::make_shared<PrintRelation>(std::cout, *this, print);
     unaryRelations[GetStringId("error")] = std::make_shared<ErrorRelation>(*this);
+    
+    RelationId expected_results = GetStringId("expected-results");
+    unaryRelations[expected_results] = std::make_shared<ExpectedResults>(*this, expected_results);
+    
+    RelationId evaluation_step_limit = GetStringId("evaluation-step-limit");
+    unaryRelations[evaluation_step_limit] = std::make_shared<EvaluationStepLimit>(*this, evaluation_step_limit);
 }
 
 DatabaseImpl::~DatabaseImpl()
@@ -446,4 +452,33 @@ void DatabaseImpl::AddResult(const Entity * row, int arity, bool displayFirstCol
 bool DatabaseImpl::AnsiHighlightingEnabled() const
 {
     return true;
+}
+
+void DatabaseImpl::SetExpectedResults(int count)
+{
+    expectedResults = count;
+}
+
+void Database::Error(const char * msg)
+{
+    ReportUserError();
+    std::cerr << Colours::Error << msg << Colours::Normal << std::endl;
+}
+
+void Database::SetEvaluationLimit(std::size_t limit)
+{
+    Evaluation::SetGlobalCallCountLimit(limit);
+}
+
+void DatabaseImpl::CheckErrors()
+{
+    if(Evaluation::GlobalCallCount() >= Evaluation::GetGlobalCallCountLimit())
+    {
+        Error("Error: Evaluation step limit reached");
+    }
+    
+    if(expectedResults != -1 && NumberOfResults() != expectedResults)
+    {
+        Error("Error: Number of results is unexpected");
+    }
 }

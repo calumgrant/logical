@@ -1226,3 +1226,13 @@ void Join::Explain(Database &db, std::ostream & os, int indent) const
     os << " ->\n";
     next->Explain(db, os, indent+4);
 }
+
+void Evaluation::SetGlobalCallCountLimit(std::size_t limit)
+{
+    globalCallCountLimit = limit;
+}
+
+std::size_t Evaluation::GetGlobalCallCountLimit()
+{
+    return globalCallCountLimit;
+}

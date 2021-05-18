@@ -51,17 +51,37 @@ private:
     std::shared_ptr<Relation> index;
 };
 
-class PrintRelation : public Predicate
+class SpecialPredicate : public Predicate
 {
 public:
-    PrintRelation(std::ostream & output, Database&db, int name);
-    void Add(const Entity *row) override;
+    SpecialPredicate(Database &db, RelationId name);
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     std::size_t Count() override;
     void Query(Entity *row, int columns, Visitor&v) override;
     int Arity() const override;
+};
+
+class PrintRelation : public SpecialPredicate
+{
+public:
+    PrintRelation(std::ostream & output, Database&db, int name);
+    void Add(const Entity *row) override;
 protected:
     std::ostream & output;
+};
+
+class EvaluationStepLimit : public SpecialPredicate
+{
+public:
+    EvaluationStepLimit(Database &db, RelationId name);
+    void Add(const Entity *row) override;
+};
+
+class ExpectedResults : public SpecialPredicate
+{
+public:
+    ExpectedResults(Database &db, RelationId name);
+    void Add(const Entity *row) override;
 };
 
 class ErrorRelation : public PrintRelation

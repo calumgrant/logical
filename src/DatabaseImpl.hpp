@@ -42,6 +42,10 @@ public:
     int NumberOfResults() const;
     void ReportUserError() override;
     bool AnsiHighlightingEnabled() const override;
+    
+    void SetExpectedResults(int count) override;
+    
+    void CheckErrors();
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
     std::unordered_map< int, std::shared_ptr<Relation> > binaryRelations;
@@ -61,4 +65,7 @@ private:
     std::shared_ptr<Relation> queryPredicate;
     
     void CreateProjection(const CompoundName &from, const CompoundName & to);
+    
+    // -1 means there is no expected value.
+    int expectedResults = -1;
 };

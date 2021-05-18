@@ -94,6 +94,7 @@ Two problems:
   - `bool Relation::Exists(const char * Entity, int mask)`
 - `order by` as a database concept...
 
+- `expected-errors` to count the number of errors.
 - Closures:
   - `call reaches a Successor succ`
   - `x reaches a parent y`
@@ -182,7 +183,7 @@ Two problems:
 - Or just delete the rules?
 - Is the deduplicating logic even sound?? Surely other variables can change too? So we need to deduplicate lots of variables, not just the ones in the sum.
 - Problem with adding rules on demand if a predicate is already being evaluated.
-
+- Implement efficient indexing of inequality: `p has Age a and a>10`
 
 ## Recursion
 
@@ -234,7 +235,7 @@ Implement memory mapped memory allocator.
 - [ ] Command line option to pass code
 - [ ] A compiled bytecode for Datalog.
 - [ ] Resources limits - memory, time and tuple-counts.
-- [ ] MySQL connector.
+- [ ] MySQL connector. Implemented using DLLs?
 - [ ] Dynamic-linked libraries
 - [ ] Reading external data.
 
