@@ -6,12 +6,22 @@ Problems to solve
 - Ensuring that recursion remains correct
 - Use the delta when evaluating recursion
 - Have a range of optimization options - so we can validate the changes.
-- Expect a certain number of evaluation results. `results-expected 5.` `steps-excpected 100000000`.
+- Expect a certain number of evaluation results. `results-expected 5.` `steps-expected 100000000`.
 - Think about hyphens.
 - Avoid reevaluating branches unnecessarily, in recursion and when rules attach to multiple tables.
 - Do we need static analysis at evaluation time?
 - Defining data like `temperature -5.`
 - Detecting negative recursion.
+
+Work plan:
+1. Allow `-` in names.
+2. Implement: `expected-results`.
+3. Implement: `evaluation-step-limit`
+4. Hook in an analysis framework.
+5. Detect negative recursion.
+6. Implement some of the optimizations
+  - Unused variables.
+  - Mark certain predicates as deltas.
 
 Implementation of recursion:
 When a query (scan/join/probe etc) is made on a predicate that's marked as "evaluating", then the *query* is marked as recursive, and the current branch/rule is also marked as recursive. (How?) Problem: what if it becomes recursive?
@@ -26,6 +36,19 @@ Design: Every time a predicate is evaluated, if needs to check the evaluation to
 
 1. Walks the dependency graph, checking for recursion and negative recursion. Recursive predicates and queries are marked as such. Negative recursion results in an error. Marks the first predicate as a delta evaluation.
 2. 
+
+- Put information into each evaluation step:
+- Bound variables (reads)
+- Unbound variables (writes)
+- Size estimates
+- Read relations
+- Written relations
+- Successors
+
+class Evaluation::Visitor
+
+Evaluation::Visit
+int number of BoundVariables
 
 
 Mutual recursion?

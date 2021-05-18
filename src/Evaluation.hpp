@@ -1,4 +1,3 @@
-#include <memory>
 
 #include "Relation.hpp"
 
@@ -34,6 +33,19 @@ public:
     
     static std::size_t GlobalCallCount();
     static void SetGlobalCallCountLimit(std::size_t limit);
+    
+    // Options for analysis
+    
+    // virtual bool AlwaysEmpty() const;
+    
+    // Expose the variables here so that they can be manipulated by the optimizer?
+    VariableId * boundVariables;
+    int numberOfBoundVariables;
+    VariableId * unboundVariables;
+    int numberOfUnboundVariables;
+    // EvaluationPtr next;
+    // std::weak_ptr<Relation> relation;
+    
 protected:
     // Returns false if the global call count has been exceeded
     bool IncrementCallCount()

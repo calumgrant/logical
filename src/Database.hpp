@@ -1,6 +1,5 @@
 
-#include <string>
-
+#include "Fwd.hpp"
 #include "StringTable.hpp"
 #include "Relation.hpp"
 #include "Colours.hpp"
@@ -16,9 +15,6 @@ class Error
 
 };
 
-typedef int StringId;
-typedef int Arity;
-typedef int RelationId;
 
 class Database
 {
