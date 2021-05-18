@@ -1,16 +1,40 @@
 #include <vector>
 #include <unordered_set>
 
+class ChainedEvaluation : public Evaluation
+{
+public:
+    Evaluation * GetNext() const override;
+protected:
+    ChainedEvaluation(const EvaluationPtr & next);
+    
+    EvaluationPtr next;
+};
+
+class ReaderEvaluation : public ChainedEvaluation
+{
+public:
+    Relation * ReadsRelation() const override;
+protected:
+    ReaderEvaluation(const std::shared_ptr<Relation> & relation, const EvaluationPtr & next);
+    std::weak_ptr<Relation> relation;
+};
+
+class WriterEvaluation : public Evaluation
+{
+protected:
+    WriterEvaluation(const std::shared_ptr<Relation> & relation);
+    std::weak_ptr<Relation> relation;
+};
+
 /*
  An evaluation over a unary predicate.
  */
-class UnaryEvaluation : public Evaluation
+class UnaryEvaluation : public ReaderEvaluation
 {
 protected:
     UnaryEvaluation(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next);
-    std::weak_ptr<Relation> relation;
-    int slot;
-    std::shared_ptr<Evaluation> next;
+    const int slot;
 };
 
 /*
@@ -53,18 +77,17 @@ public:
 /*
  Writes data into a unary predicate.
  */
-class WriterB : public Evaluation
+class WriterB : public WriterEvaluation
 {
 public:
     WriterB(const std::shared_ptr<Relation> &rel, int slot);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
-    std::weak_ptr<Relation> relation;
-    int slot;
+    const int slot;
 };
 
-class RuleEvaluation : public Evaluation
+class RuleEvaluation : public ChainedEvaluation
 {
 public:
     RuleEvaluation(int locals, const std::shared_ptr<Evaluation> &eval);
@@ -72,10 +95,8 @@ public:
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
-    std::shared_ptr<Evaluation> evaluation;
-    
     // The number of local variables
-    int locals;
+    const int locals;
 };
 
 class OrEvaluation : public Evaluation
@@ -84,8 +105,10 @@ public:
     OrEvaluation(const std::shared_ptr<Evaluation> &left, const std::shared_ptr<Evaluation> &right);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
+    Evaluation * GetNext() const override;
+    Evaluation * GetNext2() const override;
 private:
-    std::shared_ptr<Evaluation> left, right;
+    const std::shared_ptr<Evaluation> left, right;
 };
 
 /*
@@ -111,13 +134,11 @@ private:
     const int slot;
 };
 
-class BinaryEvaluation : public Evaluation
+class BinaryEvaluation : public ChainedEvaluation
 {
 protected:
     BinaryEvaluation(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
-    int slot1, slot2;
-    std::shared_ptr<Evaluation> next;
-
+    const int slot1, slot2;
 };
 
 class EqualsBB : public BinaryEvaluation
@@ -136,12 +157,11 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
 };
 
-class BinaryRelationEvaluation : public BinaryEvaluation
+class BinaryRelationEvaluation : public ReaderEvaluation
 {
 public:
     BinaryRelationEvaluation(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
-protected:
-    std::weak_ptr<Relation> relation;
+    const int slot1, slot2;
 };
 
 class EvaluateFF : public BinaryRelationEvaluation
@@ -176,7 +196,7 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
 };
 
-class NotInB : public Evaluation
+class NotInB : public ReaderEvaluation
 {
 public:
     NotInB(int slot, const std::shared_ptr<Relation> & relation, const std::shared_ptr<Evaluation> &next);
@@ -184,22 +204,19 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
     const int slot;
-    const std::weak_ptr<Relation> relation;
-    const std::shared_ptr<Evaluation> next;
 };
 
-class WriterBB : public Evaluation
+class WriterBB : public WriterEvaluation
 {
 public:
     WriterBB(const std::shared_ptr<Relation>&, int slot1, int slot2);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
-    std::weak_ptr<Relation> relation;
     int slot1, slot2;
 };
 
-class RangeB : public Evaluation
+class RangeB : public ChainedEvaluation
 {
 public:
     RangeB(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> & next);
@@ -208,10 +225,9 @@ public:
 private:
     int slot1, slot2, slot3;
     ComparatorType cmp1, cmp2;
-    std::shared_ptr<Evaluation> next;
 };
 
-class RangeU : public Evaluation
+class RangeU : public ChainedEvaluation
 {
 public:
     RangeU(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> & next);
@@ -220,7 +236,6 @@ public:
 private:
     int slot1, slot2, slot3;
     ComparatorType cmp1, cmp2;
-    std::shared_ptr<Evaluation> next;
 };
 
 class CompareBB : public BinaryEvaluation
@@ -243,13 +258,12 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
 };
 
-class BinaryArithmeticEvaluation : public Evaluation
+class BinaryArithmeticEvaluation : public ChainedEvaluation
 {
 protected:
     BinaryArithmeticEvaluation(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next);
     
     int slot1, slot2, slot3;
-    std::shared_ptr<Evaluation> next;
     
     template<typename OpInt, typename OpFloat>
     void Evaluate(Entity * row);
@@ -297,7 +311,7 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
 };
 
-class DeduplicateB : public Evaluation
+class DeduplicateB : public ChainedEvaluation
 {
 public:
     DeduplicateB(int slot1, const std::shared_ptr<Evaluation> & next);
@@ -306,10 +320,9 @@ public:
 private:
     const int slot1;
     std::unordered_set<Entity, Entity::Hash> values;
-    const std::shared_ptr<Evaluation> next;
 };
 
-class DeduplicateBB : public Evaluation
+class DeduplicateBB : public ChainedEvaluation
 {
 public:
     DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
@@ -318,7 +331,6 @@ public:
 private:
     const int slot1, slot2;
     std::unordered_set<std::pair<Entity,Entity>, PairHash> values;
-    const std::shared_ptr<Evaluation> next;
 };
 
 
@@ -348,7 +360,7 @@ private:
     const int slot, sumSlot; // The slot where the value is to sum.
 };
 
-class Load : public Evaluation
+class Load : public ChainedEvaluation
 {
 public:
     Load(int slot, const Entity &value, const std::shared_ptr<Evaluation> & next);
@@ -357,10 +369,9 @@ public:
 private:
     const int slot;
     Entity value;
-    const std::shared_ptr<Evaluation> next;
 };
 
-class NotNone : public Evaluation
+class NotNone : public ChainedEvaluation
 {
 public:
     NotNone(int slot, const std::shared_ptr<Evaluation> & next);
@@ -368,36 +379,32 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
     const int slot;
-    const std::shared_ptr<Evaluation> next;
 };
 
-class Reader : public Evaluation
+class Reader : public ReaderEvaluation
 {
 public:
     Reader(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
-    std::weak_ptr<Relation> relation;
     std::vector<int> slots;
-    std::shared_ptr<Evaluation> next;
 };
 
-class Writer : public Evaluation
+class Writer : public WriterEvaluation
 {
 public:
     Writer(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots);
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
-    std::weak_ptr<Relation> relation;
     std::vector<int> slots;
     
     int slot;
     bool contiguous;  // Optimization
 };
 
-class Join : public Evaluation
+class Join : public ReaderEvaluation
 {
 public:
     // -1 in an input or output means "unused"
@@ -405,8 +412,6 @@ public:
     void Evaluate(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
-    std::weak_ptr<Relation> relation;
     std::vector<int> inputs, outputs;
-    std::shared_ptr<Evaluation> next;
     int mask;
 };

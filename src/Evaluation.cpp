@@ -21,7 +21,7 @@ void NoneEvaluation::Evaluate(Entity * row)
     IncrementCallCount();
 }
 
-WriterB::WriterB(const std::shared_ptr<Relation> & relation, int slot) : relation(relation), slot(slot)
+WriterB::WriterB(const std::shared_ptr<Relation> & relation, int slot) : WriterEvaluation(relation), slot(slot)
 {
 }
 
@@ -45,8 +45,8 @@ void OrEvaluation::Evaluate(Entity * row)
     right->Evaluate(row);
 }
 
-RuleEvaluation::RuleEvaluation(int locals, const std::shared_ptr<Evaluation> & eval) :
-    locals(locals), evaluation(eval)
+RuleEvaluation::RuleEvaluation(int locals, const std::shared_ptr<Evaluation> & eval) : ChainedEvaluation(eval),
+    locals(locals)
 {
 }
 
@@ -54,7 +54,7 @@ void RuleEvaluation::Evaluate(Entity*)
 {
     if(IncrementCallCount()) return;
     std::vector<Entity> row(locals);
-    evaluation->Evaluate(&row[0]);
+    next->Evaluate(&row[0]);
 }
 
 EvaluateB::EvaluateB(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
@@ -68,7 +68,7 @@ EvaluateF::EvaluateF(const std::shared_ptr<Relation> &rel, int slot, const std::
 }
 
 UnaryEvaluation::UnaryEvaluation(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
-                     relation(rel), slot(slot), next(next)
+                     ReaderEvaluation(rel, next), slot(slot)
 {
 }
 
@@ -133,7 +133,7 @@ void RuleEvaluation::Explain(Database &db, std::ostream & os, int indent) const
     os << "Evaluate with " << locals << " variables";
     OutputCallCount(os);
     os << " ->\n";
-    evaluation->Explain(db, os, indent+4);
+    next->Explain(db, os, indent+4);
 }
 
 void WriterB::Explain(Database &db, std::ostream & os, int indent) const
@@ -197,7 +197,7 @@ void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
 }
 
 BinaryEvaluation::BinaryEvaluation(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), next(next)
+    slot1(slot1), slot2(slot2), ChainedEvaluation(next)
 {
 }
 
@@ -404,14 +404,12 @@ void EvaluateFF::Explain(Database &db, std::ostream & os, int indent) const
     next->Explain(db, os, indent+4);
 }
 
-BinaryRelationEvaluation::BinaryRelationEvaluation(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    BinaryEvaluation(slot1, slot2, next),
-    relation(relation)
+BinaryRelationEvaluation::BinaryRelationEvaluation(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : ReaderEvaluation(relation, next), slot1(slot1), slot2(slot2)
 {
 }
 
 WriterBB::WriterBB(const std::shared_ptr<Relation> & relation, int slot1, int slot2) :
-    relation(relation), slot1(slot1), slot2(slot2)
+    WriterEvaluation(relation), slot1(slot1), slot2(slot2)
 {
 }
 
@@ -431,7 +429,7 @@ void WriterBB::Explain(Database &db, std::ostream &os, int indent) const
 }
 
 RangeB::RangeB(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), slot3(slot3), cmp1(cmp1), cmp2(cmp2), next(next)
+    slot1(slot1), slot2(slot2), slot3(slot3), cmp1(cmp1), cmp2(cmp2), ChainedEvaluation(next)
 {
 }
 
@@ -494,7 +492,7 @@ void RangeB::Explain(Database &db, std::ostream &os, int indent) const
 }
 
 RangeU::RangeU(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), slot3(slot3), cmp1(cmp1), cmp2(cmp2), next(next)
+    slot1(slot1), slot2(slot2), slot3(slot3), cmp1(cmp1), cmp2(cmp2), ChainedEvaluation(next)
 {
 }
 
@@ -599,7 +597,7 @@ void NegateBF::Explain(Database &db, std::ostream &os, int indent) const
 }
 
 BinaryArithmeticEvaluation::BinaryArithmeticEvaluation(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), slot3(slot3), next(next)
+    slot1(slot1), slot2(slot2), slot3(slot3), ChainedEvaluation(next)
 {
 }
 
@@ -861,10 +859,12 @@ void ModBBF::Explain(Database &db, std::ostream &os, int indent) const
 
 Evaluation::Evaluation() : callCount(0)
 {
+    visited = false;
+    onRecursivePath = false;
 }
 
 DeduplicateB::DeduplicateB(int slot1, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), next(next)
+    slot1(slot1), ChainedEvaluation(next)
 {
 }
 
@@ -890,7 +890,7 @@ void DeduplicateB::Explain(Database &db, std::ostream &os, int indent) const
 }
 
 DeduplicateBB::DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), next(next)
+    slot1(slot1), slot2(slot2), ChainedEvaluation(next)
 {
 }
 
@@ -954,7 +954,7 @@ void SumCollector::Explain(Database &db, std::ostream &os, int indent) const
 }
 
 Load::Load(int slot, const Entity &v, const std::shared_ptr<Evaluation> & next) :
-    slot(slot), value(v), next(next)
+    slot(slot), value(v), ChainedEvaluation(next)
 {
 }
 
@@ -977,7 +977,7 @@ void Load::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent+4);
 }
 
-NotNone::NotNone(int slot, const std::shared_ptr<Evaluation> & next) : slot(slot), next(next)
+NotNone::NotNone(int slot, const std::shared_ptr<Evaluation> & next) : slot(slot), ChainedEvaluation(next)
 {
 }
 
@@ -1001,7 +1001,7 @@ void NotNone::Explain(Database &db, std::ostream & os, int indent) const
 }
 
 NotInB::NotInB(int slot, const std::shared_ptr<Relation> & relation, const std::shared_ptr<Evaluation> & next) :
-    slot(slot), relation(relation), next(next)
+    slot(slot), ReaderEvaluation(relation, next)
 {
 }
 
@@ -1037,7 +1037,7 @@ std::size_t Evaluation::GlobalCallCount()
 }
 
 Reader::Reader(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next) :
-    relation(relation), slots(slots), next(next)
+    ReaderEvaluation(relation, next), slots(slots)
 {
     assert(slots.size()>1);
 }
@@ -1083,7 +1083,7 @@ void Reader::Explain(Database &db, std::ostream &os, int indent) const
 }
 
 Writer::Writer(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots) :
-    relation(relation), slots(slots)
+    WriterEvaluation(relation), slots(slots)
 {
     assert(slots.size()>0);
     slot = slots[0];
@@ -1123,7 +1123,7 @@ void Writer::Explain(Database &db, std::ostream &os, int indent) const
     os << std::endl;
 }
 
-Join::Join(const std::shared_ptr<Relation> & relation, std::vector<int> && inputs, std::vector<int> && outputs, const std::shared_ptr<Evaluation> & next) : relation(relation), inputs(inputs), outputs(outputs), next(next)
+Join::Join(const std::shared_ptr<Relation> & relation, std::vector<int> && inputs, std::vector<int> && outputs, const std::shared_ptr<Evaluation> & next) : ReaderEvaluation(relation, next), inputs(inputs), outputs(outputs)
 {
     assert(inputs.size() == outputs.size());
     assert(relation->Arity() == inputs.size());
@@ -1236,3 +1236,29 @@ std::size_t Evaluation::GetGlobalCallCountLimit()
 {
     return globalCallCountLimit;
 }
+
+Relation * Evaluation::ReadsRelation() const { return nullptr; }
+
+Evaluation * Evaluation::GetNext() const { return nullptr; }
+
+Evaluation * Evaluation::GetNext2() const { return nullptr; }
+
+ReaderEvaluation::ReaderEvaluation(const std::shared_ptr<Relation> & relation, const EvaluationPtr & next) : relation(relation), ChainedEvaluation(next)
+{
+}
+
+WriterEvaluation::WriterEvaluation(const std::shared_ptr<Relation> & relation) : relation(relation)
+{
+}
+
+ChainedEvaluation::ChainedEvaluation(const EvaluationPtr & next) : next(next)
+{
+}
+
+Evaluation * OrEvaluation::GetNext() const { return &*left; }
+
+Evaluation * OrEvaluation::GetNext2() const { return &*right; }
+
+Relation * ReaderEvaluation::ReadsRelation() const { return &*relation.lock(); }
+
+Evaluation * ChainedEvaluation::GetNext() const { return &*next; }

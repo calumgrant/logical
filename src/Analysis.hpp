@@ -74,4 +74,4 @@ struct OptimizationOptions
     bool mergeBranches = true;
 };
 
-void AnalyseRecursion(Database & db, EvaluationPtr root);
+void AnalyseRecursion(Database & db, const EvaluationPtr & root);

@@ -44,8 +44,17 @@ public:
     int numberOfBoundVariables;
     VariableId * unboundVariables;
     int numberOfUnboundVariables;
+    
     // EvaluationPtr next;
     // std::weak_ptr<Relation> relation;
+    
+    // Flags for recursion
+    bool visited;  // Should be set to false after an analysis.
+    bool onRecursivePath;
+    
+    virtual Evaluation * GetNext() const;
+    virtual Evaluation * GetNext2() const;
+    virtual Relation * ReadsRelation() const;
     
 protected:
     // Returns false if the global call count has been exceeded
