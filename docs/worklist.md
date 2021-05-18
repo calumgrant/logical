@@ -11,9 +11,10 @@ Problems to solve
 - Detecting negative recursion.
 - Which predicates do we run it on? Ideally we can do this globally in O(n).
 
+
 Work plan:
-4. Hook in an analysis framework.
 5. Detect negative recursion.
+  Detect the first use in a branch?
 6. Implement some of the optimizations
   - Unused variables.
   - Mark certain predicates as deltas.

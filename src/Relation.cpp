@@ -241,8 +241,8 @@ void Predicate::RunRules()
     rulesRun = true;
     if(database.Explain())
     {
-        if(Relation::recursive) std::cout << Colours::Error << "Recursive\n" << Colours::Normal;
-        if(onRecursivePath) std::cout << "On recursive path\n";
+        // if(Relation::recursive) std::cout << Colours::Error << "Recursive\n" << Colours::Normal;
+        // if(onRecursivePath) std::cout << "On recursive path\n";
         std::cout << "Evaluated " << rules.size() << " rule" << (rules.size()>1 ? "s" : "") << " in ";
         Evaluation::OutputRelation(std::cout, database, *this);
         std::cout << " ->\n";

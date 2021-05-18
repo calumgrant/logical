@@ -91,4 +91,6 @@ public:
     void SetEvaluationLimit(std::size_t count);
     
     bool EvaluationLimitExceeded();
+    
+    void ParityError(Relation &relation);
 };

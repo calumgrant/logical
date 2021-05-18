@@ -484,3 +484,11 @@ void DatabaseImpl::CheckErrors()
         std::cerr << Colours::Error << "Error: Did not get the expected number of results (" << expectedResults << ")\n" << Colours::Normal;
     }
 }
+
+void Database::ParityError(Relation & relation)
+{
+    ReportUserError();
+    std::cerr << Colours::Error << "Error: predicate ";
+    Evaluation::OutputRelation(std::cerr, *this, relation);
+    std::cerr << Colours::Error << " has negative recursion\n" << Colours::Normal;
+}

@@ -44,6 +44,7 @@ public:
     bool recursive = false;
     bool onRecursivePath = false;
     bool analysedForRecursion = false;
+    bool parity = true;
     
 protected:
     // Returns the number of rows.

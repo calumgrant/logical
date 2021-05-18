@@ -309,7 +309,7 @@ std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compil
     auto bodyEval = clause->Compile(db, compilation);
 
     return std::make_shared<Load>(slot, ::Entity(EntityType::Boolean,1),
-                                  std::make_shared<OrEvaluation>(bodyEval, std::make_shared<NotNone>(slot, nextEval)));
+                                  std::make_shared<OrEvaluationForNot>(bodyEval, std::make_shared<NotNone>(slot, nextEval)));
 }
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Compilation &c)

@@ -111,6 +111,14 @@ private:
     const std::shared_ptr<Evaluation> left, right;
 };
 
+class OrEvaluationForNot : public OrEvaluation
+{
+public:
+    OrEvaluationForNot(const std::shared_ptr<Evaluation> &left, const std::shared_ptr<Evaluation> &right);
+    bool NextIsNot() const override;
+};
+
+
 /*
     A placeholder evaluation that produces no results.
  */

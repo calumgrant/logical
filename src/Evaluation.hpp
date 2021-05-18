@@ -52,6 +52,7 @@ public:
     virtual Evaluation * GetNext() const;
     virtual Evaluation * GetNext2() const;
     virtual Relation * ReadsRelation() const;
+    virtual bool NextIsNot() const;
     
 protected:
     // Returns false if the global call count has been exceeded

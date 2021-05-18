@@ -74,8 +74,7 @@ struct OptimizationOptions
     bool mergeBranches = true;
 };
 
-enum class Parity { Even, Odd };
-bool AnalyseRecursion(Database &db, Relation & node, Parity p);
-bool AnalyseRecursion(Database &db, Evaluation & node, Parity p);
+bool AnalyseRecursion(Database &db, Relation & node, bool parity);
+bool AnalyseRecursion(Database &db, Evaluation & node, bool parity);
 
 void AnalyseRecursion(Database & db, Relation & root);

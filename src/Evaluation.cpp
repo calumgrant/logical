@@ -1277,3 +1277,12 @@ Evaluation * OrEvaluation::GetNext2() const { return &*right; }
 Relation * ReaderEvaluation::ReadsRelation() const { return &*relation.lock(); }
 
 Evaluation * ChainedEvaluation::GetNext() const { return &*next; }
+
+OrEvaluationForNot::OrEvaluationForNot(const std::shared_ptr<Evaluation> &left, const std::shared_ptr<Evaluation> &right) : OrEvaluation(left, right)
+{
+}
+
+bool OrEvaluationForNot::NextIsNot() const { return true; }
+
+bool Evaluation::NextIsNot() const { return false; }
+

@@ -4,21 +4,24 @@
 
 #include <iostream>
 
-bool AnalyseRecursion(Database &database, Relation & node, Parity parity)
+bool AnalyseRecursion(Database &database, Relation & node, bool parity)
 {
     if(node.visited)
     {
-        std::cout << "The recursive predicate is ";
-        Evaluation::OutputRelation(std::cout, database, node);
-        std::cout << std::endl;
-
         node.recursive = true;
         node.onRecursivePath = true;
+        
+        if(node.parity != parity)
+        {
+            database.ParityError(node);
+        }
+        
         return true;
     }
     
     node.visited = true;
     node.analysedForRecursion = true;
+    node.parity = parity;
         
     node.VisitRules([&](Evaluation & eval)
     {
@@ -32,7 +35,7 @@ bool AnalyseRecursion(Database &database, Relation & node, Parity parity)
     return node.onRecursivePath && !node.recursive;
 }
 
-bool AnalyseRecursion(Database &database, Evaluation & node, Parity parity)
+bool AnalyseRecursion(Database &database, Evaluation & node, bool parity)
 {
     auto next1 = node.GetNext();
     auto next2 = node.GetNext2();
@@ -49,7 +52,7 @@ bool AnalyseRecursion(Database &database, Evaluation & node, Parity parity)
     
     if(next1)
     {
-        if(AnalyseRecursion(database, *next1, parity))
+        if(AnalyseRecursion(database, *next1, node.NextIsNot() ? !parity : parity))
             onRecursivePath = true;
     }
     
@@ -66,5 +69,5 @@ void AnalyseRecursion(Database & database, Relation & root)
 {
     if(root.analysedForRecursion) return;
     
-    AnalyseRecursion(database, root, Parity::Even);
+    AnalyseRecursion(database, root, true);
 }
