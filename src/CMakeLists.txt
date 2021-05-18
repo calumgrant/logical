@@ -15,7 +15,8 @@ FLEX_TARGET(MyScanner logical.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(logiccore 
+add_library(logiccore
+    Analysis.cpp Analysis.hpp
     AST.cpp AST.hpp
     Binary.hpp Binary.cpp
     Database.cpp Database.hpp DatabaseImpl.hpp

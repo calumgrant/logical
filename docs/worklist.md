@@ -2,6 +2,75 @@
 
 ## Short term
 
+Problems to solve
+- Ensuring that recursion remains correct
+- Use the delta when evaluating recursion
+- Have a range of optimization options - so we can validate the changes.
+- Expect a certain number of evaluation results. `results-expected 5.` `steps-excpected 100000000`.
+- Think about hyphens.
+- Avoid reevaluating branches unnecessarily, in recursion and when rules attach to multiple tables.
+- Do we need static analysis at evaluation time?
+- Defining data like `temperature -5.`
+- Detecting negative recursion.
+
+Implementation of recursion:
+When a query (scan/join/probe etc) is made on a predicate that's marked as "evaluating", then the *query* is marked as recursive, and the current branch/rule is also marked as recursive. (How?) Problem: what if it becomes recursive?
+The query that first marks itself as recursive may join on the delta, bec
+
+Idea number 2: Perform a static analysis at time of evaluation.
+Implement as depth-first search where if you meet something that has been found before then you mark it in a recursive loop. This step also checks for parity.
+
+How to detect "not" and other negativity in rules?
+
+Design: Every time a predicate is evaluated, if needs to check the evaluation to see if it has been analysed. The analysis will perform a number of steps:
+
+1. Walks the dependency graph, checking for recursion and negative recursion. Recursive predicates and queries are marked as such. Negative recursion results in an error. Marks the first predicate as a delta evaluation.
+2. 
+
+
+Mutual recursion?
+
+
+
+1. Don't reevaluate non-recursive branches.
+2. We only need to query/join the delta.
+
+If, when we run a rule in a predicate, it doesn't *query* anything recursively, then there's no need to re-run that branch, and we can tag that branch as "done".
+
+Detect recursion on path: Run Query -> Write data. At end of
+1. Evaluate predicate
+2. Run query on predicate. Flag the "current branch" as recursive. Flag the *first* query as recursive. The *second* query is not recursive.
+
+
+- In `closure1.dl`, we end up calling `has:descendant` 37952 times.
+  - We need to join with the delta `has:descendant∆`
+  - We need to tag the evaluation that could be recursive.
+  - How do we know?????
+  - When exiting a join, we may discover that the join was recursive. At this point, 
+
+```
+Evaluate with 3 variables (called 2 times) ->
+    Scan has:child (_,_) -> (_0,_1) (called 2 times) ->
+        Write (_0,_1) into has:descendent (called 4004 times)
+    Scan has:child (_,_) -> (_0,_2) (called 2 times) ->
+        Join has:descendent (_2,_) -> (_,_1) (called 4004 times) ->
+            Write (_0,_1) into has:descendent (called 37952 times)
+```
+
+
+Two problems:
+1. We don't need to call the first branch on each iteration.
+
+
+- Create a `VariableInfo` structure
+  - slot
+  - bound
+  - last use?
+  - With pretty printing?
+- Detect last use and use an "exists" predicate as needed.
+  - `bool Relation::Exists(const char * Entity, int mask)`
+- `order by` as a database concept...
+
 - Closures:
   - `call reaches a Successor succ`
   - `x reaches a parent y`
@@ -22,12 +91,6 @@
 
 ## Refactoring
 - Implement a `ChainedEvaluation` class that exposes `Next`?
-- Use `typedef int Id`
-- Create a `VariableInfo` structure
-  - slot
-  - bound
-  - last use?
-  - With pretty printing?
 - Remove the AST `Visit` functions
 - const fields more
 - Split up files

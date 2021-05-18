@@ -11,6 +11,27 @@ make
 make test
 ```
 
+## Building on MacOS
+
+Prerequisites:
+- Xcode (for MacOS build tools)
+- Homebrew (for `flex` and `bison`)
+- CMake
+
+```
+brew install flex bison
+cmake ../src -DBISON_EXECUTABLE=/opt/homebrew/opt/bison/bin/bison -DFLEX_INCLUDE_DIR=/opt/homebrew/opt/flex/include -DFL_LIBRARY=/opt/homebrew/opt/flex/lib/libfl.a
+make
+make test
+```
+
+As you can see, the versions of `flex` and `bison` that ship with the MacOS build tools are out of date and you will need the latest version, that can be supplied using Homebrew.
+
+The default CMake generator is to produce a Makefile, which works perfectly well.  Additional options to CMake include
+
+- `-DCMAKE_BUILD_TYPE=Debug` for a debug build
+- `-GXcode` for development in Xcode. Open the generated file `logical.xcodeproj` in Xcode.
+
 # Running tests
 
 In the build directory, run

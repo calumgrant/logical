@@ -1,0 +1,8 @@
+x has next x+1 if 1<=x<=10.
+
+x has next2 y if x has next y or 
+    x has next z and z has next3 y.
+
+x has next3 y if x has next y.
+
+query "Mutual recursion" has number n, next n1 if n has next3 n1.

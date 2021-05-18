@@ -192,6 +192,10 @@ querybaseclause:
     {
         $$ = new AST::EntityHasAttributes($1, $2, $4, $3);
     }
+|   unarypredicatelist entity reaches binarypredicate entity_expression
+    {
+        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4,$5), $3);
+    }
 |   unarypredicatelist entity tok_comma attributes
     { 
         $$ = new AST::EntityHasAttributes($1, $2, $4, HasType::has);
@@ -199,6 +203,10 @@ querybaseclause:
 |   entity has_a attributes
     {
         $$ = new AST::EntityHasAttributes(nullptr, $1, $3, $2);
+    }
+|   entity reaches binarypredicate entity_expression
+    {
+        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3,$4), $2);
     }
 ;
 

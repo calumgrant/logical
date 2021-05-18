@@ -408,6 +408,7 @@ void DatabaseImpl::RunQueries()
             std::cout << Colours::Relation;
             database.Print(data[0], std::cout);
             std::cout << Colours::Normal << " has results:\n";
+            //Entity queryName = data[0];
 
             // Join with all attributes in the
             database.queryPredicate->VisitAttributes([&](Relation&r) {

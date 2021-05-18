@@ -201,12 +201,6 @@ void Predicate::RunRules()
     
     std::size_t iteration = 1;
     
-    if(database.Explain())
-    {
-        std::cout << "Evaluating " << rules.size() << " rules in "
-            << Colours::Relation << database.GetString(Name()) << Colours::Normal
-            << "/" << Arity() << std::endl;
-    }
 
     do
     {
@@ -215,10 +209,6 @@ void Predicate::RunRules()
         for(auto & p : rules)
         {
             p->Evaluate(nullptr);
-            if(database.Explain())
-            {
-                p->Explain(database, std::cout, 0);
-            }
         }
         ++iteration;
     }
@@ -226,6 +216,14 @@ void Predicate::RunRules()
     
     evaluating = false;
     rulesRun = true;
+    if(database.Explain())
+    {
+        std::cout << "Evaluated " << rules.size() << " rule" << (rules.size()>1 ? "s" : "") << " in "
+            << Colours::Relation << database.GetString(Name()) << Colours::Normal
+            << "/" << Arity() << " ->\n";
+        for(auto & p : rules)
+            p->Explain(database, std::cout, 4);
+    }
 }
 
 bool Predicate::HasRules() const

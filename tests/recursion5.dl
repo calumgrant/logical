@@ -1,0 +1,7 @@
+// Attempt at negative recursion
+
+fish "Wanda".
+
+fish X if fish X and not fish X.
+
+find fish.
