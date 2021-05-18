@@ -3,10 +3,6 @@
 #include "Entity.hpp"
 #include "CompoundName.hpp"
 
-class Database;
-class Entity;
-class Evaluation;
-
 class Relation
 {
 public:

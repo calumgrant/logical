@@ -1,8 +1,6 @@
 #pragma once
 #include "Fwd.hpp"
 
-typedef int EntityId;
-
 enum class EntityType
 {
     None,

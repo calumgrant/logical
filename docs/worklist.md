@@ -6,17 +6,11 @@ Problems to solve
 - Ensuring that recursion remains correct
 - Use the delta when evaluating recursion
 - Have a range of optimization options - so we can validate the changes.
-- Expect a certain number of evaluation results. `results-expected 5.` `steps-expected 100000000`.
-- Think about hyphens.
 - Avoid reevaluating branches unnecessarily, in recursion and when rules attach to multiple tables.
-- Do we need static analysis at evaluation time?
 - Defining data like `temperature -5.`
 - Detecting negative recursion.
 
 Work plan:
-1. Allow `-` in names.
-2. Implement: `expected-results`.
-3. Implement: `evaluation-step-limit`
 4. Hook in an analysis framework.
 5. Detect negative recursion.
 6. Implement some of the optimizations
@@ -112,6 +106,13 @@ Two problems:
 - Implement a resultset. It's just a table with a writer. The table stores the results.
 - Consider synthesising an ID for `has:Person:Name`
 - Log filename in errors.
+
+## Recursion analysis
+
+1. Mark the body of each "not" with a flag. This flips the parity bit during the depth-first search.
+2. Start at the "query" and perform a search through all evaluation steps, marking each step as "visited". When you reach a step that's already visited, mark it as "recursive". Then on the way back through the depth-first search, mark those steps as "recursive loop" as well.
+3. Predicates that are flagged as recursive.
+
 
 ## Refactoring
 - Implement a `ChainedEvaluation` class that exposes `Next`?

@@ -1,6 +1,5 @@
 #include "Database.hpp"
 
-#include "Table.hpp"
 #include "Compiler.hpp"
 #include "Entity.hpp"
 #include "CompoundName.hpp"

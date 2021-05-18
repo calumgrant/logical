@@ -3,12 +3,6 @@
 
 #include "Entity.hpp"
 
-class Database;
-class Entity;
-class Compilation;
-class Evaluation;
-class CompoundName;
-
 enum class ComparatorType { lt, lteq, gt, gteq, eq, neq };
 
 enum class IsType { is, isnot };
