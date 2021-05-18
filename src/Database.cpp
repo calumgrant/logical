@@ -474,11 +474,13 @@ void DatabaseImpl::CheckErrors()
 {
     if(Evaluation::GlobalCallCount() > Evaluation::GetGlobalCallCountLimit())
     {
-        Error("Error: Evaluation terminated because step limit is reached");
+        ReportUserError();
+        std::cerr << Colours::Error << "Error: Evaluation terminated because step limit (" << Evaluation::GetGlobalCallCountLimit() << ") is reached\n" << Colours::Normal;
     }
     
     if(expectedResults != -1 && NumberOfResults() != expectedResults)
     {
-        Error("Error: Number of results is unexpected");
+        ReportUserError();
+        std::cerr << Colours::Error << "Error: Did not get the expected number of results (" << expectedResults << ")\n" << Colours::Normal;
     }
 }
