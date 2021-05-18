@@ -859,8 +859,6 @@ void ModBBF::Explain(Database &db, std::ostream &os, int indent) const
 
 Evaluation::Evaluation() : callCount(0)
 {
-    visited = false;
-    onRecursivePath = false;
 }
 
 DeduplicateB::DeduplicateB(int slot1, const std::shared_ptr<Evaluation> & next) :
@@ -1172,6 +1170,23 @@ void Join::Evaluate(Entity * locals)
 void Evaluation::OutputVariable(std::ostream & os, int variable)
 {
     os << Colours::Variable << "_" << variable << Colours::Normal;
+}
+
+void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation & relation)
+{
+    os << Colours::Relation;
+    if(auto cn = relation.GetCompoundName())
+    {
+        os << "has:";
+        for(int i=0; i<cn->parts.size(); ++i)
+        {
+            if(i>0) os << ":";
+            os << db.GetString(cn->parts[i]);
+        }
+    }
+    else
+        os << db.GetString(relation.Name());
+    os << Colours::Normal;
 }
 
 void Evaluation::OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> & relation)

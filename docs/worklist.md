@@ -9,6 +9,7 @@ Problems to solve
 - Avoid reevaluating branches unnecessarily, in recursion and when rules attach to multiple tables.
 - Defining data like `temperature -5.`
 - Detecting negative recursion.
+- Which predicates do we run it on? Ideally we can do this globally in O(n).
 
 Work plan:
 4. Hook in an analysis framework.
@@ -113,6 +114,7 @@ Two problems:
 2. Start at the "query" and perform a search through all evaluation steps, marking each step as "visited". When you reach a step that's already visited, mark it as "recursive". Then on the way back through the depth-first search, mark those steps as "recursive loop" as well.
 3. Predicates that are flagged as recursive.
 
+- What if something is recursive in one evaluation but not another?? Need to do it on a per-predicate basis.
 
 ## Refactoring
 - Implement a `ChainedEvaluation` class that exposes `Next`?

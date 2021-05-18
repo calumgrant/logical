@@ -36,8 +36,14 @@ public:
     
     virtual void AddAttribute(const std::shared_ptr<Relation> & attribute) =0;
 
-    
     virtual void VisitAttributes(const std::function<void(Relation&)> &) const =0;
+    
+    virtual void VisitRules(const std::function<void(Evaluation&)> &) const =0;
+
+    bool visited = false;
+    bool recursive = false;
+    bool onRecursivePath = false;
+    bool analysedForRecursion = false;
     
 protected:
     // Returns the number of rows.

@@ -28,6 +28,7 @@ public:
     static void Indent(std::ostream &os, int indent=0);
     static void OutputVariable(std::ostream & os, int variable);
     static void OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> & relation);
+    static void OutputRelation(std::ostream &os, Database &db, const Relation & relation);
 
     void OutputCallCount(std::ostream&) const;
     
@@ -47,11 +48,7 @@ public:
     
     // EvaluationPtr next;
     // std::weak_ptr<Relation> relation;
-    
-    // Flags for recursion
-    bool visited;  // Should be set to false after an analysis.
-    bool onRecursivePath;
-    
+        
     virtual Evaluation * GetNext() const;
     virtual Evaluation * GetNext2() const;
     virtual Relation * ReadsRelation() const;

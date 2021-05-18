@@ -24,6 +24,7 @@ public:
     
     void AddAttribute(const std::shared_ptr<Relation> & attribute) override;
     void VisitAttributes(const std::function<void(Relation&)> &) const override;
+    void VisitRules(const std::function<void(Evaluation&)> &) const override;
 private:
     bool rulesRun = false;
     std::vector< std::shared_ptr<Evaluation> > rules;

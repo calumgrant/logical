@@ -2,6 +2,7 @@
 #include "Evaluation.hpp"
 #include "Colours.hpp"
 #include "RelationImpl.hpp"
+#include "Analysis.hpp"
 
 #include <iostream>
 
@@ -207,6 +208,8 @@ void Predicate::RunRules()
 {
     if(rulesRun) return;
     
+    AnalyseRecursion(database, *this);
+    
     if(evaluating)
     {
         if(!recursive)
@@ -238,9 +241,11 @@ void Predicate::RunRules()
     rulesRun = true;
     if(database.Explain())
     {
-        std::cout << "Evaluated " << rules.size() << " rule" << (rules.size()>1 ? "s" : "") << " in "
-            << Colours::Relation << database.GetString(Name()) << Colours::Normal
-            << "/" << Arity() << " ->\n";
+        if(Relation::recursive) std::cout << Colours::Error << "Recursive\n" << Colours::Normal;
+        if(onRecursivePath) std::cout << "On recursive path\n";
+        std::cout << "Evaluated " << rules.size() << " rule" << (rules.size()>1 ? "s" : "") << " in ";
+        Evaluation::OutputRelation(std::cout, database, *this);
+        std::cout << " ->\n";
         for(auto & p : rules)
             p->Explain(database, std::cout, 4);
     }
@@ -312,3 +317,8 @@ const CompoundName * Relation::GetCompoundName() const
     return nullptr;
 }
 
+void Predicate::VisitRules(const std::function<void(Evaluation&)>&fn) const
+{
+    for(auto & rule : rules)
+        fn(*rule);
+}

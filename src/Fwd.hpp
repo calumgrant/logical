@@ -6,6 +6,7 @@ class Entity;
 class Compilation;
 class Evaluation;
 class CompoundName;
+class Relation;
 
 typedef std::shared_ptr<Evaluation> EvaluationPtr;
 
