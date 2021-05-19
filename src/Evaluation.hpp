@@ -47,11 +47,14 @@ public:
     VariableId * unboundVariables;
     int numberOfUnboundVariables;
     
-    bool onRecursivePath = false;
+    // Analysis results
     
-    // EvaluationPtr next;
-    // std::weak_ptr<Relation> relation;
-        
+    // Holds true if
+    bool onRecursivePath = false;  // Output flag: r
+    
+    // Holds true if a preceding (dominating) evaluation step is a recursive read/join.
+    bool dependsOnRecursiveRead = false;  // Output flag: R
+            
     virtual Evaluation * GetNext() const;
     virtual Evaluation * GetNext2() const;
     virtual Relation * ReadsRelation() const;

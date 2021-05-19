@@ -783,10 +783,16 @@ void MulBBF::Explain(Database &db, std::ostream &os, int indent) const
 
 void Evaluation::OutputCallCount(std::ostream & os) const
 {
-    if(callCount==1)
-        os << " (called " << callCount << " time)";
-    else if(callCount>1)
-        os << " (called " << callCount << " times)";
+    os << Colours::Detail << " (called " << callCount << " time";
+    if(callCount>1) os << "s";
+    
+    if(onRecursivePath || dependsOnRecursiveRead)
+    {
+        os << ", flags:";
+        if (onRecursivePath) os << "r";
+        if (dependsOnRecursiveRead) os << "R";
+    }
+    os << ")" << Colours::Normal;
 }
 
 void DivBBF::Evaluate(Entity *row)

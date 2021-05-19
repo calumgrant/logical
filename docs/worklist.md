@@ -2,6 +2,8 @@
 
 ## Short term
 
+- Bug: in `closure1.dl`, the `query` should not be marked as recursive-path (`r`).
+
 Problems to solve
 - Ensuring that recursion remains correct
 - Use the delta when evaluating recursion
@@ -19,6 +21,28 @@ Work plan:
   - We don't prune branches within rules:
 
 Problem is that we need to mark which branches can be lifted out of the loop.
+
+- Analysis:
+  - Need a flag on each eval step: depends_on_recursive_query
+  - affected by recursive step.
+    It is set to true if it's after a query to a recursive predicate.
+
+
+
+- Idea: Have an optimization threshold. If two sizes are equivalent to within a factor of N, then don't reorder them.
+So the existing evaluation order is taken as a compiler hint.
+- Idea: Have options controlling optimization
+
+```
+logical:limit has steps 100.
+option @evaluation, steps 100, timeout 1000.
+option @results, expect 1000.
+logical:reorder false.
+// option @optimizer, reorder false, level 2.
+```
+
+
+  This means that the value needs to be evaluated
 
 ```
 x has reachable y if
