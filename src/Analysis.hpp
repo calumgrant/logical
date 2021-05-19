@@ -74,7 +74,4 @@ struct OptimizationOptions
     bool mergeBranches = true;
 };
 
-bool AnalyseRecursion(Database &db, Relation & node, bool parity);
-bool AnalyseRecursion(Database &db, Evaluation & node, bool parity);
-
-void AnalyseRecursion(Database & db, Relation & root);
+void AnalysePredicate(Database &db, Relation & predicate);

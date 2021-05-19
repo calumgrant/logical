@@ -208,7 +208,7 @@ void Predicate::RunRules()
 {
     if(rulesRun) return;
     
-    AnalyseRecursion(database, *this);
+    AnalysePredicate(database, *this);
     
     if(evaluating)
     {

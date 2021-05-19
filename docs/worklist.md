@@ -1,8 +1,9 @@
 # Work plan
 
-## Short term
+- Investigate: missing `d` flags in recursion4.dl
+- Problem is rules attached to multiple predicates. How does the analysis work there???
 
-- Bug: in `closure1.dl`, the `query` should not be marked as recursive-path (`r`).
+## Short term
 
 Problems to solve
 - Ensuring that recursion remains correct
@@ -27,7 +28,13 @@ Problem is that we need to mark which branches can be lifted out of the loop.
   - affected by recursive step.
     It is set to true if it's after a query to a recursive predicate.
 
+For reads: readIsOnRecursivePath, then propagate that forwards.
+For each predicate:
+- Successful evaluation message in bright green.
+- Join order: Put the recursive delta first (special case of the join orderer)
+- Optimization: Or: merge identical steps (can do this after local variable optimization maybe).
 
+- Merge identical predicates (optimization)
 
 - Idea: Have an optimization threshold. If two sizes are equivalent to within a factor of N, then don't reorder them.
 So the existing evaluation order is taken as a compiler hint.

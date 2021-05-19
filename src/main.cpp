@@ -83,7 +83,7 @@ int main(int argc, char**argv)
         if(db.UserErrorReported())
             std::cout << Colours::Error << "Evaluation completed with " << db.NumberOfErrors() << " errors\n" << Colours::Normal;
         else
-            std::cout << "Evaluation completed successfully\n";
+            std::cout << Colours::Success << "Evaluation completed successfully\n" << Colours::Normal;
     }
     
     if(db.UserErrorReported())

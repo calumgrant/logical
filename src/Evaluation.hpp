@@ -51,6 +51,7 @@ public:
     
     // Holds true if
     bool onRecursivePath = false;  // Output flag: r
+    bool readIsRecursive = false;
     
     // Holds true if a preceding (dominating) evaluation step is a recursive read/join.
     bool dependsOnRecursiveRead = false;  // Output flag: R
