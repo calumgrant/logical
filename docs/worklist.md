@@ -14,7 +14,21 @@ Problems to solve
 
 Work plan:
 5. Detect negative recursion.
+- Mark rules as recursive.
+  - Show them on the output (using -vv) option maybe?
+  - We don't prune branches within rules:
+
+Problem is that we need to mark which branches can be lifted out of the loop.
+
+```
+x has reachable y if
+    number x has successor y or
+    number x has reachable z and z has successor y.
+```
+
   Detect the first use in a branch?
+  Check parity for all predicates on the path
+  How do I avoid the "root" node becoming recursive? - I think it's ok.
 6. Implement some of the optimizations
   - Unused variables.
   - Mark certain predicates as deltas.

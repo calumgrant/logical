@@ -26,12 +26,15 @@ bool AnalyseRecursion(Database &database, Relation & node, bool parity)
     node.VisitRules([&](Evaluation & eval)
     {
         if( AnalyseRecursion(database, eval, parity) )
+        {
             node.onRecursivePath = true;
+        }
     });
     
     // TODO: Scope-guard this
     node.visited = false;
     
+    // If we are exiting from a recursive loop, node.recursive is true.
     return node.onRecursivePath && !node.recursive;
 }
 
@@ -41,28 +44,26 @@ bool AnalyseRecursion(Database &database, Evaluation & node, bool parity)
     auto next2 = node.GetNext2();
     
     auto relation = node.ReadsRelation();
-
-    bool onRecursivePath = false;
     
     if(relation)
     {
         if(AnalyseRecursion(database, *relation, parity))
-            onRecursivePath = true;
+            node.onRecursivePath = true;
     }
     
     if(next1)
     {
         if(AnalyseRecursion(database, *next1, node.NextIsNot() ? !parity : parity))
-            onRecursivePath = true;
+            node.onRecursivePath = true;
     }
     
     if(next2)
     {
         if(AnalyseRecursion(database, *next2, parity))
-            onRecursivePath = true;
+            node.onRecursivePath = true;
     }
     
-    return onRecursivePath;
+    return node.onRecursivePath;
 }
 
 void AnalyseRecursion(Database & database, Relation & root)

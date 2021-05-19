@@ -169,7 +169,7 @@ void EvaluateF::Explain(Database &db, std::ostream &os, int indent) const
     os << "Scan ";
     OutputRelation(os, db, r);
     os << " into ";
-    OutputVariable(os, slot);
+    OutputIntroducedVariable(os, slot);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
@@ -189,7 +189,7 @@ void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
     os << "Load ";
-    OutputVariable(os, slot);
+    OutputIntroducedVariable(os, slot);
     os << " := ";
     db.PrintQuoted(Entity(), os);
     OutputCallCount(os);
@@ -238,7 +238,7 @@ void EqualsBF::Explain(Database & db, std::ostream & os, int indent) const
 {
     Indent(os, indent);
     os << "Assign ";
-    OutputVariable(os, slot2);
+    OutputIntroducedVariable(os, slot2);
     os << " := ";
     OutputVariable(os, slot1);
     OutputCallCount(os);
@@ -529,7 +529,7 @@ void RangeU::Explain(Database &db, std::ostream &os, int indent) const
     os << "For ";
     OutputVariable(os, slot1);
     os << " " << cmp1 << " ";
-    OutputVariable(os, slot2);
+    OutputIntroducedVariable(os, slot2);
     os << " " << cmp2 << " ";
     OutputVariable(os, slot3);
     OutputCallCount(os);
@@ -704,7 +704,7 @@ void AddBBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Calculate ";
-    OutputVariable(os, slot3);
+    OutputIntroducedVariable(os, slot3);
     os << " := ";
     OutputVariable(os, slot1);
     os << " + ";
@@ -757,7 +757,7 @@ void SubBBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Calculate ";
-    OutputVariable(os, slot3);
+    OutputIntroducedVariable(os, slot3);
     os << " := ";
     OutputVariable(os, slot1);
     os << " - ";
@@ -967,7 +967,7 @@ void Load::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Load ";
-    OutputVariable(os, slot);
+    OutputIntroducedVariable(os, slot);
     os << " := ";
     db.PrintQuoted(value, os);
     OutputCallCount(os);
@@ -1172,6 +1172,12 @@ void Evaluation::OutputVariable(std::ostream & os, int variable)
     os << Colours::Variable << "_" << variable << Colours::Normal;
 }
 
+void Evaluation::OutputIntroducedVariable(std::ostream & os, int variable)
+{
+    os << Colours::IntroducedVariable << "_" << variable << Colours::Normal;
+}
+
+
 void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation & relation)
 {
     os << Colours::Relation;
@@ -1232,7 +1238,7 @@ void Join::Explain(Database &db, std::ostream & os, int indent) const
     {
         if(i>0) os << ",";
         if(outputs[i] != -1)
-            OutputVariable(os, outputs[i]);
+            OutputIntroducedVariable(os, outputs[i]);
         else
             os << "_";
     }

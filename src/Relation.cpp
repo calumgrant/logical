@@ -231,7 +231,8 @@ void Predicate::RunRules()
         recursive = false;
         for(auto & p : rules)
         {
-            p->Evaluate(nullptr);
+            if(iteration == 1 || p->onRecursivePath)
+                p->Evaluate(nullptr);
         }
         ++iteration;
     }
@@ -247,7 +248,9 @@ void Predicate::RunRules()
         Evaluation::OutputRelation(std::cout, database, *this);
         std::cout << " ->\n";
         for(auto & p : rules)
+        {
             p->Explain(database, std::cout, 4);
+        }
     }
 }
 

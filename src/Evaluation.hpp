@@ -27,6 +27,7 @@ public:
 
     static void Indent(std::ostream &os, int indent=0);
     static void OutputVariable(std::ostream & os, int variable);
+    static void OutputIntroducedVariable(std::ostream & os, int variable);
     static void OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> & relation);
     static void OutputRelation(std::ostream &os, Database &db, const Relation & relation);
 
@@ -45,6 +46,8 @@ public:
     int numberOfBoundVariables;
     VariableId * unboundVariables;
     int numberOfUnboundVariables;
+    
+    bool onRecursivePath = false;
     
     // EvaluationPtr next;
     // std::weak_ptr<Relation> relation;
