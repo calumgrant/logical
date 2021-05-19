@@ -74,4 +74,6 @@ struct OptimizationOptions
     bool mergeBranches = true;
 };
 
+OptimizationOptions CreateOptions(int level);
+
 void AnalysePredicate(Database &db, Relation & predicate);

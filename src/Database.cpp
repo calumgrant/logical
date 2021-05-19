@@ -66,6 +66,8 @@ DatabaseImpl::DatabaseImpl() : verbose(false)
     
     RelationId evaluation_step_limit = GetStringId("evaluation-step-limit");
     unaryRelations[evaluation_step_limit] = std::make_shared<EvaluationStepLimit>(*this, evaluation_step_limit);
+    
+    options = CreateOptions(1); // Default optimization level = 1
 }
 
 DatabaseImpl::~DatabaseImpl()
@@ -491,4 +493,9 @@ void Database::ParityError(Relation & relation)
     std::cerr << Colours::Error << "Error: predicate ";
     Evaluation::OutputRelation(std::cerr, *this, relation);
     std::cerr << Colours::Error << " has negative recursion\n" << Colours::Normal;
+}
+
+void DatabaseImpl::SetOptimizationLevel(int level)
+{
+    options = CreateOptions(level);
 }

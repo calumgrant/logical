@@ -1,6 +1,11 @@
 # Work plan
 
-- Investigate: missing `d` flags in recursion4.dl
+- Recursion optimizations:
+  - Implement `-O0`
+  - Implement delta optimization.
+  - Join on the delta of a recursive call, if
+    optimization options: deltas
+
 - Problem is rules attached to multiple predicates. How does the analysis work there???
 
 ## Short term

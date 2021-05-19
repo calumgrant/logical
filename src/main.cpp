@@ -42,6 +42,9 @@ int main(int argc, char**argv)
                 case 'q':
                     quiet = true;
                     break;
+                case 'O':
+                    db.SetOptimizationLevel(atoi(argv[i]+2));
+                    break;
                 default:
                     std::cerr << "Unknown option: " << argv[i] << std::endl;
                     return (int)ErrorCode::InvalidArgs;

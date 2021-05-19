@@ -78,6 +78,8 @@ bool AnalyseRecursion(Database &database, Evaluation & node, bool parity)
 void AnalyseRecursiveReads(Evaluation & node, bool depends)
 {
     node.dependsOnRecursiveRead = depends;
+    if(!node.dependsOnRecursiveRead && node.readIsRecursive)
+        node.readDelta = true;
     
     auto next1 = node.GetNext();
     auto next2 = node.GetNext2();
@@ -113,4 +115,18 @@ void AnalysePredicate(Database & database, Relation & root)
     
     AnalyseRecursion(database, root);
     
+}
+
+OptimizationOptions CreateOptions(int level)
+{
+    OptimizationOptions options;
+    
+    switch(level)
+    {
+        case 0:
+            options.recursiveDeltas = false;
+            break;
+    }
+    
+    return options;
 }

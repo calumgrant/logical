@@ -1,6 +1,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "Analysis.hpp"
+
 struct RelationHash
 {
     int operator()(const std::pair<std::string, int> &p) const
@@ -12,7 +14,6 @@ struct RelationHash
     {
         return p.first * 97 + p.second;
     }
-
 };
 
 
@@ -46,6 +47,11 @@ public:
     void SetExpectedResults(int count) override;
     
     void CheckErrors();
+    
+    void SetOptimizationLevel(int level);
+    
+    OptimizationOptions options;
+
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
     std::unordered_map< int, std::shared_ptr<Relation> > binaryRelations;

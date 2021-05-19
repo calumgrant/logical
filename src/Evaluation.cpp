@@ -792,6 +792,7 @@ void Evaluation::OutputCallCount(std::ostream & os) const
         if (onRecursivePath) os << "r";
         if (dependsOnRecursiveRead) os << "d";
         if (readIsRecursive) os << "R";
+        if (readDelta) os << "D";
     }
     os << ")" << Colours::Normal;
 }
