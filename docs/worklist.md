@@ -1,37 +1,36 @@
 # Work plan
 
 - Bug in `closure1.dl` and `recursion4.dl`
-  - Call to delta has_reachable is not valid
-- Use JoinEvaluation instead of EvaluateBB, BF etc.
+  - Call to delta has_reachable is not valid because call is marked as recursive when it is not.
+  - Problem is (1) where the call is from a different recursive loop.
+  (2) where a rule is attached to multiple predicates. It can be recursive in one but not the other!
 
-- Bug `number X has square Y if number X and Y = X*X.` is not recursive.
 
-- Recursion optimizations:
-  - Implement `-O0`
-  - Implement delta optimization.
-  - Join on the delta of a recursive call, if
-    optimization options: deltas
 
-Can we iterate and update? Would be nice and simple if we could do that instead?? Then we just return the relevant results??
+- Optimization: Avoid redundant writes.
+
+- string/regex match
+  REGEX has regex-match Result
+  X has equal Y.
+
+
+
+- Bug `number X has square Y if number X and Y = X*X.` is not really recursive.
 
 - Problem is rules attached to multiple predicates. How does the analysis work there???
 
 - Unit tests for tables.
 - Remove "Querying empty relation" warning on queries with no query.
-- Bug in `recursion4.dl`: `query "Mutual recursion" has nuXmber n, nexXt n1 if n has next3 n1.`
-  - Also in `closure1.dl`
 - When counting and summing, ensure we make the body reentrant; deduplicate isn't doing enough and needs to be reset.
-- Bug in `recursion5.dl`: Recursion not detected
-- Scan should use a join/delta.
 - Help option: `-h`
 - `logical:option "no-joinreorder"`.
 - Have a better find syntax:
+- Any predicate can be a query.
 
 `
 result X has foo Y if ...
 
 find result, foo, bar.
-
 `
 
 ## Short term
@@ -43,27 +42,13 @@ Problems to solve
 - Avoid reevaluating branches unnecessarily, in recursion and when rules attach to multiple tables.
 - Defining data like `temperature -5.`
 - Detecting negative recursion.
-- Which predicates do we run it on? Ideally we can do this globally in O(n).
+- Reporting the line number of negative recursion.
 
 - Split off `Predicate` and `Table` into different classes, not inheritance?
   - Can then change the table type to a non-recursive table if it's more efficient?
 
 - Use termcap library
 
-Work plan:
-5. Detect negative recursion.
-- Mark rules as recursive.
-  - Show them on the output (using -vv) option maybe?
-  - We don't prune branches within rules:
-
-Problem is that we need to mark which branches can be lifted out of the loop.
-
-- Analysis:
-  - Need a flag on each eval step: depends_on_recursive_query
-  - affected by recursive step.
-    It is set to true if it's after a query to a recursive predicate.
-
-For reads: readIsOnRecursivePath, then propagate that forwards.
 For each predicate:
 - Successful evaluation message in bright green.
 - Join order: Put the recursive delta first (special case of the join orderer)
@@ -83,18 +68,6 @@ logical:reorder false.
 // option @optimizer, reorder false, level 2.
 ```
 
-
-  This means that the value needs to be evaluated
-
-```
-x has reachable y if
-    number x has successor y or
-    number x has reachable z and z has successor y.
-```
-
-  Detect the first use in a branch?
-  Check parity for all predicates on the path
-  How do I avoid the "root" node becoming recursive? - I think it's ok.
 6. Implement some of the optimizations
   - Unused variables.
   - Mark certain predicates as deltas.

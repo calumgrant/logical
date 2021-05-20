@@ -250,7 +250,7 @@ void Predicate::RunRules()
         ++iteration;
     }
     while (NextIteration()); //  && Relation::onRecursivePath);
-    
+        
     evaluating = false;
     rulesRun = true;
     if(database.Explain())

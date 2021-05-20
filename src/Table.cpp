@@ -146,6 +146,7 @@ const CompoundName * Table::GetCompoundName() const
 
 void Table::QueryDelta(Entity * row, int columns, Visitor &v)
 {
+    RunRules();
     for(std::size_t s=deltaStart; s<deltaEnd; s += arity)
     {
         bool found = true;

@@ -8,4 +8,4 @@ x has next2 y if x has next y or
 
 x has next3 y if x has next y.
 
-query "Mutual recursion" has numbeXr n, neXxt n1 if n has next3 n1.
+query "Mutual recursion" has number n, neXxt n1 if n has next3 n1.
