@@ -244,12 +244,12 @@ void Predicate::RunRules()
         recursive = false;
         for(auto & p : rules)
         {
-            // if(iteration == 1 || p->onRecursivePath)
+            if(iteration == 1 || p->onRecursivePath)
                 p->Evaluate(nullptr);
         }
         ++iteration;
     }
-    while (NextIteration()); // && Relation::recursive);
+    while (NextIteration()); //  && Relation::onRecursivePath);
     
     evaluating = false;
     rulesRun = true;

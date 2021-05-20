@@ -1,5 +1,11 @@
 # Work plan
 
+- Bug in `closure1.dl` and `recursion4.dl`
+  - Call to delta has_reachable is not valid
+- Use JoinEvaluation instead of EvaluateBB, BF etc.
+
+- Bug `number X has square Y if number X and Y = X*X.` is not recursive.
+
 - Recursion optimizations:
   - Implement `-O0`
   - Implement delta optimization.
@@ -12,6 +18,13 @@ Can we iterate and update? Would be nice and simple if we could do that instead?
 
 - Unit tests for tables.
 - Remove "Querying empty relation" warning on queries with no query.
+- Bug in `recursion4.dl`: `query "Mutual recursion" has nuXmber n, nexXt n1 if n has next3 n1.`
+  - Also in `closure1.dl`
+- When counting and summing, ensure we make the body reentrant; deduplicate isn't doing enough and needs to be reset.
+- Bug in `recursion5.dl`: Recursion not detected
+- Scan should use a join/delta.
+- Help option: `-h`
+- `logical:option "no-joinreorder"`.
 - Have a better find syntax:
 
 `

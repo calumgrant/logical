@@ -162,5 +162,6 @@ void Table::QueryDelta(Entity * row, int columns, Visitor &v)
 
 void Table::FirstIteration()
 {
-    deltaStart = deltaEnd = data.size();
+    deltaStart = 0;
+    deltaEnd = data.size();
 }

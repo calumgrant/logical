@@ -160,9 +160,9 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
             {
                 auto relation = db.GetUnaryRelation(predicates->list[i]->nameId);
                 if(i>0 || bound)
-                    eval = std::make_shared<EvaluateB>(relation, slot, eval);
+                    eval = std::make_shared<Join>(relation, std::vector<int> {slot}, std::vector<int>{-1}, eval);
                 else
-                    eval = std::make_shared<EvaluateF>(relation, slot, eval);
+                    eval = std::make_shared<Join>(relation, std::vector<int> {-1}, std::vector<int>{slot}, eval);
             }
         }
         else

@@ -1,5 +1,5 @@
 expected-results 10.
-//evaluation-step-limit 105.
+evaluation-step-limit 218.
 
 x has next x+1 if 1<=x<=10.
 
