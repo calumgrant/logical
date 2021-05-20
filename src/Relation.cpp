@@ -125,9 +125,19 @@ void UnaryTable::Query(Entity * row, int columns, Visitor &v)
     }
 }
 
+void UnaryTable::QueryDelta(Entity * row, int columns, Visitor &v)
+{
+    Query(row, columns, v);
+}
+
 void SpecialPredicate::Query(Entity * row, int, Visitor&)
 {
     // Empty relation.
+}
+
+void SpecialPredicate::QueryDelta(Entity * row, int columns, Visitor &v)
+{
+    Query(row, columns, v);
 }
 
 void BinaryTable::Query(Entity * row, int bound, Visitor&v)
@@ -180,10 +190,14 @@ void BinaryTable::Query(Entity * row, int bound, Visitor&v)
     // todo
 }
 
+void BinaryTable::QueryDelta(Entity * row, int columns, Visitor &v)
+{
+    Query(row, columns, v);
+}
 
 Predicate::Predicate(Database &db, int name) :
     rulesRun(false), name(name), database(db),
-    evaluating(false), recursive(false), sizeAtLastRecursiveCall(0)
+    evaluating(false), recursive(false)
 {
 }
 
@@ -215,7 +229,6 @@ void Predicate::RunRules()
         if(!recursive)
         {
             recursive = true;
-            sizeAtLastRecursiveCall = Count();
         }
         return;
     }
@@ -224,27 +237,25 @@ void Predicate::RunRules()
     
     std::size_t iteration = 1;
     
+    FirstIteration();
 
     do
     {
-        sizeAtLastRecursiveCall = Count();
         recursive = false;
         for(auto & p : rules)
         {
-            if(iteration == 1 || p->onRecursivePath)
+            // if(iteration == 1 || p->onRecursivePath)
                 p->Evaluate(nullptr);
         }
         ++iteration;
     }
-    while (recursive && Count()>sizeAtLastRecursiveCall);
+    while (NextIteration()); // && Relation::recursive);
     
     evaluating = false;
     rulesRun = true;
     if(database.Explain())
     {
-        // if(Relation::recursive) std::cout << Colours::Error << "Recursive\n" << Colours::Normal;
-        // if(onRecursivePath) std::cout << "On recursive path\n";
-        std::cout << "Evaluated " << rules.size() << " rule" << (rules.size()>1 ? "s" : "") << " in ";
+        std::cout << "Evaluated " << rules.size() << " rule" << (rules.size()!=1 ? "s" : "") << " in ";
         Evaluation::OutputRelation(std::cout, database, *this);
         
         if(Relation::recursive || onRecursivePath)
@@ -334,3 +345,31 @@ void Predicate::VisitRules(const std::function<void(Evaluation&)>&fn) const
     for(auto & rule : rules)
         fn(*rule);
 }
+
+bool UnaryTable::NextIteration()
+{
+    return false;
+}
+
+bool BinaryTable::NextIteration()
+{
+    return false;
+}
+
+bool SpecialPredicate::NextIteration()
+{
+    return false;
+}
+
+void UnaryTable::FirstIteration()
+{
+}
+
+void BinaryTable::FirstIteration()
+{
+}
+
+void SpecialPredicate::FirstIteration()
+{
+}
+

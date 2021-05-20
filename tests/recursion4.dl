@@ -1,5 +1,5 @@
 expected-results 10.
-evaluation-step-limit 105.
+//evaluation-step-limit 105.
 
 x has next x+1 if 1<=x<=10.
 
@@ -8,4 +8,4 @@ x has next2 y if x has next y or
 
 x has next3 y if x has next y.
 
-query "Mutual recursion" has number n, next n1 if n has next3 n1.
+query "Mutual recursion" has numbeXr n, neXxt n1 if n has next3 n1.

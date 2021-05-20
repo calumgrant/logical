@@ -33,10 +33,13 @@ private:
     // The number of
     bool evaluating;
     bool recursive;
-    std::size_t sizeAtLastRecursiveCall;
     std::unordered_set<std::shared_ptr<Relation>> attributes;
 protected:
     Database &database;
+    // Notify that the next iteration has happened; release all data gathered by this iteration
+    // Returns true if data was added
+    virtual bool NextIteration() =0;
+    virtual void FirstIteration() =0;
 };
 
 class UnaryTable : public Predicate
@@ -46,7 +49,10 @@ public:
     void Add(const Entity *row) override;
     std::size_t Count() override;
     void Query(Entity*row, int columns, Visitor&v) override;
+    void QueryDelta(Entity*row, int columns, Visitor&v) override;
     int Arity() const override;
+    bool NextIteration() override;
+    void FirstIteration() override;
 private:
     std::unordered_set<Entity, Entity::Hash> values;
     std::shared_ptr<Relation> index;
@@ -59,7 +65,10 @@ public:
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     std::size_t Count() override;
     void Query(Entity *row, int columns, Visitor&v) override;
+    void QueryDelta(Entity*row, int columns, Visitor&v) override;
     int Arity() const override;
+    bool NextIteration() override;
+    void FirstIteration() override;
 };
 
 class PrintRelation : public SpecialPredicate
@@ -99,7 +108,10 @@ public:
     void Add(const Entity * row) override;
     std::size_t Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
+    void QueryDelta(Entity*row, int columns, Visitor&v) override;
     int Arity() const override;
+    bool NextIteration() override;
+    void FirstIteration() override;
 private:
     // This representation is inefficient - fixme.
     std::unordered_set<std::pair<Entity, Entity>, PairHash> values;
@@ -130,11 +142,14 @@ class Table : public Predicate
 {
 public:
     Table(Database &db, const CompoundName &name, int arity);
+    Table(Database &db, RelationId name, int arity);
     std::size_t Count() override;
     void Query(Entity * row, int columns, Visitor&v) override;
+    void QueryDelta(Entity*row, int columns, Visitor&v) override;
     void Add(const Entity*row) override;
     int Arity() const override;
     const CompoundName * GetCompoundName() const override;
+private:
 
     class Comparer
     {
@@ -182,9 +197,10 @@ public:
     // A count of the number times we have called Query in a nested way.
     // If reentrantDepth is 0, we can safely add rules directly to the table.
     Depth reentrancy;
-    std::vector<Entity> delta_data;
-    index_type delta_hash;
+    std::size_t deltaStart, deltaEnd = 0;
     
     const CompoundName name;
+    
+    bool NextIteration() override;
+    void FirstIteration() override;
 };
-

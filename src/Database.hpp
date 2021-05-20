@@ -93,4 +93,6 @@ public:
     bool EvaluationLimitExceeded();
     
     void ParityError(Relation &relation);
+    
+    virtual const OptimizationOptions & Options() const = 0;
 };

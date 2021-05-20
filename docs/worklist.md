@@ -6,7 +6,20 @@
   - Join on the delta of a recursive call, if
     optimization options: deltas
 
+Can we iterate and update? Would be nice and simple if we could do that instead?? Then we just return the relevant results??
+
 - Problem is rules attached to multiple predicates. How does the analysis work there???
+
+- Unit tests for tables.
+- Remove "Querying empty relation" warning on queries with no query.
+- Have a better find syntax:
+
+`
+result X has foo Y if ...
+
+find result, foo, bar.
+
+`
 
 ## Short term
 
@@ -19,6 +32,10 @@ Problems to solve
 - Detecting negative recursion.
 - Which predicates do we run it on? Ideally we can do this globally in O(n).
 
+- Split off `Predicate` and `Table` into different classes, not inheritance?
+  - Can then change the table type to a non-recursive table if it's more efficient?
+
+- Use termcap library
 
 Work plan:
 5. Detect negative recursion.

@@ -1172,7 +1172,10 @@ void Join::Evaluate(Entity * locals)
             data[i] = locals[inputs[i]];
         }
     
-    relation.lock()->Query(&data[0], mask, visitor);
+    if(useDelta)
+        relation.lock()->QueryDelta(&data[0], mask, visitor);
+    else
+        relation.lock()->Query(&data[0], mask, visitor);
 }
 
 void Evaluation::OutputVariable(std::ostream & os, int variable)
@@ -1231,6 +1234,8 @@ void Join::Explain(Database &db, std::ostream & os, int indent) const
     else if(outCount==0) os << "Probe ";
     else os << "Join ";
     
+    if(useDelta)
+        os << Colours::Relation << "∆";
     OutputRelation(os, db, relation.lock());
     os << " (";
     for(int i=0; i<inputs.size(); ++i)
@@ -1299,4 +1304,3 @@ OrEvaluationForNot::OrEvaluationForNot(const std::shared_ptr<Evaluation> &left, 
 bool OrEvaluationForNot::NextIsNot() const { return true; }
 
 bool Evaluation::NextIsNot() const { return false; }
-

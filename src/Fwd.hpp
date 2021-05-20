@@ -7,6 +7,7 @@ class Compilation;
 class Evaluation;
 class CompoundName;
 class Relation;
+class OptimizationOptions;
 
 typedef std::shared_ptr<Evaluation> EvaluationPtr;
 

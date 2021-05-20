@@ -4,6 +4,7 @@
 class CompoundName
 {
 public:
+    CompoundName();
     CompoundName(const std::vector<int> & parts);
     
     bool operator==(const CompoundName & other) const;

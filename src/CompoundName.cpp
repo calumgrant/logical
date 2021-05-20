@@ -25,6 +25,10 @@ CompoundName::CompoundName(const std::vector<int> & list) : parts(list)
     assert(mapFromInputToOutput.size() == list.size());
 }
 
+CompoundName::CompoundName()
+{
+}
+
 bool CompoundName::operator==(const CompoundName & other) const
 {
     return parts == other.parts;

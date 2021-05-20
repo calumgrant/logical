@@ -51,6 +51,8 @@ public:
     void SetOptimizationLevel(int level);
     
     OptimizationOptions options;
+    
+    const OptimizationOptions & Options() const override;
 
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;

@@ -7,9 +7,16 @@
 Table::Table(Database &db, const CompoundName & cn, int arity) :
     Predicate(db, cn.parts[0]), arity(arity),
     hash({}, 100, Comparer(data, arity, -1), Comparer(data, arity, -1)),
-    delta_hash({}, 100, Comparer(delta_data, arity, -1), Comparer(delta_data, arity, -1)),
     name(cn)
 {
+}
+
+Table::Table(Database &db, RelationId name, int arity) :
+    Predicate(db, name), arity(arity),
+    hash({}, 100, Comparer(data, arity, -1), Comparer(data, arity, -1)),
+    name()
+{
+    
 }
 
 void Table::Add(const Entity *row)
@@ -27,20 +34,6 @@ void Table::Add(const Entity *row)
     for(int i=0; i<arity; ++i)
         assert(row[i].type != EntityType::None);
     
-    if(!reentrancy.IsZero())
-    {
-        // We need to add the data to a delta instead.
-        auto s = delta_data.size();
-        delta_data.insert(delta_data.end(), row, row+arity);
-        auto i = delta_hash.insert(s);
-        if(!i.second)
-        {
-            // It was duplicated, so remove it.
-            delta_data.resize(s);
-        }
-        return;
-    }
-    
     auto s = data.size();
     data.insert(data.end(), row, row+arity);
     
@@ -50,15 +43,22 @@ void Table::Add(const Entity *row)
         // It was duplicated, so remove it.
         data.resize(s);
     }
-    else
-    {
+}
+
+bool Table::NextIteration()
+{
+    bool moreResults = deltaEnd < data.size();
     
-        // Insert into all other indexes
+    for(std::size_t s = deltaStart; s < deltaEnd; s+= arity)
+    {
         for(auto & index : indexes)
         {
             index.second.insert(s);
         }
     }
+    deltaStart = deltaEnd;
+    deltaEnd = data.size();
+    return moreResults;
 }
 
 Table::map_type & Table::GetIndex(int mask)
@@ -75,7 +75,7 @@ Table::map_type & Table::GetIndex(int mask)
     
     auto &index = indexes.insert(std::make_pair(mask, it)).first->second;
     
-    for(auto i=0; i<data.size(); i+=arity)
+    for(auto i=0; i<deltaStart; i+=arity)
     {
         index.insert(i);
     }
@@ -97,21 +97,20 @@ void Table::Query(Entity * row, int mask, Visitor&v)
     {
         // Unclear if we need reentrancy guard here.
         auto r = reentrancy.Enter();
-        for(int s=0; s<data.size(); s+=arity)
+        for(std::size_t s=0; s<data.size(); s+=arity)
             v.OnRow(&data[s]);
     }
     else
     {
         
-        if(mask == -1)
+        if(mask == -1 || mask == (1<<arity)-1)
         {
-            // TODO: Also if mask is (1<<arity-1)
             auto s = data.size();
             data.insert(data.end(), row, row+arity);
             auto i = hash.find(s);
             data.resize(s);
             
-            if (i != hash.end())
+            if (i != hash.end() && *i<deltaStart)
                 v.OnRow(&data[*i]);
             return;
         }
@@ -132,18 +131,7 @@ void Table::Query(Entity * row, int mask, Visitor&v)
                 v.OnRow(&data[*i]);
             }
         }
-    }
-    
-    if( reentrancy.IsZero() && delta_data.size()>0 )
-    {
-        // Not sure this is exactly the right place to do this
-        for(std::size_t s=0; s<delta_data.size(); s+=arity)
-        {
-            Add(&delta_data[s]);
-        }
-        delta_data.clear();
-        delta_hash.clear();
-    }
+    }    
 }
 
 int Table::Arity() const
@@ -153,5 +141,26 @@ int Table::Arity() const
 
 const CompoundName * Table::GetCompoundName() const
 {
-    return &name;
+    return name.parts.empty() ? nullptr : &name;
+}
+
+void Table::QueryDelta(Entity * row, int columns, Visitor &v)
+{
+    for(std::size_t s=deltaStart; s<deltaEnd; s += arity)
+    {
+        bool found = true;
+        for(int i=0; i<arity; ++i)
+            if(columns & (1<<i) && data[s+i] != row[i])
+            {
+                found = false;
+                break;
+            }
+        if(found)
+            v.OnRow(&data[s]);
+    }
+}
+
+void Table::FirstIteration()
+{
+    deltaStart = deltaEnd = data.size();
 }

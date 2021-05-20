@@ -16,10 +16,10 @@ public:
     // Which columns are inputs and which are outputs is unspecified.
     // Call back v.OnRow for each result,
     virtual void Query(Entity *query, int columns, Visitor &v) =0;
+    virtual void QueryDelta(Entity *query, int columns, Visitor &v) =0;
 
     // Insert a row into this table.
     virtual void Add(const Entity * row) =0;
-
 
     virtual ~Relation();
     
@@ -39,6 +39,8 @@ public:
     virtual void VisitAttributes(const std::function<void(Relation&)> &) const =0;
     
     virtual void VisitRules(const std::function<void(Evaluation&)> &) const =0;
+    
+    void VisitSteps(const std::function<void(Evaluation&)> &) const;
 
     bool visited = false;
     bool recursive = false;

@@ -44,6 +44,27 @@ bool AnalyseRecursion(Database &database, Relation & node, bool parity)
     return node.onRecursivePath && !node.recursive;
 }
 
+void VisitEvaluation(Evaluation &e, const std::function<void(Evaluation&)> & fn)
+{
+    fn(e);
+    if(auto next1 = e.GetNext())
+    {
+        fn(*next1);
+        VisitEvaluation(*next1, fn);
+    
+        if(auto next2 = e.GetNext2())
+        {
+            fn(*next2);
+            VisitEvaluation(*next2, fn);
+        }
+    }
+}
+
+void Relation::VisitSteps(const std::function<void(Evaluation&)> & fn) const
+{
+    VisitRules([&](Evaluation & rule) { VisitEvaluation(rule, fn); });
+}
+
 bool AnalyseRecursion(Database &database, Evaluation & node, bool parity)
 {
     auto next1 = node.GetNext();
@@ -108,6 +129,14 @@ void AnalyseRecursion(Database & database, Relation & root)
     AnalyseRecursiveReads(root);
 }
 
+void ApplyDeltas(Relation & relation)
+{
+    relation.VisitSteps([&](Evaluation&eval) {
+        if(eval.readDelta)
+            eval.useDelta = true;
+    });
+}
+
 void AnalysePredicate(Database & database, Relation & root)
 {
     if(root.analysed) return;
@@ -115,6 +144,8 @@ void AnalysePredicate(Database & database, Relation & root)
     
     AnalyseRecursion(database, root);
     
+    if(database.Options().recursiveDeltas)
+        ApplyDeltas(root);
 }
 
 OptimizationOptions CreateOptions(int level)

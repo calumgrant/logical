@@ -19,7 +19,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
     auto i = unaryRelations.find(name);
     if (i == unaryRelations.end())
     {
-        auto p = std::make_shared<UnaryTable>(*this, name);
+        auto p = std::make_shared<Table>(*this, name, 1);
         unaryRelations.insert(std::make_pair(name, p));
         return p;
     }
@@ -498,4 +498,9 @@ void Database::ParityError(Relation & relation)
 void DatabaseImpl::SetOptimizationLevel(int level)
 {
     options = CreateOptions(level);
+}
+
+const OptimizationOptions & DatabaseImpl::Options() const
+{
+    return options;
 }
