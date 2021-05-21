@@ -4,44 +4,54 @@
 
 #include <iostream>
 
-bool AnalyseRecursion(Database &db, Relation & node, bool parity);
-bool AnalyseRecursion(Database &db, Evaluation & node, bool parity);
+
+
+Relation * AnalyseRecursion(Database &db, Relation & node, bool parity);
+Relation * AnalyseRecursion(Database &db, Evaluation & node, bool parity);
 
 void AnalyseRecursion(Database & db, Relation & root);
 
 
-bool AnalyseRecursion(Database &database, Relation & node, bool parity)
+Relation * AnalyseRecursion(Database &database, Relation & node, bool parity)
 {
     if(node.visited)
     {
         node.recursive = true;
         node.onRecursivePath = true;
+        node.recursiveRoot = &node;
         
         if(node.parity != parity)
         {
             database.ParityError(node);
         }
         
-        return true;
+        return &node;
     }
     
     node.visited = true;
     node.analysedForRecursion = true;
     node.parity = parity;
+    
+    Relation * root = nullptr;
         
     node.VisitRules([&](Evaluation & eval)
     {
-        if( AnalyseRecursion(database, eval, parity) )
+        // What happens if we get multiple recursive paths??
+        auto r = AnalyseRecursion(database, eval, parity);
+        if( r )
         {
+            assert(!root || r==root);
             node.onRecursivePath = true;
+            node.recursiveRoot = r;
         }
     });
     
     // TODO: Scope-guard this
     node.visited = false;
     
-    // If we are exiting from a recursive loop, node.recursive is true.
-    return node.onRecursivePath && !node.recursive;
+    assert(!node.recursive || node.recursiveRoot == &node);
+    
+    return node.recursive ? nullptr : root;
 }
 
 void VisitEvaluation(Evaluation &e, const std::function<void(Evaluation&)> & fn)
@@ -65,16 +75,17 @@ void Relation::VisitSteps(const std::function<void(Evaluation&)> & fn) const
     VisitRules([&](Evaluation & rule) { VisitEvaluation(rule, fn); });
 }
 
-bool AnalyseRecursion(Database &database, Evaluation & node, bool parity)
+Relation * AnalyseRecursion(Database &database, Evaluation & node, bool parity)
 {
     auto next1 = node.GetNext();
     auto next2 = node.GetNext2();
     
     auto relation = node.ReadsRelation();
+    Relation * root = nullptr;
     
     if(relation)
     {
-        if(AnalyseRecursion(database, *relation, parity))
+        if(!!(root = AnalyseRecursion(database, *relation, parity)))
         {
             node.onRecursivePath = true;
             node.readIsRecursive = true;
@@ -83,17 +94,25 @@ bool AnalyseRecursion(Database &database, Evaluation & node, bool parity)
     
     if(next1)
     {
-        if(AnalyseRecursion(database, *next1, node.NextIsNot() ? !parity : parity))
+        if(auto r = AnalyseRecursion(database, *next1, node.NextIsNot() ? !parity : parity))
+        {
             node.onRecursivePath = true;
+            assert( !root || root == r );
+            root = r;
+        }
     }
     
     if(next2)
     {
-        if(AnalyseRecursion(database, *next2, parity))
+        if(auto r = AnalyseRecursion(database, *next2, parity))
+        {
             node.onRecursivePath = true;
+            assert( !root || root == r );
+            root = r;
+        }
     }
-    
-    return node.onRecursivePath;
+        
+    return root;
 }
 
 void AnalyseRecursiveReads(Evaluation & node, bool depends)

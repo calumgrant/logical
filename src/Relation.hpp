@@ -48,6 +48,7 @@ public:
     bool analysedForRecursion = false;
     bool parity = true;
     bool analysed = false;
+    Relation * recursiveRoot = nullptr;
     
 protected:
     // Returns the number of rows.

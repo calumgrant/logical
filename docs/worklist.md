@@ -1,11 +1,64 @@
 # Work plan
 
+## Evaluating recursive predicates
+A recursive predicate is a predicate that references itself, perhaps indirecty. Recursive predicates are evaluated by *iteration*, so that the predicate is evaluated by repeatedly running the rules in the predicate until no more results are found.
+
+The drawback with this approach is that the algorithm can quite easily become *quadratic* (or worse) in the number of rows in the predicate. An optimization to this is to use *deltas* to reduce the amount of work done it each iteration.
+
+A query-step can use a delta if no preceding steps rely on a recursive evaluation. This means that the preceding steps will be constant, and can be marked as "iteration-invariant" (as opposed to "iteration-variant" which means that the evaluation can proceed differently in different iterations.)  An iteration-invariant query-step can use a delta, which means that it only returns results from the previous iteration.
+
+Predicates can be mutually recursive. This means that when a recursive predicate is called recursively (in the same recursive loop), it must perform another iteration step.
+
+Analysis of recursion:
+Each node has the following flags:
+- visited for recursion (bool)
+- parity (bool)
+- Recursive predicate: null if not in recursive loop, or points to the main recursive predicate.
+
+
+
+Each step has the foll
+
+- Each predicate must be marked with a "Recursive loop" - which keeps the iteration counter. Recursive predicates are evaluated iteratively until no more results appear anywhere in the recursive loop.
+
+Rules are run (again) in called predicates if if the predicate is marked 
+
+```
+F 2 if F 1.
+
+prime N if not prime 
+```
+
+- Idea: Monotonic negative recursion.
+```
+n is Composite if 
+
+
+n is a Prime if n=2 or Prime m and
+```
+
+What is a delta?
+
+- Implement a `class Receiver` that receives row data. This will be the base class for `Relation` queries and for `Evaluation`.
+
 - Bug in `closure1.dl` and `recursion4.dl`
   - Call to delta has_reachable is not valid because call is marked as recursive when it is not.
   - Problem is (1) where the call is from a different recursive loop.
   (2) where a rule is attached to multiple predicates. It can be recursive in one but not the other!
 
+- Idea: The query site keeps a count, and the "delta" is maintained by the query, e.g.
 
+`Query(Entity*, int mask, Visitor, std::size_t & delta);` No this is nonsense. The delta is per iteration, not per call.
+
+
+Queries as much as possible, but only returns results greater or equal to the delta.
+The delta is increased such that duplicated results are not 
+A delta of 0 returns all results, and is the initial case.
+This solves reentrancy because the indexes are only updated on the query, not on the add.
+
+
+Problem is reentrancy again.
+- `Add()` puts it on a queue, and Query transfers all results to the indexes.
 
 - Optimization: Avoid redundant writes.
 

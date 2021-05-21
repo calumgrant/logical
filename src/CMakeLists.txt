@@ -15,6 +15,8 @@ FLEX_TARGET(MyScanner logical.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
+find_library(TERMCAP NAMES termcap)
+
 add_library(logiccore
     Analysis.cpp Analysis.hpp
     AST.cpp AST.hpp
@@ -36,8 +38,8 @@ add_library(logiccore
 add_executable(logical main.cpp)
 
 add_executable(logical-tests tests.cpp)
-target_link_libraries(logical-tests logiccore)
-target_link_libraries(logical logiccore)
+target_link_libraries(logical-tests logiccore ${TERMCAP})
+target_link_libraries(logical logiccore ${TERMCAP})
 
 set_target_properties(logiccore PROPERTIES
     CXX_STANDARD 17
