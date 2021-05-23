@@ -38,10 +38,15 @@ void Table::Add(const Entity *row)
     data.insert(data.end(), row, row+arity);
     
     auto i = hash.insert(s);
+            
     if(!i.second)
     {
         // It was duplicated, so remove it.
         data.resize(s);
+    }
+    else if(loop)
+    {
+        ++loop->numberOfResults;
     }
 }
 

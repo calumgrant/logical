@@ -55,6 +55,8 @@ public:
     const OptimizationOptions & Options() const override;
     
     void SetAnsiColours(bool);
+    
+    Relation &GetQueryRelation() const override;
 
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;

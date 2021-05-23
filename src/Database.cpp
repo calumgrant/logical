@@ -378,8 +378,11 @@ int DatabaseImpl::NumberOfResults() const
 
 void Database::WarningEmptyRelation(Relation & relation)
 {
+    if(&relation != &GetQueryRelation())
+    {
 //    ++errorCount;
-    std::cerr << Colours::Error << "Warning: Querying empty relation '" << GetString(relation.Name()) << "/" << relation.Arity() << "'\n" << Colours::Normal;
+        std::cerr << Colours::Error << "Warning: Querying empty relation '" << GetString(relation.Name()) << "/" << relation.Arity() << "'\n" << Colours::Normal;
+    }
 }
 
 void DatabaseImpl::RunQueries()
@@ -503,6 +506,11 @@ void DatabaseImpl::SetOptimizationLevel(int level)
 const OptimizationOptions & DatabaseImpl::Options() const
 {
     return options;
+}
+
+Relation & DatabaseImpl::GetQueryRelation() const
+{
+    return *queryPredicate;
 }
 
 void DatabaseImpl::SetAnsiColours(bool enabled)

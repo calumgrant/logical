@@ -77,3 +77,5 @@ struct OptimizationOptions
 OptimizationOptions CreateOptions(int level);
 
 void AnalysePredicate(Database &db, Relation & predicate);
+
+

@@ -95,4 +95,6 @@ public:
     void ParityError(Relation &relation);
     
     virtual const OptimizationOptions & Options() const = 0;
+    
+    virtual Relation & GetQueryRelation() const = 0;
 };

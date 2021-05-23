@@ -16,7 +16,38 @@ This document contains in-depth implementation notes.
 
 ## Recursion
 
-When predicates 
+A *recursive* predicate is one that queries itself, perhaps indirectly.  Two or more predicates that query each other are *mutually recursive*, and in general predicates that query each other form a *recursive loop*.
+
+Predicates that are recursive must be iterated (in a loop) until there are no more results added to any of the predicates, and the loop terminates.
+
+In a predicate, the first recursive call (that is *iteration independent* can be a delta, whereas all subsequent calls are *iteration dependent* and cannot use the delta. A *delta* only queries the *changes* since the last iteration, and since this is much smaller than the original predicate, results in a significant improvement in performance.
+
+All predicates in a recursive loop must be iterated, so a recursive pred
+
+As an additional complication, 
+
+
+```
+class RecursiveLoop
+{
+    // Called by all predicates in the loop when they add results.
+    void AddResult();
+
+    // Size NumberOfResults();
+
+
+    // True if all predicates in the loop
+    bool Finished();
+};
+```
+
+
+Analysis of recursion: Each predicate has a flag to indicate that it is in a recursive loop
+
+
+
+
+When predicates "call" themselves, they are recursive.
 
 Mutual recursion: when a predicate is called on the recursive loop, it is called using `QueryRecursive`. This happens if the predicate needs to perform additional evaluation? This then checks the recursive loop to see whether it needs to perform additional recursive steps.....
 

@@ -8,6 +8,7 @@ class Evaluation;
 class CompoundName;
 class Relation;
 class OptimizationOptions;
+class RecursiveLoop;
 
 typedef std::shared_ptr<Evaluation> EvaluationPtr;
 

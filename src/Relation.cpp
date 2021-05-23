@@ -221,10 +221,6 @@ void Predicate::MakeDirty()
 
 void Predicate::RunRules()
 {
-    if(recursiveRoot && recursiveRoot!=this && rulesRun)
-    {
-        std::cout << "We should reevaluate "; Evaluation::OutputRelation(std::cout, database, *this); std::cout << std::endl;
-    }
     if(rulesRun) return;
     
     AnalysePredicate(database, *this);
@@ -263,11 +259,10 @@ void Predicate::RunRules()
         std::cout << "Evaluated " << rules.size() << " rule" << (rules.size()!=1 ? "s" : "") << " in ";
         Evaluation::OutputRelation(std::cout, database, *this);
         
-        if(Relation::recursive || onRecursivePath)
+        if(Relation::loop)
         {
             std::cout << Colours::Detail << " (Flags:";
-            if(Relation::recursive) std::cout << "R";
-            if(Relation::onRecursivePath) std::cout << "r";
+            if(Relation::loop) std::cout << "R";
             std::cout << ")" << Colours::Normal;
         }
         

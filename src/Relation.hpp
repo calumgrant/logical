@@ -44,14 +44,26 @@ public:
     
     bool visited = false;
     bool recursive = false;
-    bool onRecursivePath = false;
     bool analysedForRecursion = false;
-    bool parity = true;
     bool analysed = false;
-    Relation * recursiveRoot = nullptr;
     bool fullyEvaluated = false;
-    
+
+    bool parity = true;
+    std::shared_ptr<RecursiveLoop> loop;
+
 protected:
     // Returns the number of rows.
     virtual std::size_t Count() =0;
+};
+
+class RecursiveLoop
+{
+public:
+    // Called by all predicates that add a result.
+    void AddResult();
+    
+    Size numberOfResults = 0;
+private:
+    bool resultAdded;
+    bool evaluated;
 };
