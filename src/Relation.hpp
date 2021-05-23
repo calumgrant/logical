@@ -41,7 +41,7 @@ public:
     virtual void VisitRules(const std::function<void(Evaluation&)> &) const =0;
     
     void VisitSteps(const std::function<void(Evaluation&)> &) const;
-
+    
     bool visited = false;
     bool recursive = false;
     bool onRecursivePath = false;
@@ -49,6 +49,7 @@ public:
     bool parity = true;
     bool analysed = false;
     Relation * recursiveRoot = nullptr;
+    bool fullyEvaluated = false;
     
 protected:
     // Returns the number of rows.

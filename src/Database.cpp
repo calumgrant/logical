@@ -504,3 +504,39 @@ const OptimizationOptions & DatabaseImpl::Options() const
 {
     return options;
 }
+
+void DatabaseImpl::SetAnsiColours(bool enabled)
+{
+    if(enabled)
+    {
+        Colours::Normal = "\033[0m";
+        Colours::Value = "\033[1;35m";  // Light magenta
+        Colours::Variable = "\033[0;32m"; // Green
+        Colours::IntroducedVariable = "\033[1;32m"; // Light green
+        Colours::Success = "\033[1;32m"; // Light green
+        Colours::Relation = "\033[0;33m"; // Brown orange
+        Colours::Error = "\033[1;31m"; // Light red
+        Colours::Detail = "\033[1;30m"; // Light red
+    }
+    else
+    {
+        Colours::Normal = "";
+        Colours::Value = "";
+        Colours::Variable = "";
+        Colours::IntroducedVariable = "";
+        Colours::Success = "";
+        Colours::Relation = "";
+        Colours::Error = "";
+        Colours::Detail = "";
+    }
+}
+
+
+const char * Colours::Normal = "\033[0m";
+const char * Colours::Value = "\033[1;35m";  // Light magenta
+const char * Colours::Variable = "\033[0;32m"; // Green
+const char * Colours::IntroducedVariable = "\033[1;32m"; // Light green
+const char * Colours::Success = "\033[1;32m"; // Light green
+const char * Colours::Relation = "\033[0;33m"; // Brown orange
+const char * Colours::Error = "\033[1;31m"; // Light red
+const char * Colours::Detail = "\033[1;30m"; // Light red

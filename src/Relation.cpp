@@ -208,6 +208,7 @@ void Predicate::AddRule(const std::shared_ptr<Evaluation> & rule)
     {
         // ?? What happens if it's recursive??
         // Generally it isn't as it came from a projection.
+        // !! Projections can be recursive!
         rule->Evaluate(nullptr);
     }
     MakeDirty();
@@ -220,6 +221,10 @@ void Predicate::MakeDirty()
 
 void Predicate::RunRules()
 {
+    if(recursiveRoot && recursiveRoot!=this && rulesRun)
+    {
+        std::cout << "We should reevaluate "; Evaluation::OutputRelation(std::cout, database, *this); std::cout << std::endl;
+    }
     if(rulesRun) return;
     
     AnalysePredicate(database, *this);

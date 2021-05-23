@@ -16,6 +16,8 @@ enum class ErrorCode : int
 
 int main(int argc, char**argv)
 {
+    bool supportsTerminal = getenv("TERM");
+    
     if(argc==1)
     {
         std::cout << "Usage: logical <filename> ...\n";
@@ -25,6 +27,7 @@ int main(int argc, char**argv)
     int verbose = 0;
     bool quiet = false;
     DatabaseImpl db;
+    db.SetAnsiColours(supportsTerminal);
     int errors = 0;
     
     auto startTime = std::chrono::system_clock::now();
@@ -38,6 +41,9 @@ int main(int argc, char**argv)
                 case 'v':
                     verbose = true;
                     db.SetVerbose(true);
+                    break;
+                case 'p':
+                    db.SetAnsiColours(false);
                     break;
                 case 'q':
                     quiet = true;

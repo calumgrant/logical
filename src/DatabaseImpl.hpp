@@ -53,6 +53,8 @@ public:
     OptimizationOptions options;
     
     const OptimizationOptions & Options() const override;
+    
+    void SetAnsiColours(bool);
 
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
