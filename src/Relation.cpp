@@ -95,12 +95,12 @@ ErrorRelation::ErrorRelation(Database &db) : PrintRelation(std::cout, db, db.Get
 {
 }
 
-std::size_t Table::Count()
+std::size_t TablePredicate::Count()
 {
     return hash.size();
 }
 
-void UnaryTable::Query(Entity * row, int columns, Visitor &v)
+void UnaryTable::Query(Entity * row, int columns, Receiver &v)
 {
     RunRules();
     
@@ -109,7 +109,7 @@ void UnaryTable::Query(Entity * row, int columns, Visitor &v)
         case 0:
             for(auto &i : values)
             {
-                v.OnRow(&i);
+                v.OnRow(const_cast<Entity*>(&i));
             }
             break;
         case 1:
@@ -125,22 +125,22 @@ void UnaryTable::Query(Entity * row, int columns, Visitor &v)
     }
 }
 
-void UnaryTable::QueryDelta(Entity * row, int columns, Visitor &v)
+void UnaryTable::QueryDelta(Entity * row, int columns, Receiver &v)
 {
     Query(row, columns, v);
 }
 
-void SpecialPredicate::Query(Entity * row, int, Visitor&)
+void SpecialPredicate::Query(Entity * row, int, Receiver&)
 {
     // Empty relation.
 }
 
-void SpecialPredicate::QueryDelta(Entity * row, int columns, Visitor &v)
+void SpecialPredicate::QueryDelta(Entity * row, int columns, Receiver &v)
 {
     Query(row, columns, v);
 }
 
-void BinaryTable::Query(Entity * row, int bound, Visitor&v)
+void BinaryTable::Query(Entity * row, int bound, Receiver&v)
 {
     RunRules();
     
@@ -190,7 +190,7 @@ void BinaryTable::Query(Entity * row, int bound, Visitor&v)
     // todo
 }
 
-void BinaryTable::QueryDelta(Entity * row, int columns, Visitor &v)
+void BinaryTable::QueryDelta(Entity * row, int columns, Receiver &v)
 {
     Query(row, columns, v);
 }
@@ -322,7 +322,7 @@ int Predicate::Name() const
     return name;
 }
 
-Table::Comparer::Comparer(const std::vector<Entity> & base, int arity, int mask) : base(base), arity(arity), mask(mask)
+TablePredicate::Comparer::Comparer(const std::vector<Entity> & base, int arity, int mask) : base(base), arity(arity), mask(mask)
 {    
 }
 

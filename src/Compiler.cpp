@@ -544,7 +544,7 @@ public:
     ResultsPrinterEval(Database & db, int rs) : database(db), rowSize(rs), count() { }
     
     
-    void Evaluate(Entity * row) override
+    void OnRow(Entity * row) override
     {
         database.AddResult(row, rowSize, true);
         ++count;

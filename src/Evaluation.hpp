@@ -17,12 +17,19 @@ enum class ComparatorType;
  An evaluation may call `next->Evaluate` 0, 1 or many times.
  If an evaluation fails/is none(), then `next->Evaluate()` is not called.
  */
-class Evaluation
+class Evaluation : public Receiver
 {
 public:
     Evaluation();
     virtual ~Evaluation();
-    virtual void Evaluate(Entity * row) =0;  // Const
+    
+    void Evaluate(Entity * row)
+    {
+        ++callCount;
+        if( ++globalCallCount <= globalCallCountLimit )
+            OnRow(row);
+    }
+    
     virtual void Explain(Database &db, std::ostream &os, int indent=4) const =0;
 
     static void Indent(std::ostream &os, int indent=0);
@@ -65,13 +72,9 @@ public:
     virtual Relation * ReadsRelation() const;
     virtual bool NextIsNot() const;
     
-protected:
-    // Returns false if the global call count has been exceeded
-    bool IncrementCallCount()
-    {
-        ++callCount;
-        return ++globalCallCount > globalCallCountLimit;
-    }
+protected:    
+    // Hide the implementation
+    virtual void OnRow(Entity * row) =0;
 private:
     // The number of times Evaluate() has been called.
     std::size_t callCount;

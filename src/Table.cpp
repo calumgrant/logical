@@ -4,14 +4,14 @@
 
 #include <iostream>
 
-Table::Table(Database &db, const CompoundName & cn, int arity) :
+TablePredicate::TablePredicate(Database &db, const CompoundName & cn, int arity) :
     Predicate(db, cn.parts[0]), arity(arity),
     hash({}, 100, Comparer(data, arity, -1), Comparer(data, arity, -1)),
     name(cn)
 {
 }
 
-Table::Table(Database &db, RelationId name, int arity) :
+TablePredicate::TablePredicate(Database &db, RelationId name, int arity) :
     Predicate(db, name), arity(arity),
     hash({}, 100, Comparer(data, arity, -1), Comparer(data, arity, -1)),
     name()
@@ -19,7 +19,7 @@ Table::Table(Database &db, RelationId name, int arity) :
     
 }
 
-void Table::Add(const Entity *row)
+void TablePredicate::Add(const Entity *row)
 {
     /*
     std::cout << "Writing (";
@@ -50,7 +50,7 @@ void Table::Add(const Entity *row)
     }
 }
 
-bool Table::NextIteration()
+bool TablePredicate::NextIteration()
 {
     bool moreResults = deltaEnd < data.size();
     
@@ -66,7 +66,7 @@ bool Table::NextIteration()
     return moreResults;
 }
 
-Table::map_type & Table::GetIndex(int mask)
+TablePredicate::map_type & TablePredicate::GetIndex(int mask)
 {
     auto i = indexes.find(mask);
     if(i != indexes.end())
@@ -88,7 +88,7 @@ Table::map_type & Table::GetIndex(int mask)
     return index;
 }
 
-void Table::Query(Entity * row, int mask, Visitor&v)
+void TablePredicate::Query(Entity * row, int mask, Receiver&v)
 {
     if(!HasRules() && data.empty())
     {
@@ -139,17 +139,17 @@ void Table::Query(Entity * row, int mask, Visitor&v)
     }    
 }
 
-int Table::Arity() const
+int TablePredicate::Arity() const
 {
     return arity;
 }
 
-const CompoundName * Table::GetCompoundName() const
+const CompoundName * TablePredicate::GetCompoundName() const
 {
     return name.parts.empty() ? nullptr : &name;
 }
 
-void Table::QueryDelta(Entity * row, int columns, Visitor &v)
+void TablePredicate::QueryDelta(Entity * row, int columns, Receiver &v)
 {
     RunRules();
     
@@ -184,7 +184,7 @@ void Table::QueryDelta(Entity * row, int columns, Visitor &v)
     }
 }
 
-void Table::FirstIteration()
+void TablePredicate::FirstIteration()
 {
     deltaStart = 0;
     deltaEnd = data.size();

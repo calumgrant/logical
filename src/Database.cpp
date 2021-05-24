@@ -19,7 +19,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
     auto i = unaryRelations.find(name);
     if (i == unaryRelations.end())
     {
-        auto p = std::make_shared<Table>(*this, name, 1);
+        auto p = std::make_shared<TablePredicate>(*this, name, 1);
         unaryRelations.insert(std::make_pair(name, p));
         return p;
     }
@@ -147,7 +147,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
     {
         std::vector<int> p = { name };
         CompoundName cn(p);
-        auto r = std::make_shared<Table>(*this, cn, arity);
+        auto r = std::make_shared<TablePredicate>(*this, cn, arity);
         relations.insert(std::make_pair(index, r));
         return r;
     }
@@ -157,14 +157,14 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
 
 void DatabaseImpl::Find(int unaryPredicateName)
 {
-    class Tmp : public Relation::Visitor
+    class Tmp : public Receiver
     {
     public:
         Database &db;
         int count;
         Tmp(Database &db) : db(db), count() { }
 
-        void OnRow(const Entity *e) override
+        void OnRow(Entity *e) override
         {
             db.AddResult(e, 1, true);
             ++count;
@@ -310,7 +310,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(const CompoundName &cn)
     //if (cn.parts.size()==1)
     //    relation = std::make_shared<BinaryTable>(*this, cn.parts[0]);
     //else
-        relation = std::make_shared<Table>(*this, cn, cn.parts.size()+1);
+        relation = std::make_shared<TablePredicate>(*this, cn, cn.parts.size()+1);
     
     tables[cn] = relation;
 
@@ -387,12 +387,12 @@ void Database::WarningEmptyRelation(Relation & relation)
 
 void DatabaseImpl::RunQueries()
 {
-    class QueryVisitor : public Relation::Visitor
+    class QueryVisitor : public Receiver
     {
     public:
         QueryVisitor(DatabaseImpl & db, int arity, const CompoundName & cn) : database(db), arity(arity), cn(cn), sortedRow(arity) {}
         
-        void OnRow(const Entity * row) override
+        void OnRow(Entity * row) override
         {
             sortedRow[0] = row[0];
             for(int i=1; i<arity; ++i)
@@ -406,14 +406,14 @@ void DatabaseImpl::RunQueries()
         std::vector<Entity> sortedRow;
     };
         
-    class Visitor : public Relation::Visitor
+    class Visitor : public Receiver
     {
     public:
         Visitor(DatabaseImpl & db) : database(db) {}
         std::size_t queries = 0;
         DatabaseImpl & database;
 
-        void OnRow(const Entity * data) override
+        void OnRow(Entity * data) override
         {
             ++queries;
             std::cout << Colours::Relation;

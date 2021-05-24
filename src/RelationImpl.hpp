@@ -43,14 +43,36 @@ protected:
     virtual void FirstIteration() =0;
 };
 
+class Table : public Receiver
+{
+public:
+    virtual Arity GetArity() const =0;
+    virtual Size Rows() const =0;
+    
+    // Delta management
+    // Queries all items up to and including the current delta.
+    
+    virtual void Query(Entity * row, ColumnMask columns, Receiver & r) =0;
+    virtual void QueryDelta(Entity * row, ColumnMask columns, Receiver &r) =0;
+    
+    // Iteration management
+    
+    // Sets the delta to be the whole table.
+    virtual void FirstIteration() =0;
+    
+    // Sets the
+    // Adds all pending data
+    virtual bool NextIteration() =0;
+};
+
 class UnaryTable : public Predicate
 {
 public:
     UnaryTable(Database &db, int nameId);
     void Add(const Entity *row) override;
     std::size_t Count() override;
-    void Query(Entity*row, int columns, Visitor&v) override;
-    void QueryDelta(Entity*row, int columns, Visitor&v) override;
+    void Query(Entity*row, int columns, Receiver&v) override;
+    void QueryDelta(Entity*row, int columns, Receiver&v) override;
     int Arity() const override;
     bool NextIteration() override;
     void FirstIteration() override;
@@ -65,8 +87,8 @@ public:
     SpecialPredicate(Database &db, RelationId name);
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     std::size_t Count() override;
-    void Query(Entity *row, int columns, Visitor&v) override;
-    void QueryDelta(Entity*row, int columns, Visitor&v) override;
+    void Query(Entity *row, int columns, Receiver&v) override;
+    void QueryDelta(Entity*row, int columns, Receiver&v) override;
     int Arity() const override;
     bool NextIteration() override;
     void FirstIteration() override;
@@ -108,8 +130,8 @@ public:
     BinaryTable(Database &db, int name);
     void Add(const Entity * row) override;
     std::size_t Count() override;
-    void Query(Entity * row, int columns, Visitor&v) override;
-    void QueryDelta(Entity*row, int columns, Visitor&v) override;
+    void Query(Entity * row, int columns, Receiver&v) override;
+    void QueryDelta(Entity*row, int columns, Receiver&v) override;
     int Arity() const override;
     bool NextIteration() override;
     void FirstIteration() override;
@@ -139,14 +161,14 @@ private:
 };
 
 
-class Table : public Predicate
+class TablePredicate : public Predicate
 {
 public:
-    Table(Database &db, const CompoundName &name, int arity);
-    Table(Database &db, RelationId name, int arity);
+    TablePredicate(Database &db, const CompoundName &name, int arity);
+    TablePredicate(Database &db, RelationId name, int arity);
     std::size_t Count() override;
-    void Query(Entity * row, int columns, Visitor&v) override;
-    void QueryDelta(Entity*row, int columns, Visitor&v) override;
+    void Query(Entity * row, int columns, Receiver&v) override;
+    void QueryDelta(Entity*row, int columns, Receiver&v) override;
     void Add(const Entity*row) override;
     int Arity() const override;
     const CompoundName * GetCompoundName() const override;

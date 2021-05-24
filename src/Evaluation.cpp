@@ -16,31 +16,26 @@ NoneEvaluation::NoneEvaluation()
     // This is useful for a breakpoint
 }
 
-void NoneEvaluation::Evaluate(Entity * row)
+void NoneEvaluation::OnRow(Entity * row)
 {
-    IncrementCallCount();
 }
 
 WriterB::WriterB(const std::shared_ptr<Relation> & relation, int slot) : WriterEvaluation(relation), slot(slot)
 {
 }
 
-void WriterB::Evaluate(Entity * row)
+void WriterB::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
-
     relation.lock()->Add(row+slot);
 }
-
 
 OrEvaluation::OrEvaluation(const std::shared_ptr<Evaluation> & lhs, const std::shared_ptr<Evaluation> & rhs) :
     left(lhs), right(rhs)
 {
 }
 
-void OrEvaluation::Evaluate(Entity * row)
+void OrEvaluation::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
     left->Evaluate(row);
     right->Evaluate(row);
 }
@@ -50,9 +45,8 @@ RuleEvaluation::RuleEvaluation(int locals, const std::shared_ptr<Evaluation> & e
 {
 }
 
-void RuleEvaluation::Evaluate(Entity*)
+void RuleEvaluation::OnRow(Entity*)
 {
-    if(IncrementCallCount()) return;
     std::vector<Entity> row(locals);
     next->Evaluate(&row[0]);
 }
@@ -72,7 +66,7 @@ UnaryEvaluation::UnaryEvaluation(const std::shared_ptr<Relation> &rel, int slot,
 {
 }
 
-class UnaryVisitor : public Relation::Visitor
+class UnaryVisitor : public Receiver
 {
 public:
     UnaryVisitor(Entity * row, int slot, Evaluation & next) :
@@ -80,7 +74,7 @@ public:
     {
     }
     
-    void OnRow(const Entity *e) override
+    void OnRow(Entity *e) override
     {
         row[slot] = e[0];
         next.Evaluate(row);
@@ -91,17 +85,15 @@ public:
     Evaluation & next;
 };
 
-void EvaluateF::Evaluate(Entity * row)
+void EvaluateF::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
     UnaryVisitor v(row, slot, *next);
     
     relation.lock()->Query(row+slot, 0, v);
 }
 
-void EvaluateB::Evaluate(Entity * row)
+void EvaluateB::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
     UnaryVisitor v(row, slot, *next);
 
     // Bug: We need to get a different relation here.
@@ -179,9 +171,8 @@ NotTerminator::NotTerminator(int slot) : slot(slot)
 {
 }
 
-void NotTerminator::Evaluate(Entity * row)
+void NotTerminator::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
     row[slot].type = EntityType::None;
 }
 
@@ -206,9 +197,8 @@ EqualsBB::EqualsBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & nex
 {
 }
 
-void EqualsBB::Evaluate(Entity *row)
+void EqualsBB::OnRow(Entity *row)
 {
-    if(IncrementCallCount()) return;
     if(row[slot1] == row[slot2])
         next->Evaluate(row);
 }
@@ -227,9 +217,8 @@ EqualsBF::EqualsBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & nex
 {
 }
 
-void EqualsBF::Evaluate(Entity *row)
+void EqualsBF::OnRow(Entity *row)
 {
-    if(IncrementCallCount()) return;
     row[slot2] = row[slot1];
     next->Evaluate(row);
 }
@@ -250,17 +239,16 @@ EvaluateBB::EvaluateBB(const std::shared_ptr<Relation> & relation, int slot1, in
 {
 }
 
-void EvaluateBB::Evaluate(Entity * row)
+void EvaluateBB::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
-    class Visitor : public Relation::Visitor
+    class Visitor : public Receiver
     {
     public:
         Visitor(const std::shared_ptr<Evaluation> & next, Entity * row) : row(row), next(next)
         {
         }
         
-        void OnRow(const Entity * data) override
+        void OnRow(Entity * data) override
         {
             next->Evaluate(row);
         }
@@ -287,10 +275,9 @@ EvaluateBF::EvaluateBF(const std::shared_ptr<Relation> & relation, int slot1, in
 {
 }
 
-void EvaluateBF::Evaluate(Entity * row)
+void EvaluateBF::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
-    class Visitor : public Relation::Visitor
+    class Visitor : public Receiver
     {
     public:
         Visitor(Entity * row, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
@@ -298,7 +285,7 @@ void EvaluateBF::Evaluate(Entity * row)
         {
         }
         
-        void OnRow(const Entity * data) override
+        void OnRow(Entity * data) override
         {
             row[slot2] = data[1];
             next->Evaluate(row);
@@ -328,10 +315,9 @@ EvaluateFB::EvaluateFB(const std::shared_ptr<Relation> & relation, int slot1, in
 {
 }
 
-void EvaluateFB::Evaluate(Entity * row)
+void EvaluateFB::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
-    class Visitor : public Relation::Visitor
+    class Visitor : public Receiver
     {
     public:
         Visitor(Entity * row, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
@@ -339,7 +325,7 @@ void EvaluateFB::Evaluate(Entity * row)
         {
         }
         
-        void OnRow(const Entity * data) override
+        void OnRow(Entity * data) override
         {
             row[slot1] = data[0];
             next->Evaluate(row);
@@ -369,10 +355,9 @@ EvaluateFF::EvaluateFF(const std::shared_ptr<Relation> & relation, int slot1, in
 {
 }
 
-void EvaluateFF::Evaluate(Entity * row)
+void EvaluateFF::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
-    class Visitor : public Relation::Visitor
+    class Visitor : public Receiver
     {
     public:
         Visitor(Entity * row, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
@@ -380,7 +365,7 @@ void EvaluateFF::Evaluate(Entity * row)
         {
         }
         
-        void OnRow(const Entity * data) override
+        void OnRow(Entity * data) override
         {
             row[slot1] = data[0];
             row[slot2] = data[1];
@@ -413,9 +398,8 @@ WriterBB::WriterBB(const std::shared_ptr<Relation> & relation, int slot1, int sl
 {
 }
 
-void WriterBB::Evaluate(Entity *row)
+void WriterBB::OnRow(Entity *row)
 {
-    if(IncrementCallCount()) return;
     Entity data[2] = { row[slot1], row[slot2] };
     relation.lock()->Add(data);
 }
@@ -475,9 +459,8 @@ bool Compare(const Entity &e1, const Entity &e2, ComparatorType cmp)
         return false;
 }
 
-void RangeB::Evaluate(Entity * row)
+void RangeB::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
     if(Compare(row[slot1], row[slot2], cmp1) && Compare(row[slot2], row[slot3], cmp2))
         next->Evaluate(row);
 }
@@ -496,9 +479,8 @@ RangeU::RangeU(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, i
 {
 }
 
-void RangeU::Evaluate(Entity * row)
+void RangeU::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
     int lowerBound, upperBound;
     
     if(row[slot1].type == EntityType::Integer)
@@ -542,9 +524,8 @@ CompareBB::CompareBB(int slot1, ComparatorType cmp, int slot2, const std::shared
 {
 }
 
-void CompareBB::Evaluate(Entity *row)
+void CompareBB::OnRow(Entity *row)
 {
-    if(IncrementCallCount()) return;
     // Note: We don't compare strings for inequality.
     // FIXME
     if(Compare(row[slot1], row[slot2], cmp))
@@ -568,9 +549,8 @@ NegateBF::NegateBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & nex
 {
 }
 
-void NegateBF::Evaluate(Entity *row)
+void NegateBF::OnRow(Entity *row)
 {
-    if(IncrementCallCount()) return;
     switch(row[slot1].type)
     {
     case EntityType::Integer:
@@ -626,9 +606,8 @@ ModBBF::ModBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation
 {
 }
 
-void AddBBF::Evaluate(Entity *row)
+void AddBBF::OnRow(Entity *row)
 {
-    if(IncrementCallCount()) return;
     auto t1 = row[slot1].type;
     auto t2 = row[slot2].type;
     
@@ -717,8 +696,6 @@ void AddBBF::Explain(Database &db, std::ostream &os, int indent) const
 template<typename OpInt, typename OpFloat>
 void BinaryArithmeticEvaluation::Evaluate(Entity * row)
 {
-    if(IncrementCallCount()) return;
-
     auto t1 = row[slot1].type;
     auto t2 = row[slot2].type;
     
@@ -748,7 +725,7 @@ void BinaryArithmeticEvaluation::Evaluate(Entity * row)
     next->Evaluate(row);
 }
 
-void SubBBF::Evaluate(Entity *row)
+void SubBBF::OnRow(Entity *row)
 {
     BinaryArithmeticEvaluation::Evaluate<std::minus<int>, std::minus<float>>(row);
 }
@@ -767,7 +744,7 @@ void SubBBF::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent+4);
 }
 
-void MulBBF::Evaluate(Entity *row)
+void MulBBF::OnRow(Entity *row)
 {
     BinaryArithmeticEvaluation::Evaluate<std::multiplies<int>, std::multiplies<float>>(row);
 }
@@ -797,9 +774,8 @@ void Evaluation::OutputCallCount(std::ostream & os) const
     os << ")" << Colours::Normal;
 }
 
-void DivBBF::Evaluate(Entity *row)
+void DivBBF::OnRow(Entity *row)
 {
-    if(IncrementCallCount()) return;
     auto t1 = row[slot1].type;
     auto t2 = row[slot2].type;
     
@@ -839,9 +815,8 @@ void DivBBF::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent+4);
 }
 
-void ModBBF::Evaluate(Entity *row)
+void ModBBF::OnRow(Entity *row)
 {
-    if(IncrementCallCount()) return;
     auto t1 = row[slot1].type;
     auto t2 = row[slot1].type;
     
@@ -874,10 +849,8 @@ DeduplicateB::DeduplicateB(int slot1, const std::shared_ptr<Evaluation> & next) 
 {
 }
 
-void DeduplicateB::Evaluate(Entity * row)
+void DeduplicateB::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
-
     auto i = values.insert(row[slot1]);
     if(i.second)
     {
@@ -900,10 +873,8 @@ DeduplicateBB::DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluat
 {
 }
 
-void DeduplicateBB::Evaluate(Entity * row)
+void DeduplicateBB::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
-
     auto i = values.insert(std::make_pair(row[slot1], row[slot2]));
     if(i.second)
     {
@@ -925,9 +896,8 @@ CountCollector::CountCollector(int slot) : slot(slot)
 {
 }
 
-void CountCollector::Evaluate(Entity * row)
+void CountCollector::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
     row[slot].type = EntityType::Integer;
     ++row[slot].i;
 }
@@ -945,9 +915,8 @@ SumCollector::SumCollector(int slot, int sumSlot) : slot(slot), sumSlot(sumSlot)
 {
 }
 
-void SumCollector::Evaluate(Entity * row)
+void SumCollector::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
     row[sumSlot] += row[slot];
 }
 
@@ -964,9 +933,8 @@ Load::Load(int slot, const Entity &v, const std::shared_ptr<Evaluation> & next) 
 {
 }
 
-void Load::Evaluate(Entity * locals)
+void Load::OnRow(Entity * locals)
 {
-    if(IncrementCallCount()) return;
     locals[slot] = value;
     next->Evaluate(locals);
 }
@@ -987,9 +955,8 @@ NotNone::NotNone(int slot, const std::shared_ptr<Evaluation> & next) : slot(slot
 {
 }
 
-void NotNone::Evaluate(Entity *row)
+void NotNone::OnRow(Entity *row)
 {
-    if(IncrementCallCount()) return;
     if(row[slot].type != EntityType::None)
         next->Evaluate(row);
 }
@@ -1011,14 +978,13 @@ NotInB::NotInB(int slot, const std::shared_ptr<Relation> & relation, const std::
 {
 }
 
-void NotInB::Evaluate(Entity * row)
+void NotInB::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
-    class Visitor : public Relation::Visitor
+    class Visitor : public Receiver
     {
     public:
         bool found = false;
-        void OnRow(const Entity *) override { found = true; }
+        void OnRow(Entity *) override { found = true; }
     } visitor;
     relation.lock()->Query(row+slot, 1, visitor);
     
@@ -1048,14 +1014,12 @@ Reader::Reader(const std::shared_ptr<Relation> & relation, const std::vector<int
     assert(slots.size()>1);
 }
 
-void Reader::Evaluate(Entity * row)
+void Reader::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
-    
-    class Visitor : public Relation::Visitor
+    class Visitor : public Receiver
     {
     public:
-        void OnRow(const Entity * data) override
+        void OnRow(Entity * data) override
         {
             for(int i=0; i<reader.slots.size(); ++i)
                 row[reader.slots[i]] = data[i];
@@ -1098,10 +1062,8 @@ Writer::Writer(const std::shared_ptr<Relation> & relation, const std::vector<int
         if(slots[i] != slot+i) { contiguous = false; break; }
 }
 
-void Writer::Evaluate(Entity * row)
+void Writer::OnRow(Entity * row)
 {
-    if(IncrementCallCount()) return;
-
     if(contiguous)
         relation.lock()->Add(row + slot);
     else
@@ -1142,18 +1104,16 @@ Join::Join(const std::shared_ptr<Relation> & relation, std::vector<int> && input
     }
 }
 
-void Join::Evaluate(Entity * locals)
+void Join::OnRow(Entity * locals)
 {
-    if(IncrementCallCount()) return;
-
-    class Visitor : public Relation::Visitor
+    class Visitor : public Receiver
     {
     public:
         Visitor(Entity * locals, std::vector<int> & outputs, const std::shared_ptr<Evaluation> & next) :
             locals(locals), outputs(outputs), next(next)
         {
         }
-        void OnRow(const Entity * row) override
+        void OnRow(Entity * row) override
         {
             for(int i=0; i<outputs.size(); ++i)
                 if(outputs[i] != -1)

@@ -122,6 +122,36 @@ result X has foo Y if ...
 find result, foo, bar.
 `
 
+- Inlining predicates
+  - When?
+  - If only used once.
+  - If deemed to be very big
+  - If recursive
+  - How?
+    1. Allocate a block of variables: one for each branch.
+    2. Clone the evaluation, removing all other writes, and also the final write.
+    3. Replace the final write(s) with the tail.
+
+- More succint explain
+
+```
+    _0 := 1
+    _1 := 10
+    For _0 <= 2 <= _1:
+        _4 := _2 + _3
+        Write has:next(_2,_4)
+    For (_0,_1) in has:next(_,_):
+        Write has:next2(_0,_1)
+    For (_0,_1) in has_next3:
+        2 := "Mutual recursion"
+        Write query(_2)
+        Write has:Number:Next(_2,_0,_1)
+    For fixed-point (_0,_1):
+        For (_0,_1) in has:next2:
+            For (_2,_) in delta_has_next2(_,_1):
+              Write has:next2(_0,_1)
+```
+
 ## Short term
 
 Problems to solve
