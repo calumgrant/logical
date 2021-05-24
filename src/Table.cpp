@@ -104,7 +104,7 @@ void TablePredicate::Query(Entity * row, int mask, Receiver&v)
     {
         // Unclear if we need reentrancy guard here.
         auto r = reentrancy.Enter();
-        for(std::size_t s=0; s<data.size(); s+=arity)
+        for(std::size_t s=0; s<deltaEnd; s+=arity)
             v.OnRow(&data[s]);
     }
     else
@@ -117,7 +117,7 @@ void TablePredicate::Query(Entity * row, int mask, Receiver&v)
             auto i = hash.find(s);
             data.resize(s);
             
-            if (i != hash.end() && *i<deltaStart)
+            if (i != hash.end() && *i<deltaEnd)
                 v.OnRow(&data[*i]);
             return;
         }
@@ -135,6 +135,7 @@ void TablePredicate::Query(Entity * row, int mask, Receiver&v)
             {
                 int n = *i;  // Debug info
                 assert(n>=0 && n < data.size());
+                // Note that this only returns results up to deltaEnd because the other results aren't indexed.
                 v.OnRow(&data[*i]);
             }
         }

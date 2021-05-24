@@ -8,9 +8,11 @@ public:
     virtual Size Rows() const =0;
     
     // Delta management
-    // Queries all items up to and including the current delta.
     
+    // Queries all items up to and including the current delta.
     virtual void Query(Entity * row, ColumnMask columns, Receiver & r) =0;
+    
+    // Queries all items in the current delta
     virtual void QueryDelta(Entity * row, ColumnMask columns, Receiver &r) =0;
     
     // Iteration management
