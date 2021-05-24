@@ -560,9 +560,7 @@ struct MyStorage
 void DatabaseImpl::SetStorageFile(const char * name)
 {
     persist::map_data<MyStorage> file1(name);
-    
-    persist::map_data<MyStorage> file1(
-    
+        
     if(file1)
     {
         file1.select(0);
