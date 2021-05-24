@@ -8,9 +8,8 @@ x has next2 y if x has next y or
 
 x has next3 y if x has next2 y.
 
-query "Mutual recursion" has Number n, next n1 if n has next3 n1.
-
+query "Mutual recursion" has number n, next n1 if n has next3 n1.
 
 // find query _ has Number _.
 
-//query "Mutual recursion 2" has numXber n, neXxt n1 if n has next3 n1.
+//query "Mutual recursion 2" has number n, neXxt n1 if n has next3 n1.

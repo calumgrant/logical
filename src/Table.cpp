@@ -73,7 +73,7 @@ TableImpl::map_type & TableImpl::GetIndex(int mask)
     
     auto &index = indexes.insert(std::make_pair(mask, it)).first->second;
     
-    for(auto i=0; i<deltaStart; i+=arity)
+    for(auto i=0; i<deltaEnd; i+=arity)
     {
         index.insert(i);
     }

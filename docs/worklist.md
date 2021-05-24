@@ -1,23 +1,26 @@
 # Work plan
 
 ## Current problem
-- All predicates on the recursive path
-- Need to signal to the loop master: DataAdded()
-- Any predicate on the recursive loop will become notIterationInvariant, not just immediately recursive calls.
-  - Need a flag on each evaluation step relative to the 
-  - Potentially need to inline every predicate on the recursive path.
+
+- Bug in `closure1.dl` Not finding results if the query is recursive.
+- Look for efficiencies in evaluation
 
 ## Evaluating recursive predicates
-A recursive predicate is a predicate that references itself, perhaps indirecty. Recursive predicates are evaluated by *iteration*, so that the predicate is evaluated by repeatedly running the rules in the predicate until no more results are found.
 
-The drawback with this approach is that the algorithm can quite easily become *quadratic* (or worse) in the number of rows in the predicate. An optimization to this is to use *deltas* to reduce the amount of work done it each iteration.
+```
+    For _0 in number:
+        _1 := 100
+        For _0 <= _2 <= _1:
+            Write (_2) into number
+    For _0 in number:
+        _2 := _0 + _1
+        Write (_0,_2) into has:successor
+```
 
-A query-step can use a delta if no preceding steps rely on a recursive evaluation. This means that the preceding steps will be constant, and can be marked as "iteration-invariant" (as opposed to "iteration-variant" which means that the evaluation can proceed differently in different iterations.)  An iteration-invariant query-step can use a delta, which means that it only returns results from the previous iteration.
-
-Remember that we need to detect if any called predicates 
-
-## Mutually recursive predicates
-
+-         Scan number (_) -> (_0) (called 1 time) ->
+            Load _1 := 1 (called 101 times) ->
+                Calculate _2 := _0 + _1 (called 101 times) ->
+                    Write (_0,_2) into has:successor (called 101 times)
 Two problems:
 - Can we still use deltas?
 Predicates can be mutually recursive. This means that when a recursive predicate is called recursively (in the same recursive loop), it must perform another iteration step.
