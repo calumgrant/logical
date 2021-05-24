@@ -20,7 +20,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
     auto i = unaryRelations.find(name);
     if (i == unaryRelations.end())
     {
-        auto p = std::make_shared<TablePredicate>(*this, name, 1);
+        auto p = std::make_shared<Predicate>(*this, name, 1);
         unaryRelations.insert(std::make_pair(name, p));
         return p;
     }
@@ -148,7 +148,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
     {
         std::vector<int> p = { name };
         CompoundName cn(p);
-        auto r = std::make_shared<TablePredicate>(*this, cn, arity);
+        auto r = std::make_shared<Predicate>(*this, cn, arity);
         relations.insert(std::make_pair(index, r));
         return r;
     }
@@ -308,10 +308,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(const CompoundName &cn)
     // Create the appropriate mappings to the subsets
     std::shared_ptr<Relation> relation;
     
-    //if (cn.parts.size()==1)
-    //    relation = std::make_shared<BinaryTable>(*this, cn.parts[0]);
-    //else
-        relation = std::make_shared<TablePredicate>(*this, cn, cn.parts.size()+1);
+    relation = std::make_shared<Predicate>(*this, cn, cn.parts.size()+1);
     
     tables[cn] = relation;
 

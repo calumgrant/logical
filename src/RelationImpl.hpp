@@ -9,8 +9,8 @@
 class Predicate : public Relation
 {
 public:
-    Predicate(Database &db, int name);
-    // std::shared_ptr<Relation> data;
+    Predicate(Database &db, const CompoundName &name, ::Arity arity);
+    Predicate(Database &db, RelationId name, ::Arity arity);
 
     // Evaluates all rules if needed
     void Evaluate();
@@ -25,10 +25,17 @@ public:
     void AddAttribute(const std::shared_ptr<Relation> & attribute) override;
     void VisitAttributes(const std::function<void(Relation&)> &) const override;
     void VisitRules(const std::function<void(Evaluation&)> &) const override;
+    
+    void Query(Entity * row, ColumnMask columns, Receiver &r) override;
+    void QueryDelta(Entity * row, ColumnMask columns, Receiver &r) override;
+    void Add(const Entity * data) override;
+    ::Arity Arity() const override;
+    Size Count() override;
+    const CompoundName * GetCompoundName() const override;
 private:
     bool rulesRun = false;
     std::vector< std::shared_ptr<Evaluation> > rules;
-    int name;
+    RelationId name;
     
     // The number of
     bool evaluating;
@@ -37,13 +44,10 @@ private:
     Size loopResults = 0;
 protected:
     Database &database;
-    // Notify that the next iteration has happened; release all data gathered by this iteration
-    // Returns true if data was added
-    virtual bool NextIteration() =0;
-    virtual void FirstIteration() =0;
+    
+    std::shared_ptr<Table> table;
+    CompoundName compoundName;
 };
-
-
 
 class SpecialPredicate : public Predicate
 {
@@ -54,8 +58,6 @@ public:
     void Query(Entity *row, int columns, Receiver&v) override;
     void QueryDelta(Entity*row, int columns, Receiver&v) override;
     int Arity() const override;
-    bool NextIteration() override;
-    void FirstIteration() override;
 };
 
 class PrintRelation : public SpecialPredicate

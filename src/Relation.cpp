@@ -3,10 +3,9 @@
 #include "Colours.hpp"
 #include "RelationImpl.hpp"
 #include "Analysis.hpp"
+#include "TableImpl.hpp"
 
 #include <iostream>
-
-
 
 PrintRelation::PrintRelation(std::ostream & output, Database &db, int name) :
     SpecialPredicate(db, name), output(output)
@@ -75,21 +74,37 @@ void SpecialPredicate::QueryDelta(Entity * row, int columns, Receiver &v)
 }
 
 
-Predicate::Predicate(Database &db, int name) :
+Predicate::Predicate(Database &db, RelationId name, ::Arity arity) :
     rulesRun(false), name(name), database(db),
     evaluating(false), recursive(false)
 {
+    table = std::make_shared<TableImpl>(arity);
 }
+
+Predicate::Predicate(Database &db, const CompoundName & cn, ::Arity arity) :
+    rulesRun(false), name(cn.parts[0]), database(db),
+    evaluating(false), recursive(false),
+    compoundName(cn)
+{
+    table = std::make_shared<TableImpl>(arity);
+}
+
 
 void Predicate::AddRule(const std::shared_ptr<Evaluation> & rule)
 {
     rules.push_back(rule);
     if(rulesRun)
     {
+        database.Error("Adding a rule to an evaluated relation is not supported (yet)");
         // ?? What happens if it's recursive??
         // Generally it isn't as it came from a projection.
         // !! Projections can be recursive!
         rule->Evaluate(nullptr);
+        
+        if(database.Explain())
+        {
+            rule->Explain(database, std::cout, 4);
+        }
     }
     MakeDirty();
 }
@@ -121,13 +136,13 @@ void Predicate::RunRules()
     evaluating = true;
     recursive = false;
 
-    FirstIteration();
+    table->FirstIteration();
 
     for(auto & p : rules)
     {
         p->Evaluate(nullptr);
     }
-    NextIteration();
+    table->NextIteration();
 
     if(loop)
     {
@@ -145,13 +160,14 @@ void Predicate::RunRules()
             }
             resultsFound = loop->numberOfResults > loopSize;
             loopSize = loop->numberOfResults;
-            NextIteration();
+            table->NextIteration();
         }
         while(resultsFound);
         loopResults = loop->numberOfResults;
     }
 
-    NextIteration();
+    // Surely not needed any more?
+    table->NextIteration();
 
     evaluating = false;
     rulesRun = true;
@@ -181,7 +197,7 @@ bool Predicate::HasRules() const
     return !rules.empty();
 }
 
-SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name)
+SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name, 1)
 {
 }
 
@@ -226,12 +242,29 @@ void Predicate::VisitRules(const std::function<void(Evaluation&)>&fn) const
         fn(*rule);
 }
 
-bool SpecialPredicate::NextIteration()
+Arity Predicate::Arity() const { return table->GetArity(); }
+
+Size Predicate::Count() { return table->Rows(); }
+
+void Predicate::Query(Entity * row, ColumnMask columns, Receiver &r)
 {
-    return false;
+    RunRules();
+    table->Query(row, columns, r);
 }
 
-void SpecialPredicate::FirstIteration()
+void Predicate::QueryDelta(Entity * row, ColumnMask columns, Receiver &r)
 {
+    RunRules();
+    table->QueryDelta(row, columns, r);
 }
 
+void Predicate::Add(const Entity * data)
+{
+    table->loop = loop; // Hack :-(
+    table->OnRow(const_cast<Entity*>(data));
+}
+
+const CompoundName * Predicate::GetCompoundName() const
+{
+    return compoundName.parts.empty() ? nullptr : &compoundName;
+}

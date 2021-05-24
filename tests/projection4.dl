@@ -1,9 +1,12 @@
+expected-results 2.
+evaluation-step-limit 23.
+
 1 has seq 2.
-error "foo" if not 1 has seq 2.
 
 // This causes an error "Querying empty relation" because we create the projection from
 // seq/3 to seq/2 but do not evaluate the rules for it.
 2 has seq 3, pred 1. // Error
 
-error "foo" if not 2 has seq 3.
+error "foo 1" if not 1 has seq 2.
+error "foo 2" if not 2 has seq 3.
 find _ has seq _.

@@ -23,6 +23,8 @@ public:
     // Sets the
     // Adds all pending data
     virtual bool NextIteration() =0;
+    
+    std::shared_ptr<RecursiveLoop> loop;
 };
 
 class EmptyTable : public Table

@@ -13,7 +13,6 @@ person false.
 
 print "".
 print "Here are the people:".
-find person.
 print "".
 
 // You can define global constants as follows.
@@ -93,23 +92,7 @@ person P is retired if
 person X is old if X has age A and A>=80.
 person X is young if not X is old.
 
-// Queries
-1 has radius 2, diameter 3.
-find person P.
-find person.
-find circle C, radius R.
-find C has radius R.
-find C has radius R, diameter D.
-find C has radius R, diameter D if D>10.
-find circle C and person P.
-find circle C and person P if 
-    P has age A and C has diameter A.
-find circle C and person P, surname S if 
-    P has age A and C has diameter A.
 
-// Query using a variable list
-find P in person P.
-find P, S in person P, surname S.
 
 // Quantifiers
 
@@ -167,7 +150,27 @@ delete _.
 delete person P if P has surname "Smith".
 
 evaluation-step-limit 251.
-expected-results 36.
+expected-results 40.
 expected-errors 0.
+
+// Queries
+find person.
+
+1 has radius 2, diameter 3.
+find person P.
+find person.
+find circle C, radius R.
+find C has radius R.
+find C has radius R, diameter D.
+find C has radius R, diameter D if D>10.
+find circle C and person P.
+find circle C and person P if 
+    P has age A and C has diameter A.
+find circle C and person P, surname S if 
+    P has age A and C has diameter A.
+
+// Query using a variable list
+find P in person P.
+find P, S in person P, surname S.
 
 print "Syntax test passed".

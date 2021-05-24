@@ -1,38 +1,5 @@
 #pragma once
-
-class UnaryTable : public Predicate
-{
-public:
-    UnaryTable(Database &db, int nameId);
-    void Add(const Entity *row) override;
-    std::size_t Count() override;
-    void Query(Entity*row, int columns, Receiver&v) override;
-    void QueryDelta(Entity*row, int columns, Receiver&v) override;
-    int Arity() const override;
-    bool NextIteration() override;
-    void FirstIteration() override;
-private:
-    std::unordered_set<Entity, Entity::Hash> values;
-    std::shared_ptr<Relation> index;
-};
-
-class BinaryTable : public Predicate
-{
-public:
-    BinaryTable(Database &db, int name);
-    void Add(const Entity * row) override;
-    std::size_t Count() override;
-    void Query(Entity * row, int columns, Receiver&v) override;
-    void QueryDelta(Entity*row, int columns, Receiver&v) override;
-    int Arity() const override;
-    bool NextIteration() override;
-    void FirstIteration() override;
-private:
-    // This representation is inefficient - fixme.
-    std::unordered_set<std::pair<Entity, Entity>, PairHash> values;
-    std::unordered_multimap<Entity, Entity, Entity::Hash> map1, map2;
-};
-
+#include "Table.hpp"
 
 class Depth
 {
@@ -53,24 +20,23 @@ private:
     int depth = 0;
 };
 
-class TablePredicate : public Predicate
+class TableImpl : public Table
 {
 public:
-    TablePredicate(Database &db, const CompoundName &name, int arity);
-    TablePredicate(Database &db, RelationId name, int arity);
-    std::size_t Count() override;
-    void Query(Entity * row, int columns, Receiver&v) override;
-    void QueryDelta(Entity*row, int columns, Receiver&v) override;
-    void Add(const Entity*row) override;
-    int Arity() const override;
-    const CompoundName * GetCompoundName() const override;
+    TableImpl(Arity arity);
+    
+    Size Rows() const override;
+    void Query(Entity * row, ColumnMask columns, Receiver&v) override;
+    void QueryDelta(Entity*row, ColumnMask columns, Receiver&v) override;
+    void OnRow(Entity*row) override;
+    Arity GetArity() const override;
 private:
 
     class Comparer
     {
         Entity::Hash hasher;
     public:
-        Comparer(const std::vector<Entity>&base, int arity, int mask);
+        Comparer(const std::vector<Entity>&base, Arity arity, ColumnMask mask);
         
         int operator()(std::size_t element) const
         {
@@ -95,27 +61,23 @@ private:
             return true; // Equal
         }
     private:
-        const int arity, mask;
+        const Arity arity;
+        const ColumnMask mask;
         const std::vector<Entity> & base;
     };
     
-    const int arity;
+    const Arity arity;
     std::vector<Entity> data;
     typedef std::unordered_set<std::size_t, Comparer, Comparer> index_type;
     index_type hash;
     
     // Map from mask to index.
     typedef std::unordered_multiset<std::size_t, Comparer, Comparer> map_type;
-    std::unordered_map<int, map_type> indexes;
-    map_type & GetIndex(int mask);
-    
-    // A count of the number times we have called Query in a nested way.
-    // If reentrantDepth is 0, we can safely add rules directly to the table.
-    Depth reentrancy;
-    std::size_t deltaStart =0, deltaEnd = 0;
-    
-    const CompoundName name;
-    
+    std::unordered_map<ColumnMask, map_type> indexes;
+    map_type & GetIndex(ColumnMask mask);
+
+    Size deltaStart =0, deltaEnd = 0;
+        
     bool NextIteration() override;
     void FirstIteration() override;
 };
