@@ -2,6 +2,8 @@
 #include "Database.hpp"
 #include "RelationImpl.hpp"
 
+#include "TableImpl.hpp"
+
 #include <iostream>
 
 TablePredicate::TablePredicate(Database &db, const CompoundName & cn, int arity) :
@@ -188,4 +190,168 @@ void TablePredicate::FirstIteration()
 {
     deltaStart = 0;
     deltaEnd = data.size();
+}
+
+void UnaryTable::Add(const Entity *row)
+{
+    MakeDirty();
+    //std::cout << "Added (" << (int)e.type << "," << e.i << ") to the table\n";
+    values.insert(row[0]);
+}
+
+void BinaryTable::Add(const Entity * row)
+{
+    MakeDirty();
+    
+    auto value = std::make_pair(row[0],row[1]);
+    //std::cout << "Added (" << (int)e1.type << "," << e1.i << ") (" << (int)e2.type << "," << e2.i << ") to the table\n";
+    auto p = values.insert(value);
+    
+    if(p.second)
+    {
+        // TODO: Lazy map initialization
+        map1.insert(value);
+        map2.insert(std::make_pair(row[1], row[0]));
+    }
+}
+
+std::size_t UnaryTable::Count()
+{
+    return values.size();
+}
+
+std::size_t BinaryTable::Count()
+{
+    return values.size();
+}
+
+std::size_t TablePredicate::Count()
+{
+    return hash.size();
+}
+
+void UnaryTable::Query(Entity * row, int columns, Receiver &v)
+{
+    RunRules();
+    
+    switch(columns)
+    {
+        case 0:
+            for(auto &i : values)
+            {
+                v.OnRow(const_cast<Entity*>(&i));
+            }
+            break;
+        case 1:
+            {
+                auto i = values.find(row[0]);
+                if (i != values.end())
+                    v.OnRow(row);
+                break;
+            }
+            break;
+        default:
+            assert(!"Invalid query columns");
+    }
+}
+
+void UnaryTable::QueryDelta(Entity * row, int columns, Receiver &v)
+{
+    Query(row, columns, v);
+}
+
+void BinaryTable::Query(Entity * row, int bound, Receiver&v)
+{
+    RunRules();
+    
+    switch(bound)
+    {
+        case 0:
+            for(auto & i : values)
+            {
+                Entity data[2];
+                // TODO: Store a pair in the table to make the scan faster
+                data[0] = i.first;
+                data[1] = i.second;
+                v.OnRow(data);
+            }
+            break;
+        case 1:
+            {
+                auto range = map1.equal_range(row[0]);
+                for(auto i=range.first; i!=range.second; ++i)
+                {
+                    row[1] = i->second;
+                    v.OnRow(row);  // ??
+                }
+            }
+            break;
+        case 2:
+            {
+                auto range = map2.equal_range(row[1]);
+                for(auto i=range.first; i!=range.second; ++i)
+                {
+                    row[0] = i->second;
+                    v.OnRow(row);  // ??
+                }
+            }
+            break;
+        case 3:
+            {
+                if(values.find(std::make_pair(row[0], row[1])) != values.end())
+                    v.OnRow(row);
+            }
+            break;
+        default:
+            std::cout << "TODO: Implement the join\n";
+            // Not implemented yet
+            break;
+    }
+    // todo
+}
+
+void BinaryTable::QueryDelta(Entity * row, int columns, Receiver &v)
+{
+    Query(row, columns, v);
+}
+
+UnaryTable::UnaryTable(Database &db, int name) : Predicate(db, name)
+{
+}
+
+BinaryTable::BinaryTable(Database &db, int name) : Predicate(db, name)
+{
+}
+
+TablePredicate::Comparer::Comparer(const std::vector<Entity> & base, int arity, int mask) : base(base), arity(arity), mask(mask)
+{
+}
+
+int UnaryTable::Arity() const
+{
+    return 1;
+}
+
+int BinaryTable::Arity() const
+{
+    return 2;
+}
+
+bool UnaryTable::NextIteration()
+{
+    return false;
+}
+
+bool BinaryTable::NextIteration()
+{
+    return false;
+}
+
+
+void UnaryTable::FirstIteration()
+{
+}
+
+void BinaryTable::FirstIteration()
+{
 }

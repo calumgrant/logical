@@ -5,6 +5,7 @@
 #include "RelationImpl.hpp"
 #include "EvaluationImpl.hpp"
 #include "DatabaseImpl.hpp"
+#include "TableImpl.hpp"
 
 #include <iostream>
 

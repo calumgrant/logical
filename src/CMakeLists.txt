@@ -27,7 +27,7 @@ add_library(logiccore
     Colours.hpp
     CompoundName.cpp CompoundName.hpp
     Fwd.hpp
-    Table.cpp
+    Table.cpp Table.hpp TableImpl.hpp
     Evaluation.cpp Evaluation.hpp EvaluationImpl.hpp
     Compiler.cpp Compiler.hpp
     Relation.cpp Relation.hpp RelationImpl.hpp
