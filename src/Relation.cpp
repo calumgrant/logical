@@ -221,12 +221,16 @@ void Predicate::MakeDirty()
 
 void Predicate::RunRules()
 {
-    if(rulesRun) return;
+    if(!loop || loopResults == loop->numberOfResults)
+        if(rulesRun) return;
     
     AnalysePredicate(database, *this);
     
     if(evaluating)
     {
+        // Check we are in a recursive loop, otherwise something has gone badly wrong.
+        assert(loop);
+        
         if(!recursive)
         {
             recursive = true;
@@ -235,25 +239,43 @@ void Predicate::RunRules()
     }
         
     evaluating = true;
-    
-    std::size_t iteration = 1;
-    
+    recursive = false;
+
     FirstIteration();
 
-    do
+    for(auto & p : rules)
     {
-        recursive = false;
-        for(auto & p : rules)
-        {
-            if(iteration == 1 || p->onRecursivePath)
-                p->Evaluate(nullptr);
-        }
-        ++iteration;
+        p->Evaluate(nullptr);
     }
-    while (NextIteration()); //  && Relation::onRecursivePath);
+    NextIteration();
+
+    if(loop)
+    {
+        Size loopSize;
         
+        bool resultsFound;
+        do
+        {
+            recursive = false;
+            loopSize = loop->numberOfResults;
+            for(auto & p : rules)
+            {
+                if(p->onRecursivePath)
+                    p->Evaluate(nullptr);
+            }
+            resultsFound = loop->numberOfResults > loopSize;
+            loopSize = loop->numberOfResults;
+            NextIteration();
+        }
+        while(resultsFound);
+        loopResults = loop->numberOfResults;
+    }
+
+    NextIteration();
+
     evaluating = false;
     rulesRun = true;
+    
     if(database.Explain())
     {
         std::cout << "Evaluated " << rules.size() << " rule" << (rules.size()!=1 ? "s" : "") << " in ";

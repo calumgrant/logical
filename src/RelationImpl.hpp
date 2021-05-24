@@ -34,6 +34,7 @@ private:
     bool evaluating;
     bool recursive;
     std::unordered_set<std::shared_ptr<Relation>> attributes;
+    Size loopResults = 0;
 protected:
     Database &database;
     // Notify that the next iteration has happened; release all data gathered by this iteration
@@ -197,7 +198,7 @@ private:
     // A count of the number times we have called Query in a nested way.
     // If reentrantDepth is 0, we can safely add rules directly to the table.
     Depth reentrancy;
-    std::size_t deltaStart, deltaEnd = 0;
+    std::size_t deltaStart =0, deltaEnd = 0;
     
     const CompoundName name;
     
