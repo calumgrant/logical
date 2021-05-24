@@ -9,7 +9,7 @@ namespace persist
 {
     typedef long long offset_t;
 
-    const int default_map_address = 0x10000000;
+    const size_t default_map_address = 0x188000000000ll;
 
     class shared_base   // unix version
     {

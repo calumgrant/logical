@@ -2,12 +2,13 @@
 
 ## Current problem
 
-- Bug in `closure1.dl` Not finding results if the query is recursive.
 - Look for efficiencies in evaluation
 
 ## Evaluating recursive predicates
 
 ```
+    has:successor = new Table(2)
+    number = new Table(1)
     For _0 in number:
         _1 := 100
         For _0 <= _2 <= _1:
@@ -15,6 +16,8 @@
     For _0 in number:
         _2 := _0 + _1
         Write (_0,_2) into has:successor
+    //
+    For recursive_loop
 ```
 
 -         Scan number (_) -> (_0) (called 1 time) ->

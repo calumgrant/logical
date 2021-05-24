@@ -6,6 +6,7 @@
 #include "EvaluationImpl.hpp"
 #include "DatabaseImpl.hpp"
 #include "TableImpl.hpp"
+#include "persist.h"
 
 #include <iostream>
 
@@ -546,3 +547,35 @@ const char * Colours::Success = "\033[1;32m"; // Light green
 const char * Colours::Relation = "\033[0;33m"; // Brown orange
 const char * Colours::Error = "\033[1;31m"; // Light red
 const char * Colours::Detail = "\033[1;30m"; // Light red
+
+typedef std::basic_string<char, std::char_traits<char>, persist::allocator<char>> mystring;
+
+struct MyStorage
+{
+    int times_opened = 0;
+    
+    mystring str;
+};
+
+void DatabaseImpl::SetStorageFile(const char * name)
+{
+    persist::map_data<MyStorage> file1(name);
+    
+    persist::map_data<MyStorage> file1(
+    
+    if(file1)
+    {
+        file1.select(0);
+        
+        if (file1->times_opened == 0)
+            file1->str = "This is test data";
+        
+        ++file1->times_opened;
+        
+        std::cout << "You have run this " << file1->times_opened << " times: " << file1->str << "\n";
+    }
+    else
+    {
+        std::cerr << "Failed to create data file " << name << "\n";
+    }
+}

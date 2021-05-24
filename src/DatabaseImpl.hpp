@@ -57,6 +57,8 @@ public:
     void SetAnsiColours(bool);
     
     Relation &GetQueryRelation() const override;
+    
+    void SetStorageFile(const char * name);
 
 private:
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;

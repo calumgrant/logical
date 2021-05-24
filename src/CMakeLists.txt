@@ -10,10 +10,12 @@ find_package(BISON)
 LIST(APPEND CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 FIND_LIBRARY(FL_LIBRARY NAMES libfl fl DOC "/opt/homebrew/opt/flex/lib")
 
+add_subdirectory(../external/persist/src persist)
+
 BISON_TARGET(MyParser logical.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/tokens.tab.h)
 FLEX_TARGET(MyScanner logical.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../external/persist/include)
 
 find_library(TERMCAP NAMES termcap)
 
@@ -38,8 +40,9 @@ add_library(logiccore
 add_executable(logical main.cpp)
 
 add_executable(logical-tests tests.cpp)
-target_link_libraries(logical-tests logiccore ${TERMCAP})
-target_link_libraries(logical logiccore ${TERMCAP})
+target_link_libraries(logical-tests logiccore)
+target_link_libraries(logical logiccore)
+target_link_libraries(logiccore ${TERMCAP} persist)
 
 set_target_properties(logiccore PROPERTIES
     CXX_STANDARD 17

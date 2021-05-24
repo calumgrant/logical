@@ -1,6 +1,9 @@
 
 #pragma once
 
+/*
+ Stores a table of tuples of any arity.
+ */
 class Table : public Receiver
 {
 public:
@@ -24,6 +27,7 @@ public:
     // Adds all pending data
     virtual bool NextIteration() =0;
     
+    // This is a bad interface.
     std::shared_ptr<RecursiveLoop> loop;
 };
 
