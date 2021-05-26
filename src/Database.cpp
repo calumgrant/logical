@@ -554,7 +554,7 @@ const int version = 4;
 
 struct MyStorage
 {
-    MyStorage(persist::map_reference map) :
+    MyStorage(persist::map_file & map) :
         str(map), vec(persist::allocator<mystring>(map))
     {
         intptr = std::allocate_shared<int, persist::allocator<int>>(map, 10);
@@ -587,7 +587,7 @@ void DatabaseImpl::SetStorageFile(const char * name)
         if (data->times_opened == 0)
         {
             data->str = "This is test data";
-            data->intptr = std::allocate_shared<int, persist::allocator<int>>(persist::map_reference(file), 42);
+            data->intptr = std::allocate_shared<int, persist::allocator<int>>(file, 42);
         }
         
         ++data->times_opened;

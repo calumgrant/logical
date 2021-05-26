@@ -1,5 +1,12 @@
 # Work plan
 
+Persist:
+- Use atomics for top and end
+- Keep magic bytes
+- Use exceptions
+- The allocator should store a map_file, not the memory block.
+- Keep lots of counts and display them.
+
 1. Check that the `-O0` optimizations are still sound.
   - Get unit tests working with `-O0` and `-O1`.
 2. Implement `-f` and `-fno-` to enable and disable options.

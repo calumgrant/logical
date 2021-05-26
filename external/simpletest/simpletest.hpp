@@ -11,8 +11,9 @@ namespace Test
         public:
             ~FixtureStatic()
             {
-                if(failures>0)
-                    std::cerr << "*** " << failures << " tests failed ***\n";
+                std::cout << failures << " failures and " << successes << " successes\n";
+                if(failures)
+                    std::cerr << "*** Some tests have failed ***\n";
                 else
                     std::cout << "All tests passed\n";
                 if(failures)
@@ -92,6 +93,13 @@ namespace Test
             if(!running)
                 tests.push_back(fn);
         }
+
+        template<typename E>
+        void ExpectedException(testfn fn)
+        {
+
+        }
+
     protected:
         template<typename A, typename B>
         void Equals(const A &a, const B &b, const char * file, int line)
