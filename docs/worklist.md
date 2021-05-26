@@ -1,8 +1,78 @@
 # Work plan
 
+1. Check that the `-O0` optimizations are still sound.
+  - Get unit tests working with `-O0` and `-O1`.
+2. Implement `-f` and `-fno-` to enable and disable options.
+3. Optimization: `-frecursive-branch` to lift recursive branches. Look at `closure1.dl`.
+3. Improvements to `persist`, including a readme.
+  - How to auto-grow the heap if it's shared??
+    - Have a well known memory segment that's private
+    - Disable sharing as that will never be used.
+  - Check temp file by default
+  - Check resource limit
+  - readme
+  - proper tests
+  - Store "map_file" in the mapped object? (A bit wierd but makes sense).
+  - I think address space randomization is happening, so you can't just take a reference.
+4. 
+
+
 ## Current problem
 
-- Look for efficiencies in evaluation
+- Think about how to use a default map_file.
+  - Fix the allocation bug - when the vector resizes it crashes in malloc(). Probably just a bug.
+
+## Persist tasks
+
+- Creation of a temp file
+- Deleting the temp file at the end
+- Options for no-recycle.
+- Proper tests
+- Ability to store a map file in the file itself.
+- Versioning support.
+- Limit file size support
+- Allocate a huge file but don't allocate it all on disk?
+- Create a decent test framework support
+
+```
+#include <caltest.hpp>
+
+Test::Framework(argc, argv).
+  .AddTest("name", function).Test(function).Test(...);
+// Destructor runs.
+
+void test1(Test::Test & t)
+{
+  t.Equals(1, 2);
+  t.Throws<T>
+}
+
+
+class Foo : public Test::Fixture
+{
+  Foo() : Test::Fixture("names")
+  {
+    AddTest(f);
+  }
+
+  Foo(Test::Run)
+  {
+
+  }
+
+  void f()
+  {
+    Equals(1,1);
+  }
+};
+
+int main()
+{
+  Foo foo;
+
+}
+
+```
 
 ## Evaluating recursive predicates
 
@@ -19,16 +89,6 @@
     //
     For recursive_loop
 ```
-
--         Scan number (_) -> (_0) (called 1 time) ->
-            Load _1 := 1 (called 101 times) ->
-                Calculate _2 := _0 + _1 (called 101 times) ->
-                    Write (_0,_2) into has:successor (called 101 times)
-Two problems:
-- Can we still use deltas?
-Predicates can be mutually recursive. This means that when a recursive predicate is called recursively (in the same recursive loop), it must perform another iteration step.
-
-
 
 ## Semi-naive evaluation
 Partial evaluation means that if a set of inputs is already bound, then there is no need to evaluate the whole predicate. Evaluation is limited to a set of inputs. The predicate is memoised so that the predicate is not recomputed for the same set of inputs.

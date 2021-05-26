@@ -550,27 +550,57 @@ const char * Colours::Detail = "\033[1;30m"; // Light red
 
 typedef std::basic_string<char, std::char_traits<char>, persist::allocator<char>> mystring;
 
+const int version = 4;
+
 struct MyStorage
 {
+    MyStorage(persist::map_reference map) :
+        str(map), vec(persist::allocator<mystring>(map))
+    {
+        intptr = std::allocate_shared<int, persist::allocator<int>>(map, 10);
+        vec.reserve(2005);
+    }
+    
+    int version = ::version;
     int times_opened = 0;
     
     mystring str;
+    
+    std::shared_ptr<int> intptr;
+    std::vector<mystring, persist::allocator<mystring>> vec;
 };
 
 void DatabaseImpl::SetStorageFile(const char * name)
 {
-    persist::map_data<MyStorage> file1(name);
+    persist::map_file file(name);
         
-    if(file1)
+    if(file)
     {
-        file1.select(0);
+        persist::map_data<MyStorage> data(file, file);
         
-        if (file1->times_opened == 0)
-            file1->str = "This is test data";
+        if(data->version != version)
+        {
+            std::cout << "Invalid version detected - aborting\n";
+            return;
+        }
+
+        if (data->times_opened == 0)
+        {
+            data->str = "This is test data";
+            data->intptr = std::allocate_shared<int, persist::allocator<int>>(persist::map_reference(file), 42);
+        }
         
-        ++file1->times_opened;
+        ++data->times_opened;
         
-        std::cout << "You have run this " << file1->times_opened << " times: " << file1->str << "\n";
+        for(int i=0; i<1000; ++i)
+        {
+            std::cout << data->vec.size() << std::endl;
+            data->vec.push_back(mystring("This is a really long string", persist::allocator<char>(file)));
+        }
+        
+        std::cout << "You have run this " << data->times_opened << " times: " << data->str << "\n";
+        std::cout << "Shared int value = " << *data->intptr << std::endl;
+        std::cout << "There are " << data->vec.size() << " strings in the file\n";
     }
     else
     {

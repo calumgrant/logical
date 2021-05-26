@@ -5,6 +5,7 @@
 #include "CompoundName.hpp"
 #include "Binary.hpp"
 #include "DatabaseImpl.hpp"
+#include <simpletest.hpp>
 
 #undef _NDEBUG
 #undef NDEBUG
@@ -45,6 +46,63 @@ void TestSerialization(const Entity &e)
     }
     assert(e == e2);
 }
+
+class DemoTest : public Test::Fixture<DemoTest>
+{
+public:
+    // The default constructor adds tests
+    DemoTest()
+    {
+        name = "This is a demo";
+
+        AddTest(&DemoTest::f);
+        AddTest(&DemoTest::g);
+        AddTest(&DemoTest::g);
+    }
+
+    int count = 10;
+
+    void f()
+    {
+        EQUALS(1,1);
+    }
+
+    void g()
+    {
+        EQUALS(10, count);
+        ++count;
+    }
+} t2;
+
+class Test2 : public Test::Fixture<Test2>
+{
+public:
+    Test2() : base("Test2")
+    {
+    }
+} t3;
+
+class StringTableTests : public Test::Fixture<StringTableTests>
+{
+public:
+    StringTableTests() : base("String table")
+    {
+        AddTest(&StringTableTests::Test);
+    }
+
+    void Test()
+    {
+        int x = st.GetId("hello");
+        EQUALS(x, st.GetId("hello"));
+        int y = st.GetId("hello2");
+        CHECK(x!=y);
+        EQUALS(y, st.GetId("hello2"));
+        EQUALS("hello", st.GetString(0));
+        EQUALS("hello2", st.GetString(1));
+    }
+
+    StringTable st;
+} stt;
 
 int main()
 {
@@ -183,6 +241,4 @@ int main()
         TestSerialization(Entity{EntityType::AtString, 0x10000});
         TestSerialization(Entity{EntityType::AtString, -1});
     }
-
-    std::cout << "Tests passed\n";
 }
