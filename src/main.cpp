@@ -95,8 +95,9 @@ int main(int argc, char**argv)
         
         if(!quiet)
         {
-            std::cout << "Found " << db.NumberOfResults() << " results in total\n";
+            std::cout << "Results found    = " << db.NumberOfResults() << std::endl;
             std::cout << "Evaluation steps = " << Database::GlobalCallCount() << std::endl;
+            std::cout << "Memory used      = " << db.Storage().size() << " bytes\n";
             std::cout << "Evaluation time  = " << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() << " µs\n";
             
             db.CheckErrors();

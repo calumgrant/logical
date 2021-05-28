@@ -75,6 +75,7 @@ public:
     virtual void ReportUserError() =0;
     bool UserErrorReported() const;
     
+    static std::size_t GlobalCallCountLimit();
     static std::size_t GlobalCallCount();
 
     void WarningEmptyRelation(Relation&);

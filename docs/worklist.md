@@ -1,39 +1,16 @@
 # Work plan
 
-- Persist:
--- Bug in UnaryPredicate::Assert. We look up the unary relation, which returns something that is invalid. The ->Add() predicate fails and crashes.
+- Optimization: Lift or branches.
 
-- Things to persist:
-  - Relations
-  - Shared pointers
-  - Tables
+
+
+- Persist:
+-- Bug in UnaryPredicate::Assert. We look up the unary relation, which returns something that is invalid. The ->Add() predicate fails and crashes. Is it due to invalid function pointers in vtables?
 
 - Optimization: Lift Or branches for recursion.
-- Use memory pool for strings and other things
 - Report on memory used.
 - Table.Write to return a bool if it's newly added.
-- Report this in the results.
-- Persist poor error reporting with bad constructor arts
-- Make it easier to specify a temp file.
-
-How
-
-
-- Idea: taint results with source code.
-
-```
-Evaluated 1 rule in has:reachable (Flags:R) ->
-    Evaluate with 3 variables (called 2 times, flags:r) ->
-        Scan number (_) -> (_0) (called 2 times) ->
-            Join has:successor (_0,_) -> (_,_1) (called 202 times) ->
-                Write (_0,_1) into has:reachable (called 202 times)
-```
-becomes
-```
-    for _0 in number(_):
-        for (_,_1) in has:successor (_0,_):
-            write has_reachanble(_0,_1)
-```
+  - Report this in the results.
 
 Simpletest:
 - Give it a repo
@@ -46,89 +23,23 @@ Simpletest:
 Persist:
 - Tidy up the code generally
 
-1. Check that the `-O0` optimizations are still sound.
-  - Get unit tests working with `-O0` and `-O1`.
 2. Implement `-f` and `-fno-` to enable and disable options.
 3. Optimization: `-frecursive-branch` to lift recursive branches. Look at `closure1.dl`.
 3. Improvements to `persist`, including a readme.
   - Check resource limit
   - readme
   - proper tests
-4. 
-
-
-## Current problem
-
-- Think about how to use a default map_file.
-  - Fix the allocation bug - when the vector resizes it crashes in malloc(). Probably just a bug.
 
 ## Persist tasks
 
-- Creation of a temp file
-- Deleting the temp file at the end
-- Options for no-recycle.
-- Proper tests
-- Ability to store a map file in the file itself.
-- Versioning support.
-- Limit file size support
+- Tidy up tests
 - Allocate a huge file but don't allocate it all on disk?
 - Create a decent test framework support
-
-```
-#include <caltest.hpp>
-
-Test::Framework(argc, argv).
-  .AddTest("name", function).Test(function).Test(...);
-// Destructor runs.
-
-void test1(Test::Test & t)
-{
-  t.Equals(1, 2);
-  t.Throws<T>
-}
-
-
-class Foo : public Test::Fixture
-{
-  Foo() : Test::Fixture("names")
-  {
-    AddTest(f);
-  }
-
-  Foo(Test::Run)
-  {
-
-  }
-
-  void f()
-  {
-    Equals(1,1);
-  }
-};
-
-int main()
-{
-  Foo foo;
-
-}
-
-```
-
-## Evaluating recursive predicates
-
-```
-    has:successor = new Table(2)
-    number = new Table(1)
-    For _0 in number:
-        _1 := 100
-        For _0 <= _2 <= _1:
-            Write (_2) into number
-    For _0 in number:
-        _2 := _0 + _1
-        Write (_0,_2) into has:successor
-    //
-    For recursive_loop
-```
+- More robust open file options
+- Errors if size is invalid
+- Throw on failed
+- Easier to create a temp file.
+- Set the size limit.
 
 ## Semi-naive evaluation
 Partial evaluation means that if a set of inputs is already bound, then there is no need to evaluate the whole predicate. Evaluation is limited to a set of inputs. The predicate is memoised so that the predicate is not recomputed for the same set of inputs.
@@ -143,78 +54,21 @@ All predicates are semi-naive.
 - Use square brackets for special annotations, such as: `[in]`, `[out]`
 - Syntax highlighter
 
-- Bug in recursion4: Rules are shared between recursive and non-recursive predicates. The recursive predicates have deltas on them which fail to get evaluated correctly. Don't know how to solve this.
-
-
-
-
-
-
-Analysis of recursion:
-Each node has the following flags:
-- visited for recursion (bool)
-- parity (bool)
-- Recursive predicate: null if not in recursive loop, or points to the main recursive predicate.
-
-
-
-Each step has the foll
-
-- Each predicate must be marked with a "Recursive loop" - which keeps the iteration counter. Recursive predicates are evaluated iteratively until no more results appear anywhere in the recursive loop.
-
 Rules are run (again) in called predicates if if the predicate is marked 
 
-```
-F 2 if F 1.
-
-prime N if not prime 
-```
-
 - Idea: Monotonic negative recursion.
-```
-n is Composite if 
-
-
-n is a Prime if n=2 or Prime m and
-```
-
-What is a delta?
-
-- Implement a `class Receiver` that receives row data. This will be the base class for `Relation` queries and for `Evaluation`.
-
-- Bug in `closure1.dl` and `recursion4.dl`
-  - Call to delta has_reachable is not valid because call is marked as recursive when it is not.
-  - Problem is (1) where the call is from a different recursive loop.
-  (2) where a rule is attached to multiple predicates. It can be recursive in one but not the other!
-
-- Idea: The query site keeps a count, and the "delta" is maintained by the query, e.g.
-
-`Query(Entity*, int mask, Visitor, std::size_t & delta);` No this is nonsense. The delta is per iteration, not per call.
-
-
-Queries as much as possible, but only returns results greater or equal to the delta.
-The delta is increased such that duplicated results are not 
-A delta of 0 returns all results, and is the initial case.
-This solves reentrancy because the indexes are only updated on the query, not on the add.
-
-
-Problem is reentrancy again.
-- `Add()` puts it on a queue, and Query transfers all results to the indexes.
 
 - Optimization: Avoid redundant writes.
 
 - string/regex match
-  REGEX has regex-match Result
-  X has equal Y.
-
-
+  `REGEX has regex-match Result`
+  `X has equal Y.`
 
 - Bug `number X has square Y if number X and Y = X*X.` is not really recursive.
 
 - Problem is rules attached to multiple predicates. How does the analysis work there???
 
 - Unit tests for tables.
-- Remove "Querying empty relation" warning on queries with no query.
 - When counting and summing, ensure we make the body reentrant; deduplicate isn't doing enough and needs to be reset.
 - Help option: `-h`
 - `logical:option "no-joinreorder"`.

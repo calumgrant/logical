@@ -312,7 +312,23 @@ int Database::ReadFile(const char *filename)
 
         yyset_in(f, scanner);
         yyrestart(f, scanner);
-        int p = yyparse(scanner, *this);
+        int p;
+        try
+        {
+            p = yyparse(scanner, *this);
+        }
+        catch(std::bad_alloc&)
+        {
+            Error("Memory limit reached");
+        }
+        catch(std::length_error&)
+        {
+            Error("Memory limit reached");
+        }
+        catch(...)
+        {
+            Error("Internal error - uncaught exception");
+        }
         fclose(f);
         if(p) return 128;
         yylex_destroy(scanner);
@@ -372,6 +388,12 @@ std::size_t Database::GlobalCallCount()
 {
     return Evaluation::GlobalCallCount();
 }
+
+std::size_t Database::GlobalCallCountLimit()
+{
+    return Evaluation::GetGlobalCallCountLimit();
+}
+
 
 void DatabaseImpl::CreateProjection(const CompoundName &from, const CompoundName &to)
 {
