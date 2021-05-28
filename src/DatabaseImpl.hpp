@@ -18,6 +18,25 @@ struct RelationHash
 };
 
 
+class DataStore
+{
+public:
+    DataStore(persist::shared_memory & memory);
+    
+    StringTable strings, atstrings;
+
+    std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
+    std::unordered_map< int, std::shared_ptr<Relation> > binaryRelations;
+    std::unordered_map< std::pair<int, int>, std::shared_ptr<Relation>, RelationHash> relations;
+
+    std::unordered_map<CompoundName, std::shared_ptr<Relation>, CompoundName::Hash> tables;
+    
+    // Names, indexed on their first column
+    std::unordered_multimap<int, CompoundName> names;
+
+    std::shared_ptr<Relation> queryPredicate;
+};
+
 class DatabaseImpl : public Database
 {
 public:
@@ -61,22 +80,12 @@ public:
 
 private:
     persist::map_file datafile;
-    std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
-    std::unordered_map< int, std::shared_ptr<Relation> > binaryRelations;
-    std::unordered_map< std::pair<int, int>, std::shared_ptr<Relation>, RelationHash> relations;
-
-    StringTable strings, atstrings;
+    persist::map_data<DataStore> datastore;
     
     bool verbose = false;
     int errorCount = 0;
     std::size_t resultCount = 0;
     
-    std::unordered_map<CompoundName, std::shared_ptr<Relation>, CompoundName::Hash> tables;
-    
-    // Names, indexed on their first column
-    std::unordered_multimap<int, CompoundName> names;
-
-    std::shared_ptr<Relation> queryPredicate;
     
     void CreateProjection(const CompoundName &from, const CompoundName & to);
     

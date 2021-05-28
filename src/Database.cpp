@@ -17,11 +17,11 @@ void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
 std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
 {
-    auto i = unaryRelations.find(name);
-    if (i == unaryRelations.end())
+    auto i = datastore->unaryRelations.find(name);
+    if (i == datastore->unaryRelations.end())
     {
         auto p = std::make_shared<Predicate>(*this, name, 1);
-        unaryRelations.insert(std::make_pair(name, p));
+        datastore->unaryRelations.insert(std::make_pair(name, p));
         return p;
     }
     else
@@ -30,14 +30,14 @@ std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
 
 std::shared_ptr<Relation> DatabaseImpl::GetBinaryRelation(int name)
 {
-    auto i = binaryRelations.find(name);
-    if (i==binaryRelations.end())
+    auto i = datastore->binaryRelations.find(name);
+    if (i==datastore->binaryRelations.end())
     {
         std::vector<int> cn(1);
         cn[0] = name;
         
         auto p = GetRelation(cn);
-        binaryRelations.insert(std::make_pair(name, p));
+        datastore->binaryRelations.insert(std::make_pair(name, p));
         return p;
     }
     else
@@ -49,20 +49,23 @@ void Database::UnboundError(const std::string &name, int line, int column)
     std::cerr << "Error at (" << line << ":" << column << "): " << name << " is unbound.\n";
 }
 
-DatabaseImpl::DatabaseImpl(const char * name, int limitMB) : datafile(name, 2, 2, 1, 16384, limitMB * 1000000ll, name ? 0 : persist::temp_heap), verbose(false)
+DatabaseImpl::DatabaseImpl(const char * name, int limitMB) :
+    datafile(name, 2, 2, 1, 16384, limitMB * 1000000ll, name ? 0 : persist::temp_heap),
+    datastore(datafile.data(), datafile.data()),
+    verbose(false)
 {
     int queryId = GetStringId("query");
-    queryPredicate = GetUnaryRelation(queryId);
+    datastore->queryPredicate = GetUnaryRelation(queryId);
     
     int print = GetStringId("print");
-    unaryRelations[print] = std::make_shared<PrintRelation>(std::cout, *this, print);
-    unaryRelations[GetStringId("error")] = std::make_shared<ErrorRelation>(*this);
+    datastore->unaryRelations[print] = std::make_shared<PrintRelation>(std::cout, *this, print);
+    datastore->unaryRelations[GetStringId("error")] = std::make_shared<ErrorRelation>(*this);
     
     RelationId expected_results = GetStringId("expected-results");
-    unaryRelations[expected_results] = std::make_shared<ExpectedResults>(*this, expected_results);
+    datastore->unaryRelations[expected_results] = std::make_shared<ExpectedResults>(*this, expected_results);
     
     RelationId evaluation_step_limit = GetStringId("evaluation-step-limit");
-    unaryRelations[evaluation_step_limit] = std::make_shared<EvaluationStepLimit>(*this, evaluation_step_limit);
+    datastore->unaryRelations[evaluation_step_limit] = std::make_shared<EvaluationStepLimit>(*this, evaluation_step_limit);
     
     options = CreateOptions(1); // Default optimization level = 1
 }
@@ -120,12 +123,12 @@ void Database::PrintQuoted(const Entity &e, std::ostream &os) const
 
 const std::string &DatabaseImpl::GetString(int id) const
 {
-    return strings.GetString(id);
+    return datastore->strings.GetString(id);
 }
 
 const std::string &DatabaseImpl::GetAtString(int id) const
 {
-    return atstrings.GetString(id);
+    return datastore->atstrings.GetString(id);
 }
 
 std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
@@ -138,14 +141,14 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
 
     auto index = std::make_pair(name, arity);
 
-    auto i = relations.find(index);
+    auto i = datastore->relations.find(index);
 
-    if (i == relations.end())
+    if (i == datastore->relations.end())
     {
         std::vector<int> p = { name };
         CompoundName cn(p);
         auto r = std::make_shared<Predicate>(*this, cn, arity);
-        relations.insert(std::make_pair(index, r));
+        datastore->relations.insert(std::make_pair(index, r));
         return r;
     }
     else
@@ -246,12 +249,12 @@ Entity Database::AddStrings(int id1, int id2)
 
 int DatabaseImpl::GetStringId(const std::string &str)
 {
-    return strings.GetId(str);
+    return datastore->strings.GetId(str);
 }
 
 int DatabaseImpl::GetAtStringId(const std::string &str)
 {
-    return atstrings.GetId(str);
+    return datastore->atstrings.GetId(str);
 }
 
 int Database::ReadFile(const char *filename)
@@ -278,9 +281,9 @@ int Database::ReadFile(const char *filename)
 
 std::shared_ptr<Relation> DatabaseImpl::GetRelation(const CompoundName &cn)
 {
-    auto t = tables.find(cn);
+    auto t = datastore->tables.find(cn);
     
-    if(t != tables.end()) return t->second;
+    if(t != datastore->tables.end()) return t->second;
     
     // Find all tables that contain this one:
     /*
@@ -293,7 +296,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(const CompoundName &cn)
     
     for(auto i : cn.parts)
     {
-        auto m = names.equal_range(i);
+        auto m = datastore->names.equal_range(i);
         for(auto j=m.first; j!=m.second; ++j)
         {
             if(cn <= j->second) supersets.insert(j->second);
@@ -306,7 +309,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(const CompoundName &cn)
     
     relation = std::make_shared<Predicate>(*this, cn, cn.parts.size()+1);
     
-    tables[cn] = relation;
+    datastore->tables[cn] = relation;
 
     for(auto & superset : supersets)
     {
@@ -318,7 +321,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(const CompoundName &cn)
         CreateProjection(cn, subset);
     }
     
-    for(auto i : cn.parts) names.insert(std::make_pair(i, cn));
+    for(auto i : cn.parts) datastore->names.insert(std::make_pair(i, cn));
     return relation;
 }
 
@@ -351,13 +354,13 @@ void DatabaseImpl::CreateProjection(const CompoundName &from, const CompoundName
         projection[j+1] = i+1;
     }
     
-    auto writer = std::make_shared<Writer>(tables[to], projection);
+    auto writer = std::make_shared<Writer>(datastore->tables[to], projection);
     
-    auto reader = std::make_shared<Reader>(tables[from], cols, writer);
+    auto reader = std::make_shared<Reader>(datastore->tables[from], cols, writer);
     
     auto eval = std::make_shared<RuleEvaluation>(cols.size(), reader);
     
-    tables[to]->AddRule(eval);
+    datastore->tables[to]->AddRule(eval);
 }
 
 int DatabaseImpl::NumberOfErrors() const
@@ -416,7 +419,7 @@ void DatabaseImpl::RunQueries()
             //Entity queryName = data[0];
 
             // Join with all attributes in the
-            database.queryPredicate->VisitAttributes([&](Relation&r) {
+            database.datastore->queryPredicate->VisitAttributes([&](Relation&r) {
                 QueryVisitor qv(database, r.Arity(), *r.GetCompoundName());
                 std::vector<Entity> row(r.Arity());
                 row[0] = data[0];
@@ -426,7 +429,7 @@ void DatabaseImpl::RunQueries()
         }
     } visitor(*this);
     
-    queryPredicate->Query(nullptr, 0, visitor);
+    datastore->queryPredicate->Query(nullptr, 0, visitor);
 }
 
 void DatabaseImpl::AddResult(const Entity * row, int arity, bool displayFirstColumn)
@@ -504,7 +507,7 @@ const OptimizationOptions & DatabaseImpl::Options() const
 
 Relation & DatabaseImpl::GetQueryRelation() const
 {
-    return *queryPredicate;
+    return *datastore->queryPredicate;
 }
 
 void DatabaseImpl::SetAnsiColours(bool enabled)
@@ -564,3 +567,7 @@ struct MyStorage
     std::shared_ptr<int> intptr;
     std::vector<mystring, persist::allocator<mystring>> vec;
 };
+
+DataStore::DataStore(persist::shared_memory & mem)
+{
+}
