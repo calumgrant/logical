@@ -1,6 +1,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "persist.h"
 #include "Analysis.hpp"
 
 struct RelationHash
@@ -20,7 +21,7 @@ struct RelationHash
 class DatabaseImpl : public Database
 {
 public:
-    DatabaseImpl();
+    DatabaseImpl(const char * name, int limitMB);
     ~DatabaseImpl();
     
     int GetStringId(const std::string&s) override;
@@ -57,10 +58,9 @@ public:
     void SetAnsiColours(bool);
     
     Relation &GetQueryRelation() const override;
-    
-    void SetStorageFile(const char * name);
 
 private:
+    persist::map_file datafile;
     std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
     std::unordered_map< int, std::shared_ptr<Relation> > binaryRelations;
     std::unordered_map< std::pair<int, int>, std::shared_ptr<Relation>, RelationHash> relations;

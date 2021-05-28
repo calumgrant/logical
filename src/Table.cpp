@@ -46,7 +46,12 @@ void TableImpl::OnRow(Entity *row)
 bool TableImpl::NextIteration()
 {
     bool moreResults = deltaEnd < data.size();
+
+    //std::cout << "Next iteration: deltaStart = " << deltaStart << ", deltaEnd = " << deltaEnd << ", size = " << data.size() << std::endl;
     
+    deltaStart = deltaEnd;
+    deltaEnd = data.size();
+
     for(std::size_t s = deltaStart; s < deltaEnd; s+= arity)
     {
         for(auto & index : indexes)
@@ -54,8 +59,6 @@ bool TableImpl::NextIteration()
             index.second.insert(s);
         }
     }
-    deltaStart = deltaEnd;
-    deltaEnd = data.size();
     return moreResults;
 }
 
@@ -73,7 +76,7 @@ TableImpl::map_type & TableImpl::GetIndex(int mask)
     
     auto &index = indexes.insert(std::make_pair(mask, it)).first->second;
     
-    for(auto i=0; i<deltaEnd; i+=arity)
+    for(Size i=0; i<deltaEnd; i+=arity)
     {
         index.insert(i);
     }
@@ -103,7 +106,10 @@ void TableImpl::Query(Entity * row, int mask, Receiver&v)
         }
         else
         {
+            bool debugHadIndex = indexes.find(mask) != indexes.end();
             auto & index = GetIndex(mask);
+            assert(index.size() == deltaEnd/arity);
+            
             auto s = data.size();
             data.insert(data.end(), row, row+arity);
             auto result = index.equal_range(s);
@@ -113,7 +119,7 @@ void TableImpl::Query(Entity * row, int mask, Receiver&v)
             {
                 int n = *i;  // Debug info
                 assert(n>=0 && n < data.size());
-                // Note that this only returns results up to deltaEnd because the other results aren't indexed.
+                // Note that this only returns results up to deltaEnd because the other results aren't indexed yet.
                 v.OnRow(&data[*i]);
             }
         }
@@ -129,6 +135,9 @@ void TableImpl::QueryDelta(Entity * row, int columns, Receiver &v)
 {
     if(deltaStart == deltaEnd)
     {
+        // This feels like a hack
+        // it comes about when data is asserted directly into the table
+        // but I don't feel this is right.
         deltaStart = 0;
         deltaEnd = data.size();
     }
@@ -144,11 +153,13 @@ void TableImpl::QueryDelta(Entity * row, int columns, Receiver &v)
         return;
     }
     
+    // TODO: Optimize when columns = -1 or all columns
+    
     // TODO: Perhaps we should instead query the index
-    for(std::size_t s=deltaStart; s<deltaEnd; s += arity)
+    for(Size s=deltaStart; s<deltaEnd; s += arity)
     {
         bool found = true;
-        for(int i=0; i<arity; ++i)
+        for(Arity i=0; i<arity; ++i)
             if(columns & (1<<i) && data[s+i] != row[i])
             {
                 found = false;
@@ -161,8 +172,10 @@ void TableImpl::QueryDelta(Entity * row, int columns, Receiver &v)
 
 void TableImpl::FirstIteration()
 {
+    //assert(deltaEnd == data.size());
     deltaStart = 0;
     deltaEnd = data.size();
+    //std::cout << "First iteration: deltaStart = " << deltaStart << ", deltaEnd = " << deltaEnd << ", size = " << data.size() << std::endl;
 }
 
 

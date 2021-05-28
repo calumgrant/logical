@@ -7,6 +7,10 @@
 
 #include <iostream>
 
+Relation::~Relation()
+{
+}
+
 PrintRelation::PrintRelation(std::ostream & output, Database &db, int name) :
     SpecialPredicate(db, name), output(output)
 {

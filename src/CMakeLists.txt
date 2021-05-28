@@ -109,6 +109,7 @@ add_test(NAME Primes1 COMMAND logical ../tests/primes1.dl)
 add_test(NAME Recursion1 COMMAND logical ../tests/recursion1.dl)
 add_test(NAME Recursion2 COMMAND logical ../tests/recursion2.dl)
 add_test(NAME Recursion3 COMMAND logical ../tests/recursion3.dl)
+add_test(NAME Recursion3a COMMAND logical -O0 ../tests/recursion3.dl)
 add_test(NAME Recursion4 COMMAND logical ../tests/recursion4.dl)
 
 add_test(NAME Projection1 COMMAND logical ../tests/projection1.dl)

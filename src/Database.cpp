@@ -6,7 +6,6 @@
 #include "EvaluationImpl.hpp"
 #include "DatabaseImpl.hpp"
 #include "TableImpl.hpp"
-#include "persist.h"
 
 #include <iostream>
 
@@ -50,11 +49,7 @@ void Database::UnboundError(const std::string &name, int line, int column)
     std::cerr << "Error at (" << line << ":" << column << "): " << name << " is unbound.\n";
 }
 
-Relation::~Relation()
-{
-}
-
-DatabaseImpl::DatabaseImpl() : verbose(false)
+DatabaseImpl::DatabaseImpl(const char * name, int limitMB) : datafile(name, 2, 2, 1, 16384, limitMB * 1000000ll, name ? 0 : persist::temp_heap), verbose(false)
 {
     int queryId = GetStringId("query");
     queryPredicate = GetUnaryRelation(queryId);
@@ -554,10 +549,10 @@ const int version = 4;
 
 struct MyStorage
 {
-    MyStorage(persist::map_file & map) :
-        str(map), vec(persist::allocator<mystring>(map))
+    MyStorage(persist::shared_memory & mem) :
+        str(mem), vec(persist::allocator<mystring>(mem))
     {
-        intptr = std::allocate_shared<int, persist::allocator<int>>(map, 10);
+        intptr = std::allocate_shared<int, persist::allocator<int>>(mem, 10);
         vec.reserve(2005);
     }
     
@@ -569,41 +564,3 @@ struct MyStorage
     std::shared_ptr<int> intptr;
     std::vector<mystring, persist::allocator<mystring>> vec;
 };
-
-void DatabaseImpl::SetStorageFile(const char * name)
-{
-    persist::map_file file(name);
-        
-    if(file)
-    {
-        persist::map_data<MyStorage> data(file, file);
-        
-        if(data->version != version)
-        {
-            std::cout << "Invalid version detected - aborting\n";
-            return;
-        }
-
-        if (data->times_opened == 0)
-        {
-            data->str = "This is test data";
-            data->intptr = std::allocate_shared<int, persist::allocator<int>>(file, 42);
-        }
-        
-        ++data->times_opened;
-        
-        for(int i=0; i<1000; ++i)
-        {
-            std::cout << data->vec.size() << std::endl;
-            data->vec.push_back(mystring("This is a really long string", persist::allocator<char>(file)));
-        }
-        
-        std::cout << "You have run this " << data->times_opened << " times: " << data->str << "\n";
-        std::cout << "Shared int value = " << *data->intptr << std::endl;
-        std::cout << "There are " << data->vec.size() << " strings in the file\n";
-    }
-    else
-    {
-        std::cerr << "Failed to create data file " << name << "\n";
-    }
-}

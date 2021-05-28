@@ -116,7 +116,7 @@ int main()
     assert(st.GetString(0) == "hello");
     assert(st.GetString(1) == "hello2");
 
-    DatabaseImpl db;
+    DatabaseImpl db(nullptr, 1000);
     auto e1 = db.CreateInt(0);
 
     auto test = db.GetStringId("test");

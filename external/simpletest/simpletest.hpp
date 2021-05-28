@@ -70,6 +70,7 @@ namespace Test
                     }
                     catch(const std::exception& e)
                     {
+                        std::cout << name << ": Thrown exception " << e.what() << std::endl;
                         ++failures;
                     }
                     catch(...)
@@ -118,6 +119,27 @@ namespace Test
                 throw Failed();
             }
         }
+
+        template<typename Ex, typename Fn>
+        void CheckThrows(Fn fn, const char * file, int line)
+        {
+            bool correct;
+            try
+            {
+                fn();
+                correct = false; // Not thrown
+            }
+            catch(const Ex & e)
+            {
+                correct = true;
+            }
+            catch(...)
+            {
+                correct = false;
+            }
+            Check(correct, file, line);            
+        }
+
          
     private:
         static bool running;

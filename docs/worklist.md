@@ -1,27 +1,50 @@
 # Work plan
 
+- Optimization: Lift Or branches for recursion.
+- Use memory pool for strings and other things
+- Report on memory used.
+- Table.Write to return a bool if it's newly added.
+- Report this in the results.
+
+
+How
+
+
+- Idea: taint results with source code.
+
+```
+Evaluated 1 rule in has:reachable (Flags:R) ->
+    Evaluate with 3 variables (called 2 times, flags:r) ->
+        Scan number (_) -> (_0) (called 2 times) ->
+            Join has:successor (_0,_) -> (_,_1) (called 202 times) ->
+                Write (_0,_1) into has:reachable (called 202 times)
+```
+becomes
+```
+    for _0 in number(_):
+        for (_,_1) in has:successor (_0,_):
+            write has_reachanble(_0,_1)
+```
+
+Simpletest:
+- Give it a repo
+- Name it something better
+- Simpletest to count fixtures?
+- Test exceptions
+- Compare vectors
+- Tidy up code
+
 Persist:
-- Check the file allocation limits.
-- Use atomics for top and end
-- Keep magic bytes
-- Use exceptions
-- The allocator should store a map_file, not the memory block.
-- Support capacity.
+- Tidy up the code generally
 
 1. Check that the `-O0` optimizations are still sound.
   - Get unit tests working with `-O0` and `-O1`.
 2. Implement `-f` and `-fno-` to enable and disable options.
 3. Optimization: `-frecursive-branch` to lift recursive branches. Look at `closure1.dl`.
 3. Improvements to `persist`, including a readme.
-  - How to auto-grow the heap if it's shared??
-    - Have a well known memory segment that's private
-    - Disable sharing as that will never be used.
-  - Check temp file by default
   - Check resource limit
   - readme
   - proper tests
-  - Store "map_file" in the mapped object? (A bit wierd but makes sense).
-  - I think address space randomization is happening, so you can't just take a reference.
 4. 
 
 
