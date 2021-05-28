@@ -1,5 +1,10 @@
 # Work plan
 
+- Things to persist:
+  - Relations
+  - Shared pointers
+  - Tables
+
 - Optimization: Lift Or branches for recursion.
 - Use memory pool for strings and other things
 - Report on memory used.

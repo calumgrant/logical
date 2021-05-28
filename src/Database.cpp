@@ -11,21 +11,36 @@
 #include <unordered_set>
 #include <iostream>
 
+template<typename Key, typename Value, typename Hash = std::hash<Key>, typename Eq = std::equal_to<Key>>
+struct unordered_map_helper
+{
+    typedef std::pair<const Key, Value> value_type;
+    typedef persist::fast_allocator<value_type> allocator_type;
+    
+    typedef std::unordered_map< Key, Value, Hash, Eq, allocator_type> map_type;
+    typedef std::unordered_multimap< Key, Value, Hash, Eq, allocator_type> multimap_type;
+};
+
+template<typename T, typename...Args>
+std::shared_ptr<T> allocate_shared(persist::map_file & map, Args&& ...args)
+{
+    return std::allocate_shared<T, persist::fast_allocator<T>>(map, std::forward<Args>(args)...);
+}
+
 class DataStore
 {
 public:
     DataStore(persist::shared_memory & memory);
     
     StringTable strings, atstrings;
+    
+    unordered_map_helper<RelationId, std::shared_ptr<Relation>>::map_type unaryRelations, binaryRelations;
+    unordered_map_helper<std::pair<RelationId, Arity>, std::shared_ptr<Relation>, RelationHash>::map_type relations;
 
-    std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
-    std::unordered_map< int, std::shared_ptr<Relation> > binaryRelations;
-    std::unordered_map< std::pair<int, int>, std::shared_ptr<Relation>, RelationHash> relations;
-
-    std::unordered_map<CompoundName, std::shared_ptr<Relation>, CompoundName::Hash> tables;
+    unordered_map_helper<CompoundName, std::shared_ptr<Relation>, CompoundName::Hash>::map_type tables;
     
     // Names, indexed on their first column
-    std::unordered_multimap<int, CompoundName> names;
+    unordered_map_helper<StringId, CompoundName>::multimap_type names;
 
     std::shared_ptr<Relation> queryPredicate;
 };
@@ -41,7 +56,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
     auto i = datastore->unaryRelations.find(name);
     if (i == datastore->unaryRelations.end())
     {
-        auto p = std::make_shared<Predicate>(*this, name, 1);
+        auto p = std::allocate_shared<Predicate, persist::fast_allocator<Predicate>>(datafile, *this, name, 1);
         datastore->unaryRelations.insert(std::make_pair(name, p));
         return p;
     }
@@ -79,14 +94,14 @@ DatabaseImpl::DatabaseImpl(const char * name, int limitMB) :
     datastore->queryPredicate = GetUnaryRelation(queryId);
     
     int print = GetStringId("print");
-    datastore->unaryRelations[print] = std::make_shared<PrintRelation>(std::cout, *this, print);
-    datastore->unaryRelations[GetStringId("error")] = std::make_shared<ErrorRelation>(*this);
+    datastore->unaryRelations[print] = allocate_shared<PrintRelation>(datafile, std::cout, *this, print);
+    datastore->unaryRelations[GetStringId("error")] = allocate_shared<ErrorRelation>(datafile, *this);
     
     RelationId expected_results = GetStringId("expected-results");
-    datastore->unaryRelations[expected_results] = std::make_shared<ExpectedResults>(*this, expected_results);
+    datastore->unaryRelations[expected_results] = allocate_shared<ExpectedResults>(datafile, *this, expected_results);
     
     RelationId evaluation_step_limit = GetStringId("evaluation-step-limit");
-    datastore->unaryRelations[evaluation_step_limit] = std::make_shared<EvaluationStepLimit>(*this, evaluation_step_limit);
+    datastore->unaryRelations[evaluation_step_limit] = allocate_shared<EvaluationStepLimit>(datafile, *this, evaluation_step_limit);
     
     options = CreateOptions(1); // Default optimization level = 1
 }
@@ -168,7 +183,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
     {
         std::vector<int> p = { name };
         CompoundName cn(p);
-        auto r = std::make_shared<Predicate>(*this, cn, arity);
+        auto r = allocate_shared<Predicate>(datafile, *this, cn, arity);
         datastore->relations.insert(std::make_pair(index, r));
         return r;
     }
@@ -339,7 +354,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(const CompoundName &cn)
     // Create the appropriate mappings to the subsets
     std::shared_ptr<Relation> relation;
     
-    relation = std::make_shared<Predicate>(*this, cn, cn.parts.size()+1);
+    relation = allocate_shared<Predicate>(datafile, *this, cn, cn.parts.size()+1);
     
     datastore->tables[cn] = relation;
 
@@ -386,11 +401,11 @@ void DatabaseImpl::CreateProjection(const CompoundName &from, const CompoundName
         projection[j+1] = i+1;
     }
     
-    auto writer = std::make_shared<Writer>(datastore->tables[to], projection);
+    auto writer = allocate_shared<Writer>(datafile, datastore->tables[to], projection);
     
-    auto reader = std::make_shared<Reader>(datastore->tables[from], cols, writer);
+    auto reader = allocate_shared<Reader>(datafile, datastore->tables[from], cols, writer);
     
-    auto eval = std::make_shared<RuleEvaluation>(cols.size(), reader);
+    auto eval = allocate_shared<RuleEvaluation>(datafile, cols.size(), reader);
     
     datastore->tables[to]->AddRule(eval);
 }
@@ -601,6 +616,12 @@ struct MyStorage
 };
 
 DataStore::DataStore(persist::shared_memory & mem) :
-    strings(mem), atstrings(mem)
+    strings(mem),
+    atstrings(mem),
+    unaryRelations({}, std::hash<RelationId>(), std::equal_to<RelationId>(), mem),
+    binaryRelations({}, std::hash<RelationId>(), std::equal_to<RelationId>(), mem),
+    relations({}, RelationHash(), std::equal_to<std::pair<RelationId, Arity>>(), mem),
+    tables({}, CompoundName::Hash(), std::equal_to<CompoundName>(), mem),
+    names({}, std::hash<StringId>(), std::equal_to<StringId>(), mem)
 {
 }
