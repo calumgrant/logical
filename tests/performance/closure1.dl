@@ -1,5 +1,5 @@
 expected-results 6.
-//evaluation-step-limit 41672.
+evaluation-step-limit 41672.
 
 x is a number if 0<=x<=100.
 
@@ -8,7 +8,6 @@ x has successor x+1 if x is a number.
 x has reachable y if
     number x has successor y or
     number x has reachable z and z has successor y.
-
 
 query "Reachable" has Reachable n if 95 has reachable n.
 

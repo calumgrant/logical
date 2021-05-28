@@ -5,7 +5,8 @@
 - Report on memory used.
 - Table.Write to return a bool if it's newly added.
 - Report this in the results.
-
+- Persist poor error reporting with bad constructor arts
+- Make it easier to specify a temp file.
 
 How
 

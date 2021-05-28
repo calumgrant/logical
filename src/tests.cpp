@@ -82,6 +82,7 @@ public:
     }
 } t3;
 
+
 class StringTableTests : public Test::Fixture<StringTableTests>
 {
 public:
@@ -92,30 +93,23 @@ public:
 
     void Test()
     {
-        int x = st.GetId("hello");
-        EQUALS(x, st.GetId("hello"));
-        int y = st.GetId("hello2");
+        persist::map_file file { nullptr, 0, 0, 0, 16384, 16384, persist::temp_heap };
+        StringTable st(file.data());
+
+        int x = st.GetId(string_type("hello", file.data()));
+        EQUALS(x, st.GetId(string_type("hello", file.data())));
+        int y = st.GetId(string_type("hello2", file.data()));
         CHECK(x!=y);
-        EQUALS(y, st.GetId("hello2"));
+        EQUALS(y, st.GetId(string_type("hello2", file.data())));
         EQUALS("hello", st.GetString(0));
         EQUALS("hello2", st.GetString(1));
     }
-
-    StringTable st;
+    
 } stt;
+
 
 int main()
 {
-    StringTable st;
-    int x = st.GetId("hello");
-    assert(st.GetId("hello")==x);
-    int y = st.GetId("hello2");
-    assert(x!=y);
-    assert(st.GetId("hello2")==y);
-
-    assert(st.GetString(0) == "hello");
-    assert(st.GetString(1) == "hello2");
-
     DatabaseImpl db(nullptr, 1000);
     auto e1 = db.CreateInt(0);
 
@@ -132,7 +126,7 @@ int main()
     r2->Add(row2);
     assert(r2->GetCount() == 1);
 
-    x = db.GetStringId("x"), y = db.GetStringId("y");
+    StringId x = db.GetStringId("x"), y = db.GetStringId("y");
     auto z = db.GetStringId("z");
     {
         Compilation c;

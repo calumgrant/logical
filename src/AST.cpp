@@ -519,7 +519,7 @@ AST::Aggregate::Aggregate(Entity *e, Entity * v, Clause *c) : entity(e), value(v
 
 void AST::NamedVariable::UnboundError(Database &db) const
 {
-    db.UnboundError(db.GetString(nameId), line, column);
+    db.UnboundError(db.GetString(nameId).c_str(), line, column);
 }
 
 void AST::UnnamedVariable::UnboundError(Database &db) const

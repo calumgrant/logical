@@ -7,7 +7,28 @@
 #include "DatabaseImpl.hpp"
 #include "TableImpl.hpp"
 
+#include <unordered_map>
+#include <unordered_set>
 #include <iostream>
+
+class DataStore
+{
+public:
+    DataStore(persist::shared_memory & memory);
+    
+    StringTable strings, atstrings;
+
+    std::unordered_map< int, std::shared_ptr<Relation> > unaryRelations;
+    std::unordered_map< int, std::shared_ptr<Relation> > binaryRelations;
+    std::unordered_map< std::pair<int, int>, std::shared_ptr<Relation>, RelationHash> relations;
+
+    std::unordered_map<CompoundName, std::shared_ptr<Relation>, CompoundName::Hash> tables;
+    
+    // Names, indexed on their first column
+    std::unordered_multimap<int, CompoundName> names;
+
+    std::shared_ptr<Relation> queryPredicate;
+};
 
 void yyrestart (FILE *input_file ,yyscan_t yyscanner );
 int yylex_init (yyscan_t* scanner);
@@ -44,7 +65,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetBinaryRelation(int name)
         return i->second;
 }
 
-void Database::UnboundError(const std::string &name, int line, int column)
+void Database::UnboundError(const char *name, int line, int column)
 {
     std::cerr << "Error at (" << line << ":" << column << "): " << name << " is unbound.\n";
 }
@@ -121,12 +142,12 @@ void Database::PrintQuoted(const Entity &e, std::ostream &os) const
     os << Colours::Normal;
 }
 
-const std::string &DatabaseImpl::GetString(int id) const
+const string_type &DatabaseImpl::GetString(int id) const
 {
     return datastore->strings.GetString(id);
 }
 
-const std::string &DatabaseImpl::GetAtString(int id) const
+const string_type &DatabaseImpl::GetAtString(int id) const
 {
     return datastore->atstrings.GetString(id);
 }
@@ -229,7 +250,7 @@ int Database::GetStringLiteral(const char *literal)
             value.push_back(literal[i]);
     }
     
-    return GetStringId(value);
+    return GetStringId(value.c_str());
 }
 
 bool Database::UserErrorReported() const
@@ -247,15 +268,26 @@ Entity Database::AddStrings(int id1, int id2)
     return CreateString(GetString(id1) + GetString(id2));
 }
 
-int DatabaseImpl::GetStringId(const std::string &str)
+int DatabaseImpl::GetStringId(const string_type &str)
 {
     return datastore->strings.GetId(str);
 }
 
-int DatabaseImpl::GetAtStringId(const std::string &str)
+int DatabaseImpl::GetAtStringId(const string_type &str)
 {
     return datastore->atstrings.GetId(str);
 }
+
+int DatabaseImpl::GetStringId(const char *str)
+{
+    return datastore->strings.GetId(string_type(str, datafile.data()));
+}
+
+int DatabaseImpl::GetAtStringId(const char *str)
+{
+    return datastore->atstrings.GetId(string_type(str, datafile.data()));
+}
+
 
 int Database::ReadFile(const char *filename)
 {
@@ -568,6 +600,7 @@ struct MyStorage
     std::vector<mystring, persist::allocator<mystring>> vec;
 };
 
-DataStore::DataStore(persist::shared_memory & mem)
+DataStore::DataStore(persist::shared_memory & mem) :
+    strings(mem), atstrings(mem)
 {
 }

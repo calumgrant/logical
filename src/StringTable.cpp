@@ -1,6 +1,13 @@
 #include "StringTable.hpp"
 
-int StringTable::GetId(const std::string &s)
+StringTable::StringTable(persist::shared_memory & mem) :
+    strings(persist::fast_allocator<char>(mem)),
+    ids({}, std::hash<string_type>(), std::equal_to<string_type>(), persist::fast_allocator<std::pair<const string_type, int>>(mem))
+{
+}
+
+
+int StringTable::GetId(const string_type &s)
 {
     auto i = ids.find(s);
     if(i == ids.end())
@@ -14,7 +21,7 @@ int StringTable::GetId(const std::string &s)
         return i->second;
 }
 
-const std::string & StringTable::GetString(int id) const
+const string_type & StringTable::GetString(int id) const
 {
     return strings[id];
 }

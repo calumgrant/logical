@@ -632,26 +632,26 @@ void AddBBF::OnRow(Entity *row)
         {
             std::ostringstream ss;
             ss << row[slot1].i << database.GetString(row[slot2].i);
-            row[slot3] = database.CreateString(ss.str());
+            row[slot3] = database.CreateString(ss.str().c_str());
         }
         else if(t1 == EntityType::Float)
         {
             std::ostringstream ss;
             ss << row[slot1].f << database.GetString(row[slot2].i);
-            row[slot3] = database.CreateString(ss.str());
+            row[slot3] = database.CreateString(ss.str().c_str());
 
         }
         else if(t2 == EntityType::Integer)
         {
             std::ostringstream ss;
             ss << database.GetString(row[slot1].i) << row[slot2].i;
-            row[slot3] = database.CreateString(ss.str());
+            row[slot3] = database.CreateString(ss.str().c_str());
         }
         else if(t2 == EntityType::Float)
         {
             std::ostringstream ss;
             ss << database.GetString(row[slot1].i) << row[slot2].f;
-            row[slot3] = database.CreateString(ss.str());
+            row[slot3] = database.CreateString(ss.str().c_str());
         }
         else
             return;

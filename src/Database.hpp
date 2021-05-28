@@ -25,19 +25,22 @@ public:
     void WriteBinary(const char * filename);
 
     // Create entities
-    Entity CreateString(const std::string&s) { return Entity { EntityType::String, GetStringId(s) }; }
+    Entity CreateString(const string_type&s) { return Entity { EntityType::String, GetStringId(s) }; }
+    Entity CreateString(const char *s) { return Entity { EntityType::String, GetStringId(s) }; }
     Entity CreateInt(int i) const { return Entity { EntityType::Integer, i}; }
     Entity CreateFloat(float f) const { return Entity { EntityType::Float, f}; }
-    Entity CreateAt(const std::string &s) { return Entity { EntityType::AtString, GetAtStringId(s) }; }
+    Entity CreateAt(const string_type &s) { return Entity { EntityType::AtString, GetAtStringId(s) }; }
     Entity Create(bool b) const { return Entity { EntityType::Boolean, b}; }
     
     Entity AddStrings(StringId id1, StringId id2);
     
-    virtual StringId GetStringId(const std::string&s) =0;
-    virtual StringId GetAtStringId(const std::string&s) =0;
+    virtual StringId GetStringId(const string_type&s) =0;
+    virtual StringId GetAtStringId(const string_type&s) =0;
+    virtual StringId GetStringId(const char*s) =0;
+    virtual StringId GetAtStringId(const char*s) =0;
     int GetStringLiteral(const char * literal);
-    virtual const std::string &GetString(StringId id) const =0;
-    virtual const std::string &GetAtString(StringId id) const =0;
+    virtual const string_type &GetString(StringId id) const =0;
+    virtual const string_type &GetAtString(StringId id) const =0;
 
     void Add(const std::string & table, const Entity &entityId);
     void Add(const std::string & table, const Entity &entityId1, const Entity &entity);
@@ -45,7 +48,7 @@ public:
     void SyntaxError(const SourceLocation&);
 
     // Variable "name" is not bound to a value
-    void UnboundError(const std::string &name, int line, int column);
+    void UnboundError(const char *name, int line, int column);
 
     void NotImplementedError(const SourceLocation&);
     
