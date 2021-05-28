@@ -6,26 +6,12 @@
 #include "EvaluationImpl.hpp"
 #include "DatabaseImpl.hpp"
 #include "TableImpl.hpp"
+#include "Helpers.hpp"
 
 #include <unordered_map>
 #include <unordered_set>
 #include <iostream>
 
-template<typename Key, typename Value, typename Hash = std::hash<Key>, typename Eq = std::equal_to<Key>>
-struct unordered_map_helper
-{
-    typedef std::pair<const Key, Value> value_type;
-    typedef persist::fast_allocator<value_type> allocator_type;
-    
-    typedef std::unordered_map< Key, Value, Hash, Eq, allocator_type> map_type;
-    typedef std::unordered_multimap< Key, Value, Hash, Eq, allocator_type> multimap_type;
-};
-
-template<typename T, typename...Args>
-std::shared_ptr<T> allocate_shared(persist::map_file & map, Args&& ...args)
-{
-    return std::allocate_shared<T, persist::fast_allocator<T>>(map, std::forward<Args>(args)...);
-}
 
 class DataStore
 {
@@ -43,6 +29,8 @@ public:
     unordered_map_helper<StringId, CompoundName>::multimap_type names;
 
     std::shared_ptr<Relation> queryPredicate;
+    
+    bool initialized = false;
 };
 
 void yyrestart (FILE *input_file ,yyscan_t yyscanner );
@@ -56,12 +44,15 @@ std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
     auto i = datastore->unaryRelations.find(name);
     if (i == datastore->unaryRelations.end())
     {
-        auto p = std::allocate_shared<Predicate, persist::fast_allocator<Predicate>>(datafile, *this, name, 1);
+        auto p = allocate_shared<Predicate>(datafile, *this, name, 1);
+
         datastore->unaryRelations.insert(std::make_pair(name, p));
         return p;
     }
     else
+    {
         return i->second;
+    }
 }
 
 std::shared_ptr<Relation> DatabaseImpl::GetBinaryRelation(int name)
@@ -91,18 +82,23 @@ DatabaseImpl::DatabaseImpl(const char * name, int limitMB) :
     verbose(false)
 {
     int queryId = GetStringId("query");
-    datastore->queryPredicate = GetUnaryRelation(queryId);
     
-    int print = GetStringId("print");
-    datastore->unaryRelations[print] = allocate_shared<PrintRelation>(datafile, std::cout, *this, print);
-    datastore->unaryRelations[GetStringId("error")] = allocate_shared<ErrorRelation>(datafile, *this);
-    
-    RelationId expected_results = GetStringId("expected-results");
-    datastore->unaryRelations[expected_results] = allocate_shared<ExpectedResults>(datafile, *this, expected_results);
-    
-    RelationId evaluation_step_limit = GetStringId("evaluation-step-limit");
-    datastore->unaryRelations[evaluation_step_limit] = allocate_shared<EvaluationStepLimit>(datafile, *this, evaluation_step_limit);
-    
+    if(!datastore->initialized)
+    {
+        datastore->queryPredicate = GetUnaryRelation(queryId);
+        
+        int print = GetStringId("print");
+        datastore->unaryRelations[print] = allocate_shared<PrintRelation>(datafile, *this, print);
+        datastore->unaryRelations[GetStringId("error")] = allocate_shared<ErrorRelation>(datafile, *this);
+        
+        RelationId expected_results = GetStringId("expected-results");
+        datastore->unaryRelations[expected_results] = allocate_shared<ExpectedResults>(datafile, *this, expected_results);
+        
+        RelationId evaluation_step_limit = GetStringId("evaluation-step-limit");
+        datastore->unaryRelations[evaluation_step_limit] = allocate_shared<EvaluationStepLimit>(datafile, *this, evaluation_step_limit);
+        datastore->initialized = true;
+    }
+
     options = CreateOptions(1); // Default optimization level = 1
 }
 
@@ -625,3 +621,9 @@ DataStore::DataStore(persist::shared_memory & mem) :
     names({}, std::hash<StringId>(), std::equal_to<StringId>(), mem)
 {
 }
+
+persist::shared_memory &DatabaseImpl::Storage()
+{
+    return datafile.data();
+}
+

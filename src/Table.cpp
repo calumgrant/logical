@@ -6,9 +6,12 @@
 
 #include <iostream>
 
-TableImpl::TableImpl(Arity arity) :
+TableImpl::TableImpl(persist::shared_memory & mem, Arity arity) :
     arity(arity),
-    hash({}, 100, Comparer(data, arity, -1), Comparer(data, arity, -1))
+    mem(mem),
+    data(mem),
+    hash({}, 100, Comparer(data, arity, -1), Comparer(data, arity, -1), mem),
+    indexes({}, std::hash<ColumnMask>(), std::equal_to<ColumnMask>(), mem)
 {
 }
 
@@ -72,7 +75,7 @@ TableImpl::map_type & TableImpl::GetIndex(int mask)
     
     // Create an index
     
-    map_type it({}, 100, Comparer(data, arity, mask), Comparer(data, arity, mask));
+    map_type it({}, 100, Comparer(data, arity, mask), Comparer(data, arity, mask), mem);
     
     auto &index = indexes.insert(std::make_pair(mask, it)).first->second;
     
@@ -184,6 +187,6 @@ Size TableImpl::Rows() const
     return hash.size();
 }
 
-TableImpl::Comparer::Comparer(const std::vector<Entity> & base, int arity, int mask) : base(base), arity(arity), mask(mask)
+TableImpl::Comparer::Comparer(const vector & base, int arity, int mask) : base(base), arity(arity), mask(mask)
 {
 }

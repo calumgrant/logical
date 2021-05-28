@@ -1,5 +1,8 @@
 # Work plan
 
+- Persist:
+-- Bug in UnaryPredicate::Assert. We look up the unary relation, which returns something that is invalid. The ->Add() predicate fails and crashes.
+
 - Things to persist:
   - Relations
   - Shared pointers

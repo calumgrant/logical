@@ -1,7 +1,6 @@
 #pragma once
 
 #include <unordered_set>
-#include <unordered_map>
 #include <vector>
 #include <memory>
 #include <string>
@@ -34,13 +33,13 @@ public:
     const CompoundName * GetCompoundName() const override;
 private:
     bool rulesRun = false;
-    std::vector< std::shared_ptr<Evaluation> > rules;
+    std::vector< std::shared_ptr<Evaluation>, persist::allocator<std::shared_ptr<Evaluation>> > rules;
     RelationId name;
     
     // The number of
     bool evaluating;
     bool recursive;
-    std::unordered_set<std::shared_ptr<Relation>> attributes;
+    std::unordered_set<std::shared_ptr<Relation>, std::hash<std::shared_ptr<Relation>>, std::equal_to<std::shared_ptr<Relation>>, persist::allocator<std::shared_ptr<Relation>>> attributes;
     Size loopResults = 0;
 protected:
     Database &database;
@@ -63,10 +62,9 @@ public:
 class PrintRelation : public SpecialPredicate
 {
 public:
-    PrintRelation(std::ostream & output, Database&db, int name);
+    PrintRelation(Database&db, int name);
     void Add(const Entity *row) override;
 protected:
-    std::ostream & output;
 };
 
 class EvaluationStepLimit : public SpecialPredicate

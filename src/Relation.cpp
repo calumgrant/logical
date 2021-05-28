@@ -4,6 +4,7 @@
 #include "RelationImpl.hpp"
 #include "Analysis.hpp"
 #include "TableImpl.hpp"
+#include "Helpers.hpp"
 
 #include <iostream>
 
@@ -11,22 +12,23 @@ Relation::~Relation()
 {
 }
 
-PrintRelation::PrintRelation(std::ostream & output, Database &db, int name) :
-    SpecialPredicate(db, name), output(output)
+PrintRelation::PrintRelation(Database &db, int name) :
+    SpecialPredicate(db, name)
 {
 }
 
 void PrintRelation::Add(const Entity * row)
 {
-    database.Print(row[0], output);
-    output << std::endl;
+    database.Print(row[0], std::cout);
+    std::cout << std::endl;
 }
 
 void ErrorRelation::Add(const Entity * row)
 {
-    output << Colours::Error << "Error: ";
-    PrintRelation::Add(row);
-    output << Colours::Normal;
+    std::cerr << Colours::Error << "Error: ";
+    database.Print(row[0], std::cerr);
+    std::cerr << std::endl;
+    std::cerr << Colours::Normal;
     database.ReportUserError();
 }
 
@@ -63,7 +65,7 @@ std::size_t SpecialPredicate::Count()
     return 0;
 }
 
-ErrorRelation::ErrorRelation(Database &db) : PrintRelation(std::cout, db, db.GetStringId("error"))
+ErrorRelation::ErrorRelation(Database &db) : PrintRelation(db, db.GetStringId("error"))
 {
 }
 
@@ -80,19 +82,20 @@ void SpecialPredicate::QueryDelta(Entity * row, int columns, Receiver &v)
 
 Predicate::Predicate(Database &db, RelationId name, ::Arity arity) :
     rulesRun(false), name(name), database(db),
-    evaluating(false), recursive(false)
+    evaluating(false), recursive(false), rules(db.Storage()),
+    attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage())
 {
-    table = std::make_shared<TableImpl>(arity);
+    table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
 }
 
 Predicate::Predicate(Database &db, const CompoundName & cn, ::Arity arity) :
     rulesRun(false), name(cn.parts[0]), database(db),
     evaluating(false), recursive(false),
-    compoundName(cn)
+    compoundName(cn), rules(db.Storage()),
+    attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage())
 {
-    table = std::make_shared<TableImpl>(arity);
+    table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
 }
-
 
 void Predicate::AddRule(const std::shared_ptr<Evaluation> & rule)
 {

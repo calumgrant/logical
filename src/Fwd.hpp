@@ -24,3 +24,8 @@ typedef int ColumnMask;
 
 typedef std::size_t Size;
 typedef std::size_t RowIndex;
+
+namespace persist
+{
+    class shared_memory;
+}

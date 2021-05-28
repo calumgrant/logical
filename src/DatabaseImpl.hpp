@@ -58,6 +58,8 @@ public:
     void SetAnsiColours(bool);
     
     Relation &GetQueryRelation() const override;
+    
+    persist::shared_memory & Storage() override;
 
 private:
     persist::map_file datafile;

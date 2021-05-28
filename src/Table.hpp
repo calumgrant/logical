@@ -30,8 +30,3 @@ public:
     // This is a bad interface.
     std::shared_ptr<RecursiveLoop> loop;
 };
-
-class EmptyTable : public Table
-{
-public:
-};

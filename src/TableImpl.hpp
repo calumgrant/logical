@@ -23,7 +23,7 @@ private:
 class TableImpl : public Table
 {
 public:
-    TableImpl(Arity arity);
+    TableImpl(persist::shared_memory &mem, Arity arity);
     
     Size Rows() const override;
     void Query(Entity * row, ColumnMask columns, Receiver&v) override;
@@ -31,12 +31,13 @@ public:
     void OnRow(Entity*row) override;
     Arity GetArity() const override;
 private:
+    typedef std::vector<Entity, persist::fast_allocator<Entity>> vector;
 
     class Comparer
     {
         Entity::Hash hasher;
     public:
-        Comparer(const std::vector<Entity>&base, Arity arity, ColumnMask mask);
+        Comparer(const vector&base, Arity arity, ColumnMask mask);
         
         int operator()(std::size_t element) const
         {
@@ -63,17 +64,20 @@ private:
     private:
         const Arity arity;
         const ColumnMask mask;
-        const std::vector<Entity> & base;
+        const vector & base;
     };
     
+    persist::shared_memory & mem;
+    
     const Arity arity;
-    std::vector<Entity> data;
-    typedef std::unordered_set<std::size_t, Comparer, Comparer> index_type;
+    vector data;
+    typedef std::unordered_set<std::size_t, Comparer, Comparer, persist::fast_allocator<std::size_t>> index_type;
     index_type hash;
     
     // Map from mask to index.
-    typedef std::unordered_multiset<std::size_t, Comparer, Comparer> map_type;
-    std::unordered_map<ColumnMask, map_type> indexes;
+    typedef std::unordered_multiset<std::size_t, Comparer, Comparer, persist::fast_allocator<std::size_t>> map_type;
+    std::unordered_map<ColumnMask, map_type, std::hash<ColumnMask>, std::equal_to<ColumnMask>,
+        persist::fast_allocator<std::pair<const ColumnMask, map_type>>> indexes;
     map_type & GetIndex(ColumnMask mask);
 
     Size deltaStart =0, deltaEnd = 0;
