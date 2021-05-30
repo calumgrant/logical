@@ -190,10 +190,29 @@ std::shared_ptr<Relation> DatabaseImpl::GetReachesRelation(RelationId nameId)
     auto i = datastore->reachesRelations.find(nameId);
     if(i==datastore->reachesRelations.end())
     {
+        auto r = GetBinaryRelation(nameId);
         auto rel = allocate_shared<Predicate>(datafile, *this, nameId, 2, true);
         // Create the rules (TODO)
-        std::cout << "TODO: Find reaches relation\n";
 
+        {
+            // Add the rule rel(_0,_1) :- r(_0, _1)
+            std::vector<int> writeArgs = { 0, 1 };
+            auto write = std::make_shared<Writer>(rel, writeArgs);
+            auto reader = std::make_shared<Join>(r, std::vector<int>{-1,-1}, std::move(writeArgs), write);
+            auto baseRule = std::make_shared<RuleEvaluation>(2, reader);
+            rel->AddRule(baseRule);
+        }
+        
+        {
+            // Add the rule rel(_0, _1) :- rel(_0, _2), r(_2, _1).
+            std::vector<int> writeArgs = { 0, 1 };
+            auto write = std::make_shared<Writer>(rel, writeArgs);
+            auto join2 = std::make_shared<Join>(r, std::vector<int> {2, -1}, std::vector<int> { -1, 1 }, write);
+            auto join1 = std::make_shared<Join>(rel, std::vector<int> {-1,-1}, std::vector<int> {0, 2}, join2);
+            auto recursiveRule = std::make_shared<RuleEvaluation>(3, join1);
+            rel->AddRule(recursiveRule);
+        }
+        
         datastore->reachesRelations.insert(std::make_pair(nameId, rel));
         return rel;
     }

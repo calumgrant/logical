@@ -1,8 +1,15 @@
+expected-results 14.
 
 x is an item if 1<=x<=50.
 x has child y if x is an item and (y = 2*x or y = 2*x+1) and y is an item.
 
-// x has descendent y if x has child y or x has descendent z and z has child y.
+x has descendent y if x has child y or x has descendent z and z has child y.
+
+error "Inconsistency 1" if
+    x has descendent y and not x reaches child y.    
+
+error "Inconsistency 2" if
+    x reaches child y and not x has descendent y.    
 
 query "Reaches" has result x if 5 reaches child x.
 
