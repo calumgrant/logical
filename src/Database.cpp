@@ -20,9 +20,8 @@ public:
     
     StringTable strings, atstrings;
     
-    unordered_map_helper<RelationId, std::shared_ptr<Relation>>::map_type unaryRelations, binaryRelations;
+    unordered_map_helper<RelationId, std::shared_ptr<Relation>>::map_type unaryRelations, binaryRelations, reachesRelations;
     unordered_map_helper<std::pair<RelationId, Arity>, std::shared_ptr<Relation>, RelationHash>::map_type relations;
-
     unordered_map_helper<CompoundName, std::shared_ptr<Relation>, CompoundName::Hash>::map_type tables;
     
     // Names, indexed on their first column
@@ -44,7 +43,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
     auto i = datastore->unaryRelations.find(name);
     if (i == datastore->unaryRelations.end())
     {
-        auto p = allocate_shared<Predicate>(datafile, *this, name, 1);
+        auto p = allocate_shared<Predicate>(datafile, *this, name, 1, false);
 
         datastore->unaryRelations.insert(std::make_pair(name, p));
         return p;
@@ -181,6 +180,22 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
         auto r = allocate_shared<Predicate>(datafile, *this, cn, arity);
         datastore->relations.insert(std::make_pair(index, r));
         return r;
+    }
+    else
+        return i->second;
+}
+
+std::shared_ptr<Relation> DatabaseImpl::GetReachesRelation(RelationId nameId)
+{
+    auto i = datastore->reachesRelations.find(nameId);
+    if(i==datastore->reachesRelations.end())
+    {
+        auto rel = allocate_shared<Predicate>(datafile, *this, nameId, 2, true);
+        // Create the rules (TODO)
+        std::cout << "TODO: Find reaches relation\n";
+
+        datastore->reachesRelations.insert(std::make_pair(nameId, rel));
+        return rel;
     }
     else
         return i->second;
@@ -627,6 +642,7 @@ DataStore::DataStore(persist::shared_memory & mem) :
     atstrings(mem),
     unaryRelations({}, std::hash<RelationId>(), std::equal_to<RelationId>(), mem),
     binaryRelations({}, std::hash<RelationId>(), std::equal_to<RelationId>(), mem),
+    reachesRelations({}, std::hash<RelationId>(), std::equal_to<RelationId>(), mem),
     relations({}, RelationHash(), std::equal_to<std::pair<RelationId, Arity>>(), mem),
     tables({}, CompoundName::Hash(), std::equal_to<CompoundName>(), mem),
     names({}, std::hash<StringId>(), std::equal_to<StringId>(), mem)

@@ -1,5 +1,12 @@
 # Work plan
 
+- Think about `reaches`
+  - Create a predicate `reaches:Foo`
+  - Implement a TC natively for performance?
+  - The compiler creates the predicate if it does not exist.
+  - `Database::GetReachesPredicate(name)`
+
+
 - Refactor optimization framework and make it more extensible
   - `struct RelationAnalysis`, `struct StepAnalysis`
 
@@ -12,8 +19,7 @@ if optimization-level is 0 then step-limit is 1000.
 - Persist:
 -- Bug in UnaryPredicate::Assert. We look up the unary relation, which returns something that is invalid. The ->Add() predicate fails and crashes. Is it due to invalid function pointers in vtables?
 
-- Table.Write to return a bool if it's newly added.
-  - Report this in the results.
+- Report number of unique tuples written in a write predicate
 
 - Reset counters properly for deduplications (sum/count)
     `class DuplicateScope`
@@ -30,7 +36,6 @@ Persist:
 - Tidy up the code generally
 
 2. Implement `-f` and `-fno-` to enable and disable options.
-3. Optimization: `-frecursive-branch` to lift recursive branches. Look at `closure1.dl`.
 3. Improvements to `persist`, including a readme.
   - Check resource limit
   - readme
@@ -60,10 +65,6 @@ All predicates are semi-naive.
 - Use square brackets for special annotations, such as: `[in]`, `[out]`
 - Syntax highlighter
 
-Rules are run (again) in called predicates if if the predicate is marked 
-
-- Idea: Monotonic negative recursion.
-
 - Optimization: Avoid redundant writes.
 
 - string/regex match
@@ -78,15 +79,15 @@ Rules are run (again) in called predicates if if the predicate is marked
 - When counting and summing, ensure we make the body reentrant; deduplicate isn't doing enough and needs to be reset.
 - Help option: `-h`
 - `logical:option "no-joinreorder"`.
-- Have a better find syntax:
+- Have a better find syntax.
 - Any predicate can be a query.
 - `null` as a keyword is simply the null value. (Not the same as "none"??)
 
-`
+```
 result X has foo Y if ...
 
 find result, foo, bar.
-`
+```
 
 - Inlining predicates
   - When?
@@ -122,11 +123,9 @@ find result, foo, bar.
 
 Problems to solve
 - Ensuring that recursion remains correct
-- Use the delta when evaluating recursion
 - Have a range of optimization options - so we can validate the changes.
 - Avoid reevaluating branches unnecessarily, in recursion and when rules attach to multiple tables.
 - Defining data like `temperature -5.`
-- Detecting negative recursion.
 - Reporting the line number of negative recursion.
 
 - Use termcap library

@@ -168,13 +168,11 @@ Optimization::Optimization(const char * name, const char * description, int leve
 class RecursiveBranch : public Optimization
 {
 public:
-    
     RecursiveBranch() :
         Optimization("recursive-branch", "Only evaluate base cases once in a recursive predicate.", 1)
     {
-        
     }
-    
+
     class BranchImpl
     {
     public:

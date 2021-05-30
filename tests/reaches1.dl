@@ -1,0 +1,8 @@
+
+x is an item if 1<=x<=50.
+x has child y if x is an item and (y = 2*x or y = 2*x+1) and y is an item.
+
+// x has descendent y if x has child y or x has descendent z and z has child y.
+
+query "Reaches" has result x if 5 reaches child x.
+

@@ -1162,7 +1162,11 @@ void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation &
         }
     }
     else
+    {
+        if (relation.IsReaches())
+            os << "reaches:";
         os << db.GetString(relation.Name());
+    }
     os << Colours::Normal;
 }
 
@@ -1179,7 +1183,12 @@ void Evaluation::OutputRelation(std::ostream &os, Database &db, const std::share
         }
     }
     else
+    {
+        if (relation->IsReaches())
+            os << "reaches:";
+
         os << db.GetString(relation->Name());
+    }
     os << Colours::Normal;
 }
 

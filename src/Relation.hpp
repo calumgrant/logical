@@ -35,6 +35,8 @@ public:
     
     virtual const CompoundName * GetCompoundName() const; // Horrid name/interface
     
+    virtual bool IsReaches() const =0;
+    
     virtual void RunRules() =0;
     virtual int Arity() const =0;
     

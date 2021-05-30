@@ -56,7 +56,7 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compila
     return std::make_shared<NoneEvaluation>();
 }
 
-std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilation &c, int slot, bool lhsBound, AST::Clause * next)
+std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilation &c, int slot, bool lhsBound, AST::Clause * next, HasType has)
 {
     for(auto &a : attributes)
     {
@@ -74,7 +74,7 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
     auto eval = next->Compile(db, c);
         
     auto cn = GetCompoundName();
-    auto compoundRelation = db.GetRelation(cn);
+    auto compoundRelation = has == HasType::reaches ? db.GetReachesRelation(cn.parts[0]) : db.GetRelation(cn);
     
     std::vector<int> inputs(cn.parts.size() + 1), outputs(cn.parts.size()+1);
     if(lhsBound)
@@ -94,7 +94,7 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
             outputs[m] = attributes[i].slot;
     }
     
-    eval = std::make_shared<Join>(db.GetRelation(cn), std::move(inputs), std::move(outputs), eval);
+    eval = std::make_shared<Join>(compoundRelation, std::move(inputs), std::move(outputs), eval);
     
     for(auto &a : attributes)
     {
@@ -136,7 +136,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
         entityBound2 = bound || predicates;
     
         // Compile the attributes using the information provided
-        eval = attributes->Compile(db, compilation, slot, entityBound2, next);
+        eval = attributes->Compile(db, compilation, slot, entityBound2, next, has);
     }
     else
     {

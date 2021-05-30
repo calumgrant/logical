@@ -80,10 +80,11 @@ void SpecialPredicate::QueryDelta(Entity * row, int columns, Receiver &v)
 }
 
 
-Predicate::Predicate(Database &db, RelationId name, ::Arity arity) :
+Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches) :
     rulesRun(false), name(name), database(db),
     evaluating(false), recursive(false), rules(db.Storage()),
-    attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage())
+    attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage()),
+    reaches(reaches)
 {
     table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
 }
@@ -92,9 +93,15 @@ Predicate::Predicate(Database &db, const CompoundName & cn, ::Arity arity) :
     rulesRun(false), name(cn.parts[0]), database(db),
     evaluating(false), recursive(false),
     compoundName(cn), rules(db.Storage()),
-    attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage())
+    attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage()),
+    reaches(false)
 {
     table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
+}
+
+bool Predicate::IsReaches() const
+{
+    return reaches;
 }
 
 void Predicate::AddRule(const std::shared_ptr<Evaluation> & rule)
@@ -204,7 +211,7 @@ bool Predicate::HasRules() const
     return !rules.empty();
 }
 
-SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name, 1)
+SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name, 1, false)
 {
 }
 

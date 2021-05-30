@@ -9,7 +9,7 @@ class Predicate : public Relation
 {
 public:
     Predicate(Database &db, const CompoundName &name, ::Arity arity);
-    Predicate(Database &db, RelationId name, ::Arity arity);
+    Predicate(Database &db, RelationId name, ::Arity arity, bool reaches);
 
     // Evaluates all rules if needed
     void Evaluate();
@@ -34,10 +34,13 @@ public:
     ::Arity Arity() const override;
     Size Count() override;
     const CompoundName * GetCompoundName() const override;
+    bool IsReaches() const override;
     Database & GetDatabase() const override;
 
 private:
     bool rulesRun = false;
+    const bool reaches;
+    
     std::vector< std::shared_ptr<Evaluation>, persist::allocator<std::shared_ptr<Evaluation>> > rules;
     RelationId name;
     

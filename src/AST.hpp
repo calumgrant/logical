@@ -281,7 +281,7 @@ namespace AST
         std::vector<Attribute> attributes;
         void Assert(Database &db, const ::Entity &e) const;
         void Visit(Visitor&) const override;
-        std::shared_ptr<Evaluation> Compile(Database & db, Compilation &c, int slot, bool alreadyBound, Clause *next);
+        std::shared_ptr<Evaluation> Compile(Database & db, Compilation &c, int slot, bool alreadyBound, Clause *next, HasType has);
 
         CompoundName GetCompoundName() const;
     };

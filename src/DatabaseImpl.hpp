@@ -31,6 +31,7 @@ public:
     std::shared_ptr<Relation> GetBinaryRelation(int name) override;
     std::shared_ptr<Relation> GetRelation(int name, int arity) override;
     std::shared_ptr<Relation> GetRelation(const CompoundName &cn) override;
+    std::shared_ptr<Relation> GetReachesRelation(RelationId nameId) override;
 
     void Find(int unaryPredicateName) override;
     void SetVerbose(bool v) override;
