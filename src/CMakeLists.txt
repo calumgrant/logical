@@ -119,3 +119,5 @@ add_test(NAME Projection3 COMMAND logical ../tests/projection3.dl)
 add_test(NAME Projection4 COMMAND logical ../tests/projection4.dl)
 
 add_test(NAME Query1 COMMAND logical ../tests/query1.dl)
+
+add_test(NAME Reaches1 COMMAND logical ../tests/reaches1.dl)
