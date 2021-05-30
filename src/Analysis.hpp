@@ -1,8 +1,9 @@
 #pragma once
 
 #include "Fwd.hpp"
+#include <functional>
 
-struct OptimizationOptions
+struct OptimizationOptionsDeleteme
 {
     // -O1 options
     
@@ -76,8 +77,32 @@ struct OptimizationOptions
     bool mergeBranches = true;
 };
 
-OptimizationOptions CreateOptions(int level);
-
 void AnalysePredicate(Database &db, Relation & predicate);
 
+class Optimization
+{
+public:
+    const char * name, *description;
+    int level;
+    bool enabled;
+    
+    virtual void Analyse(Relation & relation) const =0;
+protected:
+    Optimization(const char * name, const char * description, int level);
+};
+
+class Optimizer
+{
+public:
+    virtual void Visit(const std::function<void(Optimization&)> &v) =0;
+
+    virtual void RegisterOptimization(Optimization&) =0;
+
+    virtual void Optimize(Relation & relation) const =0;
+    virtual void UpdateActiveList() =0;
+
+    void Enable(const char * name, bool enabled);
+    bool IsEnabled(const char * name);
+    void SetLevel(int level);
+};
 

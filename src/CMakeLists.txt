@@ -20,7 +20,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CM
 find_library(TERMCAP NAMES termcap)
 
 add_library(logiccore
-    Analysis.cpp Analysis.hpp
+    Analysis.cpp Analysis.hpp OptimizerImpl.hpp
     AST.cpp AST.hpp
     Binary.hpp Binary.cpp
     Database.cpp Database.hpp DatabaseImpl.hpp

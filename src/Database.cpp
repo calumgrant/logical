@@ -76,10 +76,11 @@ void Database::UnboundError(const char *name, int line, int column)
     std::cerr << "Error at (" << line << ":" << column << "): " << name << " is unbound.\n";
 }
 
-DatabaseImpl::DatabaseImpl(const char * name, int limitMB) :
+DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB) :
     datafile(name, 2, 2, 1, 16384, limitMB * 1000000ll, name ? 0 : persist::temp_heap),
     datastore(datafile.data(), datafile.data()),
-    verbose(false)
+    verbose(false),
+    optimizer(optimizer)
 {
     int queryId = GetStringId("query");
     
@@ -98,8 +99,6 @@ DatabaseImpl::DatabaseImpl(const char * name, int limitMB) :
         datastore->unaryRelations[evaluation_step_limit] = allocate_shared<EvaluationStepLimit>(datafile, *this, evaluation_step_limit);
         datastore->initialized = true;
     }
-
-    options = CreateOptions(1); // Default optimization level = 1
 }
 
 DatabaseImpl::~DatabaseImpl()
@@ -560,16 +559,6 @@ void Database::ParityError(Relation & relation)
     std::cerr << Colours::Error << " has negative recursion\n" << Colours::Normal;
 }
 
-void DatabaseImpl::SetOptimizationLevel(int level)
-{
-    options = CreateOptions(level);
-}
-
-const OptimizationOptions & DatabaseImpl::Options() const
-{
-    return options;
-}
-
 Relation & DatabaseImpl::GetQueryRelation() const
 {
     return *datastore->queryPredicate;
@@ -649,3 +638,7 @@ persist::shared_memory &DatabaseImpl::Storage()
     return datafile.data();
 }
 
+Optimizer & DatabaseImpl::GetOptimizer() const
+{
+    return optimizer;
+}

@@ -290,3 +290,8 @@ const CompoundName * Predicate::GetCompoundName() const
 {
     return compoundName.parts.empty() ? nullptr : &compoundName;
 }
+
+Database & Predicate::GetDatabase() const
+{
+    return database;
+}

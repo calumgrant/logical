@@ -12,6 +12,7 @@ class RecursiveLoop;
 class Receiver;
 class Table;
 class DataStore;
+class Optimizer;
 
 typedef std::shared_ptr<Evaluation> EvaluationPtr;
 

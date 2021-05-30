@@ -34,6 +34,8 @@ public:
     ::Arity Arity() const override;
     Size Count() override;
     const CompoundName * GetCompoundName() const override;
+    Database & GetDatabase() const override;
+
 private:
     bool rulesRun = false;
     std::vector< std::shared_ptr<Evaluation>, persist::allocator<std::shared_ptr<Evaluation>> > rules;

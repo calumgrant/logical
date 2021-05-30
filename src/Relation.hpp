@@ -50,6 +50,7 @@ public:
     virtual void SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase) =0;
     
     void VisitSteps(const std::function<void(Evaluation&)> &) const;
+    virtual Database & GetDatabase() const =0;
     
     bool visited = false;
     bool recursive = false;

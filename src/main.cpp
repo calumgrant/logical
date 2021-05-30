@@ -1,6 +1,7 @@
 #include "Database.hpp"
 #include "Colours.hpp"
 #include "DatabaseImpl.hpp"
+#include "OptimizerImpl.hpp"
 
 #include <iostream>
 #include <chrono>
@@ -19,6 +20,8 @@ void PrintBlurb();
 
 int main(int argc, char**argv)
 {
+    auto startTime = std::chrono::system_clock::now();
+
     bool supportsTerminal = getenv("TERM");
     
     if(argc==1)
@@ -32,9 +35,8 @@ int main(int argc, char**argv)
     int errors = 0;
     int optimizationLevel = 1;
     const char * storageFile = nullptr;
+    OptimizerImpl optimizer;
     
-    auto startTime = std::chrono::system_clock::now();
-
     for(int i=1; i<argc; ++i)
     {
         if(argv[i][0] == '-')
@@ -66,9 +68,9 @@ int main(int argc, char**argv)
     
     try
     {
-        DatabaseImpl db(storageFile, 1000);
+        DatabaseImpl db(optimizer, storageFile, 1000);
         db.SetVerbose(verbose);
-        db.SetOptimizationLevel(optimizationLevel);
+        optimizer.SetLevel(optimizationLevel);
         db.SetAnsiColours(supportsTerminal);
 
         for(int i=1; i<argc; ++i)
@@ -143,4 +145,10 @@ void PrintBlurb()
         "    -fX     Enable optimization X\n"
         "    -fno-X  Disable optimization X\n"
     ;
+    
+    OptimizerImpl optimizer;
+    optimizer.Visit([](Optimization&opt){
+        if(opt.level>0)
+            std::cout << "    -f" << opt.name << " " << opt.description << " (-O" << opt.level << ")\n";
+    });
 }

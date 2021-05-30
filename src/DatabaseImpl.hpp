@@ -14,12 +14,10 @@ struct RelationHash
     }
 };
 
-
-
 class DatabaseImpl : public Database
 {
 public:
-    DatabaseImpl(const char * name, int limitMB);
+    DatabaseImpl(Optimizer & optimizer, const char * datafile, int limitMB);
     ~DatabaseImpl();
     
     StringId GetStringId(const char *s) override;
@@ -48,12 +46,8 @@ public:
     void SetExpectedResults(int count) override;
     
     void CheckErrors();
-    
-    void SetOptimizationLevel(int level);
-    
-    OptimizationOptions options;
-    
-    const OptimizationOptions & Options() const override;
+
+    Optimizer & GetOptimizer() const override;
     
     void SetAnsiColours(bool);
     
@@ -62,6 +56,8 @@ public:
     persist::shared_memory & Storage() override;
 
 private:
+    Optimizer & optimizer;
+    
     persist::map_file datafile;
     persist::map_data<DataStore> datastore;
     

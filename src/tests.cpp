@@ -5,6 +5,8 @@
 #include "CompoundName.hpp"
 #include "Binary.hpp"
 #include "DatabaseImpl.hpp"
+#include "OptimizerImpl.hpp"
+
 #include <simpletest.hpp>
 
 #undef _NDEBUG
@@ -110,7 +112,8 @@ public:
 
 int main()
 {
-    DatabaseImpl db(nullptr, 1000);
+    OptimizerImpl opt;
+    DatabaseImpl db(opt, nullptr, 1000);
     auto e1 = db.CreateInt(0);
 
     auto test = db.GetStringId("test");

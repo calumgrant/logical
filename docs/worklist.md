@@ -1,16 +1,5 @@
 # Work plan
 
-- Optimization: Lift or branches.
-
-Remove make_shared and use allocate_shared.
-
-- Check the grammar for nonary predicates
-
-```
-optimized if ranges-enabled.
-has-old if person X has age A and A>90.
-```
-
 - Refactor optimization framework and make it more extensible
   - `struct RelationAnalysis`, `struct StepAnalysis`
 
@@ -20,20 +9,14 @@ has-old if person X has age A and A>90.
 if optimization-level is 0 then step-limit is 1000.
 ```
 
-
-- Rules should use all
-
 - Persist:
 -- Bug in UnaryPredicate::Assert. We look up the unary relation, which returns something that is invalid. The ->Add() predicate fails and crashes. Is it due to invalid function pointers in vtables?
 
-- Optimization: Lift Or branches for recursion.
-- Report on memory used.
 - Table.Write to return a bool if it's newly added.
   - Report this in the results.
 
 - Reset counters properly for deduplications (sum/count)
     `class DuplicateScope`
-
 
 Simpletest:
 - Give it a repo
