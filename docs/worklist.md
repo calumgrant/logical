@@ -1,19 +1,15 @@
 # Work plan
 
-- Think about `reaches`
-  - Create a predicate `reaches:Foo`
-  - Implement a TC natively for performance?
-  - The compiler creates the predicate if it does not exist.
-  - `Database::GetReachesPredicate(name)`
-
-
-- Refactor optimization framework and make it more extensible
-  - `struct RelationAnalysis`, `struct StepAnalysis`
 
 - Query optimization rules
-
 ```
 if optimization-level is 0 then step-limit is 1000.
+```
+
+- Newtypes of the form
+
+```
+person @person-{name}-{id} if
 ```
 
 - Persist:
@@ -122,9 +118,6 @@ find result, foo, bar.
 ## Short term
 
 Problems to solve
-- Ensuring that recursion remains correct
-- Have a range of optimization options - so we can validate the changes.
-- Avoid reevaluating branches unnecessarily, in recursion and when rules attach to multiple tables.
 - Defining data like `temperature -5.`
 - Reporting the line number of negative recursion.
 
