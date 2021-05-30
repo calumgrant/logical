@@ -72,6 +72,14 @@ public:
     virtual Relation * ReadsRelation() const;
     virtual bool NextIsNot() const;
     
+    // Gets the next node, as a shared pointer.
+    // Returns nullptr if there is no next
+    virtual std::shared_ptr<Evaluation> GetNextPtr() const;
+    virtual std::shared_ptr<Evaluation> GetNext2Ptr() const;
+
+    // Clones this node but adds a new "Next"
+    virtual std::shared_ptr<Evaluation> WithNext(const std::shared_ptr<Evaluation> & next) const;
+    
 protected:    
     // Hide the implementation
     virtual void OnRow(Entity * row) =0;

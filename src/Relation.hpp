@@ -45,6 +45,9 @@ public:
     virtual void VisitAttributes(const std::function<void(Relation&)> &) const =0;
     
     virtual void VisitRules(const std::function<void(Evaluation&)> &) const =0;
+    virtual void VisitRules(const std::function<void(const std::shared_ptr<Evaluation>&)> &) const =0;
+
+    virtual void SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase) =0;
     
     void VisitSteps(const std::function<void(Evaluation&)> &) const;
     

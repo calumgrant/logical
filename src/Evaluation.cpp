@@ -1264,3 +1264,25 @@ OrEvaluationForNot::OrEvaluationForNot(const std::shared_ptr<Evaluation> &left, 
 bool OrEvaluationForNot::NextIsNot() const { return true; }
 
 bool Evaluation::NextIsNot() const { return false; }
+
+std::shared_ptr<Evaluation> Evaluation::GetNextPtr() const { return std::shared_ptr<Evaluation>(); }
+
+std::shared_ptr<Evaluation> ChainedEvaluation::GetNextPtr() const { return next; }
+
+std::shared_ptr<Evaluation> OrEvaluation::GetNextPtr() const { return left; }
+
+std::shared_ptr<Evaluation> OrEvaluation::GetNext2Ptr() const { return right; }
+
+std::shared_ptr<Evaluation> Evaluation::GetNext2Ptr() const { return std::shared_ptr<Evaluation>(); }
+
+std::shared_ptr<Evaluation> Evaluation::WithNext(const EvaluationPtr & next) const
+{
+    assert(0);
+    return std::shared_ptr<Evaluation>();
+}
+
+std::shared_ptr<Evaluation> RuleEvaluation::WithNext(const std::shared_ptr<Evaluation> & next) const
+{
+    return std::make_shared<RuleEvaluation>(locals, next);
+}
+

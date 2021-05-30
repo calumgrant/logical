@@ -79,6 +79,18 @@ Deltas in mutual recursion:
 
 Predicates need to query the `recursiveRoot->Iteration()` in order to see if they need to perform more steps.
 
+## Memory management
+
+Logical uses a special memory allocator for certain operations. See the [Persist](...) library for an overview of this. C++ containers can be wired to use the Persist allocatior using the data types `persist::allocator<>` and `persist::fast_allocator<>`. The difference between these two allocators is that `persist::fast_allocator<>` will not recycle its memory on deletion, which speeds things up, but should not be used for transient data.
+
+C++ containers can be configured to use the Persist allocator by supplying it as a template argument, for example `std::vector<int, persist::fast_allocator<int>>`, and the Persist shared memory reference needs to be passed to the constructor of such containers.
+
+The benefits of the persistent memory allocator are:
+
+- Ability to use much more memory than simply the size of the swap file.
+- Ability to monitor and limit memory usage.
+- Generally faster than the regular memory allocator.
+- Ability to save and restore state very quickly (currently it's broken - need to investigate).
 
 ## Optimization
 

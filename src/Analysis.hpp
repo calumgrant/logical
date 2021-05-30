@@ -19,6 +19,8 @@ struct OptimizationOptions
     // evaluation with None as part of the analysis.
     bool pruneEmptyQueries = true;
 
+    bool liftBaseCase = true;
+    
     // All None branches are pruned.
     // Ors with one None branch are removed.
     bool pruneNone = true;

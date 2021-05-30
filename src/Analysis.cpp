@@ -1,5 +1,6 @@
 #include "Analysis.hpp"
 #include "Evaluation.hpp"
+#include "EvaluationImpl.hpp"
 #include "Database.hpp"
 
 #include <iostream>
@@ -152,6 +153,186 @@ void ApplyDeltas(Relation & relation)
     });
 }
 
+void TrySplitRules(RuleEvaluation & rule, OrEvaluation &eval, std::vector<std::shared_ptr<Evaluation>> evals)
+{
+    
+}
+
+class Optimization
+{
+public:
+    const char * name, *description;
+    int level;
+    bool enabled;
+    
+    virtual void Analyse(Relation & relation) =0;
+protected:
+    Optimization(const char * name, const char * description, int level);
+};
+
+Optimization::Optimization(const char * name, const char * description, int level) : name(name), description(description), level(level)
+{
+}
+
+class Optimizer
+{
+public:
+    void RegisterOptimization(const Optimization&);
+    void Optimize(Relation & relation);
+    
+    void Enable(const char * name, bool enabled);
+    bool IsEnabled(const char * name);
+    void SetLevel(int level);
+};
+
+class OptimizerImpl : public Optimizer
+{
+    std::vector<Optimizer*> optimizations;
+};
+
+/*
+ This optimization identifies those rules that form a base case and those rules that form a recursive case.
+ In the simplistic case (implemented here), we simply look for "or"
+ */
+class LiftBaseCase : public Optimization
+{
+public:
+    void Analyse(Relation & relation)
+    {
+    }
+    
+    LiftBaseCase(Database &database, Relation &rel) :
+        Optimization("lift-base-case", "Only evaluate base cases once in a recursive predicate.", 1),
+        relation(rel)
+    {
+        if(!database.Options().liftBaseCase) return;
+        if(!relation.recursive) return;
+        
+        relation.VisitRules([=](Evaluation&e) { CheckRule(e); });
+        
+        if(changed)
+        {
+            relation.VisitRules([=](const std::shared_ptr<Evaluation>&e) { OptimizeRule(e); });
+            relation.SetRecursiveRules(baseRules, recursiveRules);
+        }
+    }
+private:
+    
+    void CheckRule(Evaluation & eval)
+    {
+        if(!eval.onRecursivePath) return;
+        if(auto re = dynamic_cast<RuleEvaluation*>(&eval))
+        {
+            auto orEval = dynamic_cast<OrEvaluation*>(re->GetNext());
+            if(orEval)
+            {
+                CheckOr(*re, *orEval);
+            }
+        }
+    }
+    
+    void CheckOr(RuleEvaluation & rule, OrEvaluation &orEval)
+    {
+        if(orEval.onRecursivePath)
+        {
+            if(orEval.GetNext()->onRecursivePath)
+            {
+                if(auto o = dynamic_cast<OrEvaluation*>(orEval.GetNext()))
+                    CheckOr(rule, *o);
+            }
+            else
+            {
+                changed = true;
+            }
+            if(orEval.GetNext2()->onRecursivePath)
+            {
+                if(auto o = dynamic_cast<OrEvaluation*>(orEval.GetNext2()))
+                    CheckOr(rule, *o);
+            }
+            else
+            {
+                changed = true;
+            }
+        }
+    }
+    
+    void OptimizeRule(const std::shared_ptr<Evaluation>&eval)
+    {
+        if(auto re = dynamic_cast<RuleEvaluation*>(&*eval))
+        {
+            if(re->onRecursivePath)
+            {
+                auto next = re->GetNextPtr();
+                auto orEval = dynamic_cast<OrEvaluation*>(&*next);
+                if(orEval)
+                {
+                    OptimizeEvaluationPath(eval, next);
+                    return;
+                }
+            }
+        }
+        
+        AddBaseRule(eval);
+    }
+    
+    std::shared_ptr<Evaluation> CreateRule(const std::shared_ptr<Evaluation> & ruleEval, const std::shared_ptr<Evaluation> & branch)
+    {
+        return ruleEval->WithNext(branch);
+    }
+    
+    void OptimizeEvaluationPath(const std::shared_ptr<Evaluation> & ruleEval, const std::shared_ptr<Evaluation> & eval)
+    {
+        if(eval->onRecursivePath)
+        {
+            auto orEval = dynamic_cast<OrEvaluation*>(&*eval);
+            if(orEval)
+            {
+                OptimizeEvaluationPath(ruleEval, orEval->GetNextPtr());
+                OptimizeEvaluationPath(ruleEval, orEval->GetNext2Ptr());
+            }
+            else
+            {
+                if(ruleEval->GetNextPtr() == eval)
+                    AddRecursiveRule(ruleEval);
+                else
+                    AddRecursiveRule(CreateRule(ruleEval, eval));
+            }
+        }
+        else
+        {
+            if(ruleEval->GetNextPtr() == eval)
+                AddBaseRule(ruleEval);
+            else
+                AddBaseRule(CreateRule(ruleEval, eval));
+        }
+    }
+        
+    void AddBaseRule(const std::shared_ptr<Evaluation>&eval)
+    {
+        baseRules = baseRules ? std::make_shared<OrEvaluation>(baseRules, eval) : eval;
+    }
+    
+    void AddRecursiveRule(const std::shared_ptr<Evaluation>&eval)
+    {
+        recursiveRules = recursiveRules ? std::make_shared<OrEvaluation>(recursiveRules, eval) : eval;
+    }
+    
+    bool changed = false;
+    
+    Relation & relation;
+    
+    std::shared_ptr<Evaluation> baseRules, recursiveRules;
+};
+
+class Deltas : public Optimization
+{
+public:
+    Deltas() : Optimization("deltas", "Query the delta of the previous iteration when it is safe to do so.", 1)
+    {
+        
+    }
+};
+
 void AnalysePredicate(Database & database, Relation & root)
 {
     if(root.analysed) return;
@@ -161,6 +342,8 @@ void AnalysePredicate(Database & database, Relation & root)
     
     if(database.Options().recursiveDeltas)
         ApplyDeltas(root);
+
+    LiftBaseCase(database, root);
 }
 
 OptimizationOptions CreateOptions(int level)
@@ -171,6 +354,7 @@ OptimizationOptions CreateOptions(int level)
     {
         case 0:
             options.recursiveDeltas = false;
+            options.liftBaseCase = false;
             break;
     }
     

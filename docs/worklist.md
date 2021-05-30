@@ -2,7 +2,26 @@
 
 - Optimization: Lift or branches.
 
+Remove make_shared and use allocate_shared.
 
+- Check the grammar for nonary predicates
+
+```
+optimized if ranges-enabled.
+has-old if person X has age A and A>90.
+```
+
+- Refactor optimization framework and make it more extensible
+  - `struct RelationAnalysis`, `struct StepAnalysis`
+
+- Query optimization rules
+
+```
+if optimization-level is 0 then step-limit is 1000.
+```
+
+
+- Rules should use all
 
 - Persist:
 -- Bug in UnaryPredicate::Assert. We look up the unary relation, which returns something that is invalid. The ->Add() predicate fails and crashes. Is it due to invalid function pointers in vtables?
@@ -11,6 +30,10 @@
 - Report on memory used.
 - Table.Write to return a bool if it's newly added.
   - Report this in the results.
+
+- Reset counters properly for deduplications (sum/count)
+    `class DuplicateScope`
+
 
 Simpletest:
 - Give it a repo
@@ -123,9 +146,6 @@ Problems to solve
 - Detecting negative recursion.
 - Reporting the line number of negative recursion.
 
-- Split off `Predicate` and `Table` into different classes, not inheritance?
-  - Can then change the table type to a non-recursive table if it's more efficient?
-
 - Use termcap library
 
 For each predicate:
@@ -147,23 +167,12 @@ logical:reorder false.
 // option @optimizer, reorder false, level 2.
 ```
 
+- non-ary predicates
+foo if bar and baz.
+
 6. Implement some of the optimizations
   - Unused variables.
   - Mark certain predicates as deltas.
-
-Implementation of recursion:
-When a query (scan/join/probe etc) is made on a predicate that's marked as "evaluating", then the *query* is marked as recursive, and the current branch/rule is also marked as recursive. (How?) Problem: what if it becomes recursive?
-The query that first marks itself as recursive may join on the delta, bec
-
-Idea number 2: Perform a static analysis at time of evaluation.
-Implement as depth-first search where if you meet something that has been found before then you mark it in a recursive loop. This step also checks for parity.
-
-How to detect "not" and other negativity in rules?
-
-Design: Every time a predicate is evaluated, if needs to check the evaluation to see if it has been analysed. The analysis will perform a number of steps:
-
-1. Walks the dependency graph, checking for recursion and negative recursion. Recursive predicates and queries are marked as such. Negative recursion results in an error. Marks the first predicate as a delta evaluation.
-2. 
 
 - Put information into each evaluation step:
 - Bound variables (reads)
@@ -172,46 +181,6 @@ Design: Every time a predicate is evaluated, if needs to check the evaluation to
 - Read relations
 - Written relations
 - Successors
-
-class Evaluation::Visitor
-
-Evaluation::Visit
-int number of BoundVariables
-
-
-Mutual recursion?
-
-
-
-1. Don't reevaluate non-recursive branches.
-2. We only need to query/join the delta.
-
-If, when we run a rule in a predicate, it doesn't *query* anything recursively, then there's no need to re-run that branch, and we can tag that branch as "done".
-
-Detect recursion on path: Run Query -> Write data. At end of
-1. Evaluate predicate
-2. Run query on predicate. Flag the "current branch" as recursive. Flag the *first* query as recursive. The *second* query is not recursive.
-
-
-- In `closure1.dl`, we end up calling `has:descendant` 37952 times.
-  - We need to join with the delta `has:descendant∆`
-  - We need to tag the evaluation that could be recursive.
-  - How do we know?????
-  - When exiting a join, we may discover that the join was recursive. At this point, 
-
-```
-Evaluate with 3 variables (called 2 times) ->
-    Scan has:child (_,_) -> (_0,_1) (called 2 times) ->
-        Write (_0,_1) into has:descendent (called 4004 times)
-    Scan has:child (_,_) -> (_0,_2) (called 2 times) ->
-        Join has:descendent (_2,_) -> (_,_1) (called 4004 times) ->
-            Write (_0,_1) into has:descendent (called 37952 times)
-```
-
-
-Two problems:
-1. We don't need to call the first branch on each iteration.
-
 
 - Create a `VariableInfo` structure
   - slot

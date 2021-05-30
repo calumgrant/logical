@@ -24,6 +24,9 @@ public:
     void AddAttribute(const std::shared_ptr<Relation> & attribute) override;
     void VisitAttributes(const std::function<void(Relation&)> &) const override;
     void VisitRules(const std::function<void(Evaluation&)> &) const override;
+    void VisitRules(const std::function<void(const std::shared_ptr<Evaluation>&)> &) const override;
+    void SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase) override;
+
     
     void Query(Entity * row, ColumnMask columns, Receiver &r) override;
     void QueryDelta(Entity * row, ColumnMask columns, Receiver &r) override;

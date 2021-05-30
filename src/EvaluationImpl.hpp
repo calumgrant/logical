@@ -5,6 +5,8 @@ class ChainedEvaluation : public Evaluation
 {
 public:
     Evaluation * GetNext() const override;
+    std::shared_ptr<Evaluation> GetNextPtr() const override;
+
 protected:
     ChainedEvaluation(const EvaluationPtr & next);
     
@@ -94,6 +96,7 @@ public:
 
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
+    std::shared_ptr<Evaluation> WithNext(const std::shared_ptr<Evaluation> & eval) const override;
 private:
     // The number of local variables
     const int locals;
@@ -107,6 +110,8 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
     Evaluation * GetNext() const override;
     Evaluation * GetNext2() const override;
+    EvaluationPtr GetNextPtr() const override;
+    EvaluationPtr GetNext2Ptr() const override;
 private:
     const std::shared_ptr<Evaluation> left, right;
 };

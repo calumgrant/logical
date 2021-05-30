@@ -249,6 +249,21 @@ void Predicate::VisitRules(const std::function<void(Evaluation&)>&fn) const
         fn(*rule);
 }
 
+void Predicate::VisitRules(const std::function<void(const std::shared_ptr<Evaluation>&)>&fn) const
+{
+    for(auto & rule : rules)
+        fn(rule);
+}
+
+void Predicate::SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase)
+{
+    rules.resize(2);
+    rules[0] = baseCase;
+    rules[1] = recursiveCase;
+    baseCase->onRecursivePath = false;
+    recursiveCase->onRecursivePath = true;
+}
+
 Arity Predicate::Arity() const { return table->GetArity(); }
 
 Size Predicate::Count() { return table->Rows(); }
