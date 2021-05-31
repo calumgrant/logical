@@ -748,7 +748,6 @@ class CountTerminatorClause : public DummyClause
 public:
     CountTerminatorClause(AST::Entity & entity, const std::shared_ptr<CountCollector> & next) : entity(entity), next(next) { }
     
-    
     std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override
     {            
         bool bound;
@@ -761,12 +760,12 @@ public:
             result = std::make_shared<DeduplicateB>(slot, next);
         return result;
     }
+    std::shared_ptr<Deduplicate> result;
 
 private:
     AST::Entity & entity;
     const std::shared_ptr<CountCollector> next;
     
-    std::shared_ptr<Evaluation> result;
 };
 
 std::shared_ptr<Evaluation> AST::Count::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
@@ -779,6 +778,7 @@ std::shared_ptr<Evaluation> AST::Count::Compile(Database &db, Compilation&c, con
     
     int branch = c.CreateBranch();
     auto eval = clause->Compile(db, c);
+    eval = std::make_shared<DeduplicationGuard>(terminator.result, eval);
         
     c.Branch(branch);
     
@@ -806,7 +806,7 @@ public:
     const int resultSlot;
     AST::Entity & entity, &value;
     
-    std::shared_ptr<Evaluation> result;
+    std::shared_ptr<Deduplicate> result;
     
     std::shared_ptr<Evaluation> Compile(Database & db, Compilation&c) override
     {
@@ -844,6 +844,7 @@ std::shared_ptr<Evaluation> AST::Sum::Compile(Database &db, Compilation&c, const
     auto eval = clause->Compile(db, c);
         
     c.Branch(branch);
+    eval = std::make_shared<DeduplicationGuard>(terminator.result, eval);
     
     return std::make_shared<Load>(slot, db.CreateInt(0), std::make_shared<OrEvaluation>(eval, next));
 };

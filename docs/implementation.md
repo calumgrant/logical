@@ -79,6 +79,15 @@ Deltas in mutual recursion:
 
 Predicates need to query the `recursiveRoot->Iteration()` in order to see if they need to perform more steps.
 
+# Semi-naive evaluation
+
+The semi-naive optimization (`-fsemi-naive` `-O1`) finds calls that could benefit from semi-naive evaluation. This replaces the call with a call to a different predicate where the given variables (in positions 0...) are already bound.
+
+The compilation scheme calls step->Rebind() which returns a new evaluation with the given variables already bound. This changes the meaning of some evaluation steps, for example turning assignments into checks, or turning joins into probes etc.
+
+The evaluation of a semi-naive predicate caches a table of bound columns. It only performs evaluation if a new set of bound inputs is used.
+
+
 ## Memory management
 
 Logical uses a special memory allocator for certain operations. See the [Persist](...) library for an overview of this. C++ containers can be wired to use the Persist allocatior using the data types `persist::allocator<>` and `persist::fast_allocator<>`. The difference between these two allocators is that `persist::fast_allocator<>` will not recycle its memory on deletion, which speeds things up, but should not be used for transient data.

@@ -1,44 +1,47 @@
 # Work plan
 
+- A spurious `0` appears in `recursion6.dl`
+  - It's been called twice: The second time should be the same right?
 
 - Query optimization rules
 ```
 if optimization-level is 0 then step-limit is 1000.
 ```
 
-- Newtypes of the form
+- Optimization: Don't evaluate a rule twice if it's not recursive. (e.g. when attached to multiple predicates.)
+
+# Newtypes or record types
 
 ```
-person @person-{name}-{id} if
+new person P has name "Fred", age 20.
 ```
 
-- Persist:
--- Bug in UnaryPredicate::Assert. We look up the unary relation, which returns something that is invalid. The ->Add() predicate fails and crashes. Is it due to invalid function pointers in vtables?
+# Strings
+  - substring
+  - find, indexof.
+  - matches
+  - lowercase `name has lowercase "foo"`
 
-- Report number of unique tuples written in a write predicate
+`param has substring p and p has lowercase "pass"`
+`param has lowercase p and p has substring "pass"`
 
-- Reset counters properly for deduplications (sum/count)
-    `class DuplicateScope`
+"foo" has character "f", position 0.
+"foo" has substring "fo", position 0, index 0.
+"f" has match "foofoo", position x and 
 
-Simpletest:
-- Give it a repo
-- Name it something better
-- Simpletest to count fixtures?
-- Test exceptions
-- Compare vectors
-- Tidy up code
+- string/regex match
+  `REGEX has regex-match Result`
+  `X has equal Y.`
 
-Persist:
-- Tidy up the code generally
 
-2. Implement `-f` and `-fno-` to enable and disable options.
-3. Improvements to `persist`, including a readme.
+# Persist
+
+- Bug in UnaryPredicate::Assert. We look up the unary relation, which returns something that is invalid. The ->Add() predicate fails and crashes. Is it due to invalid function pointers in vtables?
   - Check resource limit
   - readme
   - proper tests
-
-## Persist tasks
-
+  - Tidy up the code generally
+  - Robustness to invalid input parameters and proper diagnostics
 - Tidy up tests
 - Allocate a huge file but don't allocate it all on disk?
 - Create a decent test framework support
@@ -48,24 +51,27 @@ Persist:
 - Easier to create a temp file.
 - Set the size limit.
 
+- Report number of unique tuples written in a write predicate
+
+- Reset counters properly for deduplications (sum/count)
+    `class DuplicateScope`
+
+# Simpletest
+- Give it a repo
+- Name it something better
+- Simpletest to count fixtures?
+- Test exceptions
+- Compare vectors
+- Tidy up code
+
+2. Implement `-f` and `-fno-` to enable and disable options.
+
 ## Semi-naive evaluation
-Partial evaluation means that if a set of inputs is already bound, then there is no need to evaluate the whole predicate. Evaluation is limited to a set of inputs. The predicate is memoised so that the predicate is not recomputed for the same set of inputs.
-
-To implement semi-naive evaluation, each predicate has a map from bound variables (an int mask) to an `Evaluation`. The evaluation then proceeds in the normal way, except that the local variables are assigned before evaluation and are already bound.
-
-To call a semi-naive predicate, the caller uses the `Query()` method and the callee decides whether to implement semi-naive or not.
-
-Which predicates are semi-naive?
-All predicates are semi-naive.
 
 - Use square brackets for special annotations, such as: `[in]`, `[out]`
 - Syntax highlighter
 
 - Optimization: Avoid redundant writes.
-
-- string/regex match
-  `REGEX has regex-match Result`
-  `X has equal Y.`
 
 - Bug `number X has square Y if number X and Y = X*X.` is not really recursive.
 
@@ -76,6 +82,11 @@ All predicates are semi-naive.
 - Help option: `-h`
 - `logical:option "no-joinreorder"`.
 - Have a better find syntax.
+- A question at the end of a clause turns it into a query?
+```
+find x, y in x reaches child y.
+
+```
 - Any predicate can be a query.
 - `null` as a keyword is simply the null value. (Not the same as "none"??)
 

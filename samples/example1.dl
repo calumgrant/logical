@@ -1,0 +1,25 @@
+
+
+def w has use r if
+    w has write x and
+    w reaches succ r and
+    r has read x.
+
+program p has step 0, counter 0 if p is to-run.
+
+program p has step i+1, counter c+1 if
+    program p has step i, counter c and
+    p has substring "+", position i, length 1.
+
+progress(0,0,p) :- torun(p).
+progress(i+1,c+1,p) :- progress(i,c,p), "+"=substr(p,i,1).
+progress(i+1,c-1,p) :- progress(i,c,p), "-"=substr(p,i,1).
+progress(i+1,c,p) :-
+    progress(i,c,p),
+    i < strlen(p),
+    "+" != substr(p,i,1),
+    "-" != substr(p,i,1).
+
+.decl result(c : counter, p : program)
+result(c,p) :- progress(strlen(p),c,p).
+.output result

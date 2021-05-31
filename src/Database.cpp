@@ -634,28 +634,6 @@ const char * Colours::Relation = "\033[0;33m"; // Brown orange
 const char * Colours::Error = "\033[1;31m"; // Light red
 const char * Colours::Detail = "\033[1;30m"; // Light red
 
-typedef std::basic_string<char, std::char_traits<char>, persist::allocator<char>> mystring;
-
-const int version = 4;
-
-struct MyStorage
-{
-    MyStorage(persist::shared_memory & mem) :
-        str(mem), vec(persist::allocator<mystring>(mem))
-    {
-        intptr = std::allocate_shared<int, persist::allocator<int>>(mem, 10);
-        vec.reserve(2005);
-    }
-    
-    int version = ::version;
-    int times_opened = 0;
-    
-    mystring str;
-    
-    std::shared_ptr<int> intptr;
-    std::vector<mystring, persist::allocator<mystring>> vec;
-};
-
 DataStore::DataStore(persist::shared_memory & mem) :
     strings(mem),
     atstrings(mem),

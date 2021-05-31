@@ -107,3 +107,6 @@ Note that `large-mouse "Mickey"` and `large mouse "Mickey"` mean different thing
 
 ## Recursion
 
+## Transitive closures
+
+Because the transitive closure pattern is so common, Logical has introduced a special keyword for it.

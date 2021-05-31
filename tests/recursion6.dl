@@ -1,0 +1,18 @@
+expected-results 2.
+
+item n if 1<=n<=10.
+
+n has left-child 2*n if item n.
+n has right-child m+1 if n has left-child m.
+n has child m if n has left-child m or n has right-child m.
+
+// `count` isn't working correctly - spurious 0 appears.
+query "Number of children" has Count c if c = count n in (_ has child n and item n).
+query "Number of descendents" has Count c if c = count n in (_ reaches child n).
+
+n has D m if n has child m or
+    n has D x and x has D m.
+
+error "D1" if n has D m and not n reaches child m.
+error "D2" if n reaches child m and not n has D m.
+error "D3" if n reaches child m and not n reaches D m.

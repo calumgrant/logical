@@ -68,6 +68,18 @@ prime N if
 
 Count and sum:
 
+
+Transitive closure:
+
+```
+x has reachable-function y if x has call-to y or.
+
+x has reachable-function y if x reaches call-to y.
+```
+
+# Recursion
+
+
 ## Builtin predicates
 
 ```

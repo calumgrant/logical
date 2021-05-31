@@ -845,7 +845,7 @@ Evaluation::Evaluation() : callCount(0)
 }
 
 DeduplicateB::DeduplicateB(int slot1, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), ChainedEvaluation(next)
+    slot1(slot1), Deduplicate(next)
 {
 }
 
@@ -869,7 +869,7 @@ void DeduplicateB::Explain(Database &db, std::ostream &os, int indent) const
 }
 
 DeduplicateBB::DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), ChainedEvaluation(next)
+    slot1(slot1), slot2(slot2), Deduplicate(next)
 {
 }
 
@@ -1295,3 +1295,30 @@ std::shared_ptr<Evaluation> RuleEvaluation::WithNext(const std::shared_ptr<Evalu
     return std::make_shared<RuleEvaluation>(locals, next);
 }
 
+Deduplicate::Deduplicate(const EvaluationPtr & next) : ChainedEvaluation(next)
+{
+}
+
+void DeduplicateB::Reset()
+{
+    values.clear();
+}
+
+void DeduplicateBB::Reset()
+{
+    values.clear();
+}
+
+DeduplicationGuard::DeduplicationGuard(const std::shared_ptr<Deduplicate> & dedup, const EvaluationPtr & next) : dedup(dedup), ChainedEvaluation(next)
+{
+}
+
+void DeduplicationGuard::OnRow(Entity * row)
+{
+    next->Evaluate(row);
+    dedup->Reset();
+}
+void DeduplicationGuard::Explain(Database &db, std::ostream &os, int indent) const
+{
+    next->Explain(db, os, indent);
+}

@@ -6,4 +6,3 @@ x is a number if 0<=x<=100.
 x has successor x+1 if x is a number.
 
 query "Reachable" has Reachable n if 95 reaches successor n.
-

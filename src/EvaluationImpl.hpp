@@ -324,23 +324,42 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
 };
 
-class DeduplicateB : public ChainedEvaluation
+class Deduplicate : public ChainedEvaluation
+{
+public:
+    Deduplicate(const EvaluationPtr & next);
+    virtual void Reset()=0;
+};
+
+class DeduplicationGuard : public ChainedEvaluation
+{
+public:
+    DeduplicationGuard(const std::shared_ptr<Deduplicate> & dedup, const EvaluationPtr & next);
+    void OnRow(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    std::shared_ptr<Deduplicate> dedup;
+};
+
+class DeduplicateB : public Deduplicate
 {
 public:
     DeduplicateB(int slot1, const std::shared_ptr<Evaluation> & next);
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
+    void Reset() override;
 private:
     const int slot1;
     std::unordered_set<Entity, Entity::Hash> values;
 };
 
-class DeduplicateBB : public ChainedEvaluation
+class DeduplicateBB : public Deduplicate
 {
 public:
     DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
+    void Reset() override;
 private:
     const int slot1, slot2;
     std::unordered_set<std::pair<Entity,Entity>, PairHash> values;
