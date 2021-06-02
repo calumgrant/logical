@@ -17,6 +17,11 @@ TableImpl::TableImpl(persist::shared_memory & mem, Arity arity) :
 
 void TableImpl::OnRow(Entity *row)
 {
+    Add(row);
+}
+
+bool TableImpl::Add(const Entity *row)
+{
     /*
     std::cout << "Writing (";
     for(int i=0; i<arity; ++i)
@@ -39,11 +44,21 @@ void TableImpl::OnRow(Entity *row)
     {
         // It was duplicated, so remove it.
         data.resize(s);
+        return false;
     }
     else if(loop)
     {
         ++loop->numberOfResults;
     }
+    return true;
+}
+
+void TableImpl::Clear()
+{
+    hash.clear();
+    indexes.clear();
+    data.clear();
+    deltaStart = deltaEnd = 0;
 }
 
 bool TableImpl::NextIteration()

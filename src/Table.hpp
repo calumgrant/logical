@@ -29,4 +29,7 @@ public:
     
     // This is a bad interface.
     std::shared_ptr<RecursiveLoop> loop;
+    
+    virtual bool Add(const Entity *e) =0;
+    virtual void Clear() =0;
 };

@@ -365,6 +365,18 @@ private:
     std::unordered_set<std::pair<Entity,Entity>, PairHash> values;
 };
 
+class DeduplicateV : public Deduplicate
+{
+public:
+    DeduplicateV(Database &db, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next);
+    void OnRow(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+    void Reset() override;
+private:
+    std::vector<int> slots;
+    std::shared_ptr<Table> table;
+};
+
 
 /*
  Counts the number of times Evaluate has been called.
@@ -446,4 +458,15 @@ public:
 private:
     std::vector<int> inputs, outputs;
     int mask;
+};
+
+class CreateNew : public ChainedEvaluation
+{
+public:
+    CreateNew(Database &db, int slot, const std::shared_ptr<Evaluation> & next);
+    void OnRow(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+private:
+    Database & database;
+    const int slot;
 };

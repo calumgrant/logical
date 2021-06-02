@@ -3,6 +3,7 @@
 #include "AST.hpp"
 #include "Colours.hpp"
 #include "EvaluationImpl.hpp"
+#include "TableImpl.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -1304,7 +1305,62 @@ void DeduplicationGuard::OnRow(Entity * row)
     next->Evaluate(row);
     dedup->Reset();
 }
+
 void DeduplicationGuard::Explain(Database &db, std::ostream &os, int indent) const
 {
     next->Explain(db, os, indent);
+}
+
+CreateNew::CreateNew(Database &db, int slot, const std::shared_ptr<Evaluation> & next) :
+    ChainedEvaluation(next), database(db), slot(slot)
+{
+}
+
+void CreateNew::OnRow(Entity * row)
+{
+    row[slot] = database.NewEntity();
+    next->Evaluate(row);
+}
+
+void CreateNew::Explain(Database &db, std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    os << "Create new ";
+    OutputIntroducedVariable(os, slot);
+    OutputCallCount(os);
+    os << " ->\n";
+    next->Explain(db,os,indent+4);
+}
+
+DeduplicateV::DeduplicateV(Database & db, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next) :
+    Deduplicate(next),
+    slots(slots),
+    table(std::make_shared<TableImpl>(db.Storage(), slots.size()))
+{
+}
+
+void DeduplicateV::OnRow(Entity * row)
+{
+    if(table->Add(row))
+        next->Evaluate(row);
+}
+
+void DeduplicateV::Reset()
+{
+    table->Clear();
+}
+
+void DeduplicateV::Explain(Database &db, std::ostream & os, int indent) const
+{
+    Indent(os, indent);
+    os << "Deduplicate (";
+    for(int i=0; i<slots.size(); ++i)
+    {
+        if(i>0) os << ",";
+        OutputVariable(os, slots[i]);
+    }
+    os << ")";
+    OutputCallCount(os);
+    os << " ->\n";
+    next->Explain(db, os, indent+4);
 }

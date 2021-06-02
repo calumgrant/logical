@@ -14,6 +14,11 @@ Newtypes:
   was successful.
   - The database keeps a counter.
 
+What does it compile to?
+  Create new person _0 with (_1,_3) ->
+    Write _0 into person
+    Write (_0,_1,_3) into has:name:gender
+
 
 # Built-in predicates
 

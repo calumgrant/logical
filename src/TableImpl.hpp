@@ -29,6 +29,8 @@ public:
     void Query(Entity * row, ColumnMask columns, Receiver&v) override;
     void QueryDelta(Entity*row, ColumnMask columns, Receiver&v) override;
     void OnRow(Entity*row) override;
+    bool Add(const Entity *e) override;
+    void Clear() override;
     Arity GetArity() const override;
 private:
     typedef std::vector<Entity, persist::fast_allocator<Entity>> vector;

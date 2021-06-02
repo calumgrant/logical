@@ -1,5 +1,9 @@
+expected-results 2.
 
 new person has name "Fred", gender @m.
 new person has name "Mary", gender @f.
+new person has name "Jane", gender @f.
 
 new woman has name n if person _ has name n, gender @f.
+
+find woman _ has name _.

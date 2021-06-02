@@ -362,11 +362,18 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
         {
             e = a.entityOpt->Compile(db, c, e);
         }
-
+        
         if(result)
             result = std::make_shared<OrEvaluation>(result, e);
         else
             result = e;
+
+        if(!entity)
+        {
+            result = std::make_shared<CreateNew>(db, slot, result);
+            slots.erase(slots.begin(), slots.begin()+1);  // Ugly and slow
+            result = std::make_shared<DeduplicateV>(db, slots, result);
+        }
     }
 
     if(!result) result = std::make_shared<NoneEvaluation>();
@@ -375,6 +382,13 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
 
 std::shared_ptr<Evaluation> AST::EntityClause::CompileLhs(Database &db, Compilation &c)
 {
+    if(!entity)
+    {
+        int slot = c.AddUnnamedVariable();
+        auto eval = WritePredicates(db, c, slot);
+        return eval;
+    }
+    
     bool bound;
     int slot = entity->BindVariables(db, c, bound);
     if(bound)
