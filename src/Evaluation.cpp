@@ -173,7 +173,7 @@ NotTerminator::NotTerminator(int slot) : slot(slot)
 
 void NotTerminator::OnRow(Entity * row)
 {
-    row[slot].type = EntityType::None;
+    row[slot] = Entity { EntityType::None, 0 };
 }
 
 void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
@@ -447,14 +447,16 @@ bool Compare(T value1, T value2, ComparatorType t)
 
 bool Compare(const Entity &e1, const Entity &e2, ComparatorType cmp)
 {
-    if(e1.type == EntityType::Integer && e2.type == EntityType::Integer)
-        return Compare(e1.i, e2.i, cmp);
-    else if(e1.type ==EntityType::Integer && e2.type == EntityType::Float)
-        return Compare<float>(e1.i, e2.f, cmp);
-    else if(e1.type ==EntityType::Float && e2.type == EntityType::Integer)
-        return Compare<float>(e1.f, e2.i, cmp);
-    else if(e1.type ==EntityType::Float && e2.type == EntityType::Float)
-        return Compare(e1.f, e2.f, cmp);
+    auto t1 = e1.Type(), t2=e2.Type();
+    
+    if(t1 == EntityType::Integer && t2 == EntityType::Integer)
+        return Compare((std::int64_t)e1, (std::int64_t)e2, cmp);
+    else if(t1 == EntityType::Integer && t2 == EntityType::Float)
+        return Compare<float>((std::int64_t)e1, (double)e2, cmp);
+    else if(t1 == EntityType::Float && t2 == EntityType::Integer)
+        return Compare<float>((double)e1, (std::int64_t)e2, cmp);
+    else if(t1 == EntityType::Float && t2 == EntityType::Float)
+        return Compare((double)e1, (double)e2, cmp);
     else
         return false;
 }
@@ -481,26 +483,25 @@ RangeU::RangeU(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, i
 
 void RangeU::OnRow(Entity * row)
 {
-    int lowerBound, upperBound;
+    std::int64_t lowerBound, upperBound;
     
-    if(row[slot1].type == EntityType::Integer)
+    if(row[slot1].IsInt())
     {
-        lowerBound = cmp1 == ComparatorType::lt ? row[slot1].i+1 : row[slot1].i;
+        lowerBound = cmp1 == ComparatorType::lt ? (std::int64_t)row[slot1]+1 : (std::int64_t)row[slot1];
     }
     else
         return;  // For now, floats are not supported
 
-    if(row[slot3].type == EntityType::Integer)
+    if(row[slot3].IsInt())
     {
-        upperBound = cmp2 == ComparatorType::lt ? row[slot3].i-1 : row[slot3].i;
+        upperBound = cmp2 == ComparatorType::lt ? (std::int64_t)row[slot3]-1 : (std::int64_t)row[slot3];
     }
     else
         return;  // For now, floats are not supported
     
-    row[slot2].type = EntityType::Integer;
-    int & value = row[slot2].i;
-    for(value=lowerBound; value<=upperBound; ++value)
+    for(auto value=lowerBound; value<=upperBound; ++value)
     {
+        row[slot2] = Entity(EntityType::Integer, value);
         next->Evaluate(row);
     }
 }
@@ -551,15 +552,13 @@ NegateBF::NegateBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & nex
 
 void NegateBF::OnRow(Entity *row)
 {
-    switch(row[slot1].type)
+    switch(row[slot1].Type())
     {
     case EntityType::Integer:
-        row[slot2].type = EntityType::Integer;
-        row[slot2].i = - row[slot1].i;
+            row[slot2] = Entity(EntityType::Integer, -(std::int64_t)row[slot1]);
         break;
     case EntityType::Float:
-        row[slot2].type = EntityType::Integer;
-        row[slot2].f = - row[slot1].f;
+        row[slot2] = Entity(EntityType::Float, -(double)row[slot1]);
         break;
     default:
         return;  // Fail
@@ -608,22 +607,20 @@ ModBBF::ModBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation
 
 void AddBBF::OnRow(Entity *row)
 {
-    auto t1 = row[slot1].type;
-    auto t2 = row[slot2].type;
+    auto t1 = row[slot1].Type();
+    auto t2 = row[slot2].Type();
     
     if(t1 == EntityType::Integer && t2 == EntityType::Integer)
     {
-        row[slot3].type = EntityType::Integer;
-        row[slot3].i = row[slot1].i + row[slot2].i;
+        row[slot3] = Entity(EntityType::Integer, (std::int64_t)row[slot1] + (std::int64_t)row[slot2]);
     }
     else if(t1 == EntityType::String && t2 == EntityType::String)
     {
-        row[slot3] = database.AddStrings(row[slot1].i,row[slot2].i);
+        row[slot3] = database.AddStrings((std::int64_t)row[slot1],(std::int64_t)row[slot2]);
     }
     else if(t1 == EntityType::Float && t2 == EntityType::Float)
     {
-        row[slot3].type = EntityType::Float;
-        row[slot3].f = row[slot1].f + row[slot2].f;
+        row[slot3] = (double)row[slot1] + (double)row[slot2];
     }
     else if(t1 == EntityType::String || t2 == EntityType::String)
     {
@@ -631,26 +628,26 @@ void AddBBF::OnRow(Entity *row)
         if(t1 == EntityType::Integer)
         {
             std::ostringstream ss;
-            ss << row[slot1].i << database.GetString(row[slot2].i);
+            ss << (std::int64_t)row[slot1] << database.GetString((std::int64_t)row[slot2]);
             row[slot3] = database.CreateString(ss.str().c_str());
         }
         else if(t1 == EntityType::Float)
         {
             std::ostringstream ss;
-            ss << row[slot1].f << database.GetString(row[slot2].i);
+            ss << (double)row[slot1] << database.GetString((std::int64_t)row[slot2]);
             row[slot3] = database.CreateString(ss.str().c_str());
 
         }
         else if(t2 == EntityType::Integer)
         {
             std::ostringstream ss;
-            ss << database.GetString(row[slot1].i) << row[slot2].i;
+            ss << database.GetString((std::int64_t)row[slot1]) << (std::int64_t)row[slot2];
             row[slot3] = database.CreateString(ss.str().c_str());
         }
         else if(t2 == EntityType::Float)
         {
             std::ostringstream ss;
-            ss << database.GetString(row[slot1].i) << row[slot2].f;
+            ss << database.GetString((std::int64_t)row[slot1]) << (double)row[slot2];
             row[slot3] = database.CreateString(ss.str().c_str());
         }
         else
@@ -661,13 +658,11 @@ void AddBBF::OnRow(Entity *row)
         // Convert the other to a float
         if(t1 == EntityType::Integer)
         {
-            row[slot3].type = EntityType::Float;
-            row[slot3].f = row[slot1].i + row[slot2].f;
+            row[slot3] = (std::int64_t)row[slot1] + (double)row[slot2];
         }
         else if(t2 == EntityType::Integer)
         {
-            row[slot3].type = EntityType::Float;
-            row[slot3].f = row[slot1].f + row[slot2].i;
+            row[slot3] = (double)row[slot1] + (std::int64_t)row[slot2];
         }
         else
             return;
@@ -696,28 +691,24 @@ void AddBBF::Explain(Database &db, std::ostream &os, int indent) const
 template<typename OpInt, typename OpFloat>
 void BinaryArithmeticEvaluation::Evaluate(Entity * row)
 {
-    auto t1 = row[slot1].type;
-    auto t2 = row[slot2].type;
+    auto t1 = row[slot1].Type();
+    auto t2 = row[slot2].Type();
     
     if(t1 == EntityType::Integer && t2 == EntityType::Integer)
     {
-        row[slot3].type = EntityType::Integer;
-        row[slot3].i = OpInt()(row[slot1].i,row[slot2].i);
+        row[slot3]  = Entity(EntityType::Integer, OpInt()((std::int64_t)row[slot1], (std::int64_t)row[slot2]));
     }
     else if(t1 == EntityType::Float && t2 == EntityType::Float)
     {
-        row[slot3].type = EntityType::Float;
-        row[slot3].f = OpFloat()(row[slot1].f,row[slot2].f);
+        row[slot3] = OpFloat()((double)row[slot1],(double)row[slot2]);
     }
     else if(t1 == EntityType::Float && t2 == EntityType::Integer)
     {
-        row[slot3].type = EntityType::Float;
-        row[slot3].f = OpFloat()(row[slot1].f, row[slot2].i);
+        row[slot3] = OpFloat()((double)row[slot1], (std::int64_t)row[slot2]);
     }
     else if(t1 == EntityType::Integer && t2 == EntityType::Float)
     {
-        row[slot3].type = EntityType::Float;
-        row[slot3].f = OpFloat()(row[slot1].i, row[slot2].f);
+        row[slot3] = OpFloat()((std::int64_t)row[slot1], (double)row[slot2]);
     }
     else
         return;
@@ -776,29 +767,26 @@ void Evaluation::OutputCallCount(std::ostream & os) const
 
 void DivBBF::OnRow(Entity *row)
 {
-    auto t1 = row[slot1].type;
-    auto t2 = row[slot2].type;
+    auto t1 = row[slot1].Type();
+    auto t2 = row[slot2].Type();
     
     if(t1 == EntityType::Integer && t2 == EntityType::Integer)
     {
-        row[slot3].type = EntityType::Integer;
-        if(row[slot2].i == 0) return;
-        row[slot3].i = row[slot1].i / row[slot2].i;
+        if((std::int64_t)row[slot2] == 0) return;
+        
+        row[slot3] = Entity { EntityType::Integer, (std::int64_t)row[slot1] / (std::int64_t)row[slot2] };
     }
     else if(t1 == EntityType::Float && t2 == EntityType::Float)
     {
-        row[slot3].type = EntityType::Float;
-        row[slot3].f = row[slot1].f / row[slot2].f;
+        row[slot3] = (double)row[slot1] / (double)row[slot2];
     }
     else if(t1 == EntityType::Float && t2 == EntityType::Integer)
     {
-        row[slot3].type = EntityType::Float;
-        row[slot3].f = row[slot1].f / row[slot2].i;
+        row[slot3] = (double)row[slot1] / (std::int64_t)row[slot2];
     }
     else if(t1 == EntityType::Integer && t2 == EntityType::Float)
     {
-        row[slot3].type = EntityType::Float;
-        row[slot3].f = row[slot1].i / row[slot2].f;
+        row[slot3] = (std::int64_t)row[slot1] / (double)row[slot2];
     }
     else
         return;
@@ -817,14 +805,13 @@ void DivBBF::Explain(Database &db, std::ostream &os, int indent) const
 
 void ModBBF::OnRow(Entity *row)
 {
-    auto t1 = row[slot1].type;
-    auto t2 = row[slot1].type;
+    auto t1 = row[slot1].Type();
+    auto t2 = row[slot1].Type();
     
     if(t1 == EntityType::Integer && t2 == EntityType::Integer)
     {
-        row[slot3].type = EntityType::Integer;
-        if(row[slot2].i == 0) return;
-        row[slot3].i = row[slot1].i % row[slot2].i;
+        if((std::int64_t)row[slot2] == 0) return;
+        row[slot3] = Entity { EntityType::Integer, (std::int64_t)row[slot1] % (std::int64_t)row[slot2] };
     }
     else
         return;
@@ -898,8 +885,7 @@ CountCollector::CountCollector(int slot) : slot(slot)
 
 void CountCollector::OnRow(Entity * row)
 {
-    row[slot].type = EntityType::Integer;
-    ++row[slot].i;
+    row[slot] = Entity { EntityType::Integer, 1 + (std::int64_t)row[slot] };
 }
 
 void CountCollector::Explain(Database &db, std::ostream &os, int indent) const
@@ -957,7 +943,7 @@ NotNone::NotNone(int slot, const std::shared_ptr<Evaluation> & next) : slot(slot
 
 void NotNone::OnRow(Entity *row)
 {
-    if(row[slot].type != EntityType::None)
+    if(!row[slot].IsNone())
         next->Evaluate(row);
 }
 

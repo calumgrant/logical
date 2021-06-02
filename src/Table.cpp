@@ -28,7 +28,7 @@ void TableImpl::OnRow(Entity *row)
      */
     
     for(int i=0; i<arity; ++i)
-        assert(row[i].type != EntityType::None);
+        assert(row[i].Type() != EntityType::None);
     
     auto s = data.size();
     data.insert(data.end(), row, row+arity);

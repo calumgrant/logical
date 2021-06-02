@@ -106,29 +106,29 @@ DatabaseImpl::~DatabaseImpl()
 
 void Database::Print(const Entity &e, std::ostream &os) const
 {
-    switch(e.type)
+    switch(e.Type())
     {
     case EntityType::None:
             os << "None";
             break;
     case EntityType::Integer:
-        os << e.i;
+        os << (std::int64_t)e;
         break;
     case EntityType::Float:
-        os << e.f;
+        os << (double)e;
         break;
     case EntityType::Boolean:
-        os << (e.i?"true":"false");
+        os << ((std::int64_t)e?"true":"false");
         break;
     case EntityType::String:
-        os << GetString(e.i);
+        os << GetString((std::int64_t)e);
         break;
     case EntityType::AtString:
-        os << "@" << GetAtString(e.i);
+        os << "@" << GetAtString((std::int64_t)e);
         break;
     case EntityType::Char:
     case EntityType::Byte:
-        os << e.i;
+        os << (std::int64_t)e;
         break;
     }
 }
@@ -137,7 +137,7 @@ void Database::PrintQuoted(const Entity &e, std::ostream &os) const
 {
     os << Colours::Value;
 
-    if(e.type == EntityType::String)
+    if(e.IsString())
     {
         os << '\"';
         // TODO: Escape the characters

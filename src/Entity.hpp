@@ -1,46 +1,59 @@
 #pragma once
 #include "Fwd.hpp"
 
-enum class EntityType
+enum class EntityType : std::uint16_t
 {
-    None,
-    Integer,
-    String,
-    Float,
-    AtString,
-    Boolean,
-    Char,
-    Byte
+    SilentNan = 0xf8ff,
+    None = SilentNan,
+    Integer = 0xf9ff,
+    String = 0xfaff,
+    Float = 0x0000,
+    NewType = 0xfbff,
+    AtString = 0xfcff,
+    Boolean = 0xfdff,
+    Char = 0xfeff,
+    Byte = 0xffff
 };
 
 // Something that's stored in the database
-struct Entity
+class Entity
 {
-    EntityType type;
-    union
+public:
+    EntityType Type() const
     {
-        int i;
-        float f;
-        char ch[4];
-    };
+        return ((std::uint16_t)integral.type & 0xfff8) == 0xfff8 ?
+            EntityType::Float : integral.type;
+    }
+    
+    bool IsInt() const { return integral.type == EntityType::Integer; }
+    bool IsFloat() const { return ((std::uint16_t)integral.type & 0xfff8) == 0xfff8; }
+    bool IsNone() const { return integral.type == EntityType::None; }
+    bool IsString() const { return integral.type == EntityType::String; }
+    
+    Entity() : integral {EntityType::None,0} { }
+    Entity(EntityType t, std::int64_t i) : integral { t, i } { }
+    Entity(EntityType t, std::int32_t i) : integral { t, i } { }
+    Entity(EntityType t, double d) : d(d) { }
 
-    Entity() : type(EntityType::None) { }
-    Entity(EntityType t, int i) : type(t), i(i) { }
-    Entity(EntityType t, float f) : type(t), f(f) { }
+    operator double() const { return d; }
+    operator std::int64_t() const { return integral.value; }
+    
+    void assign(std::int64_t value)
+    {
+        integral.value = value;
+    }
 
-    bool operator==(const Entity & other) const { return type == other.type && i == other.i; }
+    Entity & operator=(double d) { this->d = d; return *this; }
+    Entity & operator=(std::uint64_t v) { integral.value = v; return *this; }
+
+    bool operator==(const Entity & other) const { return i64 == other.i64; }
     bool operator!=(const Entity & other) const { return !(*this == other); }
 
-    int hash() const { return (int)type * 0x10001 + i; }
+    int hash() const { return i32[0] + i32[1]; }
 
     bool operator<(const Entity & other) const 
     { 
-        if(type == other.type)
-        {
-            return type == EntityType::Float ? f < other.f : i < other.i;
-        }
-
-        return type < other.type;
+        return i64 < other.i64;
     }
 
     struct Hash
@@ -53,39 +66,33 @@ struct Entity
     
     Entity & operator+=(const Entity & other)
     {
-        switch(type)
+        switch(integral.type)
         {
             case EntityType::None:
                 *this = other;
                 break;
             case EntityType::Integer:
-                switch(other.type)
+                switch(other.integral.type)
                 {
                     case EntityType::Integer:
-                        i += other.i;
-                        break;
-                    case EntityType::Float:
-                        type = EntityType::Float;
-                        f = i + other.f;
+                        integral.value += other.integral.value;
                         break;
                     default:
-                        break;
-                }
-                break;
-            case EntityType::Float:
-                switch(other.type)
-                {
-                    case EntityType::Integer:
-                        f += other.i;
-                        break;
-                    case EntityType::Float:
-                        f += other.f;
-                        break;
-                    default:
+                        d = integral.value + other.d;
                         break;
                 }
                 break;
             default:
+                // Float
+                switch(other.integral.type)
+                {
+                    case EntityType::Integer:
+                        d += other.integral.value;
+                        break;
+                    default:
+                        d += other.d;
+                        break;
+                }
                 break;
         }
         
@@ -93,6 +100,21 @@ struct Entity
         // We should perhaps warn about this instead.
         return *this;
     }
+private:
+    struct IntegralType
+    {
+        EntityType type : 16;
+        std::int64_t value : 48;
+    };
+
+    union
+    {
+        IntegralType integral;
+        std::uint64_t i64;
+        std::uint32_t i32[2];
+        double d;
+        char ch[8];
+    };
 };
 
 struct PairHash

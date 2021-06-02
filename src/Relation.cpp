@@ -46,18 +46,18 @@ ExpectedResults::ExpectedResults(Database &db, RelationId name) : SpecialPredica
 
 void ExpectedResults::Add(const Entity * data)
 {
-    if(data->type != EntityType::Integer)
+    if(!data->IsInt())
         database.Error("Invalid type for expected-results");
     
-    database.SetExpectedResults(data->i);
+    database.SetExpectedResults((std::int64_t)*data);
 }
 
 void EvaluationStepLimit::Add(const Entity * data)
 {
-    if(data->type != EntityType::Integer)
+    if(data->Type() != EntityType::Integer)
         database.Error("Invalid type for evaluation-step-limit");
     
-    database.SetEvaluationLimit(data->i);
+    database.SetEvaluationLimit((std::int64_t)*data);
 }
 
 std::size_t SpecialPredicate::Count()

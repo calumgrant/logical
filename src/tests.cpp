@@ -23,7 +23,7 @@ void TestSerialization(const Entity &e)
     p = buffer;
     auto e4 = ReadBinaryEntity(p, p+20);
  
-    if(!(e == e4))
+    if(e != e4)
     {
         p = buffer;
         WriteBinaryEntity(e, p, p+20);

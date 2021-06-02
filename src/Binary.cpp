@@ -103,20 +103,22 @@ Entity ReadEntity(InputIterator &it, const InputIterator &end)
                 double d;
             };
             Entity result;
-            result.type = EntityType::Float;
             for(int i=0; i<8; ++i)
                 ch[i] = *it++;
-            result.f = d;
-            return result;
+            return Entity { EntityType::Float, d };
         }
     case EntityOpCode::Float32:
         {
             Entity result;
-            result.type = EntityType::Float;
-            result.ch[0] = *it++;
-            result.ch[1] = *it++;
-            result.ch[2] = *it++;
-            result.ch[3] = *it++;
+            union{
+                float f;
+                char ch[4];
+            };
+            ch[0] = *it++;
+            ch[1] = *it++;
+            ch[2] = *it++;
+            ch[3] = *it++;
+            result = f;
             return result;
         }
     case EntityOpCode::AtString32:
@@ -145,80 +147,94 @@ Entity ReadEntity(InputIterator &it, const InputIterator &end)
 template<typename OutputIterator>
 void WriteEntity(const Entity &e, OutputIterator &it)
 {
-    switch(e.type)
+    int64_t value;
+    union
+    {
+        double d;
+        char ch[8];
+    };
+    
+    value = (std::int64_t)e;
+    
+    switch(e.Type())
     {
     case EntityType::None:
         *it++ = (unsigned char)EntityOpCode::None;
         break;
     case EntityType::Integer:
-        if(e.i <= 0x7f && e.i>-0x60)
+        if(value <= 0x7f && value>-0x60)
         {
-            WriteInt<1>(e.i, it);
+            WriteInt<1>(value, it);
         }
-        else if(e.i <= 0x7fff && e.i>=-0x8000)
+        else if(value <= 0x7fff && value>=-0x8000)
         {
             *it++ = (unsigned char)EntityOpCode::Int16;
-            WriteInt<2>(e.i, it);
+            WriteInt<2>(value, it);
         }
         else
         {
             *it++ = (unsigned char)EntityOpCode::Int32;
-            WriteInt<4>(e.i, it);
+            WriteInt<4>(value, it);
         }
         break;
     case EntityType::Boolean:
-        *it++ = e.i ? (unsigned char)EntityOpCode::True : (unsigned char)EntityOpCode::False;
+        *it++ = value ? (unsigned char)EntityOpCode::True : (unsigned char)EntityOpCode::False;
         break;
     case EntityType::String:
-        if((unsigned)e.i <= 0xffff)
+        if((unsigned)value <= 0xffff)
         {
             *it++ = (unsigned char)EntityOpCode::String16;
-            WriteInt<2>(e.i, it);
+            WriteInt<2>(value, it);
         }
         else
         {
             *it++ = (unsigned char)EntityOpCode::String32;
-            WriteInt<4>(e.i, it);
+            WriteInt<4>(value, it);
         }
         break;
     case EntityType::AtString:
-        if((unsigned)e.i <= 0xffff)
+        if((unsigned)value <= 0xffff)
         {
             *it++ = (unsigned char)EntityOpCode::AtString16;
-            WriteInt<2>(e.i, it);
+            WriteInt<2>(value, it);
         }
         else
         {
             *it++ = (unsigned char)EntityOpCode::AtString32;
-            WriteInt<4>(e.i, it);
+            WriteInt<4>(value, it);
         }
         break;
-    case EntityType::Float:
-        *it++ = (unsigned char)EntityOpCode::Float32;
-        *it++ = e.ch[0];
-        *it++ = e.ch[1];
-        *it++ = e.ch[2];
-        *it++ = e.ch[3];
+    default:
+            d = (double)e;
+        *it++ = (unsigned char)EntityOpCode::Float64;
+        *it++ = ch[0];
+        *it++ = ch[1];
+        *it++ = ch[2];
+        *it++ = ch[3];
+        *it++ = ch[4];
+        *it++ = ch[5];
+        *it++ = ch[6];
+        *it++ = ch[7];
         break;
     case EntityType::Byte:
         *it++ = (unsigned char)EntityOpCode::Byte;
-        WriteInt<1>(e.i, it);
+        WriteInt<1>(value, it);
         break;
     case EntityType::Char:
-        if((unsigned)e.i <= 0xff)
+        if((unsigned)value <= 0xff)
         {
             *it++ = (unsigned char)EntityOpCode::Char8;
-            WriteInt<1>(e.i, it);
+            WriteInt<1>(value, it);
         }
-        else if((unsigned)e.i <= 0xffff)
+        else if((unsigned)value <= 0xffff)
         {
             *it++ = (unsigned char)EntityOpCode::Char16;
-            WriteInt<2>(e.i, it);
+            WriteInt<2>(value, it);
         }
         else
         {
             *it++ = (unsigned char)EntityOpCode::Char32;
-            WriteInt<4>(e.i, it);
+            WriteInt<4>(value, it);
         }
         break;
     }

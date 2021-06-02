@@ -1,7 +1,45 @@
 # Work plan
 
-- A spurious `0` appears in `recursion6.dl`
-  - It's been called twice: The second time should be the same right?
+Implement semi-naive recursion:
+- Implement the new optimization SemiNaive
+- Determine how predicates are called
+  - 
+- Flag certain predicates as semi-naive.
+- 
+- Determine whether the predicate is recursive
+
+Entites to encode integers as: union {double, int64}
+
+String length: 
+
+# Entity encoding
+
+Use doubles. Have 52-bit integers.
+This is to expand the integer space. The first two bytes
+
+struct IntegerEncoding
+{
+  uint16_t type:8;   // encodes NAN values
+  uint64_t value:56; 
+};
+Use qnan to indicate a 64-bit value.
+
+# Built-in predicates
+
+- String predicates (See list below).
+- Query predicate `query`
+- Error `error`
+- Print `print`
+- Exit `exit`
+- Evaluation
+  - `expected-results`
+  - `evaluation-step-limit`
+  - Memory limit get/set `evaluation-memory-limit`
+  - Time limit get/set `evaluation-timeout`
+  - Optimization options
+    - optimization-level get/set `optimization-level`
+- Modules for builtins?
+  `logical:length` for string length??
 
 - Query optimization rules
 ```
@@ -13,10 +51,43 @@ if optimization-level is 0 then step-limit is 1000.
 # Newtypes or record types
 
 ```
-new person P has name "Fred", age 20.
+new person has name "Fred", age 20.
 ```
 
+The idea of `new` is to create new entities.
+
+```
+new parameter has name n, index i, parent f if 
+  function f has parameter n, index i.
+```
+
+Implementation: There is a new entity type called `newtype` that 
+
+predicate `has:name:index:parent`
+
+Binary format of newtypes? Not stored.
+
+
 # Strings
+List of predicates:
+  - `has:length`
+  - `has:substring:from:to`
+  - `has:lowercase`, `has:uppercase`
+  - `has:regex-match`
+  - `has:char:at`
+
+
+Work plan:
+- Builtin predicates for attributes:
+  - string s has length 12.
+  - string s has length=12
+  - `string s has length < 12`
+- What happens when you define a builtin predicate???
+  `@1 has length 1.` then we query what strings have length??
+  `_ has length 5.`
+  With no types, we have
+
+
   - substring
   - find, indexof.
   - matches
