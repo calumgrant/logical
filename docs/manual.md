@@ -110,3 +110,33 @@ Note that `large-mouse "Mickey"` and `large mouse "Mickey"` mean different thing
 ## Transitive closures
 
 Because the transitive closure pattern is so common, Logical has introduced a special keyword for it.
+
+## New entities
+The `new` keyword creates new entities in the database. This is unlike rules, which only use existing entities, or facts that use hard-coded entities. New entities offer a convenient way to package together a set of attributes into a single entity.
+
+`new` can be used in facts as follows:
+```
+new person has name "Fred", age 99.
+```
+This creates a new `person` entity that is guaranteed to be unique, and there is no need to synthesise an identifier for it.
+
+`new` can also be used in rules, for example
+
+```
+new woman has name n, age a if person p has name n, age a, gender "female" and a>=18.
+
+new parameter has name n, function f, index i if function f has parameter-name n, parameter-index i.
+
+new number has value 0.
+new number has value v+1, predecessor p if number p has value v and v<10.
+
+new location has
+    file f,
+    start-line l1,
+    start-column c1,
+    end-line l2,
+    end-column c2
+if
+    function _ has file f, start-line l1, start-column c1, end-line l2, end-column c2.
+```
+As you can see, `new` entities can be defined recursively.

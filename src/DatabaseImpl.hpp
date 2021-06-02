@@ -55,6 +55,8 @@ public:
     Relation &GetQueryRelation() const override;
     
     persist::shared_memory & Storage() override;
+    
+    Entity NewEntity() override;
 
 private:
     Optimizer & optimizer;

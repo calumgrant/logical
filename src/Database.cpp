@@ -29,6 +29,8 @@ public:
 
     std::shared_ptr<Relation> queryPredicate;
     
+    std::atomic<std::int64_t> entityCounter = 0;
+    
     bool initialized = false;
 };
 
@@ -129,6 +131,10 @@ void Database::Print(const Entity &e, std::ostream &os) const
     case EntityType::Char:
     case EntityType::Byte:
         os << (std::int64_t)e;
+        break;
+    case EntityType::NewType:
+        // I don't think it makes sense to output the actual identifier here.
+        os << "*"; //  << (std::int64_t)e;
         break;
     }
 }
@@ -654,4 +660,9 @@ persist::shared_memory &DatabaseImpl::Storage()
 Optimizer & DatabaseImpl::GetOptimizer() const
 {
     return optimizer;
+}
+
+Entity DatabaseImpl::NewEntity()
+{
+    return Entity { EntityType::NewType, datastore->entityCounter++ };
 }

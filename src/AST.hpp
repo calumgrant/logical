@@ -324,11 +324,16 @@ namespace AST
         EntityIsPredicate(Entity* entity, UnaryPredicateList* list, UnaryPredicateList * p);
     };
 
-
     class EntityHasAttributes : public EntityClause
     {
     public:
         EntityHasAttributes(UnaryPredicateList * unarypredicatesOpt, Entity*entity, AttributeList*attributes, HasType has);
+    };
+
+    class NewEntity : public EntityClause
+    {
+    public:
+        NewEntity(UnaryPredicate * pred, AttributeList * attributes);
     };
 
     class EntityList : public Node

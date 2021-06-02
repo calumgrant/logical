@@ -31,6 +31,7 @@ public:
     Entity CreateFloat(float f) const { return Entity { EntityType::Float, f}; }
     Entity CreateAt(const string_type &s) { return Entity { EntityType::AtString, GetAtStringId(s) }; }
     Entity Create(bool b) const { return Entity { EntityType::Boolean, b}; }
+    virtual Entity NewEntity() =0;
     
     Entity AddStrings(StringId id1, StringId id2);
     

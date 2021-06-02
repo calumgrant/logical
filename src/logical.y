@@ -67,7 +67,7 @@ typedef void * yyscan_t;
 %token tok_identifier tok_atstring tok_string tok_integer tok_float tok_underscore
 %token tok_if tok_and tok_has tok_or tok_not tok_a tok_an tok_no tok_is tok_dot tok_then tok_find tok_sum tok_in tok_all
 %token tok_open tok_close tok_comma tok_colondash tok_semicolon tok_equals tok_notequals tok_questiondash tok_lt tok_gt tok_lteq tok_gteq
-%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count tok_reaches
+%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count tok_reaches tok_new
 
 %%
 
@@ -284,6 +284,10 @@ baseclause:
         $$ = new AST::EntityHasAttributes(nullptr, $1, $3, HasType::has);
     }
 |   tok_open clause tok_close { $$=$2; }
+|   tok_new unarypredicate tok_has attributes
+    {
+        $$ = new AST::NewEntity($2, $4);
+    }
 ;
 
 unarypredicatelist:

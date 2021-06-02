@@ -55,6 +55,14 @@ void AST::UnaryPredicateList::Append(UnaryPredicate * p)
 
 void AST::EntityClause::AssertFacts(Database &db) const
 {
+    if(!entity)
+    {
+        auto e = db.NewEntity();
+        db.GetUnaryRelation(predicates->list[0]->nameId)->Add(&e);
+        attributes->Assert(db, e);
+        return;
+    }
+    
     auto v = entity->IsValue();
     if(v)
     {
@@ -566,4 +574,8 @@ CompoundName AST::AttributeList::GetCompoundName() const
     name.reserve(attributes.size());
     for(auto &a : attributes) name.push_back(a.predicate->nameId);
     return CompoundName(std::move(name));
+}
+
+AST::NewEntity::NewEntity(UnaryPredicate * predicate, AttributeList * attributes) : EntityClause(nullptr, new UnaryPredicateList(predicate), nullptr, attributes)
+{
 }

@@ -1,0 +1,5 @@
+
+new person has name "Fred", gender @m.
+new person has name "Mary", gender @f.
+
+find person _ has name _, gender _.

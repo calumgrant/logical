@@ -29,6 +29,7 @@ has     return tok_has;
 if      return tok_if;
 in      return tok_in;
 is      return tok_is;
+new     return tok_new;
 no      return tok_no;
 not     return tok_not;
 or      return tok_or;

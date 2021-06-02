@@ -3,26 +3,17 @@
 Implement semi-naive recursion:
 - Implement the new optimization SemiNaive
 - Determine how predicates are called
-  - 
 - Flag certain predicates as semi-naive.
-- 
 - Determine whether the predicate is recursive
-
-Entites to encode integers as: union {double, int64}
 
 String length: 
 
-# Entity encoding
+Newtypes:
+- New evaluation type CreateNew.
+  - Creates a unique entity if and only if the insertion into the table
+  was successful.
+  - The database keeps a counter.
 
-Use doubles. Have 52-bit integers.
-This is to expand the integer space. The first two bytes
-
-struct IntegerEncoding
-{
-  uint16_t type:8;   // encodes NAN values
-  uint64_t value:56; 
-};
-Use qnan to indicate a 64-bit value.
 
 # Built-in predicates
 

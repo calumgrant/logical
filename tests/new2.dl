@@ -1,0 +1,5 @@
+
+new person has name "Fred", gender @m.
+new person has name "Mary", gender @f.
+
+new woman has name n if person _ has name n, gender @f.
