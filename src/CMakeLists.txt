@@ -123,5 +123,6 @@ add_test(NAME Query1 COMMAND logical ../tests/query1.dl)
 
 add_test(NAME new1 COMMAND logical ../tests/new1.dl)
 add_test(NAME new2 COMMAND logical ../tests/new2.dl)
+add_test(NAME new3 COMMAND logical ../tests/new3.dl)
 
 add_test(NAME Reaches1 COMMAND logical ../tests/reaches1.dl)

@@ -358,22 +358,24 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
         
         std::shared_ptr<Evaluation> e = std::make_shared<Writer>(relation, slots);
 
-        for(auto &a : attributes->attributes)
-        {
-            e = a.entityOpt->Compile(db, c, e);
-        }
-        
         if(result)
             result = std::make_shared<OrEvaluation>(result, e);
         else
             result = e;
 
+        
         if(!entity)
         {
             result = std::make_shared<CreateNew>(db, slot, result);
             slots.erase(slots.begin(), slots.begin()+1);  // Ugly and slow
             result = std::make_shared<DeduplicateV>(db, slots, result);
         }
+        
+        for(auto &a : attributes->attributes)
+        {
+            result = a.entityOpt->Compile(db, c, result);
+        }
+
     }
 
     if(!result) result = std::make_shared<NoneEvaluation>();
