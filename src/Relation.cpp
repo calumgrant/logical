@@ -82,7 +82,7 @@ void SpecialPredicate::QueryDelta(Entity * row, int columns, Receiver &v)
 
 Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches) :
     rulesRun(false), name(name), database(db),
-    evaluating(false), recursive(false), rules(db.Storage()),
+    evaluating(false), rules(db.Storage()),
     attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage()),
     reaches(reaches)
 {
@@ -91,7 +91,7 @@ Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches)
 
 Predicate::Predicate(Database &db, const CompoundName & cn, ::Arity arity) :
     rulesRun(false), name(cn.parts[0]), database(db),
-    evaluating(false), recursive(false),
+    evaluating(false),
     compoundName(cn), rules(db.Storage()),
     attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage()),
     reaches(false)
@@ -130,33 +130,38 @@ void Predicate::MakeDirty()
 
 void Predicate::RunRules()
 {
+    AnalysePredicate(database, *this);
+    
+    
     if(!loop || loopResults == loop->numberOfResults)
         if(rulesRun) return;
-    
-    AnalysePredicate(database, *this);
     
     if(evaluating)
     {
         // Check we are in a recursive loop, otherwise something has gone badly wrong.
         assert(loop);
-        
-        if(!recursive)
-        {
-            recursive = true;
-        }
         return;
     }
-        
+
+
     evaluating = true;
-    recursive = false;
 
-    table->FirstIteration();
-
-    for(auto & p : rules)
+    // std::cout << "Predicate ";
+    // Evaluation::OutputRelation(std::cout, database, *this);
+    // std::cout << " first iteration\n";
+    
+    if(!runBaseCase)
     {
-        p->Evaluate(nullptr);
+        runBaseCase = true;
+        table->FirstIteration();
+
+        for(auto & p : rules)
+        {
+            p->Evaluate(nullptr);
+        }
     }
     table->NextIteration();
+    runBaseCase = true;
 
     if(loop)
     {
@@ -165,7 +170,10 @@ void Predicate::RunRules()
         bool resultsFound;
         do
         {
-            recursive = false;
+            // std::cout << "Predicate ";
+            // Evaluation::OutputRelation(std::cout, database, *this);
+            // std::cout << " next iteration\n";
+
             loopSize = loop->numberOfResults;
             for(auto & p : rules)
             {
@@ -181,7 +189,7 @@ void Predicate::RunRules()
     }
 
     // Surely not needed any more?
-    table->NextIteration();
+    // table->NextIteration();
 
     evaluating = false;
     rulesRun = true;

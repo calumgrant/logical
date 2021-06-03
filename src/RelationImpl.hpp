@@ -40,13 +40,13 @@ public:
 private:
     bool rulesRun = false;
     const bool reaches;
+    bool runBaseCase = false;
     
     std::vector< std::shared_ptr<Evaluation>, persist::allocator<std::shared_ptr<Evaluation>> > rules;
     RelationId name;
     
     // The number of
     bool evaluating;
-    bool recursive;
     std::unordered_set<std::shared_ptr<Relation>, std::hash<std::shared_ptr<Relation>>, std::equal_to<std::shared_ptr<Relation>>, persist::allocator<std::shared_ptr<Relation>>> attributes;
     Size loopResults = 0;
 protected:

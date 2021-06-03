@@ -19,14 +19,14 @@ public:
     }
     
 private:
-    std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Relation & node, bool parity) const
+    std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Relation & node, bool parity, const std::shared_ptr<RecursiveLoop> & existingLoop) const
     {
         if(node.visited)
         {
             node.recursive = true;
             
             if(!node.loop)
-                node.loop = std::make_shared<RecursiveLoop>();
+                node.loop = existingLoop ? existingLoop : std::make_shared<RecursiveLoop>();
             
             if(node.parity != parity)
             {
@@ -36,30 +36,40 @@ private:
             return node.loop;
         }
         
+        if(node.analysedForRecursion)
+            return node.loop;
+        
+        assert(!node.analysedForRecursion);
         node.visited = true;
         node.analysedForRecursion = true;
         node.parity = parity;
-        
-        std::shared_ptr<RecursiveLoop> loop;
-            
+        bool hasRecursiveBranch = false;
+
+        assert(!node.recursive);
+        assert(!node.loop);
+
         node.VisitRules([&](Evaluation & eval)
         {
-            // What happens if we get multiple recursive paths??
-            auto l = AnalyseRecursion(database, eval, parity);
+            auto l = AnalyseRecursion(database, eval, parity, node.loop);
             if( l )
-            {
-                assert(!loop || l==loop);
                 node.loop = l;
-            }
+            
+            if(eval.onRecursivePath) hasRecursiveBranch = true;
         });
         
         // TODO: Scope-guard this
         node.visited = false;
-            
-        return node.recursive ? nullptr : loop;
+
+        if(node.recursive)
+        {
+            assert(node.loop);
+            assert(hasRecursiveBranch);
+        }
+
+        return node.recursive ? nullptr : node.loop;
     }
 
-    std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Evaluation & node, bool parity) const
+    std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Evaluation & node, bool parity, const std::shared_ptr<RecursiveLoop> & existingLoop) const
     {
         auto next1 = node.GetNext();
         auto next2 = node.GetNext2();
@@ -69,7 +79,7 @@ private:
         
         if(relation)
         {
-            if(!!(loop = AnalyseRecursion(database, *relation, parity)))
+            if((bool)(loop = AnalyseRecursion(database, *relation, parity, existingLoop)))
             {
                 node.onRecursivePath = true;
                 node.readIsRecursive = true;
@@ -78,7 +88,7 @@ private:
         
         if(next1)
         {
-            if(auto l = AnalyseRecursion(database, *next1, node.NextIsNot() ? !parity : parity))
+            if(auto l = AnalyseRecursion(database, *next1, node.NextIsNot() ? !parity : parity, loop))
             {
                 node.onRecursivePath = true;
                 assert( !loop || loop == l );
@@ -88,13 +98,15 @@ private:
         
         if(next2)
         {
-            if(auto l = AnalyseRecursion(database, *next2, parity))
+            if(auto l = AnalyseRecursion(database, *next2, parity, loop))
             {
                 node.onRecursivePath = true;
                 assert( !loop || loop == l );
                 loop = l;
             }
         }
+        
+        assert((bool)loop == node.onRecursivePath);
             
         return loop;
     }
@@ -127,7 +139,7 @@ private:
     void AnalyseRecursion(Database & database, Relation & root) const
     {
         if(!root.analysedForRecursion)
-            AnalyseRecursion(database, root, true);
+            AnalyseRecursion(database, root, true, std::shared_ptr<RecursiveLoop>());
         
         AnalyseRecursiveReads(root);
     }

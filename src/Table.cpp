@@ -66,6 +66,11 @@ bool TableImpl::NextIteration()
     bool moreResults = deltaEnd < data.size();
 
     //std::cout << "Next iteration: deltaStart = " << deltaStart << ", deltaEnd = " << deltaEnd << ", size = " << data.size() << std::endl;
+
+    for(auto & index : indexes)
+    {
+        assert(index.second.size() == deltaEnd/arity);
+    }
     
     deltaStart = deltaEnd;
     deltaEnd = data.size();
@@ -77,6 +82,12 @@ bool TableImpl::NextIteration()
             index.second.insert(s);
         }
     }
+
+    for(auto & index : indexes)
+    {
+        assert(index.second.size() == deltaEnd/arity);
+    }
+
     return moreResults;
 }
 
@@ -85,6 +96,7 @@ TableImpl::map_type & TableImpl::GetIndex(int mask)
     auto i = indexes.find(mask);
     if(i != indexes.end())
     {
+        assert(i->second.size() == deltaEnd/arity);
         return i->second;
     }
     
@@ -98,7 +110,8 @@ TableImpl::map_type & TableImpl::GetIndex(int mask)
     {
         index.insert(i);
     }
-    
+    assert(index.size() == deltaEnd/arity);
+
     return index;
 }
 
@@ -190,9 +203,11 @@ void TableImpl::QueryDelta(Entity * row, int columns, Receiver &v)
 
 void TableImpl::FirstIteration()
 {
+    assert(deltaEnd == 0);
+    NextIteration();
     //assert(deltaEnd == data.size());
-    deltaStart = 0;
-    deltaEnd = data.size();
+//    deltaStart = 0;
+//    deltaEnd = data.size();
     //std::cout << "First iteration: deltaStart = " << deltaStart << ", deltaEnd = " << deltaEnd << ", size = " << data.size() << std::endl;
 }
 

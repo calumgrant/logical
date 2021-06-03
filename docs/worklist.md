@@ -1,5 +1,16 @@
 # Work plan
 
+- Bug that a recursive predicate has no recursive branches. How???
+- Why does enabling deltas not save steps??
+
+- Optimization: delete tables when finished.
+- Garbage collection: 
+
+Newtypes:
+- Performance bug in `performance/new3.dl` - too much memory used.
+- assertion failed
+- Odd additional evaluations that make no sense.
+
 Implement semi-naive recursion:
 - Implement the new optimization SemiNaive
 - Determine how predicates are called
@@ -19,6 +30,10 @@ What does it compile to?
     Write _0 into person
     Write (_0,_1,_3) into has:name:gender
 
+- Analysis: Query types. For each relation, store a set of how the relation would be indexed, ahead of time.
+- After the rules are run, clean them up to save memory.
+- Optimization: Merge heads.
+- Optimization: Parallelize.
 
 # Built-in predicates
 

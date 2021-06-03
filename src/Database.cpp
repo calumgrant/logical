@@ -134,7 +134,7 @@ void Database::Print(const Entity &e, std::ostream &os) const
         break;
     case EntityType::NewType:
         // I don't think it makes sense to output the actual identifier here.
-        os << "*"; //  << (std::int64_t)e;
+        os << "ν"; //  << (std::int64_t)e;
         break;
     }
 }
