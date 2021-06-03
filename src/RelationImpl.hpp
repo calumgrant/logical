@@ -96,3 +96,13 @@ public:
     void Add(const Entity *row) override;
 };
 
+class Strlen : public Predicate
+{
+public: 
+    Strlen(Database &db);
+    void AddRule(const std::shared_ptr<Evaluation> &) override;
+    std::size_t Count() override;
+    void Query(Entity *row, int columns, Receiver&v) override;
+    void QueryDelta(Entity*row, int columns, Receiver&v) override;
+    int Arity() const override;
+};

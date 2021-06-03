@@ -132,7 +132,6 @@ void Predicate::RunRules()
 {
     AnalysePredicate(database, *this);
     
-    
     if(!loop || loopResults == loop->numberOfResults)
         if(rulesRun) return;
     
@@ -187,9 +186,6 @@ void Predicate::RunRules()
         while(resultsFound);
         loopResults = loop->numberOfResults;
     }
-
-    // Surely not needed any more?
-    // table->NextIteration();
 
     evaluating = false;
     rulesRun = true;
@@ -310,3 +306,40 @@ Database & Predicate::GetDatabase() const
 {
     return database;
 }
+
+Strlen::Strlen(Database &db) : Predicate(db, std::vector<int> { db.GetStringId("strlen") }, 2)
+{
+}
+
+void Strlen::AddRule(const std::shared_ptr<Evaluation> &)
+{
+    
+}
+
+std::size_t Strlen::Count()
+{
+    return 0;
+}
+
+void Strlen::Query(Entity *row, int columns, Receiver&v)
+{
+    switch(columns)
+    {
+        case 1:
+            if(row[0].IsString())
+            {
+                row[1] = Entity(EntityType::Integer, (std::int64_t)database.GetString((std::int64_t)row[0]).size());
+                v.OnRow(row);
+            }
+            break;
+        case 3:
+            if(row[0].IsString() && row[1].IsInt() && (std::int64_t)row[1] == database.GetString((std::int64_t)row[0]).size())
+            {
+                v.OnRow(row);
+            }
+    }
+}
+
+void Strlen::QueryDelta(Entity*row, int columns, Receiver&v) {}
+
+int Strlen::Arity() const { return 2; }

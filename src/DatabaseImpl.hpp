@@ -72,4 +72,6 @@ private:
     
     // -1 means there is no expected value.
     int expectedResults = -1;
+    
+    void AddRelation(const std::shared_ptr<Relation> & rel);
 };

@@ -90,14 +90,17 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
         datastore->queryPredicate = GetUnaryRelation(queryId);
         
         int print = GetStringId("print");
-        datastore->unaryRelations[print] = allocate_shared<PrintRelation>(datafile, *this, print);
-        datastore->unaryRelations[GetStringId("error")] = allocate_shared<ErrorRelation>(datafile, *this);
+        AddRelation(allocate_shared<PrintRelation>(datafile, *this, print));
+        AddRelation(allocate_shared<ErrorRelation>(datafile, *this));
         
         RelationId expected_results = GetStringId("expected-results");
-        datastore->unaryRelations[expected_results] = allocate_shared<ExpectedResults>(datafile, *this, expected_results);
+        AddRelation(allocate_shared<ExpectedResults>(datafile, *this, expected_results));
         
         RelationId evaluation_step_limit = GetStringId("evaluation-step-limit");
-        datastore->unaryRelations[evaluation_step_limit] = allocate_shared<EvaluationStepLimit>(datafile, *this, evaluation_step_limit);
+        AddRelation(allocate_shared<EvaluationStepLimit>(datafile, *this, evaluation_step_limit));
+        
+        AddRelation(allocate_shared<Strlen>(datafile, *this));
+
         datastore->initialized = true;
     }
 }
@@ -665,4 +668,22 @@ Optimizer & DatabaseImpl::GetOptimizer() const
 Entity DatabaseImpl::NewEntity()
 {
     return Entity { EntityType::NewType, datastore->entityCounter++ };
+}
+
+void DatabaseImpl::AddRelation(const std::shared_ptr<Relation> & rel)
+{
+    switch(rel->Arity())
+    {
+        case 1:
+            datastore->unaryRelations[rel->Name()] = rel;
+            datastore->relations[std::make_pair(rel->Name(),1)] = rel;
+            break;
+        case 2:
+            datastore->binaryRelations[rel->Name()] = rel;
+            datastore->relations[std::make_pair(rel->Name(),2)] = rel;
+            // Fall through to the next case
+        default:
+            datastore->tables[*rel->GetCompoundName()] = rel;
+            break;
+    }
 }

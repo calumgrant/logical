@@ -109,7 +109,13 @@ Note that `large-mouse "Mickey"` and `large mouse "Mickey"` mean different thing
 
 ## Transitive closures
 
-Because the transitive closure pattern is so common, Logical has introduced a special keyword for it.
+Because the transitive closure pattern is so common, Logical has introduced a special keyword for it. `reaches`
+
+Grammar:
+
+> reaches-clause:
+>     unary-predicate-list entity *reaches* binarypredicate entity
+
 
 ## New entities
 The `new` keyword creates new entities in the database. This is unlike rules, which only use existing entities, or facts that use hard-coded entities. New entities offer a convenient way to package together a set of attributes into a single entity.
@@ -140,3 +146,17 @@ if
     function _ has file f, start-line l1, start-column c1, end-line l2, end-column c2.
 ```
 As you can see, `new` entities can be defined recursively.
+
+If there are multiple rules, then this will define multiple entities, even with the same attributes.
+```
+new person has name "Fred".
+new person has name "Fred".
+
+new file has name f, parent d if directory d has file f.
+
+new person has name n+" Smith" if person _ has name "Fred".
+```
+
+# Grammar
+
+## Lexical analysis

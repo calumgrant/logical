@@ -1,15 +1,36 @@
 # Work plan
 
-- Bug that a recursive predicate has no recursive branches. How???
-- Why does enabling deltas not save steps??
+String length
+
+```
+  Str has strlen 5.
+  Str has character 'c', position 12.
+  str has substring "abc", position 12, length 3.
+
+  // Now this predicate is also unbound.
+  str is a short string if str has strlen n and n<5.
+```
+The new predicate names are: `has:length` and `has:character:position`. These are simply builtin predicates. Need to avoid creating the projections to and from these predicates. They also have special binding rules that we need to consider. We have a non-binding column in general.
+  - `int Relation::Bind(int columns)`
+  - Report errors if binding is impossible.
+
+What happens if you try to add data to a builtin predicate??? Is this the same as a rule/semi-naive evaluation???
+  has:length:3
+
+How does `has:character:position` map to `has:character`? They need to be separate predicates.
+
+```
+
+```
+
+
+
 
 - Optimization: delete tables when finished.
 - Garbage collection: 
 
 Newtypes:
 - Performance bug in `performance/new3.dl` - too much memory used.
-- assertion failed
-- Odd additional evaluations that make no sense.
 
 Implement semi-naive recursion:
 - Implement the new optimization SemiNaive
@@ -19,21 +40,14 @@ Implement semi-naive recursion:
 
 String length: 
 
-Newtypes:
-- New evaluation type CreateNew.
-  - Creates a unique entity if and only if the insertion into the table
-  was successful.
-  - The database keeps a counter.
-
-What does it compile to?
-  Create new person _0 with (_1,_3) ->
-    Write _0 into person
-    Write (_0,_1,_3) into has:name:gender
-
 - Analysis: Query types. For each relation, store a set of how the relation would be indexed, ahead of time.
 - After the rules are run, clean them up to save memory.
 - Optimization: Merge heads.
 - Optimization: Parallelize.
+
+- Predicate: clear "all". To run multiple tests at the same time?
+
+- Optimization: Compressed table type. Only for streaming. Use deltas or something.
 
 # Built-in predicates
 
