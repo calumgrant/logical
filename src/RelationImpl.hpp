@@ -96,13 +96,34 @@ public:
     void Add(const Entity *row) override;
 };
 
-class Strlen : public Predicate
+class BuiltinFnPredicate : public Predicate
+{
+protected:
+    BuiltinFnPredicate(Database &db, const CompoundName &name);
+    void QueryDelta(Entity*row, int columns, Receiver&v) override;
+    int Arity() const override;
+    void AddRule(const std::shared_ptr<Evaluation> &) override;
+    std::size_t Count() override;
+    const int arity;
+};
+
+class Strlen : public BuiltinFnPredicate
 {
 public: 
     Strlen(Database &db);
-    void AddRule(const std::shared_ptr<Evaluation> &) override;
-    std::size_t Count() override;
     void Query(Entity *row, int columns, Receiver&v) override;
-    void QueryDelta(Entity*row, int columns, Receiver&v) override;
-    int Arity() const override;
+};
+
+class Lowercase : public BuiltinFnPredicate
+{
+public:
+    Lowercase(Database &db);
+    void Query(Entity *row, int columns, Receiver&v) override;
+};
+
+class Uppercase : public BuiltinFnPredicate
+{
+public:
+    Uppercase(Database &db);
+    void Query(Entity *row, int columns, Receiver&v) override;
 };

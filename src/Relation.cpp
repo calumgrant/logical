@@ -307,15 +307,15 @@ Database & Predicate::GetDatabase() const
     return database;
 }
 
-Strlen::Strlen(Database &db) : Predicate(db, std::vector<int> { db.GetStringId("strlen") }, 2)
+Strlen::Strlen(Database &db) : BuiltinFnPredicate(db, std::vector<int> { db.GetStringId("strlen") })
 {
 }
 
-void Strlen::AddRule(const std::shared_ptr<Evaluation> &)
+void BuiltinFnPredicate::AddRule(const std::shared_ptr<Evaluation> &)
 {
 }
 
-std::size_t Strlen::Count()
+std::size_t BuiltinFnPredicate::Count()
 {
     return 0;
 }
@@ -336,9 +336,81 @@ void Strlen::Query(Entity *row, int columns, Receiver&v)
             {
                 v.OnRow(row);
             }
+            break;
     }
 }
 
-void Strlen::QueryDelta(Entity*row, int columns, Receiver&v) {}
+void BuiltinFnPredicate::QueryDelta(Entity*row, int columns, Receiver&v) {}
 
-int Strlen::Arity() const { return 2; }
+int BuiltinFnPredicate::Arity() const { return arity; }
+
+BuiltinFnPredicate::BuiltinFnPredicate(Database & database, const CompoundName & cn) : Predicate(database, cn, cn.parts.size()+1), arity(cn.parts.size()+1)
+{
+}
+
+Lowercase::Lowercase(Database &db) : BuiltinFnPredicate(db, std::vector<int> { db.GetStringId("lowercase") })
+{
+}
+
+Uppercase::Uppercase(Database &db) : BuiltinFnPredicate(db, std::vector<int> { db.GetStringId("uppercase") })
+{
+}
+
+void Lowercase::Query(Entity *row, int columns, Receiver&v)
+{
+    switch(columns)
+    {
+        case 1:
+            if(row[0].IsString())
+            {
+                auto str = database.GetString((std::int64_t)row[0]);
+                for(auto &c : str)
+                    c = std::tolower(c);
+                row[1] = database.CreateString(str);
+                v.OnRow(row);
+            }
+            break;
+        case 3:
+            if(row[0].IsString() && row[1].IsString())
+            {
+                auto str = database.GetString((std::int64_t)row[0]);
+                for(auto &c : str)
+                    c = std::tolower(c);
+                
+                if(database.GetStringId(str) == (std::int64_t)row[1])
+                    v.OnRow(row);
+            }
+            break;
+    }
+}
+
+void Uppercase::Query(Entity *row, int columns, Receiver&v)
+{
+    switch(columns)
+    {
+        case 1:
+            if(row[0].IsString())
+            {
+                auto str = database.GetString((std::int64_t)row[0]);
+                for(auto &c : str)
+                    c = std::toupper(c);
+                row[1] = database.CreateString(str);
+                v.OnRow(row);
+            }
+            break;
+        case 3:
+            if(row[0].IsString() && row[1].IsString())
+            {
+                auto str = database.GetString((std::int64_t)row[0]);
+                for(auto &c : str)
+                    c = std::toupper(c);
+                
+                if(database.GetStringId(str) == (std::int64_t)row[1])
+                    v.OnRow(row);
+            }
+            break;
+    }
+
+}
+
+

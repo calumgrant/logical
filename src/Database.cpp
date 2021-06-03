@@ -100,6 +100,8 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
         AddRelation(allocate_shared<EvaluationStepLimit>(datafile, *this, evaluation_step_limit));
         
         AddRelation(allocate_shared<Strlen>(datafile, *this));
+        AddRelation(allocate_shared<Lowercase>(datafile, *this));
+        AddRelation(allocate_shared<Uppercase>(datafile, *this));
 
         datastore->initialized = true;
     }

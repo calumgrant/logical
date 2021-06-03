@@ -121,11 +121,12 @@ add_test(NAME Projection4 COMMAND logical ../tests/projection4.dl)
 
 add_test(NAME Query1 COMMAND logical ../tests/query1.dl)
 
-add_test(NAME new1 COMMAND logical ../tests/new1.dl)
-add_test(NAME new2 COMMAND logical ../tests/new2.dl)
-add_test(NAME new3 COMMAND logical ../tests/new3.dl)
-add_test(NAME new4 COMMAND logical ../tests/new4.dl)
+add_test(NAME New1 COMMAND logical ../tests/new1.dl)
+add_test(NAME New2 COMMAND logical ../tests/new2.dl)
+add_test(NAME New3 COMMAND logical ../tests/new3.dl)
+add_test(NAME New4 COMMAND logical ../tests/new4.dl)
 
-add_test(NAME strlen1 COMMAND logical ../tests/strlen1.dl)
+add_test(NAME Strlen1 COMMAND logical ../tests/strlen1.dl)
+add_test(NAME Strings1 COMMAND logical ../tests/strings1.dl)
 
 add_test(NAME Reaches1 COMMAND logical ../tests/reaches1.dl)
