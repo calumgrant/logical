@@ -313,7 +313,6 @@ Strlen::Strlen(Database &db) : Predicate(db, std::vector<int> { db.GetStringId("
 
 void Strlen::AddRule(const std::shared_ptr<Evaluation> &)
 {
-    
 }
 
 std::size_t Strlen::Count()

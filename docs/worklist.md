@@ -1,9 +1,6 @@
 # Work plan
 
-String length
-
 ```
-  Str has strlen 5.
   Str has character 'c', position 12.
   str has substring "abc", position 12, length 3.
 
