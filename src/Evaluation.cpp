@@ -1227,12 +1227,6 @@ std::size_t Evaluation::GetGlobalCallCountLimit()
     return globalCallCountLimit;
 }
 
-Relation * Evaluation::ReadsRelation() const { return nullptr; }
-
-Evaluation * Evaluation::GetNext() const { return nullptr; }
-
-Evaluation * Evaluation::GetNext2() const { return nullptr; }
-
 ReaderEvaluation::ReaderEvaluation(const std::shared_ptr<Relation> & relation, const EvaluationPtr & next) : relation(relation), ChainedEvaluation(next)
 {
 }
@@ -1245,31 +1239,10 @@ ChainedEvaluation::ChainedEvaluation(const EvaluationPtr & next) : next(next)
 {
 }
 
-Evaluation * OrEvaluation::GetNext() const { return &*left; }
-
-Evaluation * OrEvaluation::GetNext2() const { return &*right; }
-
-Relation * ReaderEvaluation::ReadsRelation() const { return &*relation.lock(); }
-
-Evaluation * ChainedEvaluation::GetNext() const { return &*next; }
-
 OrEvaluationForNot::OrEvaluationForNot(const std::shared_ptr<Evaluation> &left, const std::shared_ptr<Evaluation> &right) : OrEvaluation(left, right)
 {
 }
 
-bool OrEvaluationForNot::NextIsNot() const { return true; }
-
-bool Evaluation::NextIsNot() const { return false; }
-
-std::shared_ptr<Evaluation> Evaluation::GetNextPtr() const { return std::shared_ptr<Evaluation>(); }
-
-std::shared_ptr<Evaluation> ChainedEvaluation::GetNextPtr() const { return next; }
-
-std::shared_ptr<Evaluation> OrEvaluation::GetNextPtr() const { return left; }
-
-std::shared_ptr<Evaluation> OrEvaluation::GetNext2Ptr() const { return right; }
-
-std::shared_ptr<Evaluation> Evaluation::GetNext2Ptr() const { return std::shared_ptr<Evaluation>(); }
 
 std::shared_ptr<Evaluation> Evaluation::WithNext(const EvaluationPtr & next) const
 {
@@ -1363,4 +1336,34 @@ void DeduplicateV::Explain(Database &db, std::ostream & os, int indent) const
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
+}
+
+void Evaluation::VisitReads(const std::function<void(std::weak_ptr<Relation>&, int)> &)
+{
+}
+
+void Evaluation::VisitNext(const std::function<void(EvaluationPtr&, bool)> &)
+{
+}
+
+void ChainedEvaluation::VisitNext(const std::function<void(EvaluationPtr&, bool)> & fn)
+{
+    fn(next, false);
+}
+
+void OrEvaluation::VisitNext(const std::function<void(EvaluationPtr&, bool)> & fn)
+{
+    fn(left, false);
+    fn(right, false);
+}
+
+void OrEvaluationForNot::VisitNext(const std::function<void(EvaluationPtr&, bool)> & fn)
+{
+    fn(left, true);
+    fn(right, false);
+}
+
+void ReaderEvaluation::VisitReads(const std::function<void(std::weak_ptr<Relation> & relation, int)> & fn)
+{
+    fn(relation, mask);
 }

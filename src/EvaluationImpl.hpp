@@ -4,8 +4,7 @@
 class ChainedEvaluation : public Evaluation
 {
 public:
-    Evaluation * GetNext() const override;
-    std::shared_ptr<Evaluation> GetNextPtr() const override;
+    void VisitNext(const std::function<void(std::shared_ptr<Evaluation>&, bool)> &f) override;
 
 protected:
     ChainedEvaluation(const EvaluationPtr & next);
@@ -16,10 +15,11 @@ protected:
 class ReaderEvaluation : public ChainedEvaluation
 {
 public:
-    Relation * ReadsRelation() const override;
+    void VisitReads(const std::function<void(std::weak_ptr<Relation>&rel, int)> & fn) override;
 protected:
     ReaderEvaluation(const std::shared_ptr<Relation> & relation, const EvaluationPtr & next);
     std::weak_ptr<Relation> relation;
+    int mask;
 };
 
 class WriterEvaluation : public Evaluation
@@ -108,19 +108,16 @@ public:
     OrEvaluation(const std::shared_ptr<Evaluation> &left, const std::shared_ptr<Evaluation> &right);
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
-    Evaluation * GetNext() const override;
-    Evaluation * GetNext2() const override;
-    EvaluationPtr GetNextPtr() const override;
-    EvaluationPtr GetNext2Ptr() const override;
-private:
-    const std::shared_ptr<Evaluation> left, right;
+    void VisitNext(const std::function<void(std::shared_ptr<Evaluation>&, bool)> &f) override;
+protected:
+    std::shared_ptr<Evaluation> left, right;
 };
 
 class OrEvaluationForNot : public OrEvaluation
 {
 public:
     OrEvaluationForNot(const std::shared_ptr<Evaluation> &left, const std::shared_ptr<Evaluation> &right);
-    bool NextIsNot() const override;
+    void VisitNext(const std::function<void(std::shared_ptr<Evaluation>&, bool)> &f) override;
 };
 
 
@@ -457,7 +454,6 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
 private:
     std::vector<int> inputs, outputs;
-    int mask;
 };
 
 class CreateNew : public ChainedEvaluation

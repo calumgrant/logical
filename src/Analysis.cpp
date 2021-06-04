@@ -19,7 +19,7 @@ public:
     }
     
 private:
-    std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Relation & node, bool parity, const std::shared_ptr<RecursiveLoop> & existingLoop) const
+    static std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Relation & node, bool parity, const std::shared_ptr<RecursiveLoop> & existingLoop)
     {
         if(node.visited)
         {
@@ -69,42 +69,26 @@ private:
         return node.recursive ? nullptr : node.loop;
     }
 
-    std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Evaluation & node, bool parity, const std::shared_ptr<RecursiveLoop> & existingLoop) const
+    static std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Evaluation & node, bool parity, const std::shared_ptr<RecursiveLoop> & existingLoop)
     {
-        auto next1 = node.GetNext();
-        auto next2 = node.GetNext2();
-        
-        auto relation = node.ReadsRelation();
         std::shared_ptr<RecursiveLoop> loop;
         
-        if(relation)
-        {
-            if((bool)(loop = AnalyseRecursion(database, *relation, parity, existingLoop)))
+        node.VisitReads([&](std::weak_ptr<Relation> & relation, int mask) {
+            if((bool)(loop = AnalyseRecursion(database, *relation.lock(), parity, existingLoop)))
             {
                 node.onRecursivePath = true;
                 node.readIsRecursive = true;
             }
-        }
+        });
         
-        if(next1)
-        {
-            if(auto l = AnalyseRecursion(database, *next1, node.NextIsNot() ? !parity : parity, loop))
+        node.VisitNext([&](std::shared_ptr<Evaluation>&n, bool nextIsNot) {
+            if(auto l = AnalyseRecursion(database, *n, nextIsNot ? !parity : parity, loop))
             {
                 node.onRecursivePath = true;
                 assert( !loop || loop == l );
                 loop = l;
             }
-        }
-        
-        if(next2)
-        {
-            if(auto l = AnalyseRecursion(database, *next2, parity, loop))
-            {
-                node.onRecursivePath = true;
-                assert( !loop || loop == l );
-                loop = l;
-            }
-        }
+        });
         
         assert((bool)loop == node.onRecursivePath);
             
@@ -117,18 +101,10 @@ private:
         if(!node.dependsOnRecursiveRead && node.readIsRecursive)
             node.readDelta = true;
         
-        auto next1 = node.GetNext();
-        auto next2 = node.GetNext2();
-        
-        if(next1)
+        node.VisitNext([&](EvaluationPtr & next, bool)
         {
-            AnalyseRecursiveReads(*next1, depends || node.readIsRecursive);
-        }
-        
-        if(next2)
-        {
-            AnalyseRecursiveReads(*next2, depends || node.readIsRecursive);
-        }
+            AnalyseRecursiveReads(*next, depends || node.readIsRecursive);
+        });
     }
 
     void AnalyseRecursiveReads(Relation & relation) const
@@ -149,17 +125,10 @@ private:
 void VisitEvaluation(Evaluation &e, const std::function<void(Evaluation&)> & fn)
 {
     fn(e);
-    if(auto next1 = e.GetNext())
-    {
-        fn(*next1);
-        VisitEvaluation(*next1, fn);
-    
-        if(auto next2 = e.GetNext2())
-        {
-            fn(*next2);
-            VisitEvaluation(*next2, fn);
-        }
-    }
+    e.VisitNext([&](EvaluationPtr &n, bool) {
+        fn(*n);
+        VisitEvaluation(*n, fn);
+    });
 }
 
 void Relation::VisitSteps(const std::function<void(Evaluation&)> & fn) const
@@ -205,13 +174,13 @@ public:
         void CheckRule(Evaluation & eval)
         {
             if(!eval.onRecursivePath) return;
+            
             if(auto re = dynamic_cast<RuleEvaluation*>(&eval))
             {
-                auto orEval = dynamic_cast<OrEvaluation*>(re->GetNext());
-                if(orEval)
-                {
-                    CheckOr(*re, *orEval);
-                }
+                re->VisitNext([&](EvaluationPtr & next, bool) {
+                    if(auto orEval = dynamic_cast<OrEvaluation*>(&*next))
+                        CheckOr(*re, *orEval);
+                });
             }
         }
         
@@ -219,44 +188,39 @@ public:
         {
             if(orEval.onRecursivePath)
             {
-                if(orEval.GetNext()->onRecursivePath)
-                {
-                    if(auto o = dynamic_cast<OrEvaluation*>(orEval.GetNext()))
-                        CheckOr(rule, *o);
-                }
-                else
-                {
-                    changed = true;
-                }
-                if(orEval.GetNext2()->onRecursivePath)
-                {
-                    if(auto o = dynamic_cast<OrEvaluation*>(orEval.GetNext2()))
-                        CheckOr(rule, *o);
-                }
-                else
-                {
-                    changed = true;
-                }
+                orEval.VisitNext([&](EvaluationPtr & next, bool) {
+                    if(next->onRecursivePath)
+                    {
+                        if(auto o = dynamic_cast<OrEvaluation*>(&*next))
+                            CheckOr(rule, *o);
+                    }
+                    else
+                    {
+                        changed = true;
+                    }
+                });
             }
         }
         
         void OptimizeRule(const std::shared_ptr<Evaluation>&eval)
         {
+            bool addBaseRule = true;
             if(auto re = dynamic_cast<RuleEvaluation*>(&*eval))
             {
                 if(re->onRecursivePath)
                 {
-                    auto next = re->GetNextPtr();
-                    auto orEval = dynamic_cast<OrEvaluation*>(&*next);
-                    if(orEval)
+                    re->VisitNext([&](EvaluationPtr &next, bool) {
+                        if( dynamic_cast<OrEvaluation*>(&*next) )
                     {
                         OptimizeEvaluationPath(eval, next);
-                        return;
+                            addBaseRule = false;
                     }
+                    });
                 }
             }
             
-            AddBaseRule(eval);
+            if(addBaseRule)
+                AddBaseRule(eval);
         }
         
         std::shared_ptr<Evaluation> CreateRule(const std::shared_ptr<Evaluation> & ruleEval, const std::shared_ptr<Evaluation> & branch)
@@ -271,23 +235,28 @@ public:
                 auto orEval = dynamic_cast<OrEvaluation*>(&*eval);
                 if(orEval)
                 {
-                    OptimizeEvaluationPath(ruleEval, orEval->GetNextPtr());
-                    OptimizeEvaluationPath(ruleEval, orEval->GetNext2Ptr());
+                    orEval->VisitNext([&](EvaluationPtr & next, bool) {
+                        OptimizeEvaluationPath(ruleEval, next);
+                    });
                 }
                 else
                 {
-                    if(ruleEval->GetNextPtr() == eval)
-                        AddRecursiveRule(ruleEval);
-                    else
-                        AddRecursiveRule(CreateRule(ruleEval, eval));
+                    ruleEval->VisitNext([&](EvaluationPtr & next, bool) {
+                        if( next == eval )
+                            AddRecursiveRule(ruleEval);
+                        else
+                            AddRecursiveRule(CreateRule(ruleEval, eval));
+                    });
                 }
             }
             else
             {
-                if(ruleEval->GetNextPtr() == eval)
-                    AddBaseRule(ruleEval);
-                else
-                    AddBaseRule(CreateRule(ruleEval, eval));
+                ruleEval->VisitNext([&](EvaluationPtr & next, bool) {
+                    if( next == eval )
+                        AddBaseRule(ruleEval);
+                    else
+                        AddBaseRule(CreateRule(ruleEval, eval));
+                });
             }
         }
             
@@ -374,12 +343,44 @@ void OptimizerImpl::Optimize(Relation & relation) const
         o->Analyse(relation);
 }
 
+class BindingAnalysis : public Optimization
+{
+public:
+    BindingAnalysis() : Optimization("binding", "Implements semi-naive binding", 0)
+    {
+    }
+    
+    void Analyse(Relation & relation) const override
+    {
+        relation.VisitSteps([](Evaluation&eval) {
+            if(auto *join = dynamic_cast<Join*>(&eval))
+            {
+                // This is a join...
+                // if(join->mask!=0)
+                {
+                    std::cout << "Semi-naive opportunity\n";
+                    // auto rel = join->ReadsRelation();
+                    // auto binding = rel->GetBinding(join->mask);
+                    
+                }
+            }
+        });
+        
+        relation.VisitRules([](Evaluation &eval) {
+            
+        });
+        
+    }
+};
+
 OptimizerImpl::OptimizerImpl()
 {
+    static BindingAnalysis binding;
     static Recursion recursion;
     static Deltas deltas;
     static RecursiveBranch recursiveBranch;
     
+    RegisterOptimization(binding);
     RegisterOptimization(recursion);
     RegisterOptimization(deltas);
     RegisterOptimization(recursiveBranch);

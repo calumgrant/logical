@@ -66,16 +66,9 @@ public:
     
     // Holds true if a preceding (dominating) evaluation step is a recursive read/join.
     bool dependsOnRecursiveRead = false;  // Output flag: R
-            
-    virtual Evaluation * GetNext() const;
-    virtual Evaluation * GetNext2() const;
-    virtual Relation * ReadsRelation() const;
-    virtual bool NextIsNot() const;
-    
-    // Gets the next node, as a shared pointer.
-    // Returns nullptr if there is no next
-    virtual std::shared_ptr<Evaluation> GetNextPtr() const;
-    virtual std::shared_ptr<Evaluation> GetNext2Ptr() const;
+
+    virtual void VisitNext(const std::function<void(std::shared_ptr<Evaluation>&, bool)> &fn);
+    virtual void VisitReads(const std::function<void(std::weak_ptr<Relation>&, int)> &fn);
 
     // Clones this node but adds a new "Next"
     virtual std::shared_ptr<Evaluation> WithNext(const std::shared_ptr<Evaluation> & next) const;
