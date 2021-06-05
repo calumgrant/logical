@@ -15,11 +15,12 @@ protected:
 class ReaderEvaluation : public ChainedEvaluation
 {
 public:
-    void VisitReads(const std::function<void(std::weak_ptr<Relation>&rel, int)> & fn) override;
+    void VisitReads(const std::function<void(std::weak_ptr<Relation>&rel, int, const int*)> & fn) override;
 protected:
     ReaderEvaluation(const std::shared_ptr<Relation> & relation, const EvaluationPtr & next);
     std::weak_ptr<Relation> relation;
     int mask;
+    std::vector<int> inputs, outputs;
 };
 
 class WriterEvaluation : public Evaluation
@@ -370,6 +371,7 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void Reset() override;
 private:
+    std::vector<Entity> working;
     std::vector<int> slots;
     std::shared_ptr<Table> table;
 };
@@ -452,8 +454,6 @@ public:
     Join(const std::shared_ptr<Relation> & relation, std::vector<int> && inputs, std::vector<int> && outputs, const std::shared_ptr<Evaluation> & next);
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
-private:
-    std::vector<int> inputs, outputs;
 };
 
 class CreateNew : public ChainedEvaluation

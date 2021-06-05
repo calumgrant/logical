@@ -1,14 +1,7 @@
 # Work plan
 
-Visitors:
-Relation::Visit
-  OnRule(std::shared_ptr<Evaluation> & eval)
-
-Evaluation::Visit
-  OnNext(std::shared_ptr<Evaluation> & next, bool isNot)
-  OnRead(Relation&, int mask)
-
-- Refactor to avoid GetNext2, ReadsRelation
+- `new5` failure. `DeduplicateV` needs to share the table in the rule somehow.
+- Call the bound predicate
 
 Semi-naive evaluation:
 1. Implement BindingAnalysis, that marks columns that are always bound.

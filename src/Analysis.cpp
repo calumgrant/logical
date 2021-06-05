@@ -73,7 +73,7 @@ private:
     {
         std::shared_ptr<RecursiveLoop> loop;
         
-        node.VisitReads([&](std::weak_ptr<Relation> & relation, int mask) {
+        node.VisitReads([&](std::weak_ptr<Relation> & relation, int mask, const int*) {
             if((bool)(loop = AnalyseRecursion(database, *relation.lock(), parity, existingLoop)))
             {
                 node.onRecursivePath = true;
@@ -122,18 +122,22 @@ private:
 };
 
 
-void VisitEvaluation(Evaluation &e, const std::function<void(Evaluation&)> & fn)
+void VisitEvaluation(EvaluationPtr &e, const std::function<void(EvaluationPtr&)> & fn)
 {
+    auto p = e;
+
     fn(e);
-    e.VisitNext([&](EvaluationPtr &n, bool) {
-        fn(*n);
-        VisitEvaluation(*n, fn);
+
+    // Visit p, not e. Don't re-visit anything that fn creates.
+    p->VisitNext([&](EvaluationPtr &n, bool) {
+        VisitEvaluation(n, fn);
     });
+    
 }
 
-void Relation::VisitSteps(const std::function<void(Evaluation&)> & fn) const
+void Relation::VisitSteps(const std::function<void(EvaluationPtr&)> & fn)
 {
-    VisitRules([&](Evaluation & rule) { VisitEvaluation(rule, fn); });
+    VisitRules([&](EvaluationPtr & rule) { VisitEvaluation(rule, fn); });
 }
 
 
@@ -293,9 +297,9 @@ public:
     
     void Analyse(Relation & relation) const override
     {
-        relation.VisitSteps([&](Evaluation&eval) {
-            if(eval.readDelta)
-                eval.useDelta = true;
+        relation.VisitSteps([&](EvaluationPtr&eval) {
+            if(eval->readDelta)
+                eval->useDelta = true;
         });
     }
 
@@ -352,18 +356,28 @@ public:
     
     void Analyse(Relation & relation) const override
     {
-        relation.VisitSteps([](Evaluation&eval) {
-            if(auto *join = dynamic_cast<Join*>(&eval))
-            {
-                // This is a join...
-                // if(join->mask!=0)
+        relation.VisitSteps([](EvaluationPtr&eval) {
+            eval->VisitReads([&](std::weak_ptr<Relation> & rel, int mask, const int * inputs) {
+                if(mask != 0)
                 {
-                    std::cout << "Semi-naive opportunity\n";
-                    // auto rel = join->ReadsRelation();
-                    // auto binding = rel->GetBinding(join->mask);
+                    std::cout << "Semi-naive opportunity: " << mask << "\n";
+
+                    auto relation = rel.lock();
+                    auto guard = relation->GetBindingRelation(mask);
+                    auto bound = relation->GetBoundRelation(mask);
                     
+                    std::vector<int> writes;
+                    for(int i=0; i<relation->Arity(); ++i)
+                        if(inputs[i] != -1) writes.push_back(i);
+                    
+                    auto write = std::make_shared<Writer>(guard, writes);
+                    eval = std::make_shared<OrEvaluation>(write, eval);
+                    // rel = bound;
+                    
+                    // auto write = std::make_shared<Writer>
+                    // eval = std::make_shared<OrEvaluation>(rel.lock()->GetBindingRelation(mask)
                 }
-            }
+            });
         });
         
         relation.VisitRules([](Evaluation &eval) {

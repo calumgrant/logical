@@ -68,7 +68,7 @@ public:
     bool dependsOnRecursiveRead = false;  // Output flag: R
 
     virtual void VisitNext(const std::function<void(std::shared_ptr<Evaluation>&, bool)> &fn);
-    virtual void VisitReads(const std::function<void(std::weak_ptr<Relation>&, int)> &fn);
+    virtual void VisitReads(const std::function<void(std::weak_ptr<Relation>&, int, const int*)> &fn);
 
     // Clones this node but adds a new "Next"
     virtual std::shared_ptr<Evaluation> WithNext(const std::shared_ptr<Evaluation> & next) const;

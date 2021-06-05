@@ -8,8 +8,8 @@
 class Predicate : public Relation
 {
 public:
-    Predicate(Database &db, const CompoundName &name, ::Arity arity);
-    Predicate(Database &db, RelationId name, ::Arity arity, bool reaches);
+    Predicate(Database &db, const CompoundName &name, ::Arity arity, BindingType bindingPredicate);
+    Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType bindingPredicate);
 
     // Evaluates all rules if needed
     void Evaluate();
@@ -23,8 +23,8 @@ public:
     
     void AddAttribute(const std::shared_ptr<Relation> & attribute) override;
     void VisitAttributes(const std::function<void(Relation&)> &) const override;
-    void VisitRules(const std::function<void(Evaluation&)> &) const override;
-    void VisitRules(const std::function<void(const std::shared_ptr<Evaluation>&)> &) const override;
+    void VisitRules(const std::function<void(Evaluation&)> &) override;
+    void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
     void SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase) override;
 
     
@@ -35,13 +35,17 @@ public:
     Size Count() override;
     const CompoundName * GetCompoundName() const override;
     bool IsReaches() const override;
+    BindingType GetBinding() const override;
     Database & GetDatabase() const override;
+    std::shared_ptr<Relation> GetBindingRelation(int columns) override;
+    std::shared_ptr<Relation> GetBoundRelation(int columns) override;
 
 private:
     bool rulesRun = false;
     const bool reaches;
+    const BindingType bindingPredicate;
     bool runBaseCase = false;
-    
+
     std::vector< std::shared_ptr<Evaluation>, persist::allocator<std::shared_ptr<Evaluation>> > rules;
     RelationId name;
     
@@ -54,6 +58,7 @@ protected:
     
     std::shared_ptr<Table> table;
     CompoundName compoundName;
+    std::unordered_map<int, std::shared_ptr<Relation>> bindingRelations;
 };
 
 class SpecialPredicate : public Predicate

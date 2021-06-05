@@ -14,6 +14,13 @@ public:
     virtual void OnRow(Entity * row)=0;
 };
 
+enum class BindingType
+{
+    Unbound,
+    Binding,
+    Bound
+};
+
 class Relation
 {
 public:
@@ -36,6 +43,7 @@ public:
     virtual const CompoundName * GetCompoundName() const; // Horrid name/interface
     
     virtual bool IsReaches() const =0;
+    virtual BindingType GetBinding() const =0;
     
     virtual void RunRules() =0;
     virtual int Arity() const =0;
@@ -46,12 +54,13 @@ public:
 
     virtual void VisitAttributes(const std::function<void(Relation&)> &) const =0;
     
-    virtual void VisitRules(const std::function<void(Evaluation&)> &) const =0;
-    virtual void VisitRules(const std::function<void(const std::shared_ptr<Evaluation>&)> &) const =0;
+    virtual void VisitRules(const std::function<void(Evaluation&)> &) =0;
+    virtual void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) =0;
 
     virtual void SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase) =0;
     
-    void VisitSteps(const std::function<void(Evaluation&)> &) const;
+    void VisitSteps(const std::function<void(EvaluationPtr&)> &);
+    
     virtual Database & GetDatabase() const =0;
     
     bool visited = false;
@@ -62,6 +71,9 @@ public:
 
     bool parity = true;
     std::shared_ptr<RecursiveLoop> loop;
+    
+    virtual std::shared_ptr<Relation> GetBindingRelation(int columns) =0;
+    virtual std::shared_ptr<Relation> GetBoundRelation(int columns) =0;
 
 protected:
     // Returns the number of rows.

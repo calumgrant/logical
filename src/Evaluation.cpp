@@ -1078,8 +1078,10 @@ void Writer::Explain(Database &db, std::ostream &os, int indent) const
     os << std::endl;
 }
 
-Join::Join(const std::shared_ptr<Relation> & relation, std::vector<int> && inputs, std::vector<int> && outputs, const std::shared_ptr<Evaluation> & next) : ReaderEvaluation(relation, next), inputs(inputs), outputs(outputs)
+Join::Join(const std::shared_ptr<Relation> & relation, std::vector<int> && inputs, std::vector<int> && outputs, const std::shared_ptr<Evaluation> & next) : ReaderEvaluation(relation, next)
 {
+    this->inputs = inputs;
+    this->outputs = outputs;
     assert(inputs.size() == outputs.size());
     assert(relation->Arity() == inputs.size());
     mask = 0;
@@ -1160,6 +1162,17 @@ void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation &
 void Evaluation::OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> & relation)
 {
     os << Colours::Relation;
+    switch(relation->GetBinding())
+    {
+        case BindingType::Binding:
+            os << "β";
+            break;
+        case BindingType::Bound:
+            os << "B";
+            break;
+        default: // Suppress warning
+            break;
+    }
     if(auto cn = relation->GetCompoundName())
     {
         os << "has:";
@@ -1308,13 +1321,17 @@ void CreateNew::Explain(Database &db, std::ostream &os, int indent) const
 DeduplicateV::DeduplicateV(Database & db, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next) :
     Deduplicate(next),
     slots(slots),
-    table(std::make_shared<TableImpl>(db.Storage(), slots.size()))
+    table(std::make_shared<TableImpl>(db.Storage(), slots.size())),
+    working(slots.size())
 {
 }
 
 void DeduplicateV::OnRow(Entity * row)
 {
-    if(table->Add(row))
+    working.clear();
+    for(auto i : slots)
+        working.push_back(row[i]);
+    if(table->Add(working.data()))
         next->Evaluate(row);
 }
 
@@ -1338,7 +1355,7 @@ void DeduplicateV::Explain(Database &db, std::ostream & os, int indent) const
     next->Explain(db, os, indent+4);
 }
 
-void Evaluation::VisitReads(const std::function<void(std::weak_ptr<Relation>&, int)> &)
+void Evaluation::VisitReads(const std::function<void(std::weak_ptr<Relation>&, int, const int*)> &)
 {
 }
 
@@ -1363,7 +1380,7 @@ void OrEvaluationForNot::VisitNext(const std::function<void(EvaluationPtr&, bool
     fn(right, false);
 }
 
-void ReaderEvaluation::VisitReads(const std::function<void(std::weak_ptr<Relation> & relation, int)> & fn)
+void ReaderEvaluation::VisitReads(const std::function<void(std::weak_ptr<Relation> & relation, int, const int*)> & fn)
 {
-    fn(relation, mask);
+    fn(relation, mask, inputs.data());
 }

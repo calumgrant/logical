@@ -125,6 +125,7 @@ add_test(NAME New1 COMMAND logical ../tests/new1.dl)
 add_test(NAME New2 COMMAND logical ../tests/new2.dl)
 add_test(NAME New3 COMMAND logical ../tests/new3.dl)
 add_test(NAME New4 COMMAND logical ../tests/new4.dl)
+add_test(NAME New5 COMMAND logical ../tests/new5.dl)
 
 add_test(NAME Strlen1 COMMAND logical ../tests/strlen1.dl)
 add_test(NAME Strings1 COMMAND logical ../tests/strings1.dl)
