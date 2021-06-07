@@ -52,16 +52,6 @@ void RuleEvaluation::OnRow(Entity*)
     next->Evaluate(&row[0]);
 }
 
-EvaluateB::EvaluateB(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
-    UnaryEvaluation(rel, slot, next)
-{
-}
-
-EvaluateF::EvaluateF(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
-    UnaryEvaluation(rel, slot, next)
-{
-}
-
 UnaryEvaluation::UnaryEvaluation(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
                      ReaderEvaluation(rel, next), slot(slot)
 {
@@ -85,21 +75,6 @@ public:
     int slot;
     Evaluation & next;
 };
-
-void EvaluateF::OnRow(Entity * row)
-{
-    UnaryVisitor v(row, slot, *next);
-    
-    relation.lock()->Query(row+slot, 0, v);
-}
-
-void EvaluateB::OnRow(Entity * row)
-{
-    UnaryVisitor v(row, slot, *next);
-
-    // Bug: We need to get a different relation here.
-    relation.lock()->Query(row+slot, 1, v);
-}
 
 void OrEvaluation::Explain(Database &db, std::ostream & os, int indent) const
 {
@@ -138,34 +113,6 @@ void WriterB::Explain(Database &db, std::ostream & os, int indent) const
     OutputRelation(os, db, relation.lock());
     OutputCallCount(os);
     os << "\n";
-}
-
-void EvaluateB::Explain(Database &db, std::ostream &os, int indent) const
-{
-    Indent(os, indent);
-    auto r = relation.lock();
-    assert(r);
-    os << "Lookup ";
-    OutputVariable(os, slot);
-    os << " in ";
-    OutputRelation(os, db, r);
-    OutputCallCount(os);
-    os << " ->\n";
-    next->Explain(db, os, indent+4);
-}
-
-void EvaluateF::Explain(Database &db, std::ostream &os, int indent) const
-{
-    Indent(os, indent);
-    auto r = relation.lock();
-    assert(r);
-    os << "Scan ";
-    OutputRelation(os, db, r);
-    os << " into ";
-    OutputIntroducedVariable(os, slot);
-    OutputCallCount(os);
-    os << " ->\n";
-    next->Explain(db, os, indent+4);
 }
 
 NotTerminator::NotTerminator(int slot) : slot(slot)
@@ -1580,12 +1527,4 @@ void NegateBF::VisitVariables(const std::function<void (int &, VariableAccess)> 
     fn(slot2, VariableAccess::Write);
 }
 
-void EvaluateB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
-{
-    fn(slot, VariableAccess::Read);
-}
 
-void EvaluateF::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
-{
-    fn(slot, VariableAccess::Write);
-}

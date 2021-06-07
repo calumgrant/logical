@@ -42,46 +42,6 @@ protected:
 };
 
 /*
- Evaluates clauses of the form f(X), where X is unbound.
- */
-class EvaluateF : public UnaryEvaluation
-{
-public:
-    EvaluateF(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next);
-    void OnRow(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
-};
-
-/*
- Evaluates clauses of the form f(X), where X is unbound.
- Only calls next->Evaluate() 0 or 1 times.
- This is in circumstances where the variable is not used again
- in the clause, so it becomes an existence tests rather than
- needing to enumerate the entire table.
- */
-class ExistsF : public UnaryEvaluation
-{
-    ExistsF(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next);
-    void OnRow(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
-};
-
-/*
- Evaluates clauses of the form f(X), where X is bound,
- or a constant value.
- */
-class EvaluateB : public UnaryEvaluation
-{
-public:
-    EvaluateB(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next);
-    void OnRow(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
-};
-
-/*
  Writes data into a unary predicate.
  */
 class WriterB : public WriterEvaluation
