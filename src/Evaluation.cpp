@@ -21,15 +21,6 @@ void NoneEvaluation::OnRow(Entity * row)
 {
 }
 
-WriterB::WriterB(const std::shared_ptr<Relation> & relation, int slot) : WriterEvaluation(relation), slot(slot)
-{
-}
-
-void WriterB::OnRow(Entity * row)
-{
-    relation.lock()->Add(row+slot);
-}
-
 OrEvaluation::OrEvaluation(const std::shared_ptr<Evaluation> & lhs, const std::shared_ptr<Evaluation> & rhs) :
     left(lhs), right(rhs)
 {
@@ -50,11 +41,6 @@ void RuleEvaluation::OnRow(Entity*)
 {
     std::vector<Entity> row(locals);
     next->Evaluate(&row[0]);
-}
-
-UnaryEvaluation::UnaryEvaluation(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next) :
-                     ReaderEvaluation(rel, next), slot(slot)
-{
 }
 
 class UnaryVisitor : public Receiver
@@ -102,17 +88,6 @@ void RuleEvaluation::Explain(Database &db, std::ostream & os, int indent) const
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent+4);
-}
-
-void WriterB::Explain(Database &db, std::ostream & os, int indent) const
-{
-    Indent(os, indent);
-    os << "Write ";
-    OutputVariable(os, slot);
-    os << " into ";
-    OutputRelation(os, db, relation.lock());
-    OutputCallCount(os);
-    os << "\n";
 }
 
 NotTerminator::NotTerminator(int slot) : slot(slot)
@@ -183,181 +158,8 @@ void EqualsBF::Explain(Database & db, std::ostream & os, int indent) const
     next->Explain(db, os, indent+4);
 }
 
-EvaluateBB::EvaluateBB(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : BinaryRelationEvaluation(relation, slot1, slot2, next)
-{
-}
-
-void EvaluateBB::OnRow(Entity * row)
-{
-    class Visitor : public Receiver
-    {
-    public:
-        Visitor(const std::shared_ptr<Evaluation> & next, Entity * row) : row(row), next(next)
-        {
-        }
-        
-        void OnRow(Entity * data) override
-        {
-            next->Evaluate(row);
-        }
-    private:
-        Entity * row;
-        std::shared_ptr<Evaluation> next;
-    } v(next, row);
-    
-    Entity data[2] = { row[slot1], row[slot2] };
-
-    relation.lock()->Query(data, 3, v);
-}
-
-void EvaluateBB::Explain(Database &db, std::ostream & os, int indent) const
-{
-    Indent(os, indent);
-    os << "Lookup (_" << slot1 << ",_" << slot2 << ") in " << db.GetString(relation.lock()->Name());
-    OutputCallCount(os);
-    os << " ->\n";
-    next->Explain(db, os, indent+4);
-}
-
-EvaluateBF::EvaluateBF(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : BinaryRelationEvaluation(relation, slot1, slot2, next)
-{
-}
-
-void EvaluateBF::OnRow(Entity * row)
-{
-    class Visitor : public Receiver
-    {
-    public:
-        Visitor(Entity * row, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-            row(row), slot1(slot1), slot2(slot2), next(next)
-        {
-        }
-        
-        void OnRow(Entity * data) override
-        {
-            row[slot2] = data[1];
-            next->Evaluate(row);
-        }
-    private:
-        Entity * row;
-        int slot1, slot2;
-        std::shared_ptr<Evaluation> next;
-    } visitor(row, slot1, slot2, next);
-    
-    Entity data[2] = { row[slot1] };
-    
-    relation.lock()->Query(data, 1, visitor);
-}
-
-void EvaluateBF::Explain(Database &db, std::ostream & os, int indent) const
-{
-    Indent(os, indent);
-    os << "Join " << db.GetString(relation.lock()->Name()) << " column 1 on _" << slot1 << " into _" << slot2;
-    OutputCallCount(os);
-    os << " ->\n";
-    
-    next->Explain(db, os, indent+4);
-}
-
-EvaluateFB::EvaluateFB(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : BinaryRelationEvaluation(relation, slot1, slot2, next)
-{
-}
-
-void EvaluateFB::OnRow(Entity * row)
-{
-    class Visitor : public Receiver
-    {
-    public:
-        Visitor(Entity * row, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-            row(row), slot1(slot1), slot2(slot2), next(next)
-        {
-        }
-        
-        void OnRow(Entity * data) override
-        {
-            row[slot1] = data[0];
-            next->Evaluate(row);
-        }
-    private:
-        Entity * row;
-        int slot1, slot2;
-        std::shared_ptr<Evaluation> next;
-    } visitor(row, slot1, slot2, next);
-    
-    Entity data[2];
-    data[1] = row[slot2];
-    
-    relation.lock()->Query(data, 2, visitor);
-}
-
-void EvaluateFB::Explain(Database &db, std::ostream & os, int indent) const
-{
-    Indent(os, indent);
-    os << "Join " << db.GetString(relation.lock()->Name()) << " column 2 on _" << slot2 << " into _" << slot1;
-    OutputCallCount(os);
-    os << " ->\n";
-    next->Explain(db, os, indent+4);
-}
-
-EvaluateFF::EvaluateFF(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : BinaryRelationEvaluation(relation, slot1, slot2, next)
-{
-}
-
-void EvaluateFF::OnRow(Entity * row)
-{
-    class Visitor : public Receiver
-    {
-    public:
-        Visitor(Entity * row, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-            row(row), slot1(slot1), slot2(slot2), next(next)
-        {
-        }
-        
-        void OnRow(Entity * data) override
-        {
-            row[slot1] = data[0];
-            row[slot2] = data[1];
-            next->Evaluate(row);
-        }
-    private:
-        Entity * row;
-        int slot1, slot2;
-        std::shared_ptr<Evaluation> next;
-    } visitor(row, slot1, slot2, next);
-    
-    relation.lock()->Query(nullptr, 0, visitor);
-}
-
-void EvaluateFF::Explain(Database &db, std::ostream & os, int indent) const
-{
-    Indent(os, indent);
-    os << "Scan " << db.GetString(relation.lock()->Name()) << " into (_" << slot1 << ",_" << slot2 << ")";
-    OutputCallCount(os);
-    os << " ->\n";
-    next->Explain(db, os, indent+4);
-}
-
 BinaryRelationEvaluation::BinaryRelationEvaluation(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : ReaderEvaluation(relation, next), slot1(slot1), slot2(slot2)
 {
-}
-
-WriterBB::WriterBB(const std::shared_ptr<Relation> & relation, int slot1, int slot2) :
-    WriterEvaluation(relation), slot1(slot1), slot2(slot2)
-{
-}
-
-void WriterBB::OnRow(Entity *row)
-{
-    Entity data[2] = { row[slot1], row[slot2] };
-    relation.lock()->Add(data);
-}
-
-void WriterBB::Explain(Database &db, std::ostream &os, int indent) const
-{
-    Indent(os, indent);
-    os << "Write (_" << slot1 << ",_" << slot2 << ") into " << db.GetString(relation.lock()->Name());
-    OutputCallCount(os);
-    os << std::endl;
 }
 
 RangeB::RangeB(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> & next) :
@@ -1402,30 +1204,6 @@ void CountCollector::VisitVariables(const std::function<void(int&, VariableAcces
     fn(slot, VariableAccess::Write);
 }
 
-void EvaluateBB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
-{
-    fn(slot1, VariableAccess::Read);
-    fn(slot2, VariableAccess::Read);
-}
-
-void EvaluateBF::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
-{
-    fn(slot1, VariableAccess::Read);
-    fn(slot2, VariableAccess::Write);
-}
-
-void EvaluateFF::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
-{
-    fn(slot1, VariableAccess::Write);
-    fn(slot2, VariableAccess::Write);
-}
-
-void EvaluateFB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
-{
-    fn(slot1, VariableAccess::Write);
-    fn(slot2, VariableAccess::Read);
-}
-
 void ReaderEvaluation::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
 {
     for(auto & i : inputs)
@@ -1486,11 +1264,6 @@ void RangeU::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
     fn(slot3, VariableAccess::Read);
 }
 
-void WriterB::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
-{
-    fn(slot, VariableAccess::Read);
-}
-
 void Writer::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
 {
     for(auto &i : slots)
@@ -1510,12 +1283,6 @@ void EqualsBF::VisitVariables(const std::function<void (int &, VariableAccess)> 
 }
 
 void CompareBB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
-{
-    fn(slot1, VariableAccess::Read);
-    fn(slot2, VariableAccess::Read);
-}
-
-void WriterBB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Read);

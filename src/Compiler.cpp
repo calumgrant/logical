@@ -324,7 +324,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
     {
         for(auto & i : predicates->list)
         {
-            std::shared_ptr<Evaluation> e = std::make_shared<WriterB>(db.GetUnaryRelation(i->nameId), slot);
+            std::shared_ptr<Evaluation> e = std::make_shared<Writer>(db.GetUnaryRelation(i->nameId), std::vector<int> {slot} );
             if(result)
                 result = std::make_shared<OrEvaluation>(result, e);
             else

@@ -31,30 +31,6 @@ protected:
     std::weak_ptr<Relation> relation;
 };
 
-/*
- An evaluation over a unary predicate.
- */
-class UnaryEvaluation : public ReaderEvaluation
-{
-protected:
-    UnaryEvaluation(const std::shared_ptr<Relation> &rel, int slot, const std::shared_ptr<Evaluation> &next);
-    int slot;
-};
-
-/*
- Writes data into a unary predicate.
- */
-class WriterB : public WriterEvaluation
-{
-public:
-    WriterB(const std::shared_ptr<Relation> &rel, int slot);
-    void OnRow(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
-private:
-    int slot;
-};
-
 class RuleEvaluation : public ChainedEvaluation
 {
 public:
@@ -146,42 +122,6 @@ public:
     int slot1, slot2;
 };
 
-class EvaluateFF : public BinaryRelationEvaluation
-{
-public:
-    EvaluateFF(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
-    void OnRow(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
-};
-
-class EvaluateFB : public BinaryRelationEvaluation
-{
-public:
-    EvaluateFB(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
-    void OnRow(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
-};
-
-class EvaluateBF : public BinaryRelationEvaluation
-{
-public:
-    EvaluateBF(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
-    void OnRow(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
-};
-
-class EvaluateBB : public BinaryRelationEvaluation
-{
-public:
-    EvaluateBB(const std::shared_ptr<Relation>&, int slot1, int slot2, const std::shared_ptr<Evaluation> & next);
-    void OnRow(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
-};
-
 class NotInB : public ReaderEvaluation
 {
 public:
@@ -191,17 +131,6 @@ public:
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
 private:
     int slot;
-};
-
-class WriterBB : public WriterEvaluation
-{
-public:
-    WriterBB(const std::shared_ptr<Relation>&, int slot1, int slot2);
-    void OnRow(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
-private:
-    int slot1, slot2;
 };
 
 class RangeB : public ChainedEvaluation
