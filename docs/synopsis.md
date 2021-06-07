@@ -57,13 +57,13 @@ P is unemployed if not P has job _ and P has age A and 18<=A and A<65.
 P is unemployed if P has no job and P has age A and 18<=A<65.
 
 // The range syntax is binding
-prime N if 
-    2<=N<=1000 and
-    not (2<=M<N and N%M=0).
+n is prime if 
+    2<=n<=1000 and
+    not (2<=m<n and n%m=0).
 
-prime N if 
-    2<=N<=1000 and
-    all (N%M!=0) in 2<=M<N.
+n is prime if 
+    2<=n<=1000 and
+    all (n%m!=0) in 2<=m<n.
 ```
 
 Count and sum:
@@ -77,6 +77,16 @@ x has reachable-function y if x has call-to y or.
 x has reachable-function y if x reaches call-to y.
 ```
 
+## New objects
+
+Classical Datalog only allows data to be queried, but Logical allows new entities to be defined. This is useful for situations where it's not necessary to synthesis an id for the entity, or where 
+
+```
+new sum-expression p has type @sum, parent e, index 0. 
+```
+
+New 
+
 # Recursion
 
 
@@ -85,3 +95,5 @@ x has reachable-function y if x reaches call-to y.
 ```
 print "Hello, world!".
 ```
+
+String length

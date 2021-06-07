@@ -436,9 +436,14 @@ std::shared_ptr<Relation> Predicate::GetBoundRelation(int columns)
 {
     auto &i = bindingRelations[columns];
     
-    if(!i) i = compoundName.parts.size()>0 ?
-        std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Bound) :
-        std::make_shared<Predicate>(database, name, Arity(), reaches, BindingType::Bound);
+    if(!i)
+    {
+        i = compoundName.parts.size()>0 ?
+           std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Bound) :
+            std::make_shared<Predicate>(database, name, Arity(), reaches, BindingType::Bound);
 
+        // TODO: Create the bound version of the predicate.
+
+    }
     return i;
 }

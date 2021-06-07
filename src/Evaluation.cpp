@@ -996,8 +996,9 @@ std::size_t Evaluation::GlobalCallCount()
 }
 
 Reader::Reader(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next) :
-    ReaderEvaluation(relation, next), slots(slots)
+    ReaderEvaluation(relation, next)
 {
+    outputs = slots;
     assert(slots.size()>1);
 }
 
@@ -1008,8 +1009,8 @@ void Reader::OnRow(Entity * row)
     public:
         void OnRow(Entity * data) override
         {
-            for(int i=0; i<reader.slots.size(); ++i)
-                row[reader.slots[i]] = data[i];
+            for(int i=0; i<reader.outputs.size(); ++i)
+                row[reader.outputs[i]] = data[i];
             reader.next->Evaluate(row);
         }
         
@@ -1028,10 +1029,10 @@ void Reader::Explain(Database &db, std::ostream &os, int indent) const
     os << "Read from ";
     OutputRelation(os, db, relation.lock());
     os << " into (";
-    for(int i=0; i<slots.size(); ++i)
+    for(int i=0; i<outputs.size(); ++i)
     {
         if(i>0) os << ",";
-        OutputVariable(os, slots[i]);
+        OutputVariable(os, outputs[i]);
     }
     os << ")";
     OutputCallCount(os);
@@ -1383,4 +1384,208 @@ void OrEvaluationForNot::VisitNext(const std::function<void(EvaluationPtr&, bool
 void ReaderEvaluation::VisitReads(const std::function<void(std::weak_ptr<Relation> & relation, int, const int*)> & fn)
 {
     fn(relation, mask, inputs.data());
+}
+
+void DeduplicateB::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+}
+
+void DeduplicateBB::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+}
+
+void OrEvaluation::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+}
+
+void RuleEvaluation::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+}
+
+void DeduplicationGuard::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+}
+
+void Load::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Write);
+}
+
+void DeduplicateV::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    for(auto &v : slots)
+        fn(v, VariableAccess::Read);
+}
+
+void SumCollector::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Read);
+    fn(sumSlot, VariableAccess::ReadWrite);
+}
+
+void NoneEvaluation::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+}
+
+void NotInB::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Read);
+}
+
+void NotTerminator::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Write);
+}
+
+void NotNone::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Read);
+}
+
+void CreateNew::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Write);
+}
+
+void CountCollector::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Write);
+}
+
+void EvaluateBB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+}
+
+void EvaluateBF::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Write);
+}
+
+void EvaluateFF::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Write);
+    fn(slot2, VariableAccess::Write);
+}
+
+void EvaluateFB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Write);
+    fn(slot2, VariableAccess::Read);
+}
+
+void ReaderEvaluation::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    for(auto & i : inputs)
+        if(i != -1)
+            fn(i, VariableAccess::Read);
+
+    for(auto & i : outputs)
+        if(i != -1)
+            fn(i, VariableAccess::Write);
+}
+
+void AddBBF::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+    fn(slot3, VariableAccess::Write);
+}
+
+void SubBBF::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+    fn(slot3, VariableAccess::Write);
+}
+
+void MulBBF::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+    fn(slot3, VariableAccess::Write);
+}
+
+void DivBBF::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+    fn(slot3, VariableAccess::Write);
+}
+
+void ModBBF::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+    fn(slot3, VariableAccess::Write);
+}
+
+void RangeB::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+    fn(slot3, VariableAccess::Read);
+}
+
+void RangeU::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Write);
+    fn(slot3, VariableAccess::Read);
+}
+
+void WriterB::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Read);
+}
+
+void Writer::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+{
+    for(auto &i : slots)
+        fn(i, VariableAccess::Read);
+}
+
+void EqualsBB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+}
+
+void EqualsBF::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Write);
+}
+
+void CompareBB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+}
+
+void WriterBB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Read);
+}
+
+void NegateBF::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot1, VariableAccess::Read);
+    fn(slot2, VariableAccess::Write);
+}
+
+void EvaluateB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Read);
+}
+
+void EvaluateF::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Write);
 }

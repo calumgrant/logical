@@ -572,6 +572,12 @@ public:
         os << "Print row\n";
     }
     
+    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override
+    {
+        for(int i=0; i<rowSize; ++i)
+            fn(i, VariableAccess::Read);
+    }
+    
     std::size_t Count() const { return count; }
     
 private:

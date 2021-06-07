@@ -1,7 +1,66 @@
 # Work plan
 
 - `new5` failure. `DeduplicateV` needs to share the table in the rule somehow.
+- Define the bound predicate: problem is
+  1. We don't know which variables are used in the outputs
+  2. With multiple branches, the output variables could be duplicated.
+  3. Output variables are sometimes computed.
+
+- Implement a variable checker
+  - No undefined reads.
+  - No duplicate writes.
+  - No dead writes.
+
+- Remove some dead classes in EvaluationImpl
+- What about AddBBB ?? Implement as:
+  c = a+b, c=d, 
+- Check negate FB (Same as negateBF)
+
+
+Solution: 
+1. Ensure a consistent set of variables are used for the inputs/outputs. Make them variables 0-n.
+   - Need to remap all of the variables so they are consistent? But how?
+   - For all writes, identify which variables are used, then remap all variables in the evaluation so that the
+     written variables are at the front.
+2. Insert an extra call at the head of each rule in the predicate.
+3. Call `Rebind(boundset)` on each evaluation node to get the correct binding.
+
+Step::RemapVariables(const std::vector<int> & map)
+std::vector<int> variableMap
+
+
+
+- Have an "abstract machine" calling convention, where a "ret" on the stack jumps to the address
+  - stack pointer
+  - stack of values (entities)
+  - 
+
+- new objects to define a variable, and use `and` to assert further facts, for example
+`new expression p has ...,p has parent e.`
+
+# Datalog abstract machine
+
+State:
+- A stack of values
+- A stack of continue/return pointers. Previous stack pointer (on return)
+- instruction pointer
+- stack pointer
+
+- Instructions:
+  Load immediate value.
+  Assign, Check equal
+  Call: target address, stack size
+  Continue
+  Return
+
+
+
+
 - Call the bound predicate
+
+Creating a bound predicate: Problems if there are multiple branches in a rule
+- Don't know which variables to bind on input as it's different per branch.
+- Morally it's just before the write, but we need to reorder it.
 
 Semi-naive evaluation:
 1. Implement BindingAnalysis, that marks columns that are always bound.
