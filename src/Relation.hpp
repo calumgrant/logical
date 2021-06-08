@@ -74,6 +74,8 @@ public:
     
     virtual std::shared_ptr<Relation> GetBindingRelation(int columns) =0;
     virtual std::shared_ptr<Relation> GetBoundRelation(int columns) =0;
+    
+    virtual bool IsSpecial() const =0;
 
 protected:
     // Returns the number of rows.

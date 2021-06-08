@@ -26,7 +26,6 @@ public:
     void VisitRules(const std::function<void(Evaluation&)> &) override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
     void SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase) override;
-
     
     void Query(Entity * row, ColumnMask columns, Receiver &r) override;
     void QueryDelta(Entity * row, ColumnMask columns, Receiver &r) override;
@@ -39,6 +38,7 @@ public:
     Database & GetDatabase() const override;
     std::shared_ptr<Relation> GetBindingRelation(int columns) override;
     std::shared_ptr<Relation> GetBoundRelation(int columns) override;
+    bool IsSpecial() const override;
 
 private:
     bool rulesRun = false;
@@ -70,6 +70,7 @@ public:
     void Query(Entity *row, int columns, Receiver&v) override;
     void QueryDelta(Entity*row, int columns, Receiver&v) override;
     int Arity() const override;
+    bool IsSpecial() const override;
 };
 
 class PrintRelation : public SpecialPredicate
@@ -109,6 +110,7 @@ protected:
     int Arity() const override;
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     std::size_t Count() override;
+    bool IsSpecial() const override;
     const int arity;
 };
 

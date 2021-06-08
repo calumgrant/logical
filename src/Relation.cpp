@@ -427,10 +427,12 @@ std::shared_ptr<Relation> Predicate::GetBindingRelation(int columns)
 {
     auto &i = bindingRelations[columns];
     
-    if(!i) i = compoundName.parts.size()>0 ?
+    if(!i)
+    {
+        i = compoundName.parts.size()>0 ?
         std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Binding) :
         std::make_shared<Predicate>(database, name, Arity(), reaches, BindingType::Binding);
-
+    }
     
     return i;
 }
@@ -513,7 +515,6 @@ std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> & ru
     write.UpdateVariables(*clone);
     write.UpdateWrites(*clone, bindingRelation);
 
-    // Step 1: Get the variable names of the output columns
     return clone;
 }
 
@@ -533,7 +534,7 @@ std::shared_ptr<Relation> Predicate::GetBoundRelation(int columns)
         auto binding = GetBindingRelation(columns);
         for(auto &r : rules)
         {
-            auto b = MakeBoundRule(r, *this, binding, columns);
+            auto b = MakeBoundRule(r, *this, i, columns);
             i->AddRule(b);
         }
         
@@ -550,8 +551,23 @@ std::shared_ptr<Relation> Predicate::GetBoundRelation(int columns)
             Adder(std::shared_ptr<Relation>&t) : table(t) { }
         } adder { i };
         
+        table->FirstIteration();
         table->Query(nullptr, 0, adder);
-
     }
     return i;
+}
+
+bool Predicate::IsSpecial() const
+{
+    return false;
+}
+
+bool BuiltinFnPredicate::IsSpecial() const
+{
+    return true;
+}
+
+bool SpecialPredicate::IsSpecial() const
+{
+    return true;
 }

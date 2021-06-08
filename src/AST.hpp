@@ -310,6 +310,8 @@ namespace AST
         std::unique_ptr<UnaryPredicateList> predicates;
         std::unique_ptr<UnaryPredicateList> isPredicates;
         std::unique_ptr<AttributeList> attributes;
+        
+        std::shared_ptr<Table> newEntityTable;
     };
 
     class EntityIs : public EntityClause

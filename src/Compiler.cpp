@@ -2,6 +2,7 @@
 #include "Database.hpp"
 #include "Evaluation.hpp"
 #include "EvaluationImpl.hpp"
+#include "TableImpl.hpp"
 
 #include <iostream>
 
@@ -368,7 +369,10 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
         {
             result = std::make_shared<CreateNew>(db, slot, result);
             slots.erase(slots.begin(), slots.begin()+1);  // Ugly and slow
-            result = std::make_shared<DeduplicateV>(db, slots, result);
+            if(!newEntityTable)
+                newEntityTable = std::make_shared<TableImpl>(db.Storage(), slots.size());
+
+            result = std::make_shared<DeduplicateV>(db, slots, newEntityTable, result);
         }
         
         for(auto &a : attributes->attributes)

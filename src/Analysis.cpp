@@ -350,7 +350,7 @@ void OptimizerImpl::Optimize(Relation & relation) const
 class BindingAnalysis : public Optimization
 {
 public:
-    BindingAnalysis() : Optimization("binding", "Implements semi-naive binding", 0)
+    BindingAnalysis() : Optimization("semi-naive", "Implements semi-naive binding", 1)
     {
     }
     
@@ -363,19 +363,19 @@ public:
                     std::cout << "Semi-naive opportunity: " << mask << "\n";
 
                     auto relation = rel.lock();
-                    auto guard = relation->GetBindingRelation(mask);
-                    auto bound = relation->GetBoundRelation(mask);
-                    
-                    std::vector<int> writes;
-                    for(int i=0; i<relation->Arity(); ++i)
-                        if(inputs[i] != -1) writes.push_back(i);
-                    
-                    auto write = std::make_shared<Writer>(guard, writes);
-                    // eval = std::make_shared<OrEvaluation>(write, eval);
-                    // rel = bound;
-                    
-                    // auto write = std::make_shared<Writer>
-                    // eval = std::make_shared<OrEvaluation>(rel.lock()->GetBindingRelation(mask)
+                    if(!relation->IsSpecial())
+                    {
+                        auto guard = relation->GetBindingRelation(mask);
+                        auto bound = relation->GetBoundRelation(mask);
+                        
+                        std::vector<int> writes;
+                        for(int i=0; i<relation->Arity(); ++i)
+                            if(inputs[i] != -1) writes.push_back(i);
+                        
+                        auto write = std::make_shared<Writer>(guard, writes);
+                        eval = std::make_shared<OrEvaluation>(write, eval);
+                        rel = bound;
+                    }
                 }
             });
         });

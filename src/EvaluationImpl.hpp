@@ -280,7 +280,7 @@ private:
 class DeduplicateV : public Deduplicate
 {
 public:
-    DeduplicateV(Database &db, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next);
+    DeduplicateV(Database &db, const std::vector<int> & slots, const std::shared_ptr<Table> & table, const std::shared_ptr<Evaluation> & next);
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void Reset() override;

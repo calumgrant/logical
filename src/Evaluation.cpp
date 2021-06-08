@@ -892,6 +892,17 @@ void Evaluation::OutputIntroducedVariable(std::ostream & os, int variable)
 void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation & relation)
 {
     os << Colours::Relation;
+    switch(relation.GetBinding())
+    {
+        case BindingType::Binding:
+            os << "β";
+            break;
+        case BindingType::Bound:
+            os << "B";
+            break;
+        default: // Suppress warning
+            break;
+    }
     if(auto cn = relation.GetCompoundName())
     {
         os << "has:";
@@ -912,35 +923,7 @@ void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation &
 
 void Evaluation::OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> & relation)
 {
-    os << Colours::Relation;
-    switch(relation->GetBinding())
-    {
-        case BindingType::Binding:
-            os << "β";
-            break;
-        case BindingType::Bound:
-            os << "B";
-            break;
-        default: // Suppress warning
-            break;
-    }
-    if(auto cn = relation->GetCompoundName())
-    {
-        os << "has:";
-        for(int i=0; i<cn->parts.size(); ++i)
-        {
-            if(i>0) os << ":";
-            os << db.GetString(cn->parts[i]);
-        }
-    }
-    else
-    {
-        if (relation->IsReaches())
-            os << "reaches:";
-
-        os << db.GetString(relation->Name());
-    }
-    os << Colours::Normal;
+    OutputRelation(os, db, *relation);
 }
 
 void Join::Explain(Database &db, std::ostream & os, int indent) const
@@ -1069,11 +1052,11 @@ void CreateNew::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db,os,indent+4);
 }
 
-DeduplicateV::DeduplicateV(Database & db, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next) :
+DeduplicateV::DeduplicateV(Database & db, const std::vector<int> & slots, const std::shared_ptr<Table> & table, const std::shared_ptr<Evaluation> & next) :
     Deduplicate(next),
     database(db),
     slots(slots),
-    table(std::make_shared<TableImpl>(db.Storage(), slots.size())),
+    table(table),
     working(slots.size())
 {
 }
@@ -1312,7 +1295,7 @@ EvaluationPtr DeduplicateB::Clone() const
 
 EvaluationPtr DeduplicateV::Clone() const
 {
-    return cloneHelper = std::make_shared<DeduplicateV>(database, slots, next->Clone());
+    return cloneHelper = std::make_shared<DeduplicateV>(database, slots, table, next->Clone());
 }
 
 EvaluationPtr OrEvaluation::Clone() const
