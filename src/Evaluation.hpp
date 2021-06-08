@@ -71,6 +71,8 @@ public:
     virtual void VisitReads(const std::function<void(std::weak_ptr<Relation>&, int, const int*)> &fn);
     enum class VariableAccess { Read, Write, ReadWrite };
     virtual void VisitVariables(const std::function<void(int&, VariableAccess)> &fn)=0;
+    virtual void VisitWrites(const std::function<void(std::weak_ptr<Relation>&, int, const int*)> &fn);
+    virtual EvaluationPtr Clone() const =0;
         
     // Clones this node but adds a new "Next"
     virtual std::shared_ptr<Evaluation> WithNext(const std::shared_ptr<Evaluation> & next) const;

@@ -828,7 +828,7 @@ void Writer::Explain(Database &db, std::ostream &os, int indent) const
     os << std::endl;
 }
 
-Join::Join(const std::shared_ptr<Relation> & relation, std::vector<int> && inputs, std::vector<int> && outputs, const std::shared_ptr<Evaluation> & next) : ReaderEvaluation(relation, next)
+Join::Join(const std::shared_ptr<Relation> & relation, const std::vector<int> & inputs, const std::vector<int> & outputs, const std::shared_ptr<Evaluation> & next) : ReaderEvaluation(relation, next)
 {
     this->inputs = inputs;
     this->outputs = outputs;
@@ -1070,6 +1070,7 @@ void CreateNew::Explain(Database &db, std::ostream &os, int indent) const
 
 DeduplicateV::DeduplicateV(Database & db, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next) :
     Deduplicate(next),
+    database(db),
     slots(slots),
     table(std::make_shared<TableImpl>(db.Storage(), slots.size())),
     working(slots.size())
@@ -1294,4 +1295,159 @@ void NegateBF::VisitVariables(const std::function<void (int &, VariableAccess)> 
     fn(slot2, VariableAccess::Write);
 }
 
+void Evaluation::VisitWrites(const std::function<void(std::weak_ptr<Relation> &rel, int, const int*)>&fn)
+{
+}
 
+void Writer::VisitWrites(const std::function<void(std::weak_ptr<Relation> &rel, int, const int*)>&fn)
+{
+    fn(relation, slots.size(), slots.data());
+}
+
+EvaluationPtr DeduplicateB::Clone() const
+{
+    return cloneHelper = std::make_shared<DeduplicateB>(slot1, next->Clone());
+}
+
+EvaluationPtr DeduplicateV::Clone() const
+{
+    return cloneHelper = std::make_shared<DeduplicateV>(database, slots, next->Clone());
+}
+
+EvaluationPtr OrEvaluation::Clone() const
+{
+    return std::make_shared<OrEvaluation>(left->Clone(), right->Clone());
+}
+
+EvaluationPtr SumCollector::Clone() const
+{
+    return std::make_shared<SumCollector>(slot, sumSlot);
+}
+
+EvaluationPtr DeduplicateBB::Clone() const
+{
+    return cloneHelper = std::make_shared<DeduplicateBB>(slot1, slot2, next->Clone());
+}
+
+EvaluationPtr NotTerminator::Clone() const
+{
+    return std::make_shared<NotTerminator>(slot);
+}
+
+EvaluationPtr NoneEvaluation::Clone() const
+{
+    return std::make_shared<NoneEvaluation>();
+}
+
+EvaluationPtr CountCollector::Clone() const
+{
+    return std::make_shared<CountCollector>(slot);
+}
+
+EvaluationPtr RuleEvaluation::Clone() const
+{
+    return std::make_shared<RuleEvaluation>(locals, next->Clone());
+}
+
+EvaluationPtr OrEvaluationForNot::Clone() const
+{
+    return std::make_shared<OrEvaluationForNot>(left->Clone(), right->Clone());
+}
+
+EvaluationPtr Join::Clone() const
+{
+    return std::make_shared<Join>(relation.lock(), inputs, outputs, next->Clone());
+}
+
+EvaluationPtr Load::Clone() const
+{
+    return std::make_shared<Load>(slot, value, next->Clone());
+}
+
+EvaluationPtr AddBBF::Clone() const
+{
+    return std::make_shared<AddBBF>(database, slot1, slot2, slot3, next->Clone());
+}
+
+EvaluationPtr SubBBF::Clone() const
+{
+    return std::make_shared<SubBBF>(slot1, slot2, slot3, next->Clone());
+}
+
+EvaluationPtr MulBBF::Clone() const
+{
+    return std::make_shared<MulBBF>(slot1, slot2, slot3, next->Clone());
+}
+
+EvaluationPtr DivBBF::Clone() const
+{
+    return std::make_shared<DivBBF>(slot1, slot2, slot3, next->Clone());
+}
+
+EvaluationPtr ModBBF::Clone() const
+{
+    return std::make_shared<ModBBF>(slot1, slot2, slot3, next->Clone());
+}
+
+EvaluationPtr NotInB::Clone() const
+{
+    return std::make_shared<NotInB>(slot, relation.lock(), next->Clone());
+}
+
+EvaluationPtr RangeB::Clone() const
+{
+    return std::make_shared<RangeB>(slot1, cmp1, slot2, cmp2, slot3, next->Clone());
+}
+
+EvaluationPtr RangeU::Clone() const
+{
+    return std::make_shared<RangeU>(slot1, cmp1, slot2, cmp2, slot3, next->Clone());
+}
+
+EvaluationPtr EqualsBB::Clone() const
+{
+    return std::make_shared<EqualsBB>(slot1, slot2, next->Clone());
+}
+
+EvaluationPtr EqualsBF::Clone() const
+{
+    return std::make_shared<EqualsBF>(slot1, slot2, next->Clone());
+}
+
+EvaluationPtr CreateNew::Clone() const
+{
+    return std::make_shared<CreateNew>(database, slot, next->Clone());
+}
+
+EvaluationPtr NotNone::Clone() const
+{
+    return std::make_shared<NotNone>(slot, next->Clone());
+}
+
+EvaluationPtr CompareBB::Clone() const
+{
+    return std::make_shared<CompareBB>(slot1, cmp, slot2, next->Clone());
+}
+
+EvaluationPtr NegateBF::Clone() const
+{
+    return std::make_shared<NegateBF>(slot1, slot2, next->Clone());
+}
+
+EvaluationPtr Reader::Clone() const
+{
+    return std::make_shared<Reader>(relation.lock(), outputs, next->Clone());
+}
+
+EvaluationPtr Writer::Clone() const
+{
+    return std::make_shared<Writer>(relation.lock(), slots);
+}
+
+EvaluationPtr DeduplicationGuard::Clone() const
+{
+    // next->Clone will assign cloneHelper
+    auto n = next->Clone();
+    assert(dedup->cloneHelper);
+    return std::make_shared<DeduplicationGuard>(dedup->cloneHelper, n);
+}

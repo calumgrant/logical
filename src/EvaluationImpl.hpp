@@ -40,6 +40,7 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
     std::shared_ptr<Evaluation> WithNext(const std::shared_ptr<Evaluation> & eval) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     // The number of local variables
     const int locals;
@@ -53,6 +54,7 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitNext(const std::function<void(std::shared_ptr<Evaluation>&, bool)> &f) override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 protected:
     std::shared_ptr<Evaluation> left, right;
 };
@@ -62,6 +64,7 @@ class OrEvaluationForNot : public OrEvaluation
 public:
     OrEvaluationForNot(const std::shared_ptr<Evaluation> &left, const std::shared_ptr<Evaluation> &right);
     void VisitNext(const std::function<void(std::shared_ptr<Evaluation>&, bool)> &f) override;
+    EvaluationPtr Clone() const override;
 };
 
 
@@ -75,6 +78,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 };
 
 class NotTerminator : public Evaluation
@@ -86,6 +90,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     int slot;
 };
@@ -104,6 +109,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 };
 
 class EqualsBF : public BinaryEvaluation
@@ -113,6 +119,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 };
 
 class BinaryRelationEvaluation : public ReaderEvaluation
@@ -129,6 +136,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     int slot;
 };
@@ -140,6 +148,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     int slot1, slot2, slot3;
     ComparatorType cmp1, cmp2;
@@ -152,6 +161,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     int slot1, slot2, slot3;
     ComparatorType cmp1, cmp2;
@@ -166,6 +176,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     ComparatorType cmp;
 };
@@ -177,6 +188,7 @@ public:
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
+    EvaluationPtr Clone() const override;
 };
 
 class BinaryArithmeticEvaluation : public ChainedEvaluation
@@ -197,6 +209,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     Database & database;  // Needed for string addition
 };
@@ -208,6 +221,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 };
 
 class MulBBF : public BinaryArithmeticEvaluation
@@ -217,6 +231,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 };
 
 class DivBBF : public BinaryArithmeticEvaluation
@@ -226,6 +241,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 };
 
 class ModBBF : public BinaryArithmeticEvaluation
@@ -235,6 +251,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 };
 
 class Deduplicate : public ChainedEvaluation
@@ -242,6 +259,10 @@ class Deduplicate : public ChainedEvaluation
 public:
     Deduplicate(const EvaluationPtr & next);
     virtual void Reset()=0;
+    
+    // Temporary state used to help clone a DeduplicationGuard.
+    // This solution is a bit ugly.
+    mutable std::shared_ptr<Deduplicate> cloneHelper;
 };
 
 class DeduplicationGuard : public ChainedEvaluation
@@ -251,8 +272,25 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     std::shared_ptr<Deduplicate> dedup;
+};
+
+class DeduplicateV : public Deduplicate
+{
+public:
+    DeduplicateV(Database &db, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next);
+    void OnRow(Entity * row) override;
+    void Explain(Database &db, std::ostream &os, int indent) const override;
+    void Reset() override;
+    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
+private:
+    Database & database;
+    std::vector<Entity> working;
+    std::vector<int> slots;
+    std::shared_ptr<Table> table;
 };
 
 class DeduplicateB : public Deduplicate
@@ -263,6 +301,7 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void Reset() override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     int slot1;
     std::unordered_set<Entity, Entity::Hash> values;
@@ -276,25 +315,11 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void Reset() override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     int slot1, slot2;
     std::unordered_set<std::pair<Entity,Entity>, PairHash> values;
 };
-
-class DeduplicateV : public Deduplicate
-{
-public:
-    DeduplicateV(Database &db, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next);
-    void OnRow(Entity * row) override;
-    void Explain(Database &db, std::ostream &os, int indent) const override;
-    void Reset() override;
-    void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
-private:
-    std::vector<Entity> working;
-    std::vector<int> slots;
-    std::shared_ptr<Table> table;
-};
-
 
 /*
  Counts the number of times Evaluate has been called.
@@ -307,6 +332,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 public:
     int slot;
 };
@@ -319,6 +345,7 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
     const Entity & Sum() const;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 
 private:
     int slot, sumSlot; // The slot where the value is to sum.
@@ -331,6 +358,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     int slot;
     Entity value;
@@ -343,6 +371,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     int slot;
 };
@@ -353,6 +382,7 @@ public:
     Reader(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next);
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
+    EvaluationPtr Clone() const override;
 };
 
 class Writer : public WriterEvaluation
@@ -362,6 +392,8 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    void VisitWrites(const std::function<void(std::weak_ptr<Relation>&, int, const int*)> &fn) override;
+    EvaluationPtr Clone() const override;
 private:
     std::vector<int> slots;
     
@@ -373,9 +405,10 @@ class Join : public ReaderEvaluation
 {
 public:
     // -1 in an input or output means "unused"
-    Join(const std::shared_ptr<Relation> & relation, std::vector<int> && inputs, std::vector<int> && outputs, const std::shared_ptr<Evaluation> & next);
+    Join(const std::shared_ptr<Relation> & relation, const std::vector<int> & inputs, const std::vector<int> & outputs, const std::shared_ptr<Evaluation> & next);
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
+    EvaluationPtr Clone() const override;
 };
 
 class CreateNew : public ChainedEvaluation
@@ -385,6 +418,7 @@ public:
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
+    EvaluationPtr Clone() const override;
 
 private:
     Database & database;

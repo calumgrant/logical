@@ -90,7 +90,7 @@ private:
             }
         });
         
-        assert((bool)loop == node.onRecursivePath);
+        // assert((bool)loop == node.onRecursivePath);
             
         return loop;
     }
@@ -371,7 +371,7 @@ public:
                         if(inputs[i] != -1) writes.push_back(i);
                     
                     auto write = std::make_shared<Writer>(guard, writes);
-                    eval = std::make_shared<OrEvaluation>(write, eval);
+                    // eval = std::make_shared<OrEvaluation>(write, eval);
                     // rel = bound;
                     
                     // auto write = std::make_shared<Writer>

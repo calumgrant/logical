@@ -5,6 +5,7 @@
 #include "Analysis.hpp"
 #include "TableImpl.hpp"
 #include "Helpers.hpp"
+#include "EvaluationImpl.hpp"
 
 #include <iostream>
 
@@ -113,6 +114,8 @@ BindingType Predicate::GetBinding() const
 
 void Predicate::AddRule(const std::shared_ptr<Evaluation> & rule)
 {
+    // This is to test the Clone function
+//    rules.push_back(rule->Clone());
     rules.push_back(rule);
     if(rulesRun)
     {
@@ -432,17 +435,122 @@ std::shared_ptr<Relation> Predicate::GetBindingRelation(int columns)
     return i;
 }
 
+class WriteAnalysis
+{
+public:
+    std::vector<int> arguments;
+    
+    WriteAnalysis(Evaluation & rule, Predicate & oldPredicate) : targetPredicate(oldPredicate)
+    {
+        AnalyseWrites(rule);
+    }
+    
+    void UpdateVariables(Evaluation & rule)
+    {
+        if(variableMapping.empty()) return;
+        
+        rule.VisitVariables([&](int & variable, Evaluation::VariableAccess access) {
+            auto m = variableMapping.find(variable);
+            if(m != variableMapping.end())
+                variable = m->second;
+        });
+        
+        rule.VisitNext([&](EvaluationPtr & next, bool) {
+            UpdateVariables(*next);
+        });
+    }
+    
+    void UpdateWrites(Evaluation & rule, const std::shared_ptr<Relation> & newPredicate)
+    {
+        rule.VisitWrites([&](std::weak_ptr<Relation> & rel, int n, const int * p) {
+            auto r = rel.lock();
+            if(&*r == &targetPredicate)
+            {
+                rel = newPredicate;
+            }
+        });
+
+        rule.VisitNext([&](EvaluationPtr & next, bool) {
+            UpdateWrites(*next, newPredicate);
+        });
+    }
+private:
+    void AnalyseWrites(Evaluation & eval)
+    {
+        eval.VisitWrites([&](std::weak_ptr<Relation>&rel, int len, const int* p){
+            auto relation = rel.lock();
+            if (&*relation == &targetPredicate && arguments.empty())
+            {
+                arguments.assign(p, p+len);
+            }
+            else
+            {
+                int i=0;
+                eval.VisitVariables([&](int& arg, Evaluation::VariableAccess access) {
+                    if(i<arguments.size() && arg != arguments[i])
+                        variableMapping[arg] = arguments[i];
+                    ++i;
+                });
+            }
+                
+        });
+        
+        eval.VisitNext([&](std::shared_ptr<Evaluation> & next, bool) {
+            AnalyseWrites(*next);
+        });
+    }
+    
+    Predicate & targetPredicate;
+    std::unordered_map<int, int> variableMapping;
+};
+
+
+std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> & rule, Predicate & oldPredicate, const std::shared_ptr<Relation> & bindingRelation, int columns)
+{
+    WriteAnalysis write(*rule, oldPredicate);
+
+    auto clone = rule->Clone();
+    write.UpdateVariables(*clone);
+    write.UpdateWrites(*clone, bindingRelation);
+
+    // Step 1: Get the variable names of the output columns
+    return clone;
+}
+
 std::shared_ptr<Relation> Predicate::GetBoundRelation(int columns)
 {
-    auto &i = bindingRelations[columns];
+    auto &i = boundRelations[columns];
     
     if(!i)
     {
         i = compoundName.parts.size()>0 ?
-           std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Bound) :
+            std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Bound) :
             std::make_shared<Predicate>(database, name, Arity(), reaches, BindingType::Bound);
 
-        // TODO: Create the bound version of the predicate.
+        // TODO: Create the bound version of the rule.
+        std::vector<int> boundArguments;
+        
+        auto binding = GetBindingRelation(columns);
+        for(auto &r : rules)
+        {
+            auto b = MakeBoundRule(r, *this, binding, columns);
+            i->AddRule(b);
+        }
+        
+        // Copy the data across already
+        // TODO: Create a rule to transfer the data across.
+        
+        struct Adder : public Receiver
+        {
+            std::shared_ptr<Relation> table;
+            void OnRow(Entity * row) override
+            {
+                table->Add(row);
+            }
+            Adder(std::shared_ptr<Relation>&t) : table(t) { }
+        } adder { i };
+        
+        table->Query(nullptr, 0, adder);
 
     }
     return i;

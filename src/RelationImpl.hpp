@@ -58,7 +58,7 @@ protected:
     
     std::shared_ptr<Table> table;
     CompoundName compoundName;
-    std::unordered_map<int, std::shared_ptr<Relation>> bindingRelations;
+    std::unordered_map<int, std::shared_ptr<Relation>> bindingRelations, boundRelations;
 };
 
 class SpecialPredicate : public Predicate

@@ -1,6 +1,9 @@
 # Work plan
 
 - `new5` failure. `DeduplicateV` needs to share the table in the rule somehow.
+
+- Special test, `-fclone` which simply clones all rules
+
 - Define the bound predicate: problem is
   1. We don't know which variables are used in the outputs
   2. With multiple branches, the output variables could be duplicated.
