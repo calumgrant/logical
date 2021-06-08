@@ -749,6 +749,7 @@ Reader::Reader(const std::shared_ptr<Relation> & relation, const std::vector<int
 {
     outputs = slots;
     assert(slots.size()>1);
+    mask = 0;
 }
 
 void Reader::OnRow(Entity * row)
