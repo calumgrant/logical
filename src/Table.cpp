@@ -220,3 +220,9 @@ Size TableImpl::Rows() const
 TableImpl::Comparer::Comparer(const vector & base, int arity, int mask) : base(base), arity(arity), mask(mask)
 {
 }
+
+void TableImpl::ReadAllData(Receiver &r)    
+{
+    for(Size i=0; i<data.size(); i+=arity)
+        r.OnRow(data.data()+i);
+}

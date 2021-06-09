@@ -86,4 +86,5 @@ private:
         
     bool NextIteration() override;
     void FirstIteration() override;
+    void ReadAllData(Receiver&r) override;
 };

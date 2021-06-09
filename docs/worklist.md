@@ -1,5 +1,10 @@
 # Work plan
 
+- Problem is that we need to analyse the whole program for semi-naive, and cannot replace the rules one at a time.
+
+
+
+
 - `new5` failure. `DeduplicateV` needs to share the table in the rule somehow.
 
 - Special test, `-fclone` which simply clones all rules

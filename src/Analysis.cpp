@@ -6,6 +6,48 @@
 
 #include <iostream>
 
+
+class BindingAnalysis : public Optimization
+{
+public:
+    BindingAnalysis() : Optimization("semi-naive", "Implements semi-naive binding", 1)
+    {
+    }
+    
+    void Analyse(Relation & relation) const override
+    {
+        relation.VisitSteps([](EvaluationPtr&eval) {
+            eval->VisitReads([&](std::weak_ptr<Relation> & rel, int mask, const int * inputs) {
+                if(mask != 0)
+                {
+                    std::cout << "Semi-naive opportunity: " << mask << "\n";
+
+                    auto relation = rel.lock();
+                    if(!relation->IsSpecial())
+                    {
+                        auto guard = relation->GetBindingRelation(mask);
+                        auto bound = relation->GetBoundRelation(mask);
+                        
+                        std::vector<int> writes;
+                        for(int i=0; i<relation->Arity(); ++i)
+                            if(inputs[i] != -1) writes.push_back(i);
+                        
+                        auto write = std::make_shared<Writer>(guard, writes);
+                        eval = std::make_shared<OrEvaluation>(write, eval);
+                        rel = bound;
+                    }
+                }
+            });
+        });
+        
+        relation.VisitRules([](Evaluation &eval) {
+            
+        });
+        
+    }
+};
+
+
 class Recursion : public Optimization
 {
 public:
@@ -21,6 +63,9 @@ public:
 private:
     static std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Relation & node, bool parity, const std::shared_ptr<RecursiveLoop> & existingLoop)
     {
+        if(node.loop && existingLoop)
+            assert(node.loop == existingLoop);
+        
         if(node.visited)
         {
             node.recursive = true;
@@ -38,7 +83,7 @@ private:
         
         if(node.analysedForRecursion)
             return node.loop;
-        
+
         assert(!node.analysedForRecursion);
         node.visited = true;
         node.analysedForRecursion = true;
@@ -55,6 +100,8 @@ private:
                 node.loop = l;
             
             if(eval.onRecursivePath) hasRecursiveBranch = true;
+            if(node.loop && existingLoop)
+                assert(node.loop == existingLoop);
         });
         
         // TODO: Scope-guard this
@@ -66,12 +113,14 @@ private:
             assert(hasRecursiveBranch);
         }
 
+        if(node.loop && existingLoop)
+            assert(node.loop == existingLoop);
         return node.recursive ? nullptr : node.loop;
     }
 
     static std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Evaluation & node, bool parity, const std::shared_ptr<RecursiveLoop> & existingLoop)
     {
-        std::shared_ptr<RecursiveLoop> loop;
+        std::shared_ptr<RecursiveLoop> loop = existingLoop;
         
         node.VisitReads([&](std::weak_ptr<Relation> & relation, int mask, const int*) {
             if((bool)(loop = AnalyseRecursion(database, *relation.lock(), parity, existingLoop)))
@@ -79,6 +128,8 @@ private:
                 node.onRecursivePath = true;
                 node.readIsRecursive = true;
             }
+            if(existingLoop && loop)
+                assert(loop == existingLoop);
         });
         
         node.VisitNext([&](std::shared_ptr<Evaluation>&n, bool nextIsNot) {
@@ -88,9 +139,14 @@ private:
                 assert( !loop || loop == l );
                 loop = l;
             }
+            if(existingLoop && loop)
+                assert(loop == existingLoop);
         });
         
         // assert((bool)loop == node.onRecursivePath);
+        
+        if(existingLoop && loop)
+            assert(loop == existingLoop);
             
         return loop;
     }
@@ -347,45 +403,7 @@ void OptimizerImpl::Optimize(Relation & relation) const
         o->Analyse(relation);
 }
 
-class BindingAnalysis : public Optimization
-{
-public:
-    BindingAnalysis() : Optimization("semi-naive", "Implements semi-naive binding", 1)
-    {
-    }
-    
-    void Analyse(Relation & relation) const override
-    {
-        relation.VisitSteps([](EvaluationPtr&eval) {
-            eval->VisitReads([&](std::weak_ptr<Relation> & rel, int mask, const int * inputs) {
-                if(mask != 0)
-                {
-                    std::cout << "Semi-naive opportunity: " << mask << "\n";
 
-                    auto relation = rel.lock();
-                    if(!relation->IsSpecial())
-                    {
-                        auto guard = relation->GetBindingRelation(mask);
-                        auto bound = relation->GetBoundRelation(mask);
-                        
-                        std::vector<int> writes;
-                        for(int i=0; i<relation->Arity(); ++i)
-                            if(inputs[i] != -1) writes.push_back(i);
-                        
-                        auto write = std::make_shared<Writer>(guard, writes);
-                        eval = std::make_shared<OrEvaluation>(write, eval);
-                        rel = bound;
-                    }
-                }
-            });
-        });
-        
-        relation.VisitRules([](Evaluation &eval) {
-            
-        });
-        
-    }
-};
 
 OptimizerImpl::OptimizerImpl()
 {

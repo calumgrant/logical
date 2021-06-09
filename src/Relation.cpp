@@ -429,9 +429,16 @@ std::shared_ptr<Relation> Predicate::GetBindingRelation(int columns)
     
     if(!i)
     {
+        // The "arity" is the number of bits set in columns.
+        int arity=0;
+        while(columns)
+        {
+            if(columns &1) ++arity;
+            columns>>=1;
+        }
         i = compoundName.parts.size()>0 ?
-        std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Binding) :
-        std::make_shared<Predicate>(database, name, Arity(), reaches, BindingType::Binding);
+        std::make_shared<Predicate>(database, compoundName, arity, BindingType::Binding) :
+        std::make_shared<Predicate>(database, name, arity, reaches, BindingType::Binding);
     }
     
     return i;
@@ -551,8 +558,7 @@ std::shared_ptr<Relation> Predicate::GetBoundRelation(int columns)
             Adder(std::shared_ptr<Relation>&t) : table(t) { }
         } adder { i };
         
-        table->FirstIteration();
-        table->Query(nullptr, 0, adder);
+        table->ReadAllData(adder);
     }
     return i;
 }

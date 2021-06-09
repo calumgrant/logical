@@ -32,4 +32,6 @@ public:
     
     virtual bool Add(const Entity *e) =0;
     virtual void Clear() =0;
+    
+    virtual void ReadAllData(Receiver&r) =0;
 };
