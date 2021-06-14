@@ -34,10 +34,10 @@ public:
     std::shared_ptr<Relation> GetReachesRelation(RelationId nameId) override;
 
     void Find(int unaryPredicateName) override;
-    void SetVerbose(bool v) override;
-    bool Explain() const override;
+    void SetVerbosity(int v) override;
     void AddResult(const Entity * row, int arity, bool displayFirstColumn) override;
-
+    int GetVerbosity() const override;
+    
     void RunQueries();
     int NumberOfErrors() const override;
     int NumberOfResults() const;
@@ -64,7 +64,7 @@ private:
     persist::map_file datafile;
     persist::map_data<DataStore> datastore;
     
-    bool verbose = false;
+    int verbosity = 1;
     int errorCount = 0;
     std::size_t resultCount = 0;
     

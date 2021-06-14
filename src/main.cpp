@@ -30,8 +30,7 @@ int main(int argc, char**argv)
         return (int)ErrorCode::InvalidArgs;
     }
 
-    int verbose = 0;
-    bool quiet = false;
+    int verbosity = 1;
     int errors = 0;
     int optimizationLevel = 1;
     const char * storageFile = nullptr;
@@ -44,13 +43,24 @@ int main(int argc, char**argv)
             switch(argv[i][1])
             {
                 case 'v':
-                    verbose = true;
+                    switch(argv[i][2])
+                    {
+                        case 0:
+                            verbosity = 2;
+                            break;
+                        case 'v':
+                            verbosity = 3;
+                            break;
+                        default:
+                            verbosity = atoi(argv[i]+2);
+                            break;
+                    }
                     break;
                 case 'p':
                     supportsTerminal = false;
                     break;
                 case 'q':
-                    quiet = true;
+                    verbosity = 0;
                     break;
                 case 'O':
                     optimizationLevel = atoi(argv[i]+2);
@@ -69,7 +79,7 @@ int main(int argc, char**argv)
     try
     {
         DatabaseImpl db(optimizer, storageFile, 1000);
-        db.SetVerbose(verbose);
+        db.SetVerbosity(verbosity);
         optimizer.SetLevel(optimizationLevel);
         db.SetAnsiColours(supportsTerminal);
 
@@ -80,7 +90,7 @@ int main(int argc, char**argv)
             {
                 continue;
             }
-            if(verbose) std::cout << "Reading " << argv[i] << std::endl;
+            if(verbosity>1) std::cout << "Reading " << argv[i] << std::endl;
 
             auto r = db.ReadFile(argv[i]);
 
@@ -95,7 +105,7 @@ int main(int argc, char**argv)
         
         auto endTime = std::chrono::system_clock::now();
         
-        if(!quiet)
+        if(verbosity>0)
         {
             std::cout << "Results found    = " << db.NumberOfResults() << std::endl;
             std::cout << "Evaluation steps = " << Database::GlobalCallCount() << std::endl;

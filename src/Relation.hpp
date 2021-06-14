@@ -56,40 +56,35 @@ public:
     
     virtual void VisitRules(const std::function<void(Evaluation&)> &) =0;
     virtual void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) =0;
-
-    virtual void SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase) =0;
     
     void VisitSteps(const std::function<void(EvaluationPtr&)> &);
     
     virtual Database & GetDatabase() const =0;
     
-    bool visited = false;
-    bool recursive = false;
-    bool analysedForRecursion = false;
     bool analysed = false;
     bool fullyEvaluated = false;
 
+    bool analysedForRecursion = false;  // Redundant: implied by recursiveRoot.
+
+    // Tags for recursion
+    int recursiveDepth = -1;  // -1 if this has not been visited, or >=0 if it has.
     bool parity = true;
-    std::shared_ptr<RecursiveLoop> loop;
+    int recursiveRoot = -1;
+    Relation * backEdge = nullptr;
+    bool inRecursiveLoop = false;
+
+    std::shared_ptr<ExecutionUnit> loop;
     
     virtual std::shared_ptr<Relation> GetBindingRelation(int columns) =0;
     virtual std::shared_ptr<Relation> GetBoundRelation(int columns) =0;
     
     virtual bool IsSpecial() const =0;
+    
+    virtual void FirstIteration() =0;
+    virtual void NextIteration() =0;
 
 protected:
     // Returns the number of rows.
     virtual std::size_t Count() =0;
 };
 
-class RecursiveLoop
-{
-public:
-    // Called by all predicates that add a result.
-    void AddResult();
-    
-    Size numberOfResults = 0;
-private:
-    bool resultAdded;
-    bool evaluated;
-};

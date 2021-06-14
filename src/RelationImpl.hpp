@@ -5,6 +5,40 @@
 #include <memory>
 #include <string>
 
+class RuleSet
+{
+public:
+    RuleSet(Database &db);
+    std::vector< std::shared_ptr<Evaluation>, persist::allocator<std::shared_ptr<Evaluation>> > rules;
+    // std::unordered_set<EvaluationPtr> rules;
+    
+    void Add(const EvaluationPtr &ptr);
+    void VisitRules(const std::function<void(Evaluation&)>&fn);
+    void SetRecursiveRules(const EvaluationPtr & baseCase, const EvaluationPtr & recursiveCase);
+};
+
+class ExecutionUnit
+{
+public:
+    // Called by all predicates that add a result.
+    void AddResult();
+    
+    Size numberOfResults = 0;
+    
+    RuleSet rules;
+    std::unordered_set<Relation*> relations;
+    
+    void RunRules();
+    
+    void AddRelation(Relation & rel);
+    void Explain();
+    
+    bool evaluated = false;
+    
+    Database & database;
+    ExecutionUnit(Database & db);
+};
+
 class Predicate : public Relation
 {
 public:
@@ -25,7 +59,6 @@ public:
     void VisitAttributes(const std::function<void(Relation&)> &) const override;
     void VisitRules(const std::function<void(Evaluation&)> &) override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
-    void SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase) override;
     
     void Query(Entity * row, ColumnMask columns, Receiver &r) override;
     void QueryDelta(Entity * row, ColumnMask columns, Receiver &r) override;
@@ -39,22 +72,25 @@ public:
     std::shared_ptr<Relation> GetBindingRelation(int columns) override;
     std::shared_ptr<Relation> GetBoundRelation(int columns) override;
     bool IsSpecial() const override;
+    void FirstIteration() override;
+    void NextIteration() override;
 
 private:
+#if !NDEBUG
+    std::string debugName;
+#endif
     bool rulesRun = false;
     const bool reaches;
     const BindingType bindingPredicate;
-    bool runBaseCase = false;
 
-    std::vector< std::shared_ptr<Evaluation>, persist::allocator<std::shared_ptr<Evaluation>> > rules;
+    RuleSet rules;
     RelationId name;
     
-    // The number of
-    bool evaluating;
     std::unordered_set<std::shared_ptr<Relation>, std::hash<std::shared_ptr<Relation>>, std::equal_to<std::shared_ptr<Relation>>, persist::allocator<std::shared_ptr<Relation>>> attributes;
-    Size loopResults = 0;
 protected:
     Database &database;
+    
+    void Reset();
     
     std::shared_ptr<Table> table;
     CompoundName compoundName;

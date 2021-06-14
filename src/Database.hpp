@@ -71,8 +71,9 @@ public:
     
     // Options for logging output
     // True if we want explanations
-    virtual void SetVerbose(bool value=true) =0;
-    virtual bool Explain() const =0;
+    virtual void SetVerbosity(int value) =0;
+    bool Explain() const;
+    virtual int GetVerbosity() const =0;
 
     virtual void ReportUserError() =0;
     bool UserErrorReported() const;

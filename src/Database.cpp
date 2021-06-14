@@ -80,7 +80,6 @@ void Database::UnboundError(const char *name, int line, int column)
 DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB) :
     datafile(name, 2, 2, 1, 16384, limitMB * 1000000ll, name ? 0 : persist::temp_heap),
     datastore(datafile.data(), datafile.data()),
-    verbose(false),
     optimizer(optimizer)
 {
     int queryId = GetStringId("query");
@@ -259,14 +258,19 @@ void Database::InvalidLhs()
     std::cerr << "Invalid left hand side of a rule.\n";
 }
 
-void DatabaseImpl::SetVerbose(bool v)
+void DatabaseImpl::SetVerbosity(int v)
 {
-    verbose = v;
+    verbosity = v;
 }
 
-bool DatabaseImpl::Explain() const
+int DatabaseImpl::GetVerbosity() const
 {
-    return verbose;
+    return verbosity;
+}
+
+bool Database::Explain() const
+{
+    return GetVerbosity()>1;
 }
 
 int Database::GetStringLiteral(const char *literal)

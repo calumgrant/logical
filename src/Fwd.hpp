@@ -8,7 +8,7 @@ class Evaluation;
 class CompoundName;
 class Relation;
 class OptimizationOptions;
-class RecursiveLoop;
+class ExecutionUnit;
 class Receiver;
 class Table;
 class DataStore;

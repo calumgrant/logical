@@ -1,11 +1,135 @@
 # Work plan
 
+Assign a loop to each node.
+
+
+- recursion1: `error` should not be in the loop (negative recursion!!)
+- rule6 assertion failure. Also, the rules aren't run as they should be.
+
+- When the optimiser changes a rule, it needs to update the recursive loop as well.
+
+Think more about identifying recursive loops.
+We need to detect a loop, and collapse the whole loop into one "node"/ExecutionUnit.
+
+Use a DFS to detect edges we have already been to. Then, we mark the target as "recursive", and mark all return nodes in the recursive loop. As soon as we are back at the original node, we stop marking nodes recursive.
+
+This gives a set of edges called "back-edges", wich are all joins.
+
+Once we have identified a back-edge, we mark the node as recursive-root. We mark all nodes on the path from the back-edge to the recursive root with the shared loop L. When we leave the recursive root node, we assign all nodes individual loops.
+
+The problem occurs when we encounter a loop whilst we are already in a loop.
+
+Each node has a "loop head" which is the recursive entry point.
+
+
+What about multiple cycles?
+
+
+
+
+What is the invariant property?
+Each node V has a loop L(V).
+P1: There is a cycle, such that V1 -...> V2 and V2 -...> V1, iff L(V1) = L(V2). 
+
+Property of DAG:
+For a DAG, all nodes V have a unique L(V). if L1(V1)=L2(V2) then V1=V2.
+Proof: There are no cycles, so the only time P1 holds is when V1=V2.
+
+Proof of existence
+For a graph with one node and no edges, we can assign L such that P1 holds.
+
+Algorithm: (inefficient)
+Assign a unique L to each V.
+For all pairs of nodes V1 and V2, check if they are in the same cycle. If they are in the same cycle, assign L(V2) = L(V1). Keep on iterating until all pairs hold for P1.
+
+Algorithm (efficient):
+
+
+
+
+
+- When we exit a recursive node, we need a recursive depth...
+
+- Need to validate the generated graph:
+  - 
+
+
+
+
+We don't need a "candidate", we just return the exiting loop-id.
+We also need a "stack depth" so that 
+
+
+
+
+When a predicate calls itself, all nodes on that path 
+
+A predicate is recursive if it can call itself. Predicates are mutually recursive if 
+
+
+
+EvaluationUnit
+- 
+
+```
+number X has name Y if ...
+function F has name Y if ...
+```
+
+The EvaluationUnit is found by (1) joining `number` and `name`, and secondly by joining `function` and `name`.
+A rule belongs in exactly one EvaluationUnit.
+
+
+- Bug seems to be that `NextIteration` does not advance the deltas of `number`. So we need to advance *all* LHS predicates, not just the one we are currently evaluating. The "loop" should perhaps contain the list of predicates in the loop.
+- Could we put all of the rules into the loop, and we can just run the loop?
+- This seems safer.
+
+- All predicates should implement a "recursive loop" that contains the rules. Bundle it into an "Evaluation" or something like that.
+
+Bugs:
+1. in recursion4, no results, and a mysterious rule that is run 0 times.
+2. in new4, there's a mysterious duplication of Bhas:value.
+
+
+
+
+
+
+
+- To make things more efficient, don't use shared pointers inside Evaluation steps. Just use `Relation&`
+
+- Avoid virtual functions for efficiency, for example in `Database` and `Relation`.
+
+- What about multiple rules? You surely need to have a different delta for each rule???
+
 - Problem is that we need to analyse the whole program for semi-naive, and cannot replace the rules one at a time.
 
+- Think about how API graphs can be modelled using `new`
+
+```
+new apinode root.
+
+What if tuples got an "ID". Could you store that "ID" elsewhere??
+Surely that's just a bottom-up Prolog and it would work just fine.
+person(parent(X)) :- person(X).
+
+All you need to do is create a reference to another table as an ID? E.g.
+tableID - 16 bits
+rowId - 32 bits.
+Becomes a "tuple ID"
 
 
 
-- `new5` failure. `DeduplicateV` needs to share the table in the rule somehow.
+root has module r with name "Rails" and 
+  r has class activerecord with name "ActiveRecord".
+
+module r has name "Rails" and 
+r has parent root and
+root is root
+
+```
+
+
 
 - Special test, `-fclone` which simply clones all rules
 
@@ -151,6 +275,151 @@ Implement semi-naive recursion:
 - Predicate: clear "all". To run multiple tests in the same run.
 
 - Optimization: Compressed table type. Only for streaming. Use deltas or something.
+
+# Debugging
+
+## Enabling the debugger
+
+The debugger is enabled by passing in the `-d` option to the command line, or by asserting `debug true.`. The `-i` option also displays a prompt.
+
+The debugging prompt accepts regular Logical syntax.
+
+## Using the debugger
+
+Commands are:
+
+- `r` Continue running.
+- `q` Quit debugging and exit.
+- `k` Stop debugging.
+- `s` Step in
+- `n` Step next
+- `o` Step out
+- `h` Display help
+- Logical line: Interpret the current line as Logical syntax.
+
+The empty line runs the previous command.
+
+Each step displays:
+- The values in the bound local variables
+- The values in the bound program variables
+- The current source line, highlighting the section that's being executed.
+- The current evaluation step
+
+# Structured values
+
+There is no reason why we can't have have a "row" as a data item. What does this mean?
+
+```
+number 0.
+number S if number N and S = {succ N}.
+number {succ N} if number N.
+```
+This creates a predicate `number/1` and `succ/1`.
+```
+parameter {F has parameter P, name N, index I} if ...
+```
+
+Can it refer to itself? Sure! But be sure to end the recursion.
+
+```
+number 0.
+number {number N} if ...
+
+node {function F} if function F.
+node N if N = {function F}
+
+node {function F} has name Name if 
+  F has name Name.
+
+node {call c} has type type if
+  c has target t and
+  t has return-type type.
+```
+
+## Specification
+
+An entity-expression of the form `{ ... }` defines a "structured value" representing rows in a predicate. For example `X = { F is a function }` represents a row holding `F`, rather than `F` itself.  Since a row cannot refer to itself, the clause `F = { F is a function }` always fails.
+
+Structured values offer another way to extend the data.
+
+Structured values may be nested.
+
+Structured values can be recursive, but there is a danger of infinite recursion
+
+## Example: Lists.
+```
+list @empty.
+{H has cons T} has head H, tail T.
+```
+
+## Implementation
+
+Storing this would be as simple as having a "row" type consisting of a relation-id (16 bits) and an index (32-bits). 
+
+Strings could be just another table, as could "at-strings".
+
+Relation::Query() could have an analog, Relation::QueryRowIds(), which returns a single value for each result, encoding the row-id.
+
+The evaluation steps are:
+
+```
+Unpack _5 -> (_6, _7)
+```
+
+This takes an existing row-id, looks up its table, and gets the row data.
+
+``` 
+Query relation (_6, _7) -> _5
+```
+
+This performs a join (scan, probe, join) and returns the results as a row-id.
+
+The database contains a map from relation-id to relation. This is only done for relations that are actively queried, since there are only 16 bits used to store the relation-id.
+
+Efficiency: `person { node @123 }` compiles to `_0 = @123, probe node (_0) -> _1, exists person (_1) -> _`.
+`person { node N }` where `N` is unbound, compiles to
+  `scan node (_) -> _0 = (_1), probe person (_0)`
+it could also compile to:
+  `scan person (_) -> (_0), probe node _0, unpack node (_1) = _0`
+
+There is a slight danger of inefficiency here, compared with the `new` keyword.
+
+What about transitive closures?
+
+```
+person { X has name Y }.
+
+person { @1 has name Y}.
+Gets evaluated as
+_0 = @1
+find has:name (_0,_) -> _2 = (_,_1)
+  exists person _2
+```
+so you can't unpick it to the same extend as `new`.
+
+## Displaying structured values
+
+Structured values are displayed in an unpacked form. We don't want to expose internal IDs. For example
+
+```
+person @1
+person (@1 has name "Fred")
+number (succ 0).
+
+new number has value 0.
+new number has value n+1 if number _ has value n and n<10.
+
+vs.
+
+number (value 0).
+number (value n+1) if number(value n) and n<10.
+number V if number N and N = value N0 and V = value
+
+value 0
+value 1
+...
+value 10
+```
 
 # Built-in predicates
 

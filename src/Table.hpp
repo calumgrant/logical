@@ -28,7 +28,7 @@ public:
     virtual bool NextIteration() =0;
     
     // This is a bad interface.
-    std::shared_ptr<RecursiveLoop> loop;
+    std::shared_ptr<ExecutionUnit> loop;
     
     virtual bool Add(const Entity *e) =0;
     virtual void Clear() =0;

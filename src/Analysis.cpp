@@ -3,6 +3,7 @@
 #include "EvaluationImpl.hpp"
 #include "Database.hpp"
 #include "OptimizerImpl.hpp"
+#include "RelationImpl.hpp"
 
 #include <iostream>
 
@@ -61,93 +62,120 @@ public:
     }
     
 private:
-    static std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Relation & node, bool parity, const std::shared_ptr<RecursiveLoop> & existingLoop)
+    
+    static Relation * GetLoop(Relation * r)
     {
-        if(node.loop && existingLoop)
-            assert(node.loop == existingLoop);
-        
-        if(node.visited)
+        return r ? &GetLoop(*r) : nullptr;
+    }
+
+    static Relation & GetLoop(Relation & r)
+    {
+        auto *rel = &r;
+        while(auto n = rel->backEdge)
+            rel = n;
+        return *rel;
+    }
+
+    static Relation * MergeLoops(Relation * r1, Relation * r2)
+    {
+        if(!r1) return r2;
+        if(!r2) return r1;
+        while(auto n = r1->backEdge)
+            r1 = n;
+        while(auto n = r2->backEdge)
+            r2 = n;
+        if(r1==r2) return r1;
+        assert(r1->recursiveDepth != r2->recursiveDepth);
+        if(r1->recursiveDepth < r2->recursiveDepth)
         {
-            node.recursive = true;
+            r2->backEdge = r1;
+            return r1;
+        }
+        else
+        {
+            r1->backEdge = r2;
+            return r2;
+        }
+    }
+    
+    // Returns a back edge if in a loop, or nullptr if this branch is not recursive
+    static Relation * AnalyseRecursion(Database &database, Relation & node, bool parity, int depth, int root)
+    {
+        if(node.recursiveDepth>=0)
+        {
+            // This node has been analysed previously.
+            // Either in the same analysis, or in a previous analysis.
             
-            if(!node.loop)
-                node.loop = existingLoop ? existingLoop : std::make_shared<RecursiveLoop>();
+            if(node.recursiveRoot == root)
+            {
+                // A forward edge
+                if(node.recursiveDepth > depth)
+                    return nullptr;
+                
+                // This is recursive, so we return this node as a back-edge.
+
+                return GetLoop(&node);
+            }
+            
+            // We have reached a node that was analysed in a previous cycle.
+            // (note we have incremental analysis).
+            return nullptr;
+        }
+        
+        node.recursiveDepth = depth;
+        node.parity = parity;
+        
+        node.recursiveRoot = root;
+        node.analysedForRecursion = true;
+        
+        Relation * loop = nullptr;
+
+        node.VisitRules([&](Evaluation & eval)
+        {
+            auto l = AnalyseRecursion(database, eval, parity, depth+1, root);
+            loop = MergeLoops(loop, l);
+        });
+        
+        if(!loop) return nullptr;
+        
+        if(loop == & node)
+        {
+            node.inRecursiveLoop = true;
             
             if(node.parity != parity)
             {
                 database.ParityError(node);
             }
             
-            return node.loop;
+            return nullptr;
         }
         
-        if(node.analysedForRecursion)
-            return node.loop;
-
-        assert(!node.analysedForRecursion);
-        node.visited = true;
-        node.analysedForRecursion = true;
-        node.parity = parity;
-        bool hasRecursiveBranch = false;
-
-        assert(!node.recursive);
-        assert(!node.loop);
-
-        node.VisitRules([&](Evaluation & eval)
+        if(loop->recursiveDepth < node.recursiveDepth)
         {
-            auto l = AnalyseRecursion(database, eval, parity, node.loop);
-            if( l )
-                node.loop = l;
-            
-            if(eval.onRecursivePath) hasRecursiveBranch = true;
-            if(node.loop && existingLoop)
-                assert(node.loop == existingLoop);
-        });
-        
-        // TODO: Scope-guard this
-        node.visited = false;
-
-        if(node.recursive)
-        {
-            assert(node.loop);
-            assert(hasRecursiveBranch);
+            node.backEdge = loop;
+            return loop;
         }
-
-        if(node.loop && existingLoop)
-            assert(node.loop == existingLoop);
-        return node.recursive ? nullptr : node.loop;
+        
+        return nullptr;
     }
 
-    static std::shared_ptr<RecursiveLoop> AnalyseRecursion(Database &database, Evaluation & node, bool parity, const std::shared_ptr<RecursiveLoop> & existingLoop)
+    // Same return as previous function
+    // Returns a back-edge
+    // Returns the outermost back-edge by looking at the recursive Depth.
+    static Relation * AnalyseRecursion(Database &database, Evaluation & node, bool parity, int depth, int root)
     {
-        std::shared_ptr<RecursiveLoop> loop = existingLoop;
+        Relation * loop = nullptr;
         
         node.VisitReads([&](std::weak_ptr<Relation> & relation, int mask, const int*) {
-            if((bool)(loop = AnalyseRecursion(database, *relation.lock(), parity, existingLoop)))
-            {
-                node.onRecursivePath = true;
-                node.readIsRecursive = true;
-            }
-            if(existingLoop && loop)
-                assert(loop == existingLoop);
+            loop = MergeLoops(loop, AnalyseRecursion(database, *relation.lock(), parity, depth+1, root));
         });
         
         node.VisitNext([&](std::shared_ptr<Evaluation>&n, bool nextIsNot) {
-            if(auto l = AnalyseRecursion(database, *n, nextIsNot ? !parity : parity, loop))
-            {
-                node.onRecursivePath = true;
-                assert( !loop || loop == l );
-                loop = l;
-            }
-            if(existingLoop && loop)
-                assert(loop == existingLoop);
+            loop = MergeLoops(loop, AnalyseRecursion(database, *n, nextIsNot ? !parity : parity, depth+1, root));
         });
-        
-        // assert((bool)loop == node.onRecursivePath);
-        
-        if(existingLoop && loop)
-            assert(loop == existingLoop);
-            
+
+        if(loop)
+            node.onRecursivePath = true;
         return loop;
     }
 
@@ -167,11 +195,37 @@ private:
     {
         relation.VisitRules([&](Evaluation & eval) { AnalyseRecursiveReads(eval, false); });
     }
+    
+    mutable int rootCount = 0;
 
     void AnalyseRecursion(Database & database, Relation & root) const
-    {
+    {        
         if(!root.analysedForRecursion)
-            AnalyseRecursion(database, root, true, std::shared_ptr<RecursiveLoop>());
+        {
+            AnalyseRecursion(database, root, true, 1, rootCount++);
+            assert(root.analysedForRecursion);
+            // assert(root.recursiveRoot == root);
+        }
+
+        if(!root.loop)
+        {
+            auto & recursiveLoop = GetLoop(root);
+            
+            // assert(&root == &recursiveLoop);  // Deleteme - debugging only
+            
+            if(!recursiveLoop.loop)
+            {
+                auto loop = std::make_shared<ExecutionUnit>(database);
+                recursiveLoop.loop = loop;
+                loop->AddRelation(recursiveLoop);
+            }
+            
+            if(!root.loop)
+            {
+                root.loop = recursiveLoop.loop;
+                root.loop->AddRelation(root);
+            }
+        }
         
         AnalyseRecursiveReads(root);
     }
@@ -220,14 +274,14 @@ public:
         BranchImpl(Database &database, Relation &rel) :
             relation(rel)
         {
-            if(!relation.recursive) return;
+            if(!relation.inRecursiveLoop) return;
             
             relation.VisitRules([=](Evaluation&e) { CheckRule(e); });
             
             if(changed)
             {
                 relation.VisitRules([=](const std::shared_ptr<Evaluation>&e) { OptimizeRule(e); });
-                relation.SetRecursiveRules(baseRules, recursiveRules);
+                relation.loop->rules.SetRecursiveRules(baseRules, recursiveRules);
             }
         }
         
@@ -416,4 +470,6 @@ OptimizerImpl::OptimizerImpl()
     RegisterOptimization(recursion);
     RegisterOptimization(deltas);
     RegisterOptimization(recursiveBranch);
+    
+    SetLevel(0);
 }

@@ -33,12 +33,34 @@ void ErrorRelation::Add(const Entity * row)
     database.ReportUserError();
 }
 
+class EmptyReceiver : public Receiver
+{
+    void OnRow(Entity * row) override
+    {
+        
+    }
+};
+
+void Predicate::Reset()
+{
+    loop.reset();
+    rules.rules.clear();
+    rulesRun = false;
+    analysed = false;
+    analysedForRecursion = false;
+    recursiveDepth = -1;
+    recursiveRoot = -1;
+}
+
 void SpecialPredicate::AddRule(const std::shared_ptr<Evaluation> & eval)
 {
     // Run the rule immediately.
-    eval->Evaluate(nullptr);
-    if( database.Explain() )
-        eval->Explain(database, std::cout, 0);
+    // ?? What about analysis ??
+
+    Reset();
+    Predicate::AddRule(eval);
+    EmptyReceiver receiver;
+    Predicate::Query(nullptr, 0, receiver);
 }
 
 ExpectedResults::ExpectedResults(Database &db, RelationId name) : SpecialPredicate(db, name)
@@ -83,22 +105,28 @@ void SpecialPredicate::QueryDelta(Entity * row, int columns, Receiver &v)
 
 Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType binding) :
     rulesRun(false), name(name), database(db),
-    evaluating(false), rules(db.Storage()),
     attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage()),
-    reaches(reaches), bindingPredicate(binding)
+    reaches(reaches), bindingPredicate(binding),
+    rules(db)
 {
     table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
+#if !NDEBUG
+    debugName = db.GetString(name).c_str();
+#endif
 }
 
 Predicate::Predicate(Database &db, const CompoundName & cn, ::Arity arity, BindingType binding) :
     rulesRun(false), name(cn.parts[0]), database(db),
-    evaluating(false),
-    compoundName(cn), rules(db.Storage()),
+    compoundName(cn),
     attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage()),
     reaches(false),
-    bindingPredicate(binding)
+    bindingPredicate(binding),
+    rules(db)
 {
     table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
+#if !NDEBUG
+    debugName = db.GetString(name).c_str();
+#endif
 }
 
 bool Predicate::IsReaches() const
@@ -116,113 +144,20 @@ void Predicate::AddRule(const std::shared_ptr<Evaluation> & rule)
 {
     // This is to test the Clone function
 //    rules.push_back(rule->Clone());
-    rules.push_back(rule);
-    if(rulesRun)
-    {
-        database.Error("Adding a rule to an evaluated relation is not supported (yet)");
-        // ?? What happens if it's recursive??
-        // Generally it isn't as it came from a projection.
-        // !! Projections can be recursive!
-        rule->Evaluate(nullptr);
-        
-        if(database.Explain())
-        {
-            rule->Explain(database, std::cout, 4);
-        }
-    }
-    MakeDirty();
-}
-
-void Predicate::MakeDirty()
-{
-    rulesRun = false;
+    rules.Add(rule);
 }
 
 void Predicate::RunRules()
 {
     AnalysePredicate(database, *this);
-    
-    if(!loop || loopResults == loop->numberOfResults)
-        if(rulesRun) return;
-    
-    if(evaluating)
-    {
-        // Check we are in a recursive loop, otherwise something has gone badly wrong.
-        assert(loop);
-        return;
-    }
 
-
-    evaluating = true;
-
-    // std::cout << "Predicate ";
-    // Evaluation::OutputRelation(std::cout, database, *this);
-    // std::cout << " first iteration\n";
-    
-    if(!runBaseCase)
-    {
-        runBaseCase = true;
-        table->FirstIteration();
-
-        for(auto & p : rules)
-        {
-            p->Evaluate(nullptr);
-        }
-    }
-    table->NextIteration();
-    runBaseCase = true;
-
-    if(loop)
-    {
-        Size loopSize;
-        
-        bool resultsFound;
-        do
-        {
-            // std::cout << "Predicate ";
-            // Evaluation::OutputRelation(std::cout, database, *this);
-            // std::cout << " next iteration\n";
-
-            loopSize = loop->numberOfResults;
-            for(auto & p : rules)
-            {
-                if(p->onRecursivePath)
-                    p->Evaluate(nullptr);
-            }
-            resultsFound = loop->numberOfResults > loopSize;
-            loopSize = loop->numberOfResults;
-            table->NextIteration();
-        }
-        while(resultsFound);
-        loopResults = loop->numberOfResults;
-    }
-
-    evaluating = false;
-    rulesRun = true;
-    
-    if(database.Explain())
-    {
-        std::cout << "Evaluated " << rules.size() << " rule" << (rules.size()!=1 ? "s" : "") << " in ";
-        Evaluation::OutputRelation(std::cout, database, *this);
-        
-        if(Relation::loop)
-        {
-            std::cout << Colours::Detail << " (Flags:";
-            if(Relation::loop) std::cout << "R";
-            std::cout << ")" << Colours::Normal;
-        }
-        
-        std::cout << " ->\n";
-        for(auto & p : rules)
-        {
-            p->Explain(database, std::cout, 4);
-        }
-    }
+    assert(loop);
+    loop->RunRules();
 }
 
 bool Predicate::HasRules() const
 {
-    return !rules.empty();
+    return !rules.rules.empty();
 }
 
 SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name, 1, false, BindingType::Unbound)
@@ -264,23 +199,11 @@ const CompoundName * Relation::GetCompoundName() const
     return nullptr;
 }
 
-void Predicate::VisitRules(const std::function<void(Evaluation&)>&fn)
+void RuleSet::SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase)
 {
-    for(auto & rule : rules)
-        fn(*rule);
-}
-
-void Predicate::VisitRules(const std::function<void(EvaluationPtr&)>&fn)
-{
-    for(EvaluationPtr & rule : rules)
-        fn(rule);
-}
-
-void Predicate::SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase)
-{
-    rules.resize(2);
-    rules[0] = baseCase;
-    rules[1] = recursiveCase;
+    rules.clear();
+    rules.push_back(baseCase);
+    rules.push_back(recursiveCase);
     baseCase->onRecursivePath = false;
     recursiveCase->onRecursivePath = true;
 }
@@ -539,7 +462,7 @@ std::shared_ptr<Relation> Predicate::GetBoundRelation(int columns)
         std::vector<int> boundArguments;
         
         auto binding = GetBindingRelation(columns);
-        for(auto &r : rules)
+        for(auto &r : rules.rules)
         {
             auto b = MakeBoundRule(r, *this, i, columns);
             i->AddRule(b);
@@ -577,3 +500,116 @@ bool SpecialPredicate::IsSpecial() const
 {
     return true;
 }
+
+void ExecutionUnit::AddRelation(Relation & rel)
+{
+    relations.insert(&rel);
+//    rel.VisitSteps([&](EvaluationPtr & step) {
+//        step->VisitWrites([&](std::weak_ptr<Relation>&rel, int, const int*) {
+//            relations.insert(&*rel.lock());
+//        });
+//    });
+    
+    rel.VisitRules([&](EvaluationPtr & rule) {
+        rules.rules.push_back(rule);
+    });
+}
+
+void ExecutionUnit::RunRules()
+{
+    if(evaluated) return;
+    evaluated = true;
+    
+    for(auto r : relations)
+        r->FirstIteration();
+
+    for(auto & p : rules.rules)
+    {
+        p->Evaluate(nullptr);
+    }
+
+    Size loopSize;
+    
+    bool resultsFound;
+    do
+    {
+        for(auto r : relations)
+            r->NextIteration();
+
+        loopSize = numberOfResults;
+
+        if(database.GetVerbosity()>2)
+        {
+            std::cout << "Number of results in loop = " << loopSize << std::endl;
+            Explain();
+        }
+        
+        for(auto & p : rules.rules)
+        {
+            if(p->onRecursivePath)
+                p->Evaluate(nullptr);
+        }
+        resultsFound = numberOfResults > loopSize;
+        loopSize = numberOfResults;
+    }
+    while(resultsFound);
+
+    for(auto r : relations)
+        r->NextIteration();
+    
+    if(database.Explain())
+        Explain();
+}
+
+void ExecutionUnit::Explain()
+{
+    std::cout << "Evaluated ";
+    bool first = true;
+    for(auto & r : relations)
+    {
+        if(first) first = false; else std::cout << ", ";
+        Evaluation::OutputRelation(std::cout, database, *r);
+    }
+        
+    std::cout << " ->\n";
+    for(auto & p : rules.rules)
+    {
+        p->Explain(database, std::cout, 4);
+    }
+}
+
+ExecutionUnit::ExecutionUnit(Database & db) : database(db), rules(db)
+{
+}
+
+void Predicate::FirstIteration()
+{
+    table->FirstIteration();
+}
+
+void Predicate::NextIteration()
+{
+    table->NextIteration();
+}
+
+void RuleSet::Add(const EvaluationPtr & rule)
+{
+    rules.push_back(rule);
+}
+
+void Predicate::VisitRules(const std::function<void(Evaluation&)>&fn)
+{
+    for(auto & rule : rules.rules)
+        fn(*rule);
+}
+
+void Predicate::VisitRules(const std::function<void(EvaluationPtr&)>&fn)
+{
+    for(EvaluationPtr & rule : rules.rules)
+        fn(rule);
+}
+
+RuleSet::RuleSet(Database &db) : rules(db.Storage())
+{
+}
+
