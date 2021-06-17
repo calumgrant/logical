@@ -101,9 +101,9 @@ void SpecialPredicate::QueryDelta(Row row, Columns columns, Receiver &v)
 }
 
 Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType binding, Columns cols) : rulesRun(false), name(name), database(db),
-                                                                                                                      attributes({}, std::hash<Relation *>(), std::equal_to<Relation *>(), db.Storage()),
-                                                                                                                      reaches(reaches), bindingPredicate(binding), bindingColumns(cols),
-                                                                                                                      rules(db)
+    attributes({}, std::hash<Relation *>(), std::equal_to<Relation *>(), db.Storage()),
+    reaches(reaches), bindingPredicate(binding), bindingColumns(cols),
+    rules(db)
 {
     table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
 #if !NDEBUG

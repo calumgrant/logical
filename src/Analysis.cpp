@@ -366,12 +366,24 @@ public:
             }
             
             if(addBaseRule)
-                AddBaseRule(eval);
+            {
+                if(eval->onRecursivePath)
+                    AddRecursiveRule(eval);
+                else
+                    AddBaseRule(eval);
+            }
         }
         
-        std::shared_ptr<Evaluation> CreateRule(const std::shared_ptr<Evaluation> & ruleEval, const std::shared_ptr<Evaluation> & branch)
+        std::shared_ptr<Evaluation> CreateBaseRule(const std::shared_ptr<Evaluation> & ruleEval, const std::shared_ptr<Evaluation> & branch)
         {
             return ruleEval->WithNext(branch);
+        }
+
+        std::shared_ptr<Evaluation> CreateRecursiveRule(const std::shared_ptr<Evaluation> & ruleEval, const std::shared_ptr<Evaluation> & branch)
+        {
+            auto r = ruleEval->WithNext(branch);
+            r->onRecursivePath = true;
+            return r;
         }
         
         void OptimizeEvaluationPath(const std::shared_ptr<Evaluation> & ruleEval, const std::shared_ptr<Evaluation> & eval)
@@ -391,7 +403,7 @@ public:
                         if( next == eval )
                             AddRecursiveRule(ruleEval);
                         else
-                            AddRecursiveRule(CreateRule(ruleEval, eval));
+                            AddRecursiveRule(CreateRecursiveRule(ruleEval, eval));
                     });
                 }
             }
@@ -401,19 +413,22 @@ public:
                     if( next == eval )
                         AddBaseRule(ruleEval);
                     else
-                        AddBaseRule(CreateRule(ruleEval, eval));
+                        AddBaseRule(CreateBaseRule(ruleEval, eval));
                 });
             }
         }
             
         void AddBaseRule(const std::shared_ptr<Evaluation>&eval)
         {
+            assert(!eval->onRecursivePath);
             baseRules = baseRules ? std::make_shared<OrEvaluation>(baseRules, eval) : eval;
         }
         
         void AddRecursiveRule(const std::shared_ptr<Evaluation>&eval)
         {
+            assert(eval->onRecursivePath);
             recursiveRules = recursiveRules ? std::make_shared<OrEvaluation>(recursiveRules, eval) : eval;
+            recursiveRules->onRecursivePath = true;
         }
         
         bool changed = false;
