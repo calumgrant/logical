@@ -236,6 +236,7 @@ private:
             assert(&recursiveLoop == &node);
             auto loop = std::make_shared<ExecutionUnit>(database);
             node.loop = loop;
+            if(node.inRecursiveLoop) loop->recursive = true;
             loop->AddRelation(node);
         }
         
