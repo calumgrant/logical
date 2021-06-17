@@ -26,16 +26,15 @@ public:
     void Analyse(EvaluationPtr & rule) const override
     {
         Evaluation::VisitSteps(rule, [](EvaluationPtr&eval) {
-            eval->VisitReads([&](std::weak_ptr<Relation> & rel, int mask, const int * inputs) {
+            eval->VisitReads([&](Relation *& relation, int mask, const int * inputs) {
                 if(mask != 0)
                 {
                     // std::cout << "Semi-naive opportunity: " << mask << "\n";
 
-                    auto relation = rel.lock();
                     if(!relation->IsSpecial())
                     {
-                        auto guard = relation->GetBindingRelation(mask);
-                        auto bound = relation->GetBoundRelation(mask);
+                        auto & guard = relation->GetBindingRelation(mask);
+                        auto & bound = relation->GetBoundRelation(mask);
                         
                         std::vector<int> writes;
                         for(int i=0; i<relation->Arity(); ++i)
@@ -43,7 +42,7 @@ public:
                         
                         auto write = std::make_shared<Writer>(guard, writes);
                         eval = std::make_shared<OrEvaluation>(write, eval);
-                        rel = bound;
+                        relation = &bound;
                     }
                 }
             });
@@ -180,8 +179,8 @@ private:
     {
         Relation * loop = nullptr;
         
-        node.VisitReads([&](std::weak_ptr<Relation> & relation, int mask, const int*) {
-            loop = MergeLoops(loop, AnalyseRecursion(database, *relation.lock(), parity, depth+1, root));
+        node.VisitReads([&](Relation *& relation, int mask, const int*) {
+            loop = MergeLoops(loop, AnalyseRecursion(database, *relation, parity, depth+1, root));
         });
         
         node.VisitNext([&](std::shared_ptr<Evaluation>&n, bool nextIsNot) {
@@ -232,11 +231,10 @@ private:
         }
         
         node.VisitSteps([&](EvaluationPtr & eval) {
-            eval->VisitReads([&](std::weak_ptr<Relation> & next, int, const int*){
-                auto n = next.lock();
-                if(n->recursiveDepth > node.recursiveDepth)
+            eval->VisitReads([&](Relation *& next, int, const int*) {
+                if(next->recursiveDepth > node.recursiveDepth)
                 {
-                    AssignLoops(database, *n);
+                    AssignLoops(database, *next);
                 }
             });
         });

@@ -153,7 +153,7 @@ void EqualsBF::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent + 4);
 }
 
-BinaryRelationEvaluation::BinaryRelationEvaluation(const std::shared_ptr<Relation> &relation, int slot1, int slot2, const std::shared_ptr<Evaluation> &next) : ReaderEvaluation(relation, next), slot1(slot1), slot2(slot2)
+BinaryRelationEvaluation::BinaryRelationEvaluation(Relation &relation, int slot1, int slot2, const std::shared_ptr<Evaluation> &next) : ReaderEvaluation(relation, next), slot1(slot1), slot2(slot2)
 {
 }
 
@@ -696,7 +696,7 @@ void NotNone::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent + 4);
 }
 
-NotInB::NotInB(int slot, const std::shared_ptr<Relation> &relation, const std::shared_ptr<Evaluation> &next) : slot(slot), ReaderEvaluation(relation, next)
+NotInB::NotInB(int slot, Relation &relation, const std::shared_ptr<Evaluation> &next) : slot(slot), ReaderEvaluation(relation, next)
 {
 }
 
@@ -708,7 +708,7 @@ void NotInB::OnRow(Entity *row)
         bool found = false;
         void OnRow(Entity *) override { found = true; }
     } visitor;
-    relation.lock()->Query(row + slot, 1, visitor);
+    relation->Query(row + slot, 1, visitor);
 
     if (!visitor.found)
         next->Evaluate(row);
@@ -717,7 +717,7 @@ void NotInB::OnRow(Entity *row)
 void NotInB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Lookup _" << slot << " is not in " << db.GetString(relation.lock()->Name());
+    os << "Lookup _" << slot << " is not in " << db.GetString(relation->Name());
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent + 4);
@@ -731,7 +731,7 @@ std::size_t Evaluation::GlobalCallCount()
     return globalCallCount;
 }
 
-Reader::Reader(const std::shared_ptr<Relation> &relation, const std::vector<int> &slots, const std::shared_ptr<Evaluation> &next) : ReaderEvaluation(relation, next)
+Reader::Reader(Relation &relation, const std::vector<int> &slots, const std::shared_ptr<Evaluation> &next) : ReaderEvaluation(relation, next)
 {
     outputs = slots;
     assert(slots.size() > 1);
@@ -756,14 +756,14 @@ void Reader::OnRow(Entity *row)
     };
 
     Visitor visitor{*this, row};
-    relation.lock()->Query(nullptr, 0, visitor);
+    relation->Query(nullptr, 0, visitor);
 }
 
 void Reader::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Read from ";
-    OutputRelation(os, db, relation.lock());
+    OutputRelation(os, db, *relation);
     os << " into (";
     for (int i = 0; i < outputs.size(); ++i)
     {
@@ -777,7 +777,7 @@ void Reader::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent + 4);
 }
 
-Writer::Writer(const std::shared_ptr<Relation> &relation, const std::vector<int> &slots) : WriterEvaluation(relation), slots(slots)
+Writer::Writer(Relation &relation, const std::vector<int> &slots) : WriterEvaluation(relation), slots(slots)
 {
     assert(slots.size() > 0);
     slot = slots[0];
@@ -793,14 +793,14 @@ Writer::Writer(const std::shared_ptr<Relation> &relation, const std::vector<int>
 void Writer::OnRow(Entity *row)
 {
     if (contiguous)
-        relation.lock()->Add(row + slot);
+        relation->Add(row + slot);
     else
     {
         // Assemble the data into a vector
         std::vector<Entity> data(slots.size());
         for (int i = 0; i < slots.size(); ++i)
             data[i] = row[slots[i]];
-        relation.lock()->Add(&data[0]);
+        relation->Add(&data[0]);
     }
 }
 
@@ -815,17 +815,17 @@ void Writer::Explain(Database &db, std::ostream &os, int indent) const
         OutputVariable(os, slots[i]);
     }
     os << ") into ";
-    OutputRelation(os, db, relation.lock());
+    OutputRelation(os, db, *relation);
     OutputCallCount(os);
     os << std::endl;
 }
 
-Join::Join(const std::shared_ptr<Relation> &relation, const std::vector<int> &inputs, const std::vector<int> &outputs, const std::shared_ptr<Evaluation> &next) : ReaderEvaluation(relation, next)
+Join::Join(Relation &relation, const std::vector<int> &inputs, const std::vector<int> &outputs, const std::shared_ptr<Evaluation> &next) : ReaderEvaluation(relation, next)
 {
     this->inputs = inputs;
     this->outputs = outputs;
     assert(inputs.size() == outputs.size());
-    assert(relation->Arity() == inputs.size());
+    assert(relation.Arity() == inputs.size());
     mask = 0;
     int shift = 1;
     for (auto v : this->inputs)
@@ -864,9 +864,9 @@ void Join::OnRow(Entity *locals)
         }
 
     if (useDelta)
-        relation.lock()->QueryDelta(&data[0], mask, visitor);
+        relation->QueryDelta(&data[0], mask, visitor);
     else
-        relation.lock()->Query(&data[0], mask, visitor);
+        relation->Query(&data[0], mask, visitor);
 }
 
 void Evaluation::OutputVariable(std::ostream &os, int variable)
@@ -918,11 +918,6 @@ void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation &
     os << Colours::Normal;
 }
 
-void Evaluation::OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> &relation)
-{
-    OutputRelation(os, db, *relation);
-}
-
 void Join::Explain(Database &db, std::ostream &os, int indent) const
 {
     int inCount = 0, outCount = 0;
@@ -943,7 +938,7 @@ void Join::Explain(Database &db, std::ostream &os, int indent) const
 
     if (useDelta)
         os << Colours::Relation << "∆";
-    OutputRelation(os, db, relation.lock());
+    OutputRelation(os, db, *relation);
     os << " (";
     for (int i = 0; i < inputs.size(); ++i)
     {
@@ -980,11 +975,11 @@ std::size_t Evaluation::GetGlobalCallCountLimit()
     return globalCallCountLimit;
 }
 
-ReaderEvaluation::ReaderEvaluation(const std::shared_ptr<Relation> &relation, const EvaluationPtr &next) : relation(relation), ChainedEvaluation(next)
+ReaderEvaluation::ReaderEvaluation(Relation &relation, const EvaluationPtr &next) : relation(&relation), ChainedEvaluation(next)
 {
 }
 
-WriterEvaluation::WriterEvaluation(const std::shared_ptr<Relation> &relation) : relation(relation)
+WriterEvaluation::WriterEvaluation(Relation &relation) : relation(&relation)
 {
 }
 
@@ -1094,7 +1089,7 @@ void DeduplicateV::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent + 4);
 }
 
-void Evaluation::VisitReads(const std::function<void(std::weak_ptr<Relation> &, int, const int *)> &)
+void Evaluation::VisitReads(const std::function<void(Relation* &, int, const int *)> &)
 {
 }
 
@@ -1119,7 +1114,7 @@ void OrEvaluationForNot::VisitNext(const std::function<void(EvaluationPtr &, boo
     fn(right, false);
 }
 
-void ReaderEvaluation::VisitReads(const std::function<void(std::weak_ptr<Relation> &relation, int, const int *)> &fn)
+void ReaderEvaluation::VisitReads(const std::function<void(Relation *& relation, int, const int *)> &fn)
 {
     fn(relation, mask, inputs.data());
 }
@@ -1283,11 +1278,11 @@ void NegateBF::VisitVariables(const std::function<void(int &, VariableAccess)> &
     fn(slot2, VariableAccess::Write);
 }
 
-void Evaluation::VisitWrites(const std::function<void(std::weak_ptr<Relation> &rel, int, const int *)> &fn)
+void Evaluation::VisitWrites(const std::function<void(Relation *& rel, int, const int *)> &fn)
 {
 }
 
-void Writer::VisitWrites(const std::function<void(std::weak_ptr<Relation> &rel, int, const int *)> &fn)
+void Writer::VisitWrites(const std::function<void(Relation *& rel, int, const int *)> &fn)
 {
     fn(relation, slots.size(), slots.data());
 }
@@ -1344,7 +1339,7 @@ EvaluationPtr OrEvaluationForNot::Clone() const
 
 EvaluationPtr Join::Clone() const
 {
-    return std::make_shared<Join>(relation.lock(), inputs, outputs, next->Clone());
+    return std::make_shared<Join>(*relation, inputs, outputs, next->Clone());
 }
 
 EvaluationPtr Load::Clone() const
@@ -1379,7 +1374,7 @@ EvaluationPtr ModBBF::Clone() const
 
 EvaluationPtr NotInB::Clone() const
 {
-    return std::make_shared<NotInB>(slot, relation.lock(), next->Clone());
+    return std::make_shared<NotInB>(slot, *relation, next->Clone());
 }
 
 EvaluationPtr RangeB::Clone() const
@@ -1424,12 +1419,12 @@ EvaluationPtr NegateBF::Clone() const
 
 EvaluationPtr Reader::Clone() const
 {
-    return std::make_shared<Reader>(relation.lock(), outputs, next->Clone());
+    return std::make_shared<Reader>(*relation, outputs, next->Clone());
 }
 
 EvaluationPtr Writer::Clone() const
 {
-    return std::make_shared<Writer>(relation.lock(), slots);
+    return std::make_shared<Writer>(*relation, slots);
 }
 
 EvaluationPtr DeduplicationGuard::Clone() const

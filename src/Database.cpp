@@ -27,7 +27,7 @@ public:
     // Names, indexed on their first column
     unordered_map_helper<StringId, CompoundName>::multimap_type names;
 
-    std::shared_ptr<Relation> queryPredicate;
+    Relation * queryPredicate;
     
     std::atomic<std::int64_t> entityCounter = 0;
     
@@ -40,7 +40,7 @@ int yylex_init_extra (Database *, yyscan_t* scanner);
 int yylex_destroy (yyscan_t yyscanner );
 void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
-std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
+Relation& DatabaseImpl::GetUnaryRelation(int name)
 {
     auto i = datastore->unaryRelations.find(name);
     if (i == datastore->unaryRelations.end())
@@ -48,15 +48,15 @@ std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
         auto p = allocate_shared<Predicate>(datafile, *this, name, 1, false, BindingType::Unbound, 0);
 
         datastore->unaryRelations.insert(std::make_pair(name, p));
-        return p;
+        return *p;
     }
     else
     {
-        return i->second;
+        return *i->second;
     }
 }
 
-std::shared_ptr<Relation> DatabaseImpl::GetBinaryRelation(int name)
+Relation& DatabaseImpl::GetBinaryRelation(int name)
 {
     auto i = datastore->binaryRelations.find(name);
     if (i==datastore->binaryRelations.end())
@@ -64,12 +64,12 @@ std::shared_ptr<Relation> DatabaseImpl::GetBinaryRelation(int name)
         std::vector<int> cn(1);
         cn[0] = name;
         
-        auto p = GetRelation(cn);
+        auto p = GetRelationPtr(cn);
         datastore->binaryRelations.insert(std::make_pair(name, p));
-        return p;
+        return *p;
     }
     else
-        return i->second;
+        return *i->second;
 }
 
 void Database::UnboundError(const char *name, int line, int column)
@@ -86,7 +86,7 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
     
     if(!datastore->initialized)
     {
-        datastore->queryPredicate = GetUnaryRelation(queryId);
+        datastore->queryPredicate = &GetUnaryRelation(queryId);
         
         int print = GetStringId("print");
         AddRelation(allocate_shared<PrintRelation>(datafile, *this, print));
@@ -171,7 +171,7 @@ const string_type &DatabaseImpl::GetAtString(int id) const
     return datastore->atstrings.GetString(id);
 }
 
-std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
+Relation& DatabaseImpl::GetRelation(int name, int arity)
 {
     switch(arity)
     {
@@ -189,25 +189,25 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
         CompoundName cn(p);
         auto r = allocate_shared<Predicate>(datafile, *this, cn, arity, BindingType::Unbound, 0);
         datastore->relations.insert(std::make_pair(index, r));
-        return r;
+        return *r;
     }
     else
-        return i->second;
+        return *i->second;
 }
 
-std::shared_ptr<Relation> DatabaseImpl::GetReachesRelation(RelationId nameId)
+Relation& DatabaseImpl::GetReachesRelation(RelationId nameId)
 {
     auto i = datastore->reachesRelations.find(nameId);
     if(i==datastore->reachesRelations.end())
     {
-        auto r = GetBinaryRelation(nameId);
+        auto & r = GetBinaryRelation(nameId);
         auto rel = allocate_shared<Predicate>(datafile, *this, nameId, 2, true, BindingType::Unbound, 0);
         // Create the rules (TODO)
 
         {
             // Add the rule rel(_0,_1) :- r(_0, _1)
             std::vector<int> writeArgs = { 0, 1 };
-            auto write = std::make_shared<Writer>(rel, writeArgs);
+            auto write = std::make_shared<Writer>(*rel, writeArgs);
             auto reader = std::make_shared<Join>(r, std::vector<int>{-1,-1}, std::move(writeArgs), write);
             auto baseRule = std::make_shared<RuleEvaluation>(2, reader);
             rel->AddRule(baseRule);
@@ -216,18 +216,18 @@ std::shared_ptr<Relation> DatabaseImpl::GetReachesRelation(RelationId nameId)
         {
             // Add the rule rel(_0, _1) :- rel(_0, _2), r(_2, _1).
             std::vector<int> writeArgs = { 0, 1 };
-            auto write = std::make_shared<Writer>(rel, writeArgs);
+            auto write = std::make_shared<Writer>(*rel, writeArgs);
             auto join2 = std::make_shared<Join>(r, std::vector<int> {2, -1}, std::vector<int> { -1, 1 }, write);
-            auto join1 = std::make_shared<Join>(rel, std::vector<int> {-1,-1}, std::vector<int> {0, 2}, join2);
+            auto join1 = std::make_shared<Join>(*rel, std::vector<int> {-1,-1}, std::vector<int> {0, 2}, join2);
             auto recursiveRule = std::make_shared<RuleEvaluation>(3, join1);
             rel->AddRule(recursiveRule);
         }
         
         datastore->reachesRelations.insert(std::make_pair(nameId, rel));
-        return rel;
+        return *rel;
     }
     else
-        return i->second;
+        return *i->second;
 }
 
 void DatabaseImpl::Find(int unaryPredicateName)
@@ -248,7 +248,7 @@ void DatabaseImpl::Find(int unaryPredicateName)
     Tmp visitor(*this);
 
     Entity row;
-    GetUnaryRelation(unaryPredicateName)->Query(&row, 0, visitor);
+    GetUnaryRelation(unaryPredicateName).Query(&row, 0, visitor);
 
     std::cout << "Found " << visitor.count << " results\n";
 }
@@ -386,7 +386,12 @@ int Database::ReadFile(const char *filename)
     return 1;
 }
 
-std::shared_ptr<Relation> DatabaseImpl::GetRelation(const CompoundName &cn)
+Relation & DatabaseImpl::GetRelation(const CompoundName &cn)
+{
+    return *GetRelationPtr(cn);
+}
+
+std::shared_ptr<Relation> DatabaseImpl::GetRelationPtr(const CompoundName &cn)
 {
     auto t = datastore->tables.find(cn);
     
@@ -467,9 +472,9 @@ void DatabaseImpl::CreateProjection(const CompoundName &from, const CompoundName
         projection[j+1] = i+1;
     }
     
-    auto writer = allocate_shared<Writer>(datafile, datastore->tables[to], projection);
+    auto writer = allocate_shared<Writer>(datafile, *datastore->tables[to], projection);
     
-    auto reader = allocate_shared<Reader>(datafile, datastore->tables[from], cols, writer);
+    auto reader = allocate_shared<Reader>(datafile, *datastore->tables[from], cols, writer);
     
     auto eval = allocate_shared<RuleEvaluation>(datafile, cols.size(), reader);
     

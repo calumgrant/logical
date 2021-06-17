@@ -35,7 +35,6 @@ public:
     static void Indent(std::ostream &os, int indent=0);
     static void OutputVariable(std::ostream & os, int variable);
     static void OutputIntroducedVariable(std::ostream & os, int variable);
-    static void OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> & relation);
     static void OutputRelation(std::ostream &os, Database &db, const Relation & relation);
 
     void OutputCallCount(std::ostream&) const;
@@ -71,19 +70,19 @@ public:
     // Holds true if a preceding (dominating) evaluation step is a recursive read/join.
     bool dependsOnRecursiveRead = false;  // Output flag: R
 
-    virtual void VisitNext(const std::function<void(std::shared_ptr<Evaluation>&, bool)> &fn);
-    virtual void VisitReads(const std::function<void(std::weak_ptr<Relation>&, int, const int*)> &fn);
+    virtual void VisitNext(const std::function<void(EvaluationPtr&, bool)> &fn);
+    virtual void VisitReads(const std::function<void(Relation*&, int, const int*)> &fn);
     enum class VariableAccess { Read, Write, ReadWrite };
     virtual void VisitVariables(const std::function<void(int&, VariableAccess)> &fn)=0;
-    virtual void VisitWrites(const std::function<void(std::weak_ptr<Relation>&, int, const int*)> &fn);
+    virtual void VisitWrites(const std::function<void(Relation*&, int, const int*)> &fn);
     virtual EvaluationPtr Clone() const =0;
         
     // Clones this node but adds a new "Next"
-    virtual std::shared_ptr<Evaluation> WithNext(const std::shared_ptr<Evaluation> & next) const;
+    virtual EvaluationPtr WithNext(const EvaluationPtr & next) const;
         
 protected:    
     // Hide the implementation
-    virtual void OnRow(Entity * row) =0;
+    virtual void OnRow(Row row) =0;
 private:
     // The number of times Evaluate() has been called.
     std::size_t callCount;

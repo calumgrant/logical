@@ -105,7 +105,7 @@ void SpecialPredicate::QueryDelta(Row row, Columns columns, Receiver &v)
 
 Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType binding, Columns cols) :
     rulesRun(false), name(name), database(db),
-    attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage()),
+    attributes({}, std::hash<Relation*>(), std::equal_to<Relation*>(), db.Storage()),
     reaches(reaches), bindingPredicate(binding), bindingColumns(cols),
     rules(db)
 {
@@ -118,7 +118,7 @@ Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches,
 Predicate::Predicate(Database &db, const CompoundName & cn, ::Arity arity, BindingType binding, Columns cols) :
     rulesRun(false), name(cn.parts[0]), database(db),
     compoundName(cn),
-    attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage()),
+    attributes({}, std::hash<Relation*>(), std::equal_to<Relation*>(), db.Storage()),
     reaches(false),
     bindingPredicate(binding), bindingColumns(cols),
     rules(db)
@@ -189,9 +189,9 @@ int SpecialPredicate::Arity() const
     return 1;
 }
 
-void Predicate::AddAttribute(const std::shared_ptr<Relation> & attribute)
+void Predicate::AddAttribute(Relation & attribute)
 {
-    attributes.insert(attribute);
+    attributes.insert(&attribute);
 }
 
 void Predicate::VisitAttributes(const std::function<void(Relation&)> & visitor) const
@@ -351,7 +351,7 @@ void Uppercase::Query(Row row, Columns columns, Receiver&v)
 
 }
 
-std::shared_ptr<Relation> Predicate::GetBindingRelation(Columns columns)
+Relation& Predicate::GetBindingRelation(Columns columns)
 {
     auto &i = bindingRelations[columns];
     
@@ -370,7 +370,7 @@ std::shared_ptr<Relation> Predicate::GetBindingRelation(Columns columns)
         std::make_shared<Predicate>(database, name, arity, reaches, BindingType::Binding, columns);
     }
     
-    return i;
+    return *i;
 }
 
 class WriteAnalysis
@@ -398,13 +398,12 @@ public:
         });
     }
     
-    void UpdateWrites(Evaluation & rule, const std::shared_ptr<Relation> & newPredicate)
+    void UpdateWrites(Evaluation & rule, Relation & newPredicate)
     {
-        rule.VisitWrites([&](std::weak_ptr<Relation> & rel, int n, const int * p) {
-            auto r = rel.lock();
-            if(&*r == &targetPredicate)
+        rule.VisitWrites([&](Relation *& rel, int n, const int * p) {
+            if(rel == &targetPredicate)
             {
-                rel = newPredicate;
+                rel = &newPredicate;
             }
         });
 
@@ -415,9 +414,8 @@ public:
 private:
     void AnalyseWrites(Evaluation & eval)
     {
-        eval.VisitWrites([&](std::weak_ptr<Relation>&rel, int len, const int* p){
-            auto relation = rel.lock();
-            if (&*relation == &targetPredicate && arguments.empty())
+        eval.VisitWrites([&](Relation *& relation, int len, const int* p){
+            if (relation == &targetPredicate && arguments.empty())
             {
                 arguments.assign(p, p+len);
             }
@@ -443,7 +441,7 @@ private:
 };
 
 
-std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> & rule, Predicate & oldPredicate, const std::shared_ptr<Relation> & bindingRelation, Columns columns)
+std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> & rule, Predicate & oldPredicate, Relation & bindingRelation, Columns columns)
 {
     WriteAnalysis write(*rule, oldPredicate);
 
@@ -454,7 +452,7 @@ std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> & ru
     return clone;
 }
 
-std::shared_ptr<Relation> Predicate::GetBoundRelation(Columns columns)
+Relation& Predicate::GetBoundRelation(Columns columns)
 {
     auto &i = boundRelations[columns];
     
@@ -467,10 +465,10 @@ std::shared_ptr<Relation> Predicate::GetBoundRelation(Columns columns)
         // TODO: Create the bound version of the rule.
         std::vector<int> boundArguments;
         
-        auto binding = GetBindingRelation(columns);
+        auto & binding = GetBindingRelation(columns);
         for(auto &r : rules.rules)
         {
-            auto b = MakeBoundRule(r, *this, i, columns);
+            auto b = MakeBoundRule(r, *this, *i, columns);
             i->AddRule(b);
         }
         
@@ -489,7 +487,7 @@ std::shared_ptr<Relation> Predicate::GetBoundRelation(Columns columns)
         
         table->ReadAllData(adder);
     }
-    return i;
+    return *i;
 }
 
 bool Predicate::IsSpecial() const

@@ -76,7 +76,7 @@ std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilati
     auto eval = next->Compile(db, c);
         
     auto cn = GetCompoundName();
-    auto compoundRelation = has == HasType::reaches ? db.GetReachesRelation(cn.parts[0]) : db.GetRelation(cn);
+    auto & compoundRelation = has == HasType::reaches ? db.GetReachesRelation(cn.parts[0]) : db.GetRelation(cn);
     
     std::vector<int> inputs(cn.parts.size() + 1), outputs(cn.parts.size()+1);
     if(lhsBound)
@@ -160,7 +160,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
         {
             for(int i = predicates->list.size()-1; i>=0; --i)
             {
-                auto relation = db.GetUnaryRelation(predicates->list[i]->nameId);
+                auto & relation = db.GetUnaryRelation(predicates->list[i]->nameId);
                 if(i>0 || bound)
                     eval = std::make_shared<Join>(relation, std::vector<int> {slot}, std::vector<int>{-1}, eval);
                 else
@@ -172,7 +172,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
             // isnot
             if(predicates->list.size() == 1)
             {
-                auto relation = db.GetUnaryRelation(predicates->list[0]->nameId);
+                auto & relation = db.GetUnaryRelation(predicates->list[0]->nameId);
                 eval = std::make_shared<NotInB>(slot, relation, eval);
             }
             else
@@ -338,7 +338,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
     {
         auto cn = attributes->GetCompoundName();
         
-        auto relation = db.GetRelation(cn);
+        auto & relation = db.GetRelation(cn);
         
         std::vector<int> slots(cn.parts.size()+1);
         slots[0] = slot;
@@ -461,17 +461,17 @@ void AST::EntityClause::AddRule(Database &db, const std::shared_ptr<Evaluation> 
     if(predicates)
     {
         for(auto &i : predicates->list)
-            db.GetUnaryRelation(i->nameId)->AddRule(rule);
+            db.GetUnaryRelation(i->nameId).AddRule(rule);
     }
     
     if(attributes)
     {
-        auto relation = db.GetRelation(attributes->GetCompoundName());
-        relation->AddRule(rule);
+        auto & relation = db.GetRelation(attributes->GetCompoundName());
+        relation.AddRule(rule);
         if(predicates)
         {
             for(auto &i : predicates->list)
-                db.GetUnaryRelation(i->nameId)->AddAttribute(relation);
+                db.GetUnaryRelation(i->nameId).AddAttribute(relation);
         }
     }
 }

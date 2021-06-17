@@ -75,7 +75,7 @@ public:
     
     std::size_t GetCount();
     
-    virtual void AddAttribute(const std::shared_ptr<Relation> & attribute) =0;
+    virtual void AddAttribute(Relation & attribute) =0;
 
     virtual void VisitAttributes(const std::function<void(Relation&)> &) const =0;
     
@@ -100,8 +100,8 @@ public:
 
     std::shared_ptr<ExecutionUnit> loop;
     
-    virtual std::shared_ptr<Relation> GetBindingRelation(Columns columns) =0;
-    virtual std::shared_ptr<Relation> GetBoundRelation(Columns columns) =0;
+    virtual Relation& GetBindingRelation(Columns columns) =0;
+    virtual Relation& GetBoundRelation(Columns columns) =0;
     
     virtual bool IsSpecial() const =0;
     

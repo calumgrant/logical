@@ -27,12 +27,12 @@ public:
     const string_type &GetString(StringId id) const override;
     const string_type &GetAtString(StringId id) const override;
     
-    std::shared_ptr<Relation> GetUnaryRelation(int name) override;
-    std::shared_ptr<Relation> GetBinaryRelation(int name) override;
-    std::shared_ptr<Relation> GetRelation(int name, int arity) override;
-    std::shared_ptr<Relation> GetRelation(const CompoundName &cn) override;
-    std::shared_ptr<Relation> GetReachesRelation(RelationId nameId) override;
-
+    Relation& GetUnaryRelation(int name) override;
+    Relation& GetBinaryRelation(int name) override;
+    Relation& GetRelation(int name, int arity) override;
+    Relation& GetRelation(const CompoundName &cn) override;
+    Relation& GetReachesRelation(RelationId nameId) override;
+    
     void Find(int unaryPredicateName) override;
     void SetVerbosity(int v) override;
     void AddResult(const Entity * row, int arity, bool displayFirstColumn) override;
@@ -69,6 +69,9 @@ private:
     std::size_t resultCount = 0;
     
     void CreateProjection(const CompoundName &from, const CompoundName & to);
+    
+    std::shared_ptr<Relation> GetRelationPtr(const CompoundName &cn);
+
     
     // -1 means there is no expected value.
     int expectedResults = -1;

@@ -53,11 +53,11 @@ public:
 
     void NotImplementedError(const SourceLocation&);
     
-    virtual std::shared_ptr<Relation> GetUnaryRelation(RelationId nameId) =0;
-    virtual std::shared_ptr<Relation> GetBinaryRelation(RelationId nameId) =0;
-    virtual std::shared_ptr<Relation> GetRelation(RelationId nameId, Arity arity) =0;
-    virtual std::shared_ptr<Relation> GetRelation(const CompoundName &cn) =0;
-    virtual std::shared_ptr<Relation> GetReachesRelation(RelationId nameId) =0;
+    virtual Relation& GetUnaryRelation(RelationId nameId) =0;
+    virtual Relation& GetBinaryRelation(RelationId nameId) =0;
+    virtual Relation& GetRelation(RelationId nameId, Arity arity) =0;
+    virtual Relation& GetRelation(const CompoundName &cn) =0;
+    virtual Relation& GetReachesRelation(RelationId nameId) =0;
 
     virtual void Find(int unaryPredicateId) =0;
 

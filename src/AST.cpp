@@ -58,7 +58,7 @@ void AST::EntityClause::AssertFacts(Database &db) const
     if(!entity)
     {
         auto e = db.NewEntity();
-        db.GetUnaryRelation(predicates->list[0]->nameId)->Add(&e);
+        db.GetUnaryRelation(predicates->list[0]->nameId).Add(&e);
         attributes->Assert(db, e);
         return;
     }
@@ -95,7 +95,7 @@ void AST::NotImplementedClause::AssertFacts(Database & db) const
 
 void AST::UnaryPredicate::Assert(Database &db, const ::Entity &e) const
 {
-    db.GetUnaryRelation(nameId)->Add(&e);
+    db.GetUnaryRelation(nameId).Add(&e);
 }
 
 void AST::UnaryPredicateList::Assert(Database &db, const ::Entity &e) const
@@ -133,7 +133,7 @@ AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateList * unaryPredicat
 void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
 {
     auto compoundName = GetCompoundName();
-    auto relation = db.GetRelation(compoundName);
+    auto & relation = db.GetRelation(compoundName);
     
     std::vector<::Entity> entities(attributes.size()+1);
     entities[0] = e;
@@ -163,7 +163,7 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
         db.ReportUserError();
     }
 
-    relation->Add(&entities[0]);
+    relation.Add(&entities[0]);
 }
 
 AST::EntityList::EntityList(Entity *e)
@@ -195,7 +195,7 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
             if(v)
             {
                 ::Entity e = v->GetValue();
-                db.GetUnaryRelation(predicate->nameId)->Add(&e);
+                db.GetUnaryRelation(predicate->nameId).Add(&e);
             }
             else
                 entitiesOpt->entities[0]->UnboundError(db);
@@ -211,14 +211,14 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
             if(v0 && v1)
             {
                 ::Entity row[2] = { v0->GetValue(), v1->GetValue() };
-                db.GetBinaryRelation(predicate->nameId)->Add(row);
+                db.GetBinaryRelation(predicate->nameId).Add(row);
             }
 
             return;
         }
     }
 
-    auto relation = db.GetRelation(predicate->nameId, arity);
+    auto & relation = db.GetRelation(predicate->nameId, arity);
 
     // TODO: Add the data 
     std::cout << "TODO: Assert Datalog predicate " << predicate->nameId << "/" << arity << ".\n";

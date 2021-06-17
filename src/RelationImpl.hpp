@@ -60,7 +60,7 @@ public:
     int Name() const override;
     bool HasRules() const;
     
-    void AddAttribute(const std::shared_ptr<Relation> & attribute) override;
+    void AddAttribute(Relation & attribute) override;
     void VisitAttributes(const std::function<void(Relation&)> &) const override;
     void VisitRules(const std::function<void(Evaluation&)> &) override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
@@ -75,8 +75,8 @@ public:
     BindingType GetBinding() const override;
     Columns GetBindingColumns() const override;
     Database & GetDatabase() const override;
-    std::shared_ptr<Relation> GetBindingRelation(Columns columns) override;
-    std::shared_ptr<Relation> GetBoundRelation(Columns columns) override;
+    Relation& GetBindingRelation(Columns columns) override;
+    Relation& GetBoundRelation(Columns columns) override;
     bool IsSpecial() const override;
     void FirstIteration() override;
     void NextIteration() override;
@@ -93,7 +93,7 @@ private:
     RuleSet rules;
     RelationId name;
     
-    std::unordered_set<std::shared_ptr<Relation>, std::hash<std::shared_ptr<Relation>>, std::equal_to<std::shared_ptr<Relation>>, persist::allocator<std::shared_ptr<Relation>>> attributes;
+    std::unordered_set<Relation*, std::hash<Relation*>, std::equal_to<Relation*>, persist::allocator<Relation*>> attributes;
 protected:
     Database &database;
     
