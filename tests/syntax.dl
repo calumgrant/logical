@@ -149,7 +149,7 @@ delete _.
 
 delete person P if P has surname "Smith".
 
-evaluation-step-limit 251.
+// evaluation-step-limit 251.
 expected-results 40.
 expected-errors 0.
 

@@ -1,5 +1,8 @@
 # Work plan
 
+- Recursive branch optimization is unsound.
+  - recursion3.dl: has_parent and has:ancestor should not be in the same loop.
+
 - Not marking execution units as recursive properly.
 
 Optimization scope:
@@ -228,19 +231,39 @@ Options for parallelism:
 1) Evaluate the ExecutionUnits in parallel.
   - Implement the partial order
   - Put a lock on each table
-2) Implement a special "parallelisation" step, that Splits the stack frame.
-   OnRow: Copy the row into a slot.
-   Keeps a list of free slots.
-   Writer (OnRow)
-   Each thread:
-   - waits for a slot to become available.
-   - slot state: free, busy, available
-
-2) Evaluate each ExecutionUnit in parallel.
+2) Implement each ExecutionUnit in parallel. This should give the benefit when we are stuck on one or two big predicates which resource-starve the CPU.
   - Split the execution frame into N different branches.
-  - The outermost/initial 
+  - The outermost/initial step is the one to parallelise.
   - Implement a "QueryParallel" execution node
   - Implement a "WriteConcurrent" execution node.
+  - Table->CreateQuery(Row row, Columns)
+    - Table::WholeTableIterator
+    - Table::ColumnsIterator
+    - Table::ReentrantIterator
+    - What about other table representations? (e.g. a sorted list)
+    - This can only happen once the Table has been defined.
+    - Could we just have a single cursor in the table??? No, anti-parallel.
+```
+class MicroThread
+{
+};
+
+class EvalLoop : public MicroThread
+{
+  std::vector<Entity> locals;
+  void Run() override
+  {
+    while(query.GetNext(locals.data()))
+    {
+      next->Evaluate(row);
+    }
+  }
+};
+```
+
+The predicate
+
+Threading engine: An engine contains a
 
 Changes to make:
 1. Each table is threadsafe. What this means: Concurrent writes are possible and are safe. Use atomic counters in the execution unit. Reads are also threadsafe, and can overlap with writes. (May need to copy row data to avoid vector moving on write). 
