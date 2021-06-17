@@ -44,6 +44,8 @@ public:
     static void SetGlobalCallCountLimit(std::size_t limit);
     static std::size_t GetGlobalCallCountLimit();
     
+    static void VisitSteps(EvaluationPtr & ptr, const std::function<void(EvaluationPtr&)> &fn);
+
     // Options for analysis
     
     // virtual bool AlwaysEmpty() const;
@@ -64,6 +66,8 @@ public:
     // Optimization options:
     bool useDelta = false;
     
+    bool analysed = false;
+    
     // Holds true if a preceding (dominating) evaluation step is a recursive read/join.
     bool dependsOnRecursiveRead = false;  // Output flag: R
 
@@ -76,7 +80,7 @@ public:
         
     // Clones this node but adds a new "Next"
     virtual std::shared_ptr<Evaluation> WithNext(const std::shared_ptr<Evaluation> & next) const;
-    
+        
 protected:    
     // Hide the implementation
     virtual void OnRow(Entity * row) =0;

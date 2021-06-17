@@ -26,8 +26,8 @@ public:
     TableImpl(persist::shared_memory &mem, Arity arity);
     
     Size Rows() const override;
-    void Query(Entity * row, ColumnMask columns, Receiver&v) override;
-    void QueryDelta(Entity*row, ColumnMask columns, Receiver&v) override;
+    void Query(Entity * row, Columns columns, Receiver&v) override;
+    void QueryDelta(Entity*row, Columns columns, Receiver&v) override;
     void OnRow(Entity*row) override;
     bool Add(const Entity *e) override;
     void Clear() override;
@@ -39,14 +39,14 @@ private:
     {
         Entity::Hash hasher;
     public:
-        Comparer(const vector&base, Arity arity, ColumnMask mask);
+        Comparer(const vector&base, Arity arity, Columns mask);
         
         int operator()(std::size_t element) const
         {
             int h = 0;
             for(auto i = 0; i<arity; ++i)
             {
-                if(mask & (1<<i))
+                if(mask.IsBound(i))
                     h = h * 17 + hasher(base[element + i]);
             }
             return h;
@@ -56,7 +56,7 @@ private:
         {
             for(auto i = 0; i<arity; ++i)
             {
-                if(mask & (1<<i))
+                if(mask.IsBound(i))
                 {
                     if(base[element1+i] != base[element2+i]) return false;
                 }
@@ -65,7 +65,7 @@ private:
         }
     private:
         const Arity arity;
-        const ColumnMask mask;
+        const Columns mask;
         const vector & base;
     };
     
@@ -78,9 +78,9 @@ private:
     
     // Map from mask to index.
     typedef std::unordered_multiset<std::size_t, Comparer, Comparer, persist::fast_allocator<std::size_t>> map_type;
-    std::unordered_map<ColumnMask, map_type, std::hash<ColumnMask>, std::equal_to<ColumnMask>,
-        persist::fast_allocator<std::pair<const ColumnMask, map_type>>> indexes;
-    map_type & GetIndex(ColumnMask mask);
+    std::unordered_map<Columns, map_type, Columns::Hash, Columns::EqualTo,
+        persist::fast_allocator<std::pair<const Columns, map_type>>> indexes;
+    map_type & GetIndex(Columns mask);
 
     Size deltaStart =0, deltaEnd = 0;
         

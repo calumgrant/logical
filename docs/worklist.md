@@ -1,5 +1,32 @@
 # Work plan
 
+- Not marking execution units as recursive properly.
+
+Optimization scope:
+1. Relation
+  - Compilation
+  - Preexecution
+2. Execution Unit
+
+- Quick-eval needs to optimize the rule.
+- The binding analysis occurs at compilation stage
+- In implementation of `uppercase` etc, don't implement the bound relation in the predicate. Instead, implement as `X = has:uppercase Y and Y=Z`.
+
+Optimization stages:
+- 1. Compilation
+- Preexecution
+- 
+- Bug: In recursion4, The bound predicate Bhas:next3 is not in the recursive loop.
+
+- Need to reenable deltas to make them work on the execution unit, not the relation.
+  `has:next2:3`
+- Rename Beta predicates and include their bound columns
+
+- problem in binary2: For some reason, Bhas:predecessor has not been evaluated.
+- Need to do whole-program semi-naive analysis, not just lazily on current predicate.
+- Need to assign a "loop" during recursion analysis.
+- Need to add *all* 
+
 Assign a loop to each node.
 
 
@@ -169,6 +196,35 @@ std::vector<int> variableMap
 
 - new objects to define a variable, and use `and` to assert further facts, for example
 `new expression p has ...,p has parent e.`
+
+# Parallelism
+
+Options for parallelism:
+1) Evaluate the ExecutionUnits in parallel.
+  - Implement the partial order
+  - Put a lock on each table
+2) Implement a special "parallelisation" step, that Splits the stack frame.
+   OnRow: Copy the row into a slot.
+   Keeps a list of free slots.
+   Writer (OnRow)
+   Each thread:
+   - waits for a slot to become available.
+   - slot state: free, busy, available
+
+2) Evaluate each ExecutionUnit in parallel.
+  - Split the execution frame into N different branches.
+  - The outermost/initial 
+  - Implement a "QueryParallel" execution node
+  - Implement a "WriteConcurrent" execution node.
+
+Changes to make:
+1. Each table is threadsafe. What this means: Concurrent writes are possible and are safe. Use atomic counters in the execution unit. Reads are also threadsafe
+2. The persist memory allocator is threadsafe. Use atomic lists for the memory pool. Use atomic counters.
+3. 
+
+Implement a special thread pool:
+
+class
 
 # Datalog abstract machine
 

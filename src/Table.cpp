@@ -11,7 +11,7 @@ TableImpl::TableImpl(persist::shared_memory & mem, Arity arity) :
     mem(mem),
     data(mem),
     hash({}, 100, Comparer(data, arity, -1), Comparer(data, arity, -1), mem),
-    indexes({}, std::hash<ColumnMask>(), std::equal_to<ColumnMask>(), mem)
+    indexes({}, Columns::Hash(), Columns::EqualTo(), mem)
 {
 }
 
@@ -91,7 +91,7 @@ bool TableImpl::NextIteration()
     return moreResults;
 }
 
-TableImpl::map_type & TableImpl::GetIndex(int mask)
+TableImpl::map_type & TableImpl::GetIndex(Columns mask)
 {
     auto i = indexes.find(mask);
     if(i != indexes.end())
@@ -115,16 +115,16 @@ TableImpl::map_type & TableImpl::GetIndex(int mask)
     return index;
 }
 
-void TableImpl::Query(Entity * row, int mask, Receiver&v)
+void TableImpl::Query(Row row, Columns mask, Receiver&v)
 {
-    if(mask==0)
+    if(mask.IsUnbound())
     {
         for(std::size_t s=0; s<deltaEnd; s+=arity)
             v.OnRow(&data[s]);
     }
     else
     {
-        if(mask == -1 || mask == (1<<arity)-1)
+        if(mask.IsFullyBound(arity))
         {
             auto s = data.size();
             data.insert(data.end(), row, row+arity);
@@ -162,7 +162,7 @@ Arity TableImpl::GetArity() const
     return arity;
 }
 
-void TableImpl::QueryDelta(Entity * row, int columns, Receiver &v)
+void TableImpl::QueryDelta(Row row, Columns columns, Receiver &v)
 {
     if(deltaStart == deltaEnd)
     {
@@ -173,7 +173,7 @@ void TableImpl::QueryDelta(Entity * row, int columns, Receiver &v)
         deltaEnd = data.size();
     }
     
-    if(columns==0)
+    if(columns.IsUnbound())
     {
         // This is an optimization on the next part
         // to make it slightly faster.
@@ -191,7 +191,7 @@ void TableImpl::QueryDelta(Entity * row, int columns, Receiver &v)
     {
         bool found = true;
         for(Arity i=0; i<arity; ++i)
-            if(columns & (1<<i) && data[s+i] != row[i])
+            if(columns.IsBound(i) && data[s+i] != row[i])
             {
                 found = false;
                 break;
@@ -205,10 +205,6 @@ void TableImpl::FirstIteration()
 {
     assert(deltaEnd == 0);
     NextIteration();
-    //assert(deltaEnd == data.size());
-//    deltaStart = 0;
-//    deltaEnd = data.size();
-    //std::cout << "First iteration: deltaStart = " << deltaStart << ", deltaEnd = " << deltaEnd << ", size = " << data.size() << std::endl;
 }
 
 
@@ -217,7 +213,7 @@ Size TableImpl::Rows() const
     return hash.size();
 }
 
-TableImpl::Comparer::Comparer(const vector & base, int arity, int mask) : base(base), arity(arity), mask(mask)
+TableImpl::Comparer::Comparer(const vector & base, int arity, Columns mask) : base(base), arity(arity), mask(mask)
 {
 }
 

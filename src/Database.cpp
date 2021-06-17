@@ -45,7 +45,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetUnaryRelation(int name)
     auto i = datastore->unaryRelations.find(name);
     if (i == datastore->unaryRelations.end())
     {
-        auto p = allocate_shared<Predicate>(datafile, *this, name, 1, false, BindingType::Unbound);
+        auto p = allocate_shared<Predicate>(datafile, *this, name, 1, false, BindingType::Unbound, 0);
 
         datastore->unaryRelations.insert(std::make_pair(name, p));
         return p;
@@ -187,7 +187,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(int name, int arity)
     {
         std::vector<int> p = { name };
         CompoundName cn(p);
-        auto r = allocate_shared<Predicate>(datafile, *this, cn, arity, BindingType::Unbound);
+        auto r = allocate_shared<Predicate>(datafile, *this, cn, arity, BindingType::Unbound, 0);
         datastore->relations.insert(std::make_pair(index, r));
         return r;
     }
@@ -201,7 +201,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetReachesRelation(RelationId nameId)
     if(i==datastore->reachesRelations.end())
     {
         auto r = GetBinaryRelation(nameId);
-        auto rel = allocate_shared<Predicate>(datafile, *this, nameId, 2, true, BindingType::Unbound);
+        auto rel = allocate_shared<Predicate>(datafile, *this, nameId, 2, true, BindingType::Unbound, 0);
         // Create the rules (TODO)
 
         {
@@ -414,7 +414,7 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelation(const CompoundName &cn)
     // Create the appropriate mappings to the subsets
     std::shared_ptr<Relation> relation;
     
-    relation = allocate_shared<Predicate>(datafile, *this, cn, cn.parts.size()+1, BindingType::Unbound);
+    relation = allocate_shared<Predicate>(datafile, *this, cn, cn.parts.size()+1, BindingType::Unbound, 0);
     
     datastore->tables[cn] = relation;
 

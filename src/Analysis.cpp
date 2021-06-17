@@ -15,13 +15,21 @@ public:
     {
     }
     
-    void Analyse(Relation & relation) const override
+    void Analyse(ExecutionUnit & exec) const override
     {
-        relation.VisitSteps([](EvaluationPtr&eval) {
+    }
+    
+    void Analyse(Relation & rel) const override
+    {
+    }
+    
+    void Analyse(EvaluationPtr & rule) const override
+    {
+        Evaluation::VisitSteps(rule, [](EvaluationPtr&eval) {
             eval->VisitReads([&](std::weak_ptr<Relation> & rel, int mask, const int * inputs) {
                 if(mask != 0)
                 {
-                    std::cout << "Semi-naive opportunity: " << mask << "\n";
+                    // std::cout << "Semi-naive opportunity: " << mask << "\n";
 
                     auto relation = rel.lock();
                     if(!relation->IsSpecial())
@@ -31,7 +39,7 @@ public:
                         
                         std::vector<int> writes;
                         for(int i=0; i<relation->Arity(); ++i)
-                            if(inputs[i] != -1) writes.push_back(i);
+                            if(inputs[i] != -1) writes.push_back(inputs[i]);
                         
                         auto write = std::make_shared<Writer>(guard, writes);
                         eval = std::make_shared<OrEvaluation>(write, eval);
@@ -40,11 +48,6 @@ public:
                 }
             });
         });
-        
-        relation.VisitRules([](Evaluation &eval) {
-            
-        });
-        
     }
 };
 
@@ -56,11 +59,19 @@ public:
     {
     }
     
-    void Analyse(Relation & relation) const
+    void Analyse(Relation & relation) const override
     {
         AnalyseRecursion(relation.GetDatabase(), relation);
     }
     
+    void Analyse(ExecutionUnit & exec) const override
+    {
+    }
+
+    void Analyse(EvaluationPtr & rule) const override
+    {
+    }
+
 private:
     
     static Relation * GetLoop(Relation * r)
@@ -121,6 +132,9 @@ private:
             // (note we have incremental analysis).
             return nullptr;
         }
+        
+        // BindingAnalysis binding;
+        // binding.Analyse(node);
         
         node.recursiveDepth = depth;
         node.parity = parity;
@@ -197,6 +211,36 @@ private:
     }
     
     mutable int rootCount = 0;
+    
+    static void AssignLoops(Database & database, Relation & node)
+    {
+        if(node.loop) return;
+        assert(!node.loop);
+        auto & recursiveLoop = GetLoop(node);
+        
+        if(recursiveLoop.loop)
+        {
+            node.loop = recursiveLoop.loop;
+            node.loop->AddRelation(node);
+        }
+        else
+        {
+            assert(&recursiveLoop == &node);
+            auto loop = std::make_shared<ExecutionUnit>(database);
+            node.loop = loop;
+            loop->AddRelation(node);
+        }
+        
+        node.VisitSteps([&](EvaluationPtr & eval) {
+            eval->VisitReads([&](std::weak_ptr<Relation> & next, int, const int*){
+                auto n = next.lock();
+                if(n->recursiveDepth > node.recursiveDepth)
+                {
+                    AssignLoops(database, *n);
+                }
+            });
+        });
+    }
 
     void AnalyseRecursion(Database & database, Relation & root) const
     {        
@@ -205,26 +249,7 @@ private:
             AnalyseRecursion(database, root, true, 1, rootCount++);
             assert(root.analysedForRecursion);
             // assert(root.recursiveRoot == root);
-        }
-
-        if(!root.loop)
-        {
-            auto & recursiveLoop = GetLoop(root);
-            
-            // assert(&root == &recursiveLoop);  // Deleteme - debugging only
-            
-            if(!recursiveLoop.loop)
-            {
-                auto loop = std::make_shared<ExecutionUnit>(database);
-                recursiveLoop.loop = loop;
-                loop->AddRelation(recursiveLoop);
-            }
-            
-            if(!root.loop)
-            {
-                root.loop = recursiveLoop.loop;
-                root.loop->AddRelation(root);
-            }
+            AssignLoops(database, root);
         }
         
         AnalyseRecursiveReads(root);
@@ -271,17 +296,17 @@ public:
     class BranchImpl
     {
     public:
-        BranchImpl(Database &database, Relation &rel) :
-            relation(rel)
+        BranchImpl(Database &database, ExecutionUnit &exec) :
+            exec(exec)
         {
-            if(!relation.inRecursiveLoop) return;
+            if(!exec.Recursive()) return;
             
-            relation.VisitRules([=](Evaluation&e) { CheckRule(e); });
+            exec.rules.VisitRules([=](Evaluation&e) { CheckRule(e); });
             
             if(changed)
             {
-                relation.VisitRules([=](const std::shared_ptr<Evaluation>&e) { OptimizeRule(e); });
-                relation.loop->rules.SetRecursiveRules(baseRules, recursiveRules);
+                exec.rules.VisitRules([=](const std::shared_ptr<Evaluation>&e) { OptimizeRule(e); });
+                exec.rules.SetRecursiveRules(baseRules, recursiveRules);
             }
         }
         
@@ -386,7 +411,7 @@ public:
         
         bool changed = false;
         
-        Relation & relation;
+        ExecutionUnit & exec;
         
         std::shared_ptr<Evaluation> baseRules, recursiveRules;
 
@@ -394,7 +419,15 @@ public:
     
     void Analyse(Relation & relation) const override
     {
-        BranchImpl(relation.GetDatabase(), relation);
+    }
+    
+    void Analyse(ExecutionUnit & exec) const override
+    {
+        BranchImpl(exec.database, exec);
+    }
+    
+    void Analyse(EvaluationPtr & rule) const override
+    {
     }
 };
 
@@ -405,14 +438,21 @@ public:
     {
     }
     
-    void Analyse(Relation & relation) const override
+    void Analyse(ExecutionUnit & exec) const override
     {
-        relation.VisitSteps([&](EvaluationPtr&eval) {
+        exec.rules.VisitSteps([&](EvaluationPtr&eval) {
             if(eval->readDelta)
                 eval->useDelta = true;
         });
     }
-
+    
+    void Analyse(Relation & rel) const override
+    {
+    }
+    
+    void Analyse(EvaluationPtr & ptr) const override
+    {
+    }
 };
 
 void AnalysePredicate(Database & database, Relation & root)
@@ -420,6 +460,17 @@ void AnalysePredicate(Database & database, Relation & root)
     if(root.analysed) return;
     root.analysed = true;
     database.GetOptimizer().Optimize(root);
+    
+    if(root.loop->analysed) return;
+    root.loop->analysed = true;
+    database.GetOptimizer().Optimize(*root.loop);
+}
+
+void AnalyseRule(Database & database, EvaluationPtr & rule)
+{
+    if(rule->analysed) return;
+    rule->analysed = true;
+    database.GetOptimizer().Optimize(rule);
 }
 
 void OptimizerImpl::Visit(const std::function<void(Optimization&)> &v)
@@ -457,6 +508,17 @@ void OptimizerImpl::Optimize(Relation & relation) const
         o->Analyse(relation);
 }
 
+void OptimizerImpl::Optimize(ExecutionUnit & exec) const
+{
+    for(auto o : activeOptimizations)
+        o->Analyse(exec);
+}
+
+void OptimizerImpl::Optimize(EvaluationPtr & rule) const
+{
+    for(auto o : activeOptimizations)
+        o->Analyse(rule);
+}
 
 
 OptimizerImpl::OptimizerImpl()

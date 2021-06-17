@@ -8,7 +8,9 @@ public:
     
     OptimizerImpl();
     void RegisterOptimization(Optimization&) override;
+    void Optimize(EvaluationPtr & rule) const override;
     void Optimize(Relation & relation) const override;
+    void Optimize(ExecutionUnit & exec) const override;
     void UpdateActiveList() override;
 
 private:

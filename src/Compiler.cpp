@@ -3,6 +3,7 @@
 #include "Evaluation.hpp"
 #include "EvaluationImpl.hpp"
 #include "TableImpl.hpp"
+#include "Analysis.hpp"
 
 #include <iostream>
 
@@ -628,6 +629,8 @@ void AST::Clause::Find(Database &db)
     ResultsPrinter p(db);
     SetNext(p);
     auto eval = Compile(db, c);
+    
+    db.GetOptimizer().Optimize(eval);
 
     std::vector<::Entity> row(c.locals);
     eval->Evaluate(&row[0]);

@@ -11,7 +11,7 @@
 class Receiver
 {
 public:
-    virtual void OnRow(Entity * row)=0;
+    virtual void OnRow(Row row)=0;
 };
 
 enum class BindingType
@@ -21,6 +21,30 @@ enum class BindingType
     Bound
 };
 
+class Columns
+{
+public:
+    Columns(std::uint64_t mask) : mask(mask) { }
+    
+    bool IsBound(int col) const { return mask & (1<<col); }
+    
+    bool IsUnbound() const { return mask == 0; }
+    
+    bool IsFullyBound(int arity) const { auto m = (1UL<<arity)-1; return (mask & m) == m; }
+    
+    struct Hash
+    {
+        int operator()(Columns c) const { return c.mask; }
+    };
+    
+    struct EqualTo
+    {
+        bool operator()(Columns c1, Columns c2) const { return c1.mask == c2.mask; }
+    };
+
+    const std::uint64_t mask;
+};
+
 class Relation
 {
 public:
@@ -28,22 +52,23 @@ public:
     // Visit selected rows, based on the data in query
     // Which columns are inputs and which are outputs is unspecified.
     // Call back v.OnRow for each result,
-    virtual void Query(Entity *query, int columns, Receiver &v) =0;
-    virtual void QueryDelta(Entity *query, int columns, Receiver &v) =0;
+    virtual void Query(Row query, Columns columns, Receiver &v) =0;
+    virtual void QueryDelta(Row query, Columns columns, Receiver &v) =0;
 
     // Insert a row into this table.
     virtual void Add(const Entity * row) =0;
 
     virtual ~Relation();
     
-    virtual void AddRule(const std::shared_ptr<Evaluation> & rule) =0;
+    virtual void AddRule(const EvaluationPtr & rule) =0;
     
     virtual int Name() const =0;
     
-    virtual const CompoundName * GetCompoundName() const; // Horrid name/interface
+    virtual const CompoundName * GetCompoundName() const; // Horrid name/interface !!
     
     virtual bool IsReaches() const =0;
     virtual BindingType GetBinding() const =0;
+    virtual Columns GetBindingColumns() const =0;
     
     virtual void RunRules() =0;
     virtual int Arity() const =0;
@@ -75,8 +100,8 @@ public:
 
     std::shared_ptr<ExecutionUnit> loop;
     
-    virtual std::shared_ptr<Relation> GetBindingRelation(int columns) =0;
-    virtual std::shared_ptr<Relation> GetBoundRelation(int columns) =0;
+    virtual std::shared_ptr<Relation> GetBindingRelation(Columns columns) =0;
+    virtual std::shared_ptr<Relation> GetBoundRelation(Columns columns) =0;
     
     virtual bool IsSpecial() const =0;
     

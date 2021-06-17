@@ -14,6 +14,8 @@ public:
     
     void Add(const EvaluationPtr &ptr);
     void VisitRules(const std::function<void(Evaluation&)>&fn);
+    void VisitRules(const std::function<void(EvaluationPtr&)>&fn);
+    void VisitSteps(const std::function<void(EvaluationPtr&)>&fn);
     void SetRecursiveRules(const EvaluationPtr & baseCase, const EvaluationPtr & recursiveCase);
 };
 
@@ -33,17 +35,20 @@ public:
     void AddRelation(Relation & rel);
     void Explain();
     
+    bool analysed = false;
     bool evaluated = false;
     
     Database & database;
     ExecutionUnit(Database & db);
+    bool Recursive() const;
+    Database & GetDatabase() const;
 };
 
 class Predicate : public Relation
 {
 public:
-    Predicate(Database &db, const CompoundName &name, ::Arity arity, BindingType bindingPredicate);
-    Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType bindingPredicate);
+    Predicate(Database &db, const CompoundName &name, ::Arity arity, BindingType bindingPredicate, Columns boundColumns);
+    Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType bindingPredicate, Columns boundColumns);
 
     // Evaluates all rules if needed
     void Evaluate();
@@ -60,17 +65,18 @@ public:
     void VisitRules(const std::function<void(Evaluation&)> &) override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
     
-    void Query(Entity * row, ColumnMask columns, Receiver &r) override;
-    void QueryDelta(Entity * row, ColumnMask columns, Receiver &r) override;
+    void Query(Entity * row, Columns columns, Receiver &r) override;
+    void QueryDelta(Entity * row, Columns columns, Receiver &r) override;
     void Add(const Entity * data) override;
     ::Arity Arity() const override;
     Size Count() override;
     const CompoundName * GetCompoundName() const override;
     bool IsReaches() const override;
     BindingType GetBinding() const override;
+    Columns GetBindingColumns() const override;
     Database & GetDatabase() const override;
-    std::shared_ptr<Relation> GetBindingRelation(int columns) override;
-    std::shared_ptr<Relation> GetBoundRelation(int columns) override;
+    std::shared_ptr<Relation> GetBindingRelation(Columns columns) override;
+    std::shared_ptr<Relation> GetBoundRelation(Columns columns) override;
     bool IsSpecial() const override;
     void FirstIteration() override;
     void NextIteration() override;
@@ -82,6 +88,7 @@ private:
     bool rulesRun = false;
     const bool reaches;
     const BindingType bindingPredicate;
+    const Columns bindingColumns;
 
     RuleSet rules;
     RelationId name;
@@ -94,7 +101,7 @@ protected:
     
     std::shared_ptr<Table> table;
     CompoundName compoundName;
-    std::unordered_map<int, std::shared_ptr<Relation>> bindingRelations, boundRelations;
+    std::unordered_map<Columns, std::shared_ptr<Relation>, Columns::Hash, Columns::EqualTo> bindingRelations, boundRelations;
 };
 
 class SpecialPredicate : public Predicate
@@ -103,8 +110,8 @@ public:
     SpecialPredicate(Database &db, RelationId name);
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     std::size_t Count() override;
-    void Query(Entity *row, int columns, Receiver&v) override;
-    void QueryDelta(Entity*row, int columns, Receiver&v) override;
+    void Query(Entity *row, Columns columns, Receiver&v) override;
+    void QueryDelta(Entity*row, Columns columns, Receiver&v) override;
     int Arity() const override;
     bool IsSpecial() const override;
 };
@@ -142,7 +149,7 @@ class BuiltinFnPredicate : public Predicate
 {
 protected:
     BuiltinFnPredicate(Database &db, const CompoundName &name);
-    void QueryDelta(Entity*row, int columns, Receiver&v) override;
+    void QueryDelta(Entity*row, Columns columns, Receiver&v) override;
     int Arity() const override;
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     std::size_t Count() override;
@@ -154,19 +161,19 @@ class Strlen : public BuiltinFnPredicate
 {
 public: 
     Strlen(Database &db);
-    void Query(Entity *row, int columns, Receiver&v) override;
+    void Query(Entity *row, Columns columns, Receiver&v) override;
 };
 
 class Lowercase : public BuiltinFnPredicate
 {
 public:
     Lowercase(Database &db);
-    void Query(Entity *row, int columns, Receiver&v) override;
+    void Query(Entity *row, Columns columns, Receiver&v) override;
 };
 
 class Uppercase : public BuiltinFnPredicate
 {
 public:
     Uppercase(Database &db);
-    void Query(Entity *row, int columns, Receiver&v) override;
+    void Query(Entity *row, Columns columns, Receiver&v) override;
 };

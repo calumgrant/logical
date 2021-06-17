@@ -92,21 +92,21 @@ ErrorRelation::ErrorRelation(Database &db) : PrintRelation(db, db.GetStringId("e
 {
 }
 
-void SpecialPredicate::Query(Entity * row, int, Receiver&)
+void SpecialPredicate::Query(Row, Columns, Receiver&)
 {
     // Empty relation.
 }
 
-void SpecialPredicate::QueryDelta(Entity * row, int columns, Receiver &v)
+void SpecialPredicate::QueryDelta(Row row, Columns columns, Receiver &v)
 {
     Query(row, columns, v);
 }
 
 
-Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType binding) :
+Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType binding, Columns cols) :
     rulesRun(false), name(name), database(db),
     attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage()),
-    reaches(reaches), bindingPredicate(binding),
+    reaches(reaches), bindingPredicate(binding), bindingColumns(cols),
     rules(db)
 {
     table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
@@ -115,12 +115,12 @@ Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches,
 #endif
 }
 
-Predicate::Predicate(Database &db, const CompoundName & cn, ::Arity arity, BindingType binding) :
+Predicate::Predicate(Database &db, const CompoundName & cn, ::Arity arity, BindingType binding, Columns cols) :
     rulesRun(false), name(cn.parts[0]), database(db),
     compoundName(cn),
     attributes({}, std::hash<std::shared_ptr<Relation>>(), std::equal_to<std::shared_ptr<Relation>>(), db.Storage()),
     reaches(false),
-    bindingPredicate(binding),
+    bindingPredicate(binding), bindingColumns(cols),
     rules(db)
 {
     table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
@@ -139,12 +139,17 @@ BindingType Predicate::GetBinding() const
     return bindingPredicate;
 }
 
+Columns Predicate::GetBindingColumns() const
+{
+    return bindingColumns;
+}
+
 
 void Predicate::AddRule(const std::shared_ptr<Evaluation> & rule)
 {
-    // This is to test the Clone function
-//    rules.push_back(rule->Clone());
-    rules.Add(rule);
+    auto p = rule;
+    AnalyseRule(database, p);
+    rules.Add(p);
 }
 
 void Predicate::RunRules()
@@ -160,7 +165,7 @@ bool Predicate::HasRules() const
     return !rules.rules.empty();
 }
 
-SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name, 1, false, BindingType::Unbound)
+SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name, 1, false, BindingType::Unbound, 0)
 {
 }
 
@@ -212,13 +217,13 @@ Arity Predicate::Arity() const { return table->GetArity(); }
 
 Size Predicate::Count() { return table->Rows(); }
 
-void Predicate::Query(Entity * row, ColumnMask columns, Receiver &r)
+void Predicate::Query(Row row, Columns columns, Receiver &r)
 {
     RunRules();
     table->Query(row, columns, r);
 }
 
-void Predicate::QueryDelta(Entity * row, ColumnMask columns, Receiver &r)
+void Predicate::QueryDelta(Entity * row, Columns columns, Receiver &r)
 {
     RunRules();
     table->QueryDelta(row, columns, r);
@@ -253,9 +258,9 @@ std::size_t BuiltinFnPredicate::Count()
     return 0;
 }
 
-void Strlen::Query(Entity *row, int columns, Receiver&v)
+void Strlen::Query(Row row, Columns columns, Receiver&v)
 {
-    switch(columns)
+    switch(columns.mask)
     {
         case 1:
             if(row[0].IsString())
@@ -273,11 +278,11 @@ void Strlen::Query(Entity *row, int columns, Receiver&v)
     }
 }
 
-void BuiltinFnPredicate::QueryDelta(Entity*row, int columns, Receiver&v) {}
+void BuiltinFnPredicate::QueryDelta(Row row, Columns columns, Receiver&v) {}
 
 int BuiltinFnPredicate::Arity() const { return arity; }
 
-BuiltinFnPredicate::BuiltinFnPredicate(Database & database, const CompoundName & cn) : Predicate(database, cn, cn.parts.size()+1, BindingType::Unbound), arity(cn.parts.size()+1)
+BuiltinFnPredicate::BuiltinFnPredicate(Database & database, const CompoundName & cn) : Predicate(database, cn, cn.parts.size()+1, BindingType::Unbound, 0), arity(cn.parts.size()+1)
 {
 }
 
@@ -289,9 +294,9 @@ Uppercase::Uppercase(Database &db) : BuiltinFnPredicate(db, std::vector<int> { d
 {
 }
 
-void Lowercase::Query(Entity *row, int columns, Receiver&v)
+void Lowercase::Query(Row row, Columns columns, Receiver&v)
 {
-    switch(columns)
+    switch(columns.mask)
     {
         case 1:
             if(row[0].IsString())
@@ -317,9 +322,9 @@ void Lowercase::Query(Entity *row, int columns, Receiver&v)
     }
 }
 
-void Uppercase::Query(Entity *row, int columns, Receiver&v)
+void Uppercase::Query(Row row, Columns columns, Receiver&v)
 {
-    switch(columns)
+    switch(columns.mask)
     {
         case 1:
             if(row[0].IsString())
@@ -346,7 +351,7 @@ void Uppercase::Query(Entity *row, int columns, Receiver&v)
 
 }
 
-std::shared_ptr<Relation> Predicate::GetBindingRelation(int columns)
+std::shared_ptr<Relation> Predicate::GetBindingRelation(Columns columns)
 {
     auto &i = bindingRelations[columns];
     
@@ -354,14 +359,15 @@ std::shared_ptr<Relation> Predicate::GetBindingRelation(int columns)
     {
         // The "arity" is the number of bits set in columns.
         int arity=0;
-        while(columns)
+        auto m = columns.mask;
+        while(m)
         {
-            if(columns &1) ++arity;
-            columns>>=1;
+            if(m &1) ++arity;
+            m>>=1;
         }
         i = compoundName.parts.size()>0 ?
-        std::make_shared<Predicate>(database, compoundName, arity, BindingType::Binding) :
-        std::make_shared<Predicate>(database, name, arity, reaches, BindingType::Binding);
+        std::make_shared<Predicate>(database, compoundName, arity, BindingType::Binding, columns) :
+        std::make_shared<Predicate>(database, name, arity, reaches, BindingType::Binding, columns);
     }
     
     return i;
@@ -437,7 +443,7 @@ private:
 };
 
 
-std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> & rule, Predicate & oldPredicate, const std::shared_ptr<Relation> & bindingRelation, int columns)
+std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> & rule, Predicate & oldPredicate, const std::shared_ptr<Relation> & bindingRelation, Columns columns)
 {
     WriteAnalysis write(*rule, oldPredicate);
 
@@ -448,15 +454,15 @@ std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> & ru
     return clone;
 }
 
-std::shared_ptr<Relation> Predicate::GetBoundRelation(int columns)
+std::shared_ptr<Relation> Predicate::GetBoundRelation(Columns columns)
 {
     auto &i = boundRelations[columns];
     
     if(!i)
     {
         i = compoundName.parts.size()>0 ?
-            std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Bound) :
-            std::make_shared<Predicate>(database, name, Arity(), reaches, BindingType::Bound);
+            std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Bound, columns) :
+            std::make_shared<Predicate>(database, name, Arity(), reaches, BindingType::Bound, columns);
 
         // TODO: Create the bound version of the rule.
         std::vector<int> boundArguments;
@@ -613,3 +619,33 @@ RuleSet::RuleSet(Database &db) : rules(db.Storage())
 {
 }
 
+void Evaluation::VisitSteps(EvaluationPtr & ptr, const std::function<void(EvaluationPtr&)> & fn)
+{
+    auto ptr2 = ptr;
+    fn(ptr);
+    ptr2->VisitNext([&](EvaluationPtr & next, bool) {
+        VisitSteps(next, fn); });
+}
+
+void RuleSet::VisitRules(const std::function<void(EvaluationPtr&)> & fn)
+{
+    for(auto & r : rules)
+        fn(r);
+}
+
+void RuleSet::VisitRules(const std::function<void(Evaluation&)> & fn)
+{
+    for(auto & r : rules)
+        fn(*r);
+}
+
+void RuleSet::VisitSteps(const std::function<void(EvaluationPtr&)> & fn)
+{
+    for(auto & r : rules)
+        Evaluation::VisitSteps(r, fn);
+}
+
+bool ExecutionUnit::Recursive() const
+{
+    return relations.size()>1;
+}

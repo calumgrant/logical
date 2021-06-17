@@ -17,27 +17,26 @@ NoneEvaluation::NoneEvaluation()
     // This is useful for a breakpoint
 }
 
-void NoneEvaluation::OnRow(Entity * row)
+void NoneEvaluation::OnRow(Entity *row)
 {
 }
 
-OrEvaluation::OrEvaluation(const std::shared_ptr<Evaluation> & lhs, const std::shared_ptr<Evaluation> & rhs) :
-    left(lhs), right(rhs)
+OrEvaluation::OrEvaluation(const std::shared_ptr<Evaluation> &lhs, const std::shared_ptr<Evaluation> &rhs) : left(lhs), right(rhs)
 {
 }
 
-void OrEvaluation::OnRow(Entity * row)
+void OrEvaluation::OnRow(Entity *row)
 {
     left->Evaluate(row);
     right->Evaluate(row);
 }
 
-RuleEvaluation::RuleEvaluation(int locals, const std::shared_ptr<Evaluation> & eval) : ChainedEvaluation(eval),
-    locals(locals)
+RuleEvaluation::RuleEvaluation(int locals, const std::shared_ptr<Evaluation> &eval) : ChainedEvaluation(eval),
+                                                                                      locals(locals)
 {
 }
 
-void RuleEvaluation::OnRow(Entity*)
+void RuleEvaluation::OnRow(Entity *)
 {
     std::vector<Entity> row(locals);
     next->Evaluate(&row[0]);
@@ -46,29 +45,28 @@ void RuleEvaluation::OnRow(Entity*)
 class UnaryVisitor : public Receiver
 {
 public:
-    UnaryVisitor(Entity * row, int slot, Evaluation & next) :
-        row(row), slot(slot), next(next)
+    UnaryVisitor(Entity *row, int slot, Evaluation &next) : row(row), slot(slot), next(next)
     {
     }
-    
+
     void OnRow(Entity *e) override
     {
         row[slot] = e[0];
         next.Evaluate(row);
     }
-    
-    Entity * row;
+
+    Entity *row;
     int slot;
-    Evaluation & next;
+    Evaluation &next;
 };
 
-void OrEvaluation::Explain(Database &db, std::ostream & os, int indent) const
+void OrEvaluation::Explain(Database &db, std::ostream &os, int indent) const
 {
     left->Explain(db, os, indent);
     right->Explain(db, os, indent);
 }
 
-void NoneEvaluation::Explain(Database &db, std::ostream & os, int indent) const
+void NoneEvaluation::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "None";
@@ -76,30 +74,30 @@ void NoneEvaluation::Explain(Database &db, std::ostream & os, int indent) const
     os << "\n";
 }
 
-void Evaluation::Indent(std::ostream & os, int indent)
+void Evaluation::Indent(std::ostream &os, int indent)
 {
     std::fill_n(std::ostream_iterator<char>(os), indent, ' ');
 }
 
-void RuleEvaluation::Explain(Database &db, std::ostream & os, int indent) const
+void RuleEvaluation::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Evaluate with " << locals << " variables";
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
 NotTerminator::NotTerminator(int slot) : slot(slot)
 {
 }
 
-void NotTerminator::OnRow(Entity * row)
+void NotTerminator::OnRow(Entity *row)
 {
-    row[slot] = Entity { EntityType::None, 0 };
+    row[slot] = Entity{EntityType::None, 0};
 }
 
-void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
+void NotTerminator::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Load ";
@@ -110,33 +108,30 @@ void NotTerminator::Explain(Database &db, std::ostream & os, int indent) const
     os << "\n";
 }
 
-BinaryEvaluation::BinaryEvaluation(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), ChainedEvaluation(next)
+BinaryEvaluation::BinaryEvaluation(int slot1, int slot2, const std::shared_ptr<Evaluation> &next) : slot1(slot1), slot2(slot2), ChainedEvaluation(next)
 {
 }
 
-EqualsBB::EqualsBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    BinaryEvaluation(slot1, slot2, next)
+EqualsBB::EqualsBB(int slot1, int slot2, const std::shared_ptr<Evaluation> &next) : BinaryEvaluation(slot1, slot2, next)
 {
 }
 
 void EqualsBB::OnRow(Entity *row)
 {
-    if(row[slot1] == row[slot2])
+    if (row[slot1] == row[slot2])
         next->Evaluate(row);
 }
 
-void EqualsBB::Explain(Database & db, std::ostream & os, int indent) const
+void EqualsBB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Test _" << slot1 << " == _" << slot2;
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-EqualsBF::EqualsBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    BinaryEvaluation(slot1, slot2, next)
+EqualsBF::EqualsBF(int slot1, int slot2, const std::shared_ptr<Evaluation> &next) : BinaryEvaluation(slot1, slot2, next)
 {
 }
 
@@ -146,7 +141,7 @@ void EqualsBF::OnRow(Entity *row)
     next->Evaluate(row);
 }
 
-void EqualsBF::Explain(Database & db, std::ostream & os, int indent) const
+void EqualsBF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Assign ";
@@ -155,22 +150,21 @@ void EqualsBF::Explain(Database & db, std::ostream & os, int indent) const
     OutputVariable(os, slot1);
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-BinaryRelationEvaluation::BinaryRelationEvaluation(const std::shared_ptr<Relation> & relation, int slot1, int slot2, const std::shared_ptr<Evaluation> & next) : ReaderEvaluation(relation, next), slot1(slot1), slot2(slot2)
+BinaryRelationEvaluation::BinaryRelationEvaluation(const std::shared_ptr<Relation> &relation, int slot1, int slot2, const std::shared_ptr<Evaluation> &next) : ReaderEvaluation(relation, next), slot1(slot1), slot2(slot2)
 {
 }
 
-RangeB::RangeB(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), slot3(slot3), cmp1(cmp1), cmp2(cmp2), ChainedEvaluation(next)
+RangeB::RangeB(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> &next) : slot1(slot1), slot2(slot2), slot3(slot3), cmp1(cmp1), cmp2(cmp2), ChainedEvaluation(next)
 {
 }
 
-template<typename T>
+template <typename T>
 bool Compare(T value1, T value2, ComparatorType t)
 {
-    switch(t)
+    switch (t)
     {
     case ComparatorType::eq:
         return value1 == value2;
@@ -197,23 +191,23 @@ bool Compare(T value1, T value2, ComparatorType t)
 
 bool Compare(const Entity &e1, const Entity &e2, ComparatorType cmp)
 {
-    auto t1 = e1.Type(), t2=e2.Type();
-    
-    if(t1 == EntityType::Integer && t2 == EntityType::Integer)
+    auto t1 = e1.Type(), t2 = e2.Type();
+
+    if (t1 == EntityType::Integer && t2 == EntityType::Integer)
         return Compare((std::int64_t)e1, (std::int64_t)e2, cmp);
-    else if(t1 == EntityType::Integer && t2 == EntityType::Float)
+    else if (t1 == EntityType::Integer && t2 == EntityType::Float)
         return Compare<float>((std::int64_t)e1, (double)e2, cmp);
-    else if(t1 == EntityType::Float && t2 == EntityType::Integer)
+    else if (t1 == EntityType::Float && t2 == EntityType::Integer)
         return Compare<float>((double)e1, (std::int64_t)e2, cmp);
-    else if(t1 == EntityType::Float && t2 == EntityType::Float)
+    else if (t1 == EntityType::Float && t2 == EntityType::Float)
         return Compare((double)e1, (double)e2, cmp);
     else
         return false;
 }
 
-void RangeB::OnRow(Entity * row)
+void RangeB::OnRow(Entity *row)
 {
-    if(Compare(row[slot1], row[slot2], cmp1) && Compare(row[slot2], row[slot3], cmp2))
+    if (Compare(row[slot1], row[slot2], cmp1) && Compare(row[slot2], row[slot3], cmp2))
         next->Evaluate(row);
 }
 
@@ -223,33 +217,32 @@ void RangeB::Explain(Database &db, std::ostream &os, int indent) const
     os << "Test _" << slot1 << " " << cmp1 << " _" << slot2 << " and _" << slot2 << " " << cmp2 << " _" << slot3;
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-RangeU::RangeU(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), slot3(slot3), cmp1(cmp1), cmp2(cmp2), ChainedEvaluation(next)
+RangeU::RangeU(int slot1, ComparatorType cmp1, int slot2, ComparatorType cmp2, int slot3, const std::shared_ptr<Evaluation> &next) : slot1(slot1), slot2(slot2), slot3(slot3), cmp1(cmp1), cmp2(cmp2), ChainedEvaluation(next)
 {
 }
 
-void RangeU::OnRow(Entity * row)
+void RangeU::OnRow(Entity *row)
 {
     std::int64_t lowerBound, upperBound;
-    
-    if(row[slot1].IsInt())
-    {
-        lowerBound = cmp1 == ComparatorType::lt ? (std::int64_t)row[slot1]+1 : (std::int64_t)row[slot1];
-    }
-    else
-        return;  // For now, floats are not supported
 
-    if(row[slot3].IsInt())
+    if (row[slot1].IsInt())
     {
-        upperBound = cmp2 == ComparatorType::lt ? (std::int64_t)row[slot3]-1 : (std::int64_t)row[slot3];
+        lowerBound = cmp1 == ComparatorType::lt ? (std::int64_t)row[slot1] + 1 : (std::int64_t)row[slot1];
     }
     else
-        return;  // For now, floats are not supported
-    
-    for(auto value=lowerBound; value<=upperBound; ++value)
+        return; // For now, floats are not supported
+
+    if (row[slot3].IsInt())
+    {
+        upperBound = cmp2 == ComparatorType::lt ? (std::int64_t)row[slot3] - 1 : (std::int64_t)row[slot3];
+    }
+    else
+        return; // For now, floats are not supported
+
+    for (auto value = lowerBound; value <= upperBound; ++value)
     {
         row[slot2] = Entity(EntityType::Integer, value);
         next->Evaluate(row);
@@ -267,11 +260,10 @@ void RangeU::Explain(Database &db, std::ostream &os, int indent) const
     OutputVariable(os, slot3);
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-CompareBB::CompareBB(int slot1, ComparatorType cmp, int slot2, const std::shared_ptr<Evaluation> & next) :
-    BinaryEvaluation(slot1, slot2, next), cmp(cmp)
+CompareBB::CompareBB(int slot1, ComparatorType cmp, int slot2, const std::shared_ptr<Evaluation> &next) : BinaryEvaluation(slot1, slot2, next), cmp(cmp)
 {
 }
 
@@ -279,7 +271,7 @@ void CompareBB::OnRow(Entity *row)
 {
     // Note: We don't compare strings for inequality.
     // FIXME
-    if(Compare(row[slot1], row[slot2], cmp))
+    if (Compare(row[slot1], row[slot2], cmp))
         next->Evaluate(row);
 }
 
@@ -292,26 +284,25 @@ void CompareBB::Explain(Database &db, std::ostream &os, int indent) const
     OutputVariable(os, slot2);
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-NegateBF::NegateBF(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    BinaryEvaluation(slot1, slot2, next)
+NegateBF::NegateBF(int slot1, int slot2, const std::shared_ptr<Evaluation> &next) : BinaryEvaluation(slot1, slot2, next)
 {
 }
 
 void NegateBF::OnRow(Entity *row)
 {
-    switch(row[slot1].Type())
+    switch (row[slot1].Type())
     {
     case EntityType::Integer:
-            row[slot2] = Entity(EntityType::Integer, -(std::int64_t)row[slot1]);
+        row[slot2] = Entity(EntityType::Integer, -(std::int64_t)row[slot1]);
         break;
     case EntityType::Float:
         row[slot2] = Entity(EntityType::Float, -(double)row[slot1]);
         break;
     default:
-        return;  // Fail
+        return; // Fail
     }
     next->Evaluate(row);
 }
@@ -322,36 +313,30 @@ void NegateBF::Explain(Database &db, std::ostream &os, int indent) const
     os << "Calculate _" << slot2 << " := -_" << slot1;
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-BinaryArithmeticEvaluation::BinaryArithmeticEvaluation(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), slot3(slot3), ChainedEvaluation(next)
+BinaryArithmeticEvaluation::BinaryArithmeticEvaluation(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> &next) : slot1(slot1), slot2(slot2), slot3(slot3), ChainedEvaluation(next)
 {
 }
 
-AddBBF::AddBBF(Database &db, int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    BinaryArithmeticEvaluation(slot1, slot2, slot3, next), database(db)
+AddBBF::AddBBF(Database &db, int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> &next) : BinaryArithmeticEvaluation(slot1, slot2, slot3, next), database(db)
 {
 }
 
-SubBBF::SubBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    BinaryArithmeticEvaluation(slot1, slot2, slot3, next)
+SubBBF::SubBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> &next) : BinaryArithmeticEvaluation(slot1, slot2, slot3, next)
 {
 }
 
-MulBBF::MulBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    BinaryArithmeticEvaluation(slot1, slot2, slot3, next)
+MulBBF::MulBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> &next) : BinaryArithmeticEvaluation(slot1, slot2, slot3, next)
 {
 }
 
-DivBBF::DivBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    BinaryArithmeticEvaluation(slot1, slot2, slot3, next)
+DivBBF::DivBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> &next) : BinaryArithmeticEvaluation(slot1, slot2, slot3, next)
 {
 }
 
-ModBBF::ModBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> & next) :
-    BinaryArithmeticEvaluation(slot1, slot2, slot3, next)
+ModBBF::ModBBF(int slot1, int slot2, int slot3, const std::shared_ptr<Evaluation> &next) : BinaryArithmeticEvaluation(slot1, slot2, slot3, next)
 {
 }
 
@@ -359,42 +344,41 @@ void AddBBF::OnRow(Entity *row)
 {
     auto t1 = row[slot1].Type();
     auto t2 = row[slot2].Type();
-    
-    if(t1 == EntityType::Integer && t2 == EntityType::Integer)
+
+    if (t1 == EntityType::Integer && t2 == EntityType::Integer)
     {
         row[slot3] = Entity(EntityType::Integer, (std::int64_t)row[slot1] + (std::int64_t)row[slot2]);
     }
-    else if(t1 == EntityType::String && t2 == EntityType::String)
+    else if (t1 == EntityType::String && t2 == EntityType::String)
     {
-        row[slot3] = database.AddStrings((std::int64_t)row[slot1],(std::int64_t)row[slot2]);
+        row[slot3] = database.AddStrings((std::int64_t)row[slot1], (std::int64_t)row[slot2]);
     }
-    else if(t1 == EntityType::Float && t2 == EntityType::Float)
+    else if (t1 == EntityType::Float && t2 == EntityType::Float)
     {
         row[slot3] = (double)row[slot1] + (double)row[slot2];
     }
-    else if(t1 == EntityType::String || t2 == EntityType::String)
+    else if (t1 == EntityType::String || t2 == EntityType::String)
     {
         // Convert the other to a string
-        if(t1 == EntityType::Integer)
+        if (t1 == EntityType::Integer)
         {
             std::ostringstream ss;
             ss << (std::int64_t)row[slot1] << database.GetString((std::int64_t)row[slot2]);
             row[slot3] = database.CreateString(ss.str().c_str());
         }
-        else if(t1 == EntityType::Float)
+        else if (t1 == EntityType::Float)
         {
             std::ostringstream ss;
             ss << (double)row[slot1] << database.GetString((std::int64_t)row[slot2]);
             row[slot3] = database.CreateString(ss.str().c_str());
-
         }
-        else if(t2 == EntityType::Integer)
+        else if (t2 == EntityType::Integer)
         {
             std::ostringstream ss;
             ss << database.GetString((std::int64_t)row[slot1]) << (std::int64_t)row[slot2];
             row[slot3] = database.CreateString(ss.str().c_str());
         }
-        else if(t2 == EntityType::Float)
+        else if (t2 == EntityType::Float)
         {
             std::ostringstream ss;
             ss << database.GetString((std::int64_t)row[slot1]) << (double)row[slot2];
@@ -403,14 +387,14 @@ void AddBBF::OnRow(Entity *row)
         else
             return;
     }
-    else if(t1 == EntityType::Float || t2 == EntityType::Float)
+    else if (t1 == EntityType::Float || t2 == EntityType::Float)
     {
         // Convert the other to a float
-        if(t1 == EntityType::Integer)
+        if (t1 == EntityType::Integer)
         {
             row[slot3] = (std::int64_t)row[slot1] + (double)row[slot2];
         }
-        else if(t2 == EntityType::Integer)
+        else if (t2 == EntityType::Integer)
         {
             row[slot3] = (double)row[slot1] + (std::int64_t)row[slot2];
         }
@@ -435,34 +419,34 @@ void AddBBF::Explain(Database &db, std::ostream &os, int indent) const
     OutputVariable(os, slot2);
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-template<typename OpInt, typename OpFloat>
-void BinaryArithmeticEvaluation::Evaluate(Entity * row)
+template <typename OpInt, typename OpFloat>
+void BinaryArithmeticEvaluation::Evaluate(Entity *row)
 {
     auto t1 = row[slot1].Type();
     auto t2 = row[slot2].Type();
-    
-    if(t1 == EntityType::Integer && t2 == EntityType::Integer)
+
+    if (t1 == EntityType::Integer && t2 == EntityType::Integer)
     {
-        row[slot3]  = Entity(EntityType::Integer, OpInt()((std::int64_t)row[slot1], (std::int64_t)row[slot2]));
+        row[slot3] = Entity(EntityType::Integer, OpInt()((std::int64_t)row[slot1], (std::int64_t)row[slot2]));
     }
-    else if(t1 == EntityType::Float && t2 == EntityType::Float)
+    else if (t1 == EntityType::Float && t2 == EntityType::Float)
     {
-        row[slot3] = OpFloat()((double)row[slot1],(double)row[slot2]);
+        row[slot3] = OpFloat()((double)row[slot1], (double)row[slot2]);
     }
-    else if(t1 == EntityType::Float && t2 == EntityType::Integer)
+    else if (t1 == EntityType::Float && t2 == EntityType::Integer)
     {
         row[slot3] = OpFloat()((double)row[slot1], (std::int64_t)row[slot2]);
     }
-    else if(t1 == EntityType::Integer && t2 == EntityType::Float)
+    else if (t1 == EntityType::Integer && t2 == EntityType::Float)
     {
         row[slot3] = OpFloat()((std::int64_t)row[slot1], (double)row[slot2]);
     }
     else
         return;
-    
+
     next->Evaluate(row);
 }
 
@@ -482,7 +466,7 @@ void SubBBF::Explain(Database &db, std::ostream &os, int indent) const
     OutputVariable(os, slot2);
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
 void MulBBF::OnRow(Entity *row)
@@ -496,21 +480,26 @@ void MulBBF::Explain(Database &db, std::ostream &os, int indent) const
     os << "Calculate _" << slot3 << " := _" << slot1 << " * _" << slot2;
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-void Evaluation::OutputCallCount(std::ostream & os) const
+void Evaluation::OutputCallCount(std::ostream &os) const
 {
     os << Colours::Detail << " (called " << callCount << " time";
-    if(callCount!=1) os << "s";
-    
-    if(onRecursivePath || dependsOnRecursiveRead)
+    if (callCount != 1)
+        os << "s";
+
+    if (onRecursivePath || dependsOnRecursiveRead)
     {
         os << ", flags:";
-        if (onRecursivePath) os << "r";
-        if (dependsOnRecursiveRead) os << "d";
-        if (readIsRecursive) os << "R";
-        if (readDelta) os << "D";
+        if (onRecursivePath)
+            os << "r";
+        if (dependsOnRecursiveRead)
+            os << "d";
+        if (readIsRecursive)
+            os << "R";
+        if (readDelta)
+            os << "D";
     }
     os << ")" << Colours::Normal;
 }
@@ -519,28 +508,29 @@ void DivBBF::OnRow(Entity *row)
 {
     auto t1 = row[slot1].Type();
     auto t2 = row[slot2].Type();
-    
-    if(t1 == EntityType::Integer && t2 == EntityType::Integer)
+
+    if (t1 == EntityType::Integer && t2 == EntityType::Integer)
     {
-        if((std::int64_t)row[slot2] == 0) return;
-        
-        row[slot3] = Entity { EntityType::Integer, (std::int64_t)row[slot1] / (std::int64_t)row[slot2] };
+        if ((std::int64_t)row[slot2] == 0)
+            return;
+
+        row[slot3] = Entity{EntityType::Integer, (std::int64_t)row[slot1] / (std::int64_t)row[slot2]};
     }
-    else if(t1 == EntityType::Float && t2 == EntityType::Float)
+    else if (t1 == EntityType::Float && t2 == EntityType::Float)
     {
         row[slot3] = (double)row[slot1] / (double)row[slot2];
     }
-    else if(t1 == EntityType::Float && t2 == EntityType::Integer)
+    else if (t1 == EntityType::Float && t2 == EntityType::Integer)
     {
         row[slot3] = (double)row[slot1] / (std::int64_t)row[slot2];
     }
-    else if(t1 == EntityType::Integer && t2 == EntityType::Float)
+    else if (t1 == EntityType::Integer && t2 == EntityType::Float)
     {
         row[slot3] = (std::int64_t)row[slot1] / (double)row[slot2];
     }
     else
         return;
-    
+
     next->Evaluate(row);
 }
 
@@ -550,18 +540,19 @@ void DivBBF::Explain(Database &db, std::ostream &os, int indent) const
     os << "Calculate _" << slot3 << " := _" << slot1 << " / _" << slot2;
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
 void ModBBF::OnRow(Entity *row)
 {
     auto t1 = row[slot1].Type();
     auto t2 = row[slot1].Type();
-    
-    if(t1 == EntityType::Integer && t2 == EntityType::Integer)
+
+    if (t1 == EntityType::Integer && t2 == EntityType::Integer)
     {
-        if((std::int64_t)row[slot2] == 0) return;
-        row[slot3] = Entity { EntityType::Integer, (std::int64_t)row[slot1] % (std::int64_t)row[slot2] };
+        if ((std::int64_t)row[slot2] == 0)
+            return;
+        row[slot3] = Entity{EntityType::Integer, (std::int64_t)row[slot1] % (std::int64_t)row[slot2]};
     }
     else
         return;
@@ -574,22 +565,21 @@ void ModBBF::Explain(Database &db, std::ostream &os, int indent) const
     os << "Calculate _" << slot3 << " := _" << slot1 << " % _" << slot2;
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
 Evaluation::Evaluation() : callCount(0)
 {
 }
 
-DeduplicateB::DeduplicateB(int slot1, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), Deduplicate(next)
+DeduplicateB::DeduplicateB(int slot1, const std::shared_ptr<Evaluation> &next) : slot1(slot1), Deduplicate(next)
 {
 }
 
-void DeduplicateB::OnRow(Entity * row)
+void DeduplicateB::OnRow(Entity *row)
 {
     auto i = values.insert(row[slot1]);
-    if(i.second)
+    if (i.second)
     {
         next->Evaluate(row);
     }
@@ -602,18 +592,17 @@ void DeduplicateB::Explain(Database &db, std::ostream &os, int indent) const
     OutputVariable(os, slot1);
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-DeduplicateBB::DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> & next) :
-    slot1(slot1), slot2(slot2), Deduplicate(next)
+DeduplicateBB::DeduplicateBB(int slot1, int slot2, const std::shared_ptr<Evaluation> &next) : slot1(slot1), slot2(slot2), Deduplicate(next)
 {
 }
 
-void DeduplicateBB::OnRow(Entity * row)
+void DeduplicateBB::OnRow(Entity *row)
 {
     auto i = values.insert(std::make_pair(row[slot1], row[slot2]));
-    if(i.second)
+    if (i.second)
     {
         next->Evaluate(row);
     }
@@ -625,17 +614,16 @@ void DeduplicateBB::Explain(Database &db, std::ostream &os, int indent) const
     os << "Deduplicate (_" << slot1 << ",_" << slot2 << ")";
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
-
 
 CountCollector::CountCollector(int slot) : slot(slot)
 {
 }
 
-void CountCollector::OnRow(Entity * row)
+void CountCollector::OnRow(Entity *row)
 {
-    row[slot] = Entity { EntityType::Integer, 1 + (std::int64_t)row[slot] };
+    row[slot] = Entity{EntityType::Integer, 1 + (std::int64_t)row[slot]};
 }
 
 void CountCollector::Explain(Database &db, std::ostream &os, int indent) const
@@ -651,7 +639,7 @@ SumCollector::SumCollector(int slot, int sumSlot) : slot(slot), sumSlot(sumSlot)
 {
 }
 
-void SumCollector::OnRow(Entity * row)
+void SumCollector::OnRow(Entity *row)
 {
     row[sumSlot] += row[slot];
 }
@@ -664,12 +652,11 @@ void SumCollector::Explain(Database &db, std::ostream &os, int indent) const
     std::cout << std::endl;
 }
 
-Load::Load(int slot, const Entity &v, const std::shared_ptr<Evaluation> & next) :
-    slot(slot), value(v), ChainedEvaluation(next)
+Load::Load(int slot, const Entity &v, const std::shared_ptr<Evaluation> &next) : slot(slot), value(v), ChainedEvaluation(next)
 {
 }
 
-void Load::OnRow(Entity * locals)
+void Load::OnRow(Entity *locals)
 {
     locals[slot] = value;
     next->Evaluate(locals);
@@ -684,20 +671,20 @@ void Load::Explain(Database &db, std::ostream &os, int indent) const
     db.PrintQuoted(value, os);
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-NotNone::NotNone(int slot, const std::shared_ptr<Evaluation> & next) : slot(slot), ChainedEvaluation(next)
+NotNone::NotNone(int slot, const std::shared_ptr<Evaluation> &next) : slot(slot), ChainedEvaluation(next)
 {
 }
 
 void NotNone::OnRow(Entity *row)
 {
-    if(!row[slot].IsNone())
+    if (!row[slot].IsNone())
         next->Evaluate(row);
 }
 
-void NotNone::Explain(Database &db, std::ostream & os, int indent) const
+void NotNone::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Check ";
@@ -706,15 +693,14 @@ void NotNone::Explain(Database &db, std::ostream & os, int indent) const
     db.PrintQuoted(Entity(), os);
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-NotInB::NotInB(int slot, const std::shared_ptr<Relation> & relation, const std::shared_ptr<Evaluation> & next) :
-    slot(slot), ReaderEvaluation(relation, next)
+NotInB::NotInB(int slot, const std::shared_ptr<Relation> &relation, const std::shared_ptr<Evaluation> &next) : slot(slot), ReaderEvaluation(relation, next)
 {
 }
 
-void NotInB::OnRow(Entity * row)
+void NotInB::OnRow(Entity *row)
 {
     class Visitor : public Receiver
     {
@@ -722,18 +708,19 @@ void NotInB::OnRow(Entity * row)
         bool found = false;
         void OnRow(Entity *) override { found = true; }
     } visitor;
-    relation.lock()->Query(row+slot, 1, visitor);
-    
-    if(!visitor.found) next->Evaluate(row);
+    relation.lock()->Query(row + slot, 1, visitor);
+
+    if (!visitor.found)
+        next->Evaluate(row);
 }
 
-void NotInB::Explain(Database &db, std::ostream & os, int indent) const
+void NotInB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Lookup _" << slot << " is not in " << db.GetString(relation.lock()->Name());
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
 std::size_t Evaluation::globalCallCount = 0;
@@ -744,32 +731,31 @@ std::size_t Evaluation::GlobalCallCount()
     return globalCallCount;
 }
 
-Reader::Reader(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots, const std::shared_ptr<Evaluation> & next) :
-    ReaderEvaluation(relation, next)
+Reader::Reader(const std::shared_ptr<Relation> &relation, const std::vector<int> &slots, const std::shared_ptr<Evaluation> &next) : ReaderEvaluation(relation, next)
 {
     outputs = slots;
-    assert(slots.size()>1);
+    assert(slots.size() > 1);
     mask = 0;
 }
 
-void Reader::OnRow(Entity * row)
+void Reader::OnRow(Entity *row)
 {
     class Visitor : public Receiver
     {
     public:
-        void OnRow(Entity * data) override
+        void OnRow(Entity *data) override
         {
-            for(int i=0; i<reader.outputs.size(); ++i)
+            for (int i = 0; i < reader.outputs.size(); ++i)
                 row[reader.outputs[i]] = data[i];
             reader.next->Evaluate(row);
         }
-        
-        Visitor(Reader & reader, Entity * row) : reader(reader), row(row) { }
-        Reader & reader;
-        Entity * row;
+
+        Visitor(Reader &reader, Entity *row) : reader(reader), row(row) {}
+        Reader &reader;
+        Entity *row;
     };
-    
-    Visitor visitor { *this, row };
+
+    Visitor visitor{*this, row};
     relation.lock()->Query(nullptr, 0, visitor);
 }
 
@@ -779,36 +765,40 @@ void Reader::Explain(Database &db, std::ostream &os, int indent) const
     os << "Read from ";
     OutputRelation(os, db, relation.lock());
     os << " into (";
-    for(int i=0; i<outputs.size(); ++i)
+    for (int i = 0; i < outputs.size(); ++i)
     {
-        if(i>0) os << ",";
+        if (i > 0)
+            os << ",";
         OutputVariable(os, outputs[i]);
     }
     os << ")";
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-Writer::Writer(const std::shared_ptr<Relation> & relation, const std::vector<int> & slots) :
-    WriterEvaluation(relation), slots(slots)
+Writer::Writer(const std::shared_ptr<Relation> &relation, const std::vector<int> &slots) : WriterEvaluation(relation), slots(slots)
 {
-    assert(slots.size()>0);
+    assert(slots.size() > 0);
     slot = slots[0];
     contiguous = true;
-    for(int i=1; i<slots.size(); ++i)
-        if(slots[i] != slot+i) { contiguous = false; break; }
+    for (int i = 1; i < slots.size(); ++i)
+        if (slots[i] != slot + i)
+        {
+            contiguous = false;
+            break;
+        }
 }
 
-void Writer::OnRow(Entity * row)
+void Writer::OnRow(Entity *row)
 {
-    if(contiguous)
+    if (contiguous)
         relation.lock()->Add(row + slot);
     else
     {
         // Assemble the data into a vector
         std::vector<Entity> data(slots.size());
-        for(int i=0; i<slots.size(); ++i)
+        for (int i = 0; i < slots.size(); ++i)
             data[i] = row[slots[i]];
         relation.lock()->Add(&data[0]);
     }
@@ -818,9 +808,10 @@ void Writer::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Write (";
-    for(int i=0; i<slots.size(); ++i)
+    for (int i = 0; i < slots.size(); ++i)
     {
-        if(i>0) os << ",";
+        if (i > 0)
+            os << ",";
         OutputVariable(os, slots[i]);
     }
     os << ") into ";
@@ -829,7 +820,7 @@ void Writer::Explain(Database &db, std::ostream &os, int indent) const
     os << std::endl;
 }
 
-Join::Join(const std::shared_ptr<Relation> & relation, const std::vector<int> & inputs, const std::vector<int> & outputs, const std::shared_ptr<Evaluation> & next) : ReaderEvaluation(relation, next)
+Join::Join(const std::shared_ptr<Relation> &relation, const std::vector<int> &inputs, const std::vector<int> &outputs, const std::shared_ptr<Evaluation> &next) : ReaderEvaluation(relation, next)
 {
     this->inputs = inputs;
     this->outputs = outputs;
@@ -837,78 +828,67 @@ Join::Join(const std::shared_ptr<Relation> & relation, const std::vector<int> & 
     assert(relation->Arity() == inputs.size());
     mask = 0;
     int shift = 1;
-    for(auto v : this->inputs)
+    for (auto v : this->inputs)
     {
-        if(v != -1) mask |= shift;
+        if (v != -1)
+            mask |= shift;
         shift <<= 1;
     }
 }
 
-void Join::OnRow(Entity * locals)
+void Join::OnRow(Entity *locals)
 {
     class Visitor : public Receiver
     {
     public:
-        Visitor(Entity * locals, std::vector<int> & outputs, const std::shared_ptr<Evaluation> & next) :
-            locals(locals), outputs(outputs), next(next)
+        Visitor(Entity *locals, std::vector<int> &outputs, const std::shared_ptr<Evaluation> &next) : locals(locals), outputs(outputs), next(next)
         {
         }
-        void OnRow(Entity * row) override
+        void OnRow(Entity *row) override
         {
-            for(int i=0; i<outputs.size(); ++i)
-                if(outputs[i] != -1)
+            for (int i = 0; i < outputs.size(); ++i)
+                if (outputs[i] != -1)
                     locals[outputs[i]] = row[i];
             next->Evaluate(locals);
         }
-        Entity * locals;
-        const std::vector<int> & outputs;
+        Entity *locals;
+        const std::vector<int> &outputs;
         std::shared_ptr<Evaluation> next;
     } visitor(locals, outputs, next);
-    
+
     std::vector<Entity> data(inputs.size());
-    for(int i=0; i<inputs.size(); ++i)
-        if(inputs[i] != -1)
+    for (int i = 0; i < inputs.size(); ++i)
+        if (inputs[i] != -1)
         {
             data[i] = locals[inputs[i]];
         }
-    
-    if(useDelta)
+
+    if (useDelta)
         relation.lock()->QueryDelta(&data[0], mask, visitor);
     else
         relation.lock()->Query(&data[0], mask, visitor);
 }
 
-void Evaluation::OutputVariable(std::ostream & os, int variable)
+void Evaluation::OutputVariable(std::ostream &os, int variable)
 {
     os << Colours::Variable << "_" << variable << Colours::Normal;
 }
 
-void Evaluation::OutputIntroducedVariable(std::ostream & os, int variable)
+void Evaluation::OutputIntroducedVariable(std::ostream &os, int variable)
 {
     os << Colours::IntroducedVariable << "_" << variable << Colours::Normal;
 }
 
-
-void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation & relation)
+void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation &relation)
 {
     os << Colours::Relation;
-    switch(relation.GetBinding())
-    {
-        case BindingType::Binding:
-            os << "β";
-            break;
-        case BindingType::Bound:
-            os << "B";
-            break;
-        default: // Suppress warning
-            break;
-    }
-    if(auto cn = relation.GetCompoundName())
+    if (auto cn = relation.GetCompoundName())
     {
         os << "has:";
-        for(int i=0; i<cn->parts.size(); ++i)
+        for (int i = 0; i < cn->parts.size(); ++i)
         {
-            if(i>0) os << ":";
+            if (i > 0)
+                os << ":";
             os << db.GetString(cn->parts[i]);
         }
     }
@@ -918,42 +898,68 @@ void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation &
             os << "reaches:";
         os << db.GetString(relation.Name());
     }
+
+    switch (relation.GetBinding())
+    {
+    case BindingType::Binding:
+        os << ":";
+        for(auto m = relation.GetBindingColumns().mask; m; m>>=1)
+            os << (m&1 ? "b" : "f");
+        break;
+    case BindingType::Bound:
+        os << ":";
+        for(auto m = relation.GetBindingColumns().mask; m; m>>=1)
+            os << (m&1 ? "B" : "F");
+        break;
+    default: // Suppress warning
+        break;
+    }
+
     os << Colours::Normal;
 }
 
-void Evaluation::OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> & relation)
+void Evaluation::OutputRelation(std::ostream &os, Database &db, const std::shared_ptr<Relation> &relation)
 {
     OutputRelation(os, db, *relation);
 }
 
-void Join::Explain(Database &db, std::ostream & os, int indent) const
+void Join::Explain(Database &db, std::ostream &os, int indent) const
 {
-    int inCount=0, outCount=0;
-    for(auto a : inputs) if(a!=-1) ++ inCount;
-    for(auto a : outputs) if(a!=-1) ++ outCount;
-    
+    int inCount = 0, outCount = 0;
+    for (auto a : inputs)
+        if (a != -1)
+            ++inCount;
+    for (auto a : outputs)
+        if (a != -1)
+            ++outCount;
+
     Indent(os, indent);
-    if(inCount==0) os << "Scan ";
-    else if(outCount==0) os << "Probe ";
-    else os << "Join ";
-    
-    if(useDelta)
+    if (inCount == 0)
+        os << "Scan ";
+    else if (outCount == 0)
+        os << "Probe ";
+    else
+        os << "Join ";
+
+    if (useDelta)
         os << Colours::Relation << "∆";
     OutputRelation(os, db, relation.lock());
     os << " (";
-    for(int i=0; i<inputs.size(); ++i)
+    for (int i = 0; i < inputs.size(); ++i)
     {
-        if(i>0) os << ",";
-        if(inputs[i] != -1)
+        if (i > 0)
+            os << ",";
+        if (inputs[i] != -1)
             OutputVariable(os, inputs[i]);
         else
             os << "_";
     }
     os << ") -> (";
-    for(int i=0; i<outputs.size(); ++i)
+    for (int i = 0; i < outputs.size(); ++i)
     {
-        if(i>0) os << ",";
-        if(outputs[i] != -1)
+        if (i > 0)
+            os << ",";
+        if (outputs[i] != -1)
             OutputIntroducedVariable(os, outputs[i]);
         else
             os << "_";
@@ -961,7 +967,7 @@ void Join::Explain(Database &db, std::ostream & os, int indent) const
     os << ")";
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
 void Evaluation::SetGlobalCallCountLimit(std::size_t limit)
@@ -974,15 +980,15 @@ std::size_t Evaluation::GetGlobalCallCountLimit()
     return globalCallCountLimit;
 }
 
-ReaderEvaluation::ReaderEvaluation(const std::shared_ptr<Relation> & relation, const EvaluationPtr & next) : relation(relation), ChainedEvaluation(next)
+ReaderEvaluation::ReaderEvaluation(const std::shared_ptr<Relation> &relation, const EvaluationPtr &next) : relation(relation), ChainedEvaluation(next)
 {
 }
 
-WriterEvaluation::WriterEvaluation(const std::shared_ptr<Relation> & relation) : relation(relation)
+WriterEvaluation::WriterEvaluation(const std::shared_ptr<Relation> &relation) : relation(relation)
 {
 }
 
-ChainedEvaluation::ChainedEvaluation(const EvaluationPtr & next) : next(next)
+ChainedEvaluation::ChainedEvaluation(const EvaluationPtr &next) : next(next)
 {
 }
 
@@ -990,19 +996,18 @@ OrEvaluationForNot::OrEvaluationForNot(const std::shared_ptr<Evaluation> &left, 
 {
 }
 
-
-std::shared_ptr<Evaluation> Evaluation::WithNext(const EvaluationPtr & next) const
+std::shared_ptr<Evaluation> Evaluation::WithNext(const EvaluationPtr &next) const
 {
     assert(0);
     return std::shared_ptr<Evaluation>();
 }
 
-std::shared_ptr<Evaluation> RuleEvaluation::WithNext(const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> RuleEvaluation::WithNext(const std::shared_ptr<Evaluation> &next) const
 {
     return std::make_shared<RuleEvaluation>(locals, next);
 }
 
-Deduplicate::Deduplicate(const EvaluationPtr & next) : ChainedEvaluation(next)
+Deduplicate::Deduplicate(const EvaluationPtr &next) : ChainedEvaluation(next)
 {
 }
 
@@ -1016,11 +1021,11 @@ void DeduplicateBB::Reset()
     values.clear();
 }
 
-DeduplicationGuard::DeduplicationGuard(const std::shared_ptr<Deduplicate> & dedup, const EvaluationPtr & next) : dedup(dedup), ChainedEvaluation(next)
+DeduplicationGuard::DeduplicationGuard(const std::shared_ptr<Deduplicate> &dedup, const EvaluationPtr &next) : dedup(dedup), ChainedEvaluation(next)
 {
 }
 
-void DeduplicationGuard::OnRow(Entity * row)
+void DeduplicationGuard::OnRow(Entity *row)
 {
     next->Evaluate(row);
     dedup->Reset();
@@ -1031,12 +1036,11 @@ void DeduplicationGuard::Explain(Database &db, std::ostream &os, int indent) con
     next->Explain(db, os, indent);
 }
 
-CreateNew::CreateNew(Database &db, int slot, const std::shared_ptr<Evaluation> & next) :
-    ChainedEvaluation(next), database(db), slot(slot)
+CreateNew::CreateNew(Database &db, int slot, const std::shared_ptr<Evaluation> &next) : ChainedEvaluation(next), database(db), slot(slot)
 {
 }
 
-void CreateNew::OnRow(Entity * row)
+void CreateNew::OnRow(Entity *row)
 {
     row[slot] = database.NewEntity();
     next->Evaluate(row);
@@ -1049,24 +1053,23 @@ void CreateNew::Explain(Database &db, std::ostream &os, int indent) const
     OutputIntroducedVariable(os, slot);
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db,os,indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-DeduplicateV::DeduplicateV(Database & db, const std::vector<int> & slots, const std::shared_ptr<Table> & table, const std::shared_ptr<Evaluation> & next) :
-    Deduplicate(next),
-    database(db),
-    slots(slots),
-    table(table),
-    working(slots.size())
+DeduplicateV::DeduplicateV(Database &db, const std::vector<int> &slots, const std::shared_ptr<Table> &table, const std::shared_ptr<Evaluation> &next) : Deduplicate(next),
+                                                                                                                                                        database(db),
+                                                                                                                                                        slots(slots),
+                                                                                                                                                        table(table),
+                                                                                                                                                        working(slots.size())
 {
 }
 
-void DeduplicateV::OnRow(Entity * row)
+void DeduplicateV::OnRow(Entity *row)
 {
     working.clear();
-    for(auto i : slots)
+    for (auto i : slots)
         working.push_back(row[i]);
-    if(table->Add(working.data()))
+    if (table->Add(working.data()))
         next->Evaluate(row);
 }
 
@@ -1075,215 +1078,216 @@ void DeduplicateV::Reset()
     table->Clear();
 }
 
-void DeduplicateV::Explain(Database &db, std::ostream & os, int indent) const
+void DeduplicateV::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Deduplicate (";
-    for(int i=0; i<slots.size(); ++i)
+    for (int i = 0; i < slots.size(); ++i)
     {
-        if(i>0) os << ",";
+        if (i > 0)
+            os << ",";
         OutputVariable(os, slots[i]);
     }
     os << ")";
     OutputCallCount(os);
     os << " ->\n";
-    next->Explain(db, os, indent+4);
+    next->Explain(db, os, indent + 4);
 }
 
-void Evaluation::VisitReads(const std::function<void(std::weak_ptr<Relation>&, int, const int*)> &)
+void Evaluation::VisitReads(const std::function<void(std::weak_ptr<Relation> &, int, const int *)> &)
 {
 }
 
-void Evaluation::VisitNext(const std::function<void(EvaluationPtr&, bool)> &)
+void Evaluation::VisitNext(const std::function<void(EvaluationPtr &, bool)> &)
 {
 }
 
-void ChainedEvaluation::VisitNext(const std::function<void(EvaluationPtr&, bool)> & fn)
+void ChainedEvaluation::VisitNext(const std::function<void(EvaluationPtr &, bool)> &fn)
 {
     fn(next, false);
 }
 
-void OrEvaluation::VisitNext(const std::function<void(EvaluationPtr&, bool)> & fn)
+void OrEvaluation::VisitNext(const std::function<void(EvaluationPtr &, bool)> &fn)
 {
     fn(left, false);
     fn(right, false);
 }
 
-void OrEvaluationForNot::VisitNext(const std::function<void(EvaluationPtr&, bool)> & fn)
+void OrEvaluationForNot::VisitNext(const std::function<void(EvaluationPtr &, bool)> &fn)
 {
     fn(left, true);
     fn(right, false);
 }
 
-void ReaderEvaluation::VisitReads(const std::function<void(std::weak_ptr<Relation> & relation, int, const int*)> & fn)
+void ReaderEvaluation::VisitReads(const std::function<void(std::weak_ptr<Relation> &relation, int, const int *)> &fn)
 {
     fn(relation, mask, inputs.data());
 }
 
-void DeduplicateB::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void DeduplicateB::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
 }
 
-void DeduplicateBB::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void DeduplicateBB::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Read);
 }
 
-void OrEvaluation::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void OrEvaluation::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
 }
 
-void RuleEvaluation::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void RuleEvaluation::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
 }
 
-void DeduplicationGuard::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void DeduplicationGuard::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
 }
 
-void Load::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void Load::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot, VariableAccess::Write);
 }
 
-void DeduplicateV::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void DeduplicateV::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
-    for(auto &v : slots)
+    for (auto &v : slots)
         fn(v, VariableAccess::Read);
 }
 
-void SumCollector::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void SumCollector::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot, VariableAccess::Read);
     fn(sumSlot, VariableAccess::ReadWrite);
 }
 
-void NoneEvaluation::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void NoneEvaluation::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
 }
 
-void NotInB::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void NotInB::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot, VariableAccess::Read);
 }
 
-void NotTerminator::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void NotTerminator::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot, VariableAccess::Write);
 }
 
-void NotNone::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void NotNone::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot, VariableAccess::Read);
 }
 
-void CreateNew::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void CreateNew::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot, VariableAccess::Write);
 }
 
-void CountCollector::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void CountCollector::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot, VariableAccess::Write);
 }
 
-void ReaderEvaluation::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+void ReaderEvaluation::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
-    for(auto & i : inputs)
-        if(i != -1)
+    for (auto &i : inputs)
+        if (i != -1)
             fn(i, VariableAccess::Read);
 
-    for(auto & i : outputs)
-        if(i != -1)
+    for (auto &i : outputs)
+        if (i != -1)
             fn(i, VariableAccess::Write);
 }
 
-void AddBBF::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void AddBBF::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Read);
     fn(slot3, VariableAccess::Write);
 }
 
-void SubBBF::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void SubBBF::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Read);
     fn(slot3, VariableAccess::Write);
 }
 
-void MulBBF::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void MulBBF::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Read);
     fn(slot3, VariableAccess::Write);
 }
 
-void DivBBF::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void DivBBF::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Read);
     fn(slot3, VariableAccess::Write);
 }
 
-void ModBBF::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void ModBBF::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Read);
     fn(slot3, VariableAccess::Write);
 }
 
-void RangeB::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void RangeB::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Read);
     fn(slot3, VariableAccess::Read);
 }
 
-void RangeU::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void RangeU::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Write);
     fn(slot3, VariableAccess::Read);
 }
 
-void Writer::VisitVariables(const std::function<void(int&, VariableAccess)> &fn)
+void Writer::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
-    for(auto &i : slots)
+    for (auto &i : slots)
         fn(i, VariableAccess::Read);
 }
 
-void EqualsBB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+void EqualsBB::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Read);
 }
 
-void EqualsBF::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+void EqualsBF::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Write);
 }
 
-void CompareBB::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+void CompareBB::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Read);
 }
 
-void NegateBF::VisitVariables(const std::function<void (int &, VariableAccess)> &fn)
+void NegateBF::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot1, VariableAccess::Read);
     fn(slot2, VariableAccess::Write);
 }
 
-void Evaluation::VisitWrites(const std::function<void(std::weak_ptr<Relation> &rel, int, const int*)>&fn)
+void Evaluation::VisitWrites(const std::function<void(std::weak_ptr<Relation> &rel, int, const int *)> &fn)
 {
 }
 
-void Writer::VisitWrites(const std::function<void(std::weak_ptr<Relation> &rel, int, const int*)>&fn)
+void Writer::VisitWrites(const std::function<void(std::weak_ptr<Relation> &rel, int, const int *)> &fn)
 {
     fn(relation, slots.size(), slots.data());
 }
