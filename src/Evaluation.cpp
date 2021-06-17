@@ -906,8 +906,8 @@ void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation &
         auto cols = relation.GetBindingColumns();
         auto arity = relation.Arity();
         os << ":";
-        for (int i = 0; i < arity; ++i)
-            os << (cols.IsBound(i) ? "b" : "_");
+        for (int i = cols.mask; i; i>>=1)
+            os << (i&1 ? "b" : "_");
     }
     break;
     case BindingType::Bound:
@@ -915,8 +915,8 @@ void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation &
         auto cols = relation.GetBindingColumns();
         auto arity = relation.Arity();
         os << ":";
-        for (int i = 0; i < arity; ++i)
-            os << (cols.IsBound(i) ? "B" : "_");
+        for (int i = cols.mask; i; i>>=1)
+            os << (i&1 ? "B" : "_");
     }
     break;
     default: // Suppress warning

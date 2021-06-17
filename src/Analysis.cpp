@@ -121,8 +121,10 @@ private:
             
             if(node.recursiveRoot == root)
             {
+                // assert(node.recursiveDepth != depth);
+                
                 // A forward edge
-                if(node.recursiveDepth > depth)
+                if(node.recursiveDepth >= depth)
                     return nullptr;
                 
                 // This is recursive, so we return this node as a back-edge.
@@ -148,7 +150,7 @@ private:
 
         node.VisitRules([&](Evaluation & eval)
         {
-            auto l = AnalyseRecursion(database, eval, parity, depth+1, root);
+            auto l = AnalyseRecursion(database, eval, parity, depth, root);
             loop = MergeLoops(loop, l);
         });
         
@@ -183,11 +185,14 @@ private:
         Relation * loop = nullptr;
         
         node.VisitReads([&](Relation *& relation, Columns mask, const int*) {
-            loop = MergeLoops(loop, AnalyseRecursion(database, *relation, parity, depth+1, root));
+            auto l = AnalyseRecursion(database, *relation, parity, depth+1, root);
+            loop = MergeLoops(loop, l);
+            if(l) node.readIsRecursive = true;
         });
         
         node.VisitNext([&](std::shared_ptr<Evaluation>&n, bool nextIsNot) {
-            loop = MergeLoops(loop, AnalyseRecursion(database, *n, nextIsNot ? !parity : parity, depth+1, root));
+            auto l = AnalyseRecursion(database, *n, nextIsNot ? !parity : parity, depth, root);
+            loop = MergeLoops(loop, l);
         });
 
         if(loop)
@@ -530,7 +535,7 @@ OptimizerImpl::OptimizerImpl()
     static Deltas deltas;
     static RecursiveBranch recursiveBranch;
     
-    RegisterOptimization(binding);
+    // RegisterOptimization(binding);
     RegisterOptimization(recursion);
     RegisterOptimization(deltas);
     RegisterOptimization(recursiveBranch);
