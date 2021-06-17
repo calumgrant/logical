@@ -831,7 +831,7 @@ Join::Join(Relation &relation, const std::vector<int> &inputs, const std::vector
     for (auto v : this->inputs)
     {
         if (v != -1)
-            mask |= shift;
+            mask.mask |= shift;
         shift <<= 1;
     }
 }
@@ -902,15 +902,23 @@ void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation &
     switch (relation.GetBinding())
     {
     case BindingType::Binding:
+    {
+        auto cols = relation.GetBindingColumns();
+        auto arity = relation.Arity();
         os << ":";
-        for(auto m = relation.GetBindingColumns().mask; m; m>>=1)
-            os << (m&1 ? "b" : "f");
-        break;
+        for (int i = 0; i < arity; ++i)
+            os << (cols.IsBound(i) ? "b" : "_");
+    }
+    break;
     case BindingType::Bound:
+    {
+        auto cols = relation.GetBindingColumns();
+        auto arity = relation.Arity();
         os << ":";
-        for(auto m = relation.GetBindingColumns().mask; m; m>>=1)
-            os << (m&1 ? "B" : "F");
-        break;
+        for (int i = 0; i < arity; ++i)
+            os << (cols.IsBound(i) ? "B" : "_");
+    }
+    break;
     default: // Suppress warning
         break;
     }
@@ -975,7 +983,7 @@ std::size_t Evaluation::GetGlobalCallCountLimit()
     return globalCallCountLimit;
 }
 
-ReaderEvaluation::ReaderEvaluation(Relation &relation, const EvaluationPtr &next) : relation(&relation), ChainedEvaluation(next)
+ReaderEvaluation::ReaderEvaluation(Relation &relation, const EvaluationPtr &next) : relation(&relation), ChainedEvaluation(next), mask(0)
 {
 }
 
@@ -1089,7 +1097,7 @@ void DeduplicateV::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent + 4);
 }
 
-void Evaluation::VisitReads(const std::function<void(Relation* &, int, const int *)> &)
+void Evaluation::VisitReads(const std::function<void(Relation *&, Columns, const int *)> &)
 {
 }
 
@@ -1114,7 +1122,7 @@ void OrEvaluationForNot::VisitNext(const std::function<void(EvaluationPtr &, boo
     fn(right, false);
 }
 
-void ReaderEvaluation::VisitReads(const std::function<void(Relation *& relation, int, const int *)> &fn)
+void ReaderEvaluation::VisitReads(const std::function<void(Relation *&relation, Columns, const int *)> &fn)
 {
     fn(relation, mask, inputs.data());
 }
@@ -1278,11 +1286,11 @@ void NegateBF::VisitVariables(const std::function<void(int &, VariableAccess)> &
     fn(slot2, VariableAccess::Write);
 }
 
-void Evaluation::VisitWrites(const std::function<void(Relation *& rel, int, const int *)> &fn)
+void Evaluation::VisitWrites(const std::function<void(Relation *&rel, int, const int *)> &fn)
 {
 }
 
-void Writer::VisitWrites(const std::function<void(Relation *& rel, int, const int *)> &fn)
+void Writer::VisitWrites(const std::function<void(Relation *&rel, int, const int *)> &fn)
 {
     fn(relation, slots.size(), slots.data());
 }

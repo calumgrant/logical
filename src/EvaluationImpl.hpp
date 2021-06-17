@@ -15,12 +15,12 @@ protected:
 class ReaderEvaluation : public ChainedEvaluation
 {
 public:
-    void VisitReads(const std::function<void(Relation*&rel, int, const int*)> & fn) override;
+    void VisitReads(const std::function<void(Relation*&rel, Columns, const int*)> & fn) override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
 protected:
     ReaderEvaluation(Relation & relation, const EvaluationPtr & next);
     Relation* relation;
-    int mask;
+    Columns mask;
     std::vector<int> inputs, outputs;
 };
 

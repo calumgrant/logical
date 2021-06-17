@@ -66,12 +66,13 @@ public:
     bool useDelta = false;
     
     bool analysed = false;
+    bool runBindingAnalysis = false;
     
     // Holds true if a preceding (dominating) evaluation step is a recursive read/join.
     bool dependsOnRecursiveRead = false;  // Output flag: R
 
     virtual void VisitNext(const std::function<void(EvaluationPtr&, bool)> &fn);
-    virtual void VisitReads(const std::function<void(Relation*&, int, const int*)> &fn);
+    virtual void VisitReads(const std::function<void(Relation*&, Columns, const int*)> &fn);
     enum class VariableAccess { Read, Write, ReadWrite };
     virtual void VisitVariables(const std::function<void(int&, VariableAccess)> &fn)=0;
     virtual void VisitWrites(const std::function<void(Relation*&, int, const int*)> &fn);

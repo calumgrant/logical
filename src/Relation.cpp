@@ -13,18 +13,17 @@ Relation::~Relation()
 {
 }
 
-PrintRelation::PrintRelation(Database &db, int name) :
-    SpecialPredicate(db, name)
+PrintRelation::PrintRelation(Database &db, int name) : SpecialPredicate(db, name)
 {
 }
 
-void PrintRelation::Add(const Entity * row)
+void PrintRelation::Add(const Entity *row)
 {
     database.Print(row[0], std::cout);
     std::cout << std::endl;
 }
 
-void ErrorRelation::Add(const Entity * row)
+void ErrorRelation::Add(const Entity *row)
 {
     std::cerr << Colours::Error << "Error: ";
     database.Print(row[0], std::cerr);
@@ -35,9 +34,8 @@ void ErrorRelation::Add(const Entity * row)
 
 class EmptyReceiver : public Receiver
 {
-    void OnRow(Entity * row) override
+    void OnRow(Entity *row) override
     {
-        
     }
 };
 
@@ -52,7 +50,7 @@ void Predicate::Reset()
     recursiveRoot = -1;
 }
 
-void SpecialPredicate::AddRule(const std::shared_ptr<Evaluation> & eval)
+void SpecialPredicate::AddRule(const std::shared_ptr<Evaluation> &eval)
 {
     // Run the rule immediately.
     // ?? What about analysis ??
@@ -67,19 +65,19 @@ ExpectedResults::ExpectedResults(Database &db, RelationId name) : SpecialPredica
 {
 }
 
-void ExpectedResults::Add(const Entity * data)
+void ExpectedResults::Add(const Entity *data)
 {
-    if(!data->IsInt())
+    if (!data->IsInt())
         database.Error("Invalid type for expected-results");
-    
+
     database.SetExpectedResults((std::int64_t)*data);
 }
 
-void EvaluationStepLimit::Add(const Entity * data)
+void EvaluationStepLimit::Add(const Entity *data)
 {
-    if(data->Type() != EntityType::Integer)
+    if (data->Type() != EntityType::Integer)
         database.Error("Invalid type for evaluation-step-limit");
-    
+
     database.SetEvaluationLimit((std::int64_t)*data);
 }
 
@@ -92,7 +90,7 @@ ErrorRelation::ErrorRelation(Database &db) : PrintRelation(db, db.GetStringId("e
 {
 }
 
-void SpecialPredicate::Query(Row, Columns, Receiver&)
+void SpecialPredicate::Query(Row, Columns, Receiver &)
 {
     // Empty relation.
 }
@@ -102,12 +100,10 @@ void SpecialPredicate::QueryDelta(Row row, Columns columns, Receiver &v)
     Query(row, columns, v);
 }
 
-
-Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType binding, Columns cols) :
-    rulesRun(false), name(name), database(db),
-    attributes({}, std::hash<Relation*>(), std::equal_to<Relation*>(), db.Storage()),
-    reaches(reaches), bindingPredicate(binding), bindingColumns(cols),
-    rules(db)
+Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType binding, Columns cols) : rulesRun(false), name(name), database(db),
+                                                                                                                      attributes({}, std::hash<Relation *>(), std::equal_to<Relation *>(), db.Storage()),
+                                                                                                                      reaches(reaches), bindingPredicate(binding), bindingColumns(cols),
+                                                                                                                      rules(db)
 {
     table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
 #if !NDEBUG
@@ -115,13 +111,12 @@ Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches,
 #endif
 }
 
-Predicate::Predicate(Database &db, const CompoundName & cn, ::Arity arity, BindingType binding, Columns cols) :
-    rulesRun(false), name(cn.parts[0]), database(db),
-    compoundName(cn),
-    attributes({}, std::hash<Relation*>(), std::equal_to<Relation*>(), db.Storage()),
-    reaches(false),
-    bindingPredicate(binding), bindingColumns(cols),
-    rules(db)
+Predicate::Predicate(Database &db, const CompoundName &cn, ::Arity arity, BindingType binding, Columns cols) : rulesRun(false), name(cn.parts[0]), database(db),
+                                                                                                               compoundName(cn),
+                                                                                                               attributes({}, std::hash<Relation *>(), std::equal_to<Relation *>(), db.Storage()),
+                                                                                                               reaches(false),
+                                                                                                               bindingPredicate(binding), bindingColumns(cols),
+                                                                                                               rules(db)
 {
     table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
 #if !NDEBUG
@@ -144,8 +139,7 @@ Columns Predicate::GetBindingColumns() const
     return bindingColumns;
 }
 
-
-void Predicate::AddRule(const std::shared_ptr<Evaluation> & rule)
+void Predicate::AddRule(const std::shared_ptr<Evaluation> &rule)
 {
     auto p = rule;
     AnalyseRule(database, p);
@@ -189,22 +183,23 @@ int SpecialPredicate::Arity() const
     return 1;
 }
 
-void Predicate::AddAttribute(Relation & attribute)
+void Predicate::AddAttribute(Relation &attribute)
 {
     attributes.insert(&attribute);
 }
 
-void Predicate::VisitAttributes(const std::function<void(Relation&)> & visitor) const
+void Predicate::VisitAttributes(const std::function<void(Relation &)> &visitor) const
 {
-    for(auto &r : attributes) visitor(*r);
+    for (auto &r : attributes)
+        visitor(*r);
 }
 
-const CompoundName * Relation::GetCompoundName() const
+const CompoundName *Relation::GetCompoundName() const
 {
     return nullptr;
 }
 
-void RuleSet::SetRecursiveRules(const std::shared_ptr<Evaluation> & baseCase, const std::shared_ptr<Evaluation> & recursiveCase)
+void RuleSet::SetRecursiveRules(const std::shared_ptr<Evaluation> &baseCase, const std::shared_ptr<Evaluation> &recursiveCase)
 {
     rules.clear();
     rules.push_back(baseCase);
@@ -223,29 +218,29 @@ void Predicate::Query(Row row, Columns columns, Receiver &r)
     table->Query(row, columns, r);
 }
 
-void Predicate::QueryDelta(Entity * row, Columns columns, Receiver &r)
+void Predicate::QueryDelta(Entity *row, Columns columns, Receiver &r)
 {
     RunRules();
     table->QueryDelta(row, columns, r);
 }
 
-void Predicate::Add(const Entity * data)
+void Predicate::Add(const Entity *data)
 {
     table->loop = loop; // Hack :-(
-    table->OnRow(const_cast<Entity*>(data));
+    table->OnRow(const_cast<Entity *>(data));
 }
 
-const CompoundName * Predicate::GetCompoundName() const
+const CompoundName *Predicate::GetCompoundName() const
 {
     return compoundName.parts.empty() ? nullptr : &compoundName;
 }
 
-Database & Predicate::GetDatabase() const
+Database &Predicate::GetDatabase() const
 {
     return database;
 }
 
-Strlen::Strlen(Database &db) : BuiltinFnPredicate(db, std::vector<int> { db.GetStringId("strlen") })
+Strlen::Strlen(Database &db) : BuiltinFnPredicate(db, std::vector<int>{db.GetStringId("strlen")})
 {
 }
 
@@ -258,118 +253,118 @@ std::size_t BuiltinFnPredicate::Count()
     return 0;
 }
 
-void Strlen::Query(Row row, Columns columns, Receiver&v)
+void Strlen::Query(Row row, Columns columns, Receiver &v)
 {
-    switch(columns.mask)
+    switch (columns.mask)
     {
-        case 1:
-            if(row[0].IsString())
-            {
-                row[1] = Entity(EntityType::Integer, (std::int64_t)database.GetString((std::int64_t)row[0]).size());
-                v.OnRow(row);
-            }
-            break;
-        case 3:
-            if(row[0].IsString() && row[1].IsInt() && (std::int64_t)row[1] == database.GetString((std::int64_t)row[0]).size())
-            {
-                v.OnRow(row);
-            }
-            break;
+    case 1:
+        if (row[0].IsString())
+        {
+            row[1] = Entity(EntityType::Integer, (std::int64_t)database.GetString((std::int64_t)row[0]).size());
+            v.OnRow(row);
+        }
+        break;
+    case 3:
+        if (row[0].IsString() && row[1].IsInt() && (std::int64_t)row[1] == database.GetString((std::int64_t)row[0]).size())
+        {
+            v.OnRow(row);
+        }
+        break;
     }
 }
 
-void BuiltinFnPredicate::QueryDelta(Row row, Columns columns, Receiver&v) {}
+void BuiltinFnPredicate::QueryDelta(Row row, Columns columns, Receiver &v) {}
 
 int BuiltinFnPredicate::Arity() const { return arity; }
 
-BuiltinFnPredicate::BuiltinFnPredicate(Database & database, const CompoundName & cn) : Predicate(database, cn, cn.parts.size()+1, BindingType::Unbound, 0), arity(cn.parts.size()+1)
+BuiltinFnPredicate::BuiltinFnPredicate(Database &database, const CompoundName &cn) : Predicate(database, cn, cn.parts.size() + 1, BindingType::Unbound, 0), arity(cn.parts.size() + 1)
 {
 }
 
-Lowercase::Lowercase(Database &db) : BuiltinFnPredicate(db, std::vector<int> { db.GetStringId("lowercase") })
+Lowercase::Lowercase(Database &db) : BuiltinFnPredicate(db, std::vector<int>{db.GetStringId("lowercase")})
 {
 }
 
-Uppercase::Uppercase(Database &db) : BuiltinFnPredicate(db, std::vector<int> { db.GetStringId("uppercase") })
+Uppercase::Uppercase(Database &db) : BuiltinFnPredicate(db, std::vector<int>{db.GetStringId("uppercase")})
 {
 }
 
-void Lowercase::Query(Row row, Columns columns, Receiver&v)
+void Lowercase::Query(Row row, Columns columns, Receiver &v)
 {
-    switch(columns.mask)
+    switch (columns.mask)
     {
-        case 1:
-            if(row[0].IsString())
-            {
-                auto str = database.GetString((std::int64_t)row[0]);
-                for(auto &c : str)
-                    c = std::tolower(c);
-                row[1] = database.CreateString(str);
+    case 1:
+        if (row[0].IsString())
+        {
+            auto str = database.GetString((std::int64_t)row[0]);
+            for (auto &c : str)
+                c = std::tolower(c);
+            row[1] = database.CreateString(str);
+            v.OnRow(row);
+        }
+        break;
+    case 3:
+        if (row[0].IsString() && row[1].IsString())
+        {
+            auto str = database.GetString((std::int64_t)row[0]);
+            for (auto &c : str)
+                c = std::tolower(c);
+
+            if (database.GetStringId(str) == (std::int64_t)row[1])
                 v.OnRow(row);
-            }
-            break;
-        case 3:
-            if(row[0].IsString() && row[1].IsString())
-            {
-                auto str = database.GetString((std::int64_t)row[0]);
-                for(auto &c : str)
-                    c = std::tolower(c);
-                
-                if(database.GetStringId(str) == (std::int64_t)row[1])
-                    v.OnRow(row);
-            }
-            break;
+        }
+        break;
     }
 }
 
-void Uppercase::Query(Row row, Columns columns, Receiver&v)
+void Uppercase::Query(Row row, Columns columns, Receiver &v)
 {
-    switch(columns.mask)
+    switch (columns.mask)
     {
-        case 1:
-            if(row[0].IsString())
-            {
-                auto str = database.GetString((std::int64_t)row[0]);
-                for(auto &c : str)
-                    c = std::toupper(c);
-                row[1] = database.CreateString(str);
-                v.OnRow(row);
-            }
-            break;
-        case 3:
-            if(row[0].IsString() && row[1].IsString())
-            {
-                auto str = database.GetString((std::int64_t)row[0]);
-                for(auto &c : str)
-                    c = std::toupper(c);
-                
-                if(database.GetStringId(str) == (std::int64_t)row[1])
-                    v.OnRow(row);
-            }
-            break;
-    }
+    case 1:
+        if (row[0].IsString())
+        {
+            auto str = database.GetString((std::int64_t)row[0]);
+            for (auto &c : str)
+                c = std::toupper(c);
+            row[1] = database.CreateString(str);
+            v.OnRow(row);
+        }
+        break;
+    case 3:
+        if (row[0].IsString() && row[1].IsString())
+        {
+            auto str = database.GetString((std::int64_t)row[0]);
+            for (auto &c : str)
+                c = std::toupper(c);
 
+            if (database.GetStringId(str) == (std::int64_t)row[1])
+                v.OnRow(row);
+        }
+        break;
+    }
 }
 
-Relation& Predicate::GetBindingRelation(Columns columns)
+Relation &Predicate::GetBindingRelation(Columns columns)
 {
+    assert(bindingPredicate == BindingType::Unbound);
+
     auto &i = bindingRelations[columns];
-    
-    if(!i)
+
+    if (!i)
     {
         // The "arity" is the number of bits set in columns.
-        int arity=0;
+        int arity = 0;
         auto m = columns.mask;
-        while(m)
+        while (m)
         {
-            if(m &1) ++arity;
-            m>>=1;
+            if (m & 1)
+                ++arity;
+            m >>= 1;
         }
-        i = compoundName.parts.size()>0 ?
-        std::make_shared<Predicate>(database, compoundName, arity, BindingType::Binding, columns) :
-        std::make_shared<Predicate>(database, name, arity, reaches, BindingType::Binding, columns);
+        i = compoundName.parts.size() > 0 ? std::make_shared<Predicate>(database, compoundName, arity, BindingType::Binding, columns) : std::make_shared<Predicate>(database, name, arity, reaches, BindingType::Binding, columns);
     }
-    
+
     return *i;
 }
 
@@ -377,71 +372,72 @@ class WriteAnalysis
 {
 public:
     std::vector<int> arguments;
-    
-    WriteAnalysis(Evaluation & rule, Predicate & oldPredicate) : targetPredicate(oldPredicate)
+
+    WriteAnalysis(Evaluation &rule, Predicate &oldPredicate) : targetPredicate(oldPredicate)
     {
         AnalyseWrites(rule);
     }
-    
-    void UpdateVariables(Evaluation & rule)
-    {
-        if(variableMapping.empty()) return;
-        
-        rule.VisitVariables([&](int & variable, Evaluation::VariableAccess access) {
-            auto m = variableMapping.find(variable);
-            if(m != variableMapping.end())
-                variable = m->second;
-        });
-        
-        rule.VisitNext([&](EvaluationPtr & next, bool) {
-            UpdateVariables(*next);
-        });
-    }
-    
-    void UpdateWrites(Evaluation & rule, Relation & newPredicate)
-    {
-        rule.VisitWrites([&](Relation *& rel, int n, const int * p) {
-            if(rel == &targetPredicate)
-            {
-                rel = &newPredicate;
-            }
-        });
 
-        rule.VisitNext([&](EvaluationPtr & next, bool) {
-            UpdateWrites(*next, newPredicate);
-        });
-    }
-private:
-    void AnalyseWrites(Evaluation & eval)
+    void UpdateVariables(Evaluation &rule)
     {
-        eval.VisitWrites([&](Relation *& relation, int len, const int* p){
-            if (relation == &targetPredicate && arguments.empty())
-            {
-                arguments.assign(p, p+len);
-            }
-            else
-            {
-                int i=0;
-                eval.VisitVariables([&](int& arg, Evaluation::VariableAccess access) {
-                    if(i<arguments.size() && arg != arguments[i])
-                        variableMapping[arg] = arguments[i];
-                    ++i;
-                });
-            }
-                
-        });
-        
-        eval.VisitNext([&](std::shared_ptr<Evaluation> & next, bool) {
-            AnalyseWrites(*next);
-        });
+        if (variableMapping.empty())
+            return;
+
+        rule.VisitVariables([&](int &variable, Evaluation::VariableAccess access)
+                            {
+                                auto m = variableMapping.find(variable);
+                                if (m != variableMapping.end())
+                                    variable = m->second;
+                            });
+
+        rule.VisitNext([&](EvaluationPtr &next, bool)
+                       { UpdateVariables(*next); });
     }
-    
-    Predicate & targetPredicate;
+
+    void UpdateWrites(Evaluation &rule, Relation &newPredicate)
+    {
+        rule.VisitWrites([&](Relation *&rel, Columns n, const int *p)
+                         {
+                             if (rel == &targetPredicate)
+                             {
+                                 rel = &newPredicate;
+                             }
+                         });
+
+        rule.VisitNext([&](EvaluationPtr &next, bool)
+                       { UpdateWrites(*next, newPredicate); });
+    }
+
+private:
+    void AnalyseWrites(Evaluation &eval)
+    {
+        eval.VisitWrites([&](Relation *&relation, int len, const int *p)
+                         {
+                             if (relation == &targetPredicate && arguments.empty())
+                             {
+                                 arguments.assign(p, p + len);
+                             }
+                             else
+                             {
+                                 int i = 0;
+                                 eval.VisitVariables([&](int &arg, Evaluation::VariableAccess access)
+                                                     {
+                                                         if (i < arguments.size() && arg != arguments[i])
+                                                             variableMapping[arg] = arguments[i];
+                                                         ++i;
+                                                     });
+                             }
+                         });
+
+        eval.VisitNext([&](std::shared_ptr<Evaluation> &next, bool)
+                       { AnalyseWrites(*next); });
+    }
+
+    Predicate &targetPredicate;
     std::unordered_map<int, int> variableMapping;
 };
 
-
-std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> & rule, Predicate & oldPredicate, Relation & bindingRelation, Columns columns)
+std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> &rule, Predicate &oldPredicate, Relation &bindingRelation, Columns columns)
 {
     WriteAnalysis write(*rule, oldPredicate);
 
@@ -452,39 +448,38 @@ std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> & ru
     return clone;
 }
 
-Relation& Predicate::GetBoundRelation(Columns columns)
+Relation &Predicate::GetBoundRelation(Columns columns)
 {
+    assert(bindingPredicate == BindingType::Unbound);
     auto &i = boundRelations[columns];
-    
-    if(!i)
+
+    if (!i)
     {
-        i = compoundName.parts.size()>0 ?
-            std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Bound, columns) :
-            std::make_shared<Predicate>(database, name, Arity(), reaches, BindingType::Bound, columns);
+        i = compoundName.parts.size() > 0 ? std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Bound, columns) : std::make_shared<Predicate>(database, name, Arity(), reaches, BindingType::Bound, columns);
 
         // TODO: Create the bound version of the rule.
         std::vector<int> boundArguments;
-        
-        auto & binding = GetBindingRelation(columns);
-        for(auto &r : rules.rules)
+
+        auto &binding = GetBindingRelation(columns);
+        for (auto &r : rules.rules)
         {
             auto b = MakeBoundRule(r, *this, *i, columns);
             i->AddRule(b);
         }
-        
+
         // Copy the data across already
         // TODO: Create a rule to transfer the data across.
-        
+
         struct Adder : public Receiver
         {
             std::shared_ptr<Relation> table;
-            void OnRow(Entity * row) override
+            void OnRow(Entity *row) override
             {
                 table->Add(row);
             }
-            Adder(std::shared_ptr<Relation>&t) : table(t) { }
-        } adder { i };
-        
+            Adder(std::shared_ptr<Relation> &t) : table(t) {}
+        } adder{i};
+
         table->ReadAllData(adder);
     }
     return *i;
@@ -505,63 +500,62 @@ bool SpecialPredicate::IsSpecial() const
     return true;
 }
 
-void ExecutionUnit::AddRelation(Relation & rel)
+void ExecutionUnit::AddRelation(Relation &rel)
 {
     relations.insert(&rel);
-//    rel.VisitSteps([&](EvaluationPtr & step) {
-//        step->VisitWrites([&](std::weak_ptr<Relation>&rel, int, const int*) {
-//            relations.insert(&*rel.lock());
-//        });
-//    });
-    
-    rel.VisitRules([&](EvaluationPtr & rule) {
-        rules.rules.push_back(rule);
-    });
+    //    rel.VisitSteps([&](EvaluationPtr & step) {
+    //        step->VisitWrites([&](std::weak_ptr<Relation>&rel, int, const int*) {
+    //            relations.insert(&*rel.lock());
+    //        });
+    //    });
+
+    rel.VisitRules([&](EvaluationPtr &rule)
+                   { rules.rules.push_back(rule); });
 }
 
 void ExecutionUnit::RunRules()
 {
-    if(evaluated) return;
+    if (evaluated)
+        return;
     evaluated = true;
-    
-    for(auto r : relations)
+
+    for (auto r : relations)
         r->FirstIteration();
 
-    for(auto & p : rules.rules)
+    for (auto &p : rules.rules)
     {
         p->Evaluate(nullptr);
     }
 
     Size loopSize;
-    
+
     bool resultsFound;
     do
     {
-        for(auto r : relations)
+        for (auto r : relations)
             r->NextIteration();
 
         loopSize = numberOfResults;
 
-        if(database.GetVerbosity()>2)
+        if (database.GetVerbosity() > 2)
         {
             std::cout << "Number of results in loop = " << loopSize << std::endl;
             Explain();
         }
-        
-        for(auto & p : rules.rules)
+
+        for (auto &p : rules.rules)
         {
-            if(p->onRecursivePath)
+            if (p->onRecursivePath)
                 p->Evaluate(nullptr);
         }
         resultsFound = numberOfResults > loopSize;
         loopSize = numberOfResults;
-    }
-    while(resultsFound);
+    } while (resultsFound);
 
-    for(auto r : relations)
+    for (auto r : relations)
         r->NextIteration();
-    
-    if(database.Explain())
+
+    if (database.Explain())
         Explain();
 }
 
@@ -569,20 +563,23 @@ void ExecutionUnit::Explain()
 {
     std::cout << "Evaluated ";
     bool first = true;
-    for(auto & r : relations)
+    for (auto &r : relations)
     {
-        if(first) first = false; else std::cout << ", ";
+        if (first)
+            first = false;
+        else
+            std::cout << ", ";
         Evaluation::OutputRelation(std::cout, database, *r);
     }
-        
+
     std::cout << " ->\n";
-    for(auto & p : rules.rules)
+    for (auto &p : rules.rules)
     {
         p->Explain(database, std::cout, 4);
     }
 }
 
-ExecutionUnit::ExecutionUnit(Database & db) : database(db), rules(db)
+ExecutionUnit::ExecutionUnit(Database &db) : database(db), rules(db)
 {
 }
 
@@ -596,20 +593,20 @@ void Predicate::NextIteration()
     table->NextIteration();
 }
 
-void RuleSet::Add(const EvaluationPtr & rule)
+void RuleSet::Add(const EvaluationPtr &rule)
 {
     rules.push_back(rule);
 }
 
-void Predicate::VisitRules(const std::function<void(Evaluation&)>&fn)
+void Predicate::VisitRules(const std::function<void(Evaluation &)> &fn)
 {
-    for(auto & rule : rules.rules)
+    for (auto &rule : rules.rules)
         fn(*rule);
 }
 
-void Predicate::VisitRules(const std::function<void(EvaluationPtr&)>&fn)
+void Predicate::VisitRules(const std::function<void(EvaluationPtr &)> &fn)
 {
-    for(EvaluationPtr & rule : rules.rules)
+    for (EvaluationPtr &rule : rules.rules)
         fn(rule);
 }
 
@@ -617,33 +614,33 @@ RuleSet::RuleSet(Database &db) : rules(db.Storage())
 {
 }
 
-void Evaluation::VisitSteps(EvaluationPtr & ptr, const std::function<void(EvaluationPtr&)> & fn)
+void Evaluation::VisitSteps(EvaluationPtr &ptr, const std::function<void(EvaluationPtr &)> &fn)
 {
     auto ptr2 = ptr;
     fn(ptr);
-    ptr2->VisitNext([&](EvaluationPtr & next, bool) {
-        VisitSteps(next, fn); });
+    ptr2->VisitNext([&](EvaluationPtr &next, bool)
+                    { VisitSteps(next, fn); });
 }
 
-void RuleSet::VisitRules(const std::function<void(EvaluationPtr&)> & fn)
+void RuleSet::VisitRules(const std::function<void(EvaluationPtr &)> &fn)
 {
-    for(auto & r : rules)
+    for (auto &r : rules)
         fn(r);
 }
 
-void RuleSet::VisitRules(const std::function<void(Evaluation&)> & fn)
+void RuleSet::VisitRules(const std::function<void(Evaluation &)> &fn)
 {
-    for(auto & r : rules)
+    for (auto &r : rules)
         fn(*r);
 }
 
-void RuleSet::VisitSteps(const std::function<void(EvaluationPtr&)> & fn)
+void RuleSet::VisitSteps(const std::function<void(EvaluationPtr &)> &fn)
 {
-    for(auto & r : rules)
+    for (auto &r : rules)
         Evaluation::VisitSteps(r, fn);
 }
 
 bool ExecutionUnit::Recursive() const
 {
-    return relations.size()>1;
+    return recursive;
 }

@@ -37,6 +37,7 @@ public:
     
     bool analysed = false;
     bool evaluated = false;
+    bool recursive = false;
     
     Database & database;
     ExecutionUnit(Database & db);

@@ -42,7 +42,19 @@ public:
         bool operator()(Columns c1, Columns c2) const { return c1.mask == c2.mask; }
     };
 
-    const std::uint64_t mask;
+    std::uint64_t mask;
+};
+
+// This is a work in progress
+class Query
+{
+public:
+    // Goes to the next result, and sets rowIndex to point to the row containing the data
+    // Returns true if there is a result, and false if there is no result.
+    bool Next(Size & rowIndex);
+    
+    // Internal state goes here:
+    // probably a table iterator, except that we cannot change the data structure whilst the iterator is in play.
 };
 
 class Relation

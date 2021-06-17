@@ -11,6 +11,31 @@ Optimization scope:
 - Quick-eval needs to optimize the rule.
 - The binding analysis occurs at compilation stage
 - In implementation of `uppercase` etc, don't implement the bound relation in the predicate. Instead, implement as `X = has:uppercase Y and Y=Z`.
+- Avoid evaluating rules twice.
+- Optimization step: Figure out if rules already run.
+
+- Store the original source line for each rule, and highlight the parts of it as it executes (in Explain)
+```
+    Evaluate with 4 variables (called 1 time) ->
+        Scan person (_) -> (_0) (called 1 time) ->
+            Load _2 := @f (called 3 times) ->
+                Write (_0,_2) into has:name:gender:b_ (called 3 times)
+                Join has:name:gender:B_B (_0,_,_2) -> (_,_1,_) (called 3 times) ->
+                    Deduplicate (_1) (called 2 times) ->
+                        Create new _3 (called 0 times) ->
+                            Write (_3) into woman (called 0 times)
+                            Write (_3,_1) into has:name:B_ (called 0 times)
+                            
+```
+becomes (* = write, _ = read)
+```
+    new woman has name n if person *_* has name n, gender @f.
+    new woman has name n if person _ has name n, gender *@f*.
+    new woman has name n if person _ has *name* n, *gender* @f.
+    *new woman* has name n if person _ has name n, gender @f.
+    new woman has *name* n if person _ has name n, gender @f.
+```
+
 
 Optimization stages:
 - 1. Compilation
@@ -218,9 +243,19 @@ Options for parallelism:
   - Implement a "WriteConcurrent" execution node.
 
 Changes to make:
-1. Each table is threadsafe. What this means: Concurrent writes are possible and are safe. Use atomic counters in the execution unit. Reads are also threadsafe
+1. Each table is threadsafe. What this means: Concurrent writes are possible and are safe. Use atomic counters in the execution unit. Reads are also threadsafe, and can overlap with writes. (May need to copy row data to avoid vector moving on write). 
 2. The persist memory allocator is threadsafe. Use atomic lists for the memory pool. Use atomic counters.
-3. 
+3. Each row executes in a `MicroThread`, containing:
+   - The row data
+   - A linked list of "available threads" - atomic of course.
+   - A function to call to process the thread.
+   - A status: Ready, Running, Complete.
+4. Threading options: -t1, -t -t0 (infinite), -tn. Default for -O0 is -t1, and -
+5. The first join/read of an evaluation:
+   - Keeps a vector of parallel stack frames as single array
+   - Keeps a vector of MicroThreads
+   - OnRow: Performs the query, returning a list of rows. Dispatch the first n results as threads. Each thread: runs the next function, then when the function returns, gets the next row in the list. Keeps a "count" of active threads, and when the count goes to 0, OnRow can return.
+   
 
 Implement a special thread pool:
 

@@ -25,9 +25,12 @@ public:
     
     void Analyse(EvaluationPtr & rule) const override
     {
+        if(rule->runBindingAnalysis) return;
+        rule->runBindingAnalysis = true;
+        
         Evaluation::VisitSteps(rule, [](EvaluationPtr&eval) {
-            eval->VisitReads([&](Relation *& relation, int mask, const int * inputs) {
-                if(mask != 0)
+            eval->VisitReads([&](Relation *& relation, Columns mask, const int * inputs) {
+                if(!mask.IsUnbound() && relation->GetBinding() == BindingType::Unbound)
                 {
                     // std::cout << "Semi-naive opportunity: " << mask << "\n";
 
@@ -179,7 +182,7 @@ private:
     {
         Relation * loop = nullptr;
         
-        node.VisitReads([&](Relation *& relation, int mask, const int*) {
+        node.VisitReads([&](Relation *& relation, Columns mask, const int*) {
             loop = MergeLoops(loop, AnalyseRecursion(database, *relation, parity, depth+1, root));
         });
         
@@ -219,6 +222,7 @@ private:
         
         if(recursiveLoop.loop)
         {
+            recursiveLoop.loop->recursive = true;
             node.loop = recursiveLoop.loop;
             node.loop->AddRelation(node);
         }
@@ -231,7 +235,7 @@ private:
         }
         
         node.VisitSteps([&](EvaluationPtr & eval) {
-            eval->VisitReads([&](Relation *& next, int, const int*) {
+            eval->VisitReads([&](Relation *& next, Columns, const int*) {
                 if(next->recursiveDepth > node.recursiveDepth)
                 {
                     AssignLoops(database, *next);
