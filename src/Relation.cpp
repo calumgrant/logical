@@ -13,25 +13,6 @@ Relation::~Relation()
 {
 }
 
-PrintRelation::PrintRelation(Database &db, int name) : SpecialPredicate(db, name)
-{
-}
-
-void PrintRelation::Add(const Entity *row)
-{
-    database.Print(row[0], std::cout);
-    std::cout << std::endl;
-}
-
-void ErrorRelation::Add(const Entity *row)
-{
-    std::cerr << Colours::Error << "Error: ";
-    database.Print(row[0], std::cerr);
-    std::cerr << std::endl;
-    std::cerr << Colours::Normal;
-    database.ReportUserError();
-}
-
 class EmptyReceiver : public Receiver
 {
     void OnRow(Entity *row) override
@@ -86,10 +67,6 @@ std::size_t SpecialPredicate::Count()
     return 0;
 }
 
-ErrorRelation::ErrorRelation(Database &db) : PrintRelation(db, db.GetStringId("error"))
-{
-}
-
 void SpecialPredicate::Query(Row, Columns, Receiver &)
 {
     // Empty relation.
@@ -111,13 +88,15 @@ Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches,
 #endif
 }
 
-Predicate::Predicate(Database &db, const CompoundName &cn, ::Arity arity, BindingType binding, Columns cols) : rulesRun(false), name(cn.parts[0]), database(db),
-                                                                                                               compoundName(cn),
-                                                                                                               attributes({}, std::hash<Relation *>(), std::equal_to<Relation *>(), db.Storage()),
-                                                                                                               reaches(false),
-                                                                                                               bindingPredicate(binding), bindingColumns(cols),
-                                                                                                               rules(db)
+Predicate::Predicate(Database &db, const CompoundName &cn, ::Arity arity, BindingType binding, Columns cols) :
+    rulesRun(false), database(db),
+    compoundName(cn),
+    attributes({}, std::hash<Relation *>(), std::equal_to<Relation *>(), db.Storage()),
+    reaches(false),
+    bindingPredicate(binding), bindingColumns(cols),
+    rules(db)
 {
+    if(cn.parts.size()>0) name = cn.parts[0];
     table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
 #if !NDEBUG
     debugName = db.GetString(name).c_str();
@@ -163,6 +142,10 @@ SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name,
 {
 }
 
+SpecialPredicate::SpecialPredicate(Database &db, const CompoundName & cn) : Predicate(db, cn, 1+cn.parts.size(), BindingType::Unbound, 0)
+{
+}
+
 EvaluationStepLimit::EvaluationStepLimit(Database &db, RelationId name) : SpecialPredicate(db, name)
 {
 }
@@ -176,11 +159,6 @@ std::size_t Relation::GetCount()
 {
     RunRules();
     return Count();
-}
-
-int SpecialPredicate::Arity() const
-{
-    return 1;
 }
 
 void Predicate::AddAttribute(Relation &attribute)

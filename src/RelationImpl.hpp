@@ -94,7 +94,6 @@ private:
     const Columns bindingColumns;
 
     RuleSet rules;
-    RelationId name;
     
     std::unordered_set<Relation*, std::hash<Relation*>, std::equal_to<Relation*>, persist::allocator<Relation*>> attributes;
 protected:
@@ -103,19 +102,20 @@ protected:
     void Reset();
     
     std::shared_ptr<Table> table;
+    RelationId name;
     CompoundName compoundName;
     std::unordered_map<Columns, std::shared_ptr<Relation>, Columns::Hash, Columns::EqualTo> bindingRelations, boundRelations;
 };
 
-class SpecialPredicate : public Predicate
+class SpecialPredicate : public Predicate // TODO: Extend Relation
 {
 public:
     SpecialPredicate(Database &db, RelationId name);
+    SpecialPredicate(Database &db, const CompoundName & name);
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     std::size_t Count() override;
     void Query(Entity *row, Columns columns, Receiver&v) override;
     void QueryDelta(Entity*row, Columns columns, Receiver&v) override;
-    int Arity() const override;
     bool IsSpecial() const override;
 };
 
@@ -131,14 +131,6 @@ private:
     std::unordered_map<Columns, Logical::Extern, Columns::Hash, Columns::EqualTo> externs;
 };
 
-class PrintRelation : public SpecialPredicate
-{
-public:
-    PrintRelation(Database&db, int name);
-    void Add(const Entity *row) override;
-protected:
-};
-
 class EvaluationStepLimit : public SpecialPredicate
 {
 public:
@@ -150,13 +142,6 @@ class ExpectedResults : public SpecialPredicate
 {
 public:
     ExpectedResults(Database &db, RelationId name);
-    void Add(const Entity *row) override;
-};
-
-class ErrorRelation : public PrintRelation
-{
-public:
-    ErrorRelation(Database&db);
     void Add(const Entity *row) override;
 };
 

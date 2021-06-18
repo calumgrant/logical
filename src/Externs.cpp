@@ -26,6 +26,14 @@ void Logical::Module::RegisterFunction(Logical::Extern ex, const char * name, Di
     RegisterFunction(ex, 1, &name, &direction);
 }
 
+void Logical::Module::RegisterFunction(Logical::Extern ex, const char * name1, Direction direction1, const char * name2, Direction direction2)
+{
+    const char *names[] = { name1, name2 };
+    Direction dirs[] = { direction1, direction2 };
+    RegisterFunction(ex, 2, names, dirs);
+}
+
+
 void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char ** name, const Direction *direction)
 {
     auto & db = ((ModuleImpl*)this)->database;
@@ -82,8 +90,10 @@ void DatabaseImpl::LoadModule(const char*name)
 }
 
 ExternPredicate::ExternPredicate(Database & db, int name, const CompoundName &cn) :
-    SpecialPredicate(db, name)
+    SpecialPredicate(db, cn)
 {
+    this->name = name;
+    compoundName = cn;
 }
 
 void ExternPredicate::AddExtern(Columns c, Logical::Extern fn)
@@ -105,7 +115,7 @@ public:
     
     Entity &Index(int index)
     {
-        return row[index==0 ? 0 : 1 + cn.parts[index-1]];
+        return row[index==0 ? 0 : 1 + cn.mapFromInputToOutput[index-1]];
     }
     
     void call(Logical::Extern fn)
@@ -202,6 +212,13 @@ void Logical::Call::Set(int index, double value)
     auto & call = (CallImpl&)*this;
     call.Index(index) = value;
 }
+
+void Logical::Call::Set(int index, long value)
+{
+    auto & call = (CallImpl&)*this;
+    call.Index(index) = Entity(EntityType::Integer, (std::int64_t)value);
+}
+
 
 Logical::Call::Call()
 {}

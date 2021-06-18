@@ -2,10 +2,11 @@
 #include <Logical.hpp>
 #include <iostream>
 #include <cmath>
+#include <sstream>
 
 using namespace Logical;
 
-static void print(Call & call)
+static void print(Call &call, std::ostream & os)
 {
     const char * str;
     double d;
@@ -13,22 +14,30 @@ static void print(Call & call)
     bool b;
     
     if(call.Get(0, str))
-        std::cout << str << std::endl;
+        os << str;
     else if(call.Get(0, d))
-        std::cout << d << std::endl;
+        os << d;
     else if(call.Get(0, i))
-        std::cout << i << std::endl;
+        os << i;
     else if(call.Get(0, b))
-        std::cout << (b?"true":"false") << std::endl;
+        os << (b?"true":"false");
     else if(call.GetAtString(0, str))
-        std::cout << "@" << str << std::endl;
+        os << "@" << str;
     else
-        std::cout << "?\n";
+        os << "?";
+}
+
+static void print(Call & call)
+{
+    print(call, std::cout);
+    std::cout << std::endl;
 }
 
 static void error(Call & call)
 {
-    call.GetModule().ReportError("An error occurred");
+    std::stringstream ss;
+    print(call, ss);
+    call.GetModule().ReportError(ss.str().c_str());
 }
 
 static void pi(Call & call)
@@ -37,11 +46,22 @@ static void pi(Call & call)
     call.YieldResult();
 }
 
+static void strlen(Call & call)
+{
+    const char * str;
+    if(call.Get(0, str))
+    {
+        call.Set(1, (long)std::strlen(str));
+        call.YieldResult();
+    }
+}
+
 void RegisterFunctions(Module & module)
 {
     module.RegisterFunction(print, "print", In);
     module.RegisterFunction(pi, "pi", Out);
     module.RegisterFunction(error, "error", In);
+    module.RegisterFunction(strlen, "string", In, "length", Out);
     
     // string rep.
 }

@@ -46,7 +46,7 @@ public:
     }
 
     Entity & operator=(double d) { this->d = d; return *this; }
-    Entity & operator=(std::uint64_t v) { integral.value = v; return *this; }
+    Entity & operator=(std::int64_t v) { integral.value = v; return *this; }
 
     bool operator==(const Entity & other) const { return i64 == other.i64; }
     bool operator!=(const Entity & other) const { return !(*this == other); }

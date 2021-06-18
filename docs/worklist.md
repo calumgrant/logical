@@ -1,15 +1,11 @@
 # Work plan
 
 - Externs
-  - Register the extern in the list
-  - Dispatch to the right extern
-  - Pass the tests
-  - Port existing externs to new framework.
-  - error
   - expected-results
   - evaluation-step-limit
   - strlen, lowercase, uppercase
   - Check the fully bound version.
+  - Check binding errors at compile time?
 
 ## Semi-naive evaluation (SNE)
 
