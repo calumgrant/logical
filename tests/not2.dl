@@ -4,11 +4,3 @@ f 3.
 
 error "f is empty" if not f _.
 error "g is not empty" if g _.
-
-print X if error X.
-
-print "Test failed." if error _.
-print "Test failed." and exit 1 if error _. // Is not correct
-exit 1 if error _. // Exit not implemented
-
-print "not2 test passed." if not error _.

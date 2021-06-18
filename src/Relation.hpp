@@ -45,6 +45,16 @@ public:
     {
         bool operator()(Columns c1, Columns c2) const { return c1.mask == c2.mask; }
     };
+    
+    bool operator<=(Columns other) const
+    {
+        return (mask & other.mask) == mask;
+    }
+    
+    Columns operator-(Columns other) const
+    {
+        return mask - other.mask;
+    }
 
     std::uint64_t mask;
 };

@@ -11,6 +11,7 @@ static void print(Call & call)
     double d;
     long i;
     bool b;
+    
     if(call.Get(0, str))
         std::cout << str << std::endl;
     else if(call.Get(0, d))
@@ -23,7 +24,11 @@ static void print(Call & call)
         std::cout << "@" << str << std::endl;
     else
         std::cout << "?\n";
-        
+}
+
+static void error(Call & call)
+{
+    call.GetModule().ReportError("An error occurred");
 }
 
 static void pi(Call & call)
@@ -36,4 +41,7 @@ void RegisterFunctions(Module & module)
 {
     module.RegisterFunction(print, "print", In);
     module.RegisterFunction(pi, "pi", Out);
+    module.RegisterFunction(error, "error", In);
+    
+    // string rep.
 }

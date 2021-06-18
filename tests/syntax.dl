@@ -16,8 +16,8 @@ print "Here are the people:".
 print "".
 
 // You can define global constants as follows.
-pi 3.14159.
-3.1415926 is pi.
+Pi 3.14159.
+3.1415926 is Pi.
 googol 1.0e100.
 googol 1e100.
 username "calum".

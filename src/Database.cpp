@@ -98,7 +98,7 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
         
         //int print = GetStringId("print");
         //AddRelation(allocate_shared<PrintRelation>(datafile, *this, print));
-        AddRelation(allocate_shared<ErrorRelation>(datafile, *this));
+        //AddRelation(allocate_shared<ErrorRelation>(datafile, *this));
         
         RelationId expected_results = GetStringId("expected-results");
         AddRelation(allocate_shared<ExpectedResults>(datafile, *this, expected_results));

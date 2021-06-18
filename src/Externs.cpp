@@ -107,6 +107,22 @@ public:
     {
         return row[index==0 ? 0 : 1 + cn.parts[index-1]];
     }
+    
+    void call(Logical::Extern fn)
+    {
+        try
+        {
+            fn(*this);
+        }
+        catch(std::exception & ex)
+        {
+            module.database.Error(ex.what());
+        }
+        catch (...)
+        {
+            module.database.Error("Uncaught exception in extern");
+        }
+    }
 };
 
 void Logical::Call::YieldResult()
@@ -190,30 +206,64 @@ void Logical::Call::Set(int index, double value)
 Logical::Call::Call()
 {}
 
+class ChainReceiver : public Receiver
+{
+public:
+    ChainReceiver(Receiver & r, int arity, Columns mask1, Columns mask2, Row row1, Row row2) :
+        r(r), arity(arity), mask1(mask1), mask2(mask2), row1(row1), row2(row2)
+    {
+    }
+    
+    Receiver & r;
+    int arity;
+    Columns mask1, mask2;
+    Row row1, row2;
+    
+    void OnRow(Row row)
+    {
+        for(int i=0; i<arity; ++i)
+            if(!mask1.IsBound(i))
+            {
+                if(mask2.IsBound(i))
+                {
+                    if(row1[i] != row2[i]) return;
+                }
+                else
+                    row2[i] = row1[i];
+            }
+        r.OnRow(row2);
+    }
+};
+
 void ExternPredicate::Query(Row row, Columns columns, Receiver & r)
 {
-    auto fn = externs[columns];
+    auto fn = externs.find(columns);
     
-    if(fn)
+    if(fn != externs.end())
     {
         CallImpl call(database, compoundName, row, r);
-        try
-        {
-            fn(call);
-        }
-        catch(std::exception & ex)
-        {
-            database.Error(ex.what());
-        }
-        catch (...)
-        {
-            database.Error("Uncaught exception in extern");
-        }
+        call.call(fn->second);
+        return;
     }
-    else
+
+    for(auto & e : externs)
     {
-        database.Error("Cannot bind to extern");
+        if(e.first <= columns)
+        {
+            // Can dispatch here instead.
+            int arity = compoundName.parts.size()+1;
+            Entity tmp[arity];
+            for(int i=0; i<arity; ++i)
+                if(e.first.IsBound(i))
+                    tmp[i] = row[i];
+            ChainReceiver rec(r, arity, e.first, columns, tmp, row);
+            CallImpl call(database, compoundName, tmp, rec);
+            call.call(e.second);
+            return;
+        }
     }
+
+    database.Error("Cannot bind to extern");
 }
 
 class NullReceiver : public Receiver
@@ -233,22 +283,23 @@ void ExternPredicate::Add(const Entity * row)
     {
         NullReceiver r;
         CallImpl call(database, compoundName, (Entity*)row, r);
-        try
-        {
-            fn(call);
-        }
-        catch(std::exception & ex)
-        {
-            database.Error(ex.what());
-        }
-        catch (...)
-        {
-            database.Error("Uncaught exception in extern");
-        }
+        call.call(fn);
     }
     else
     {
         database.Error("Cannot bind to extern");
     }
 
+}
+
+Logical::Module & Logical::Call::GetModule()
+{
+    auto & call = (CallImpl&)*this;
+    return call.module;
+}
+
+void Logical::Module::ReportError(const char * str)
+{
+    auto & db = ((ModuleImpl*)this)->database;
+    db.Error(str);
 }
