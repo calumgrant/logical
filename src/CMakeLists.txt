@@ -28,6 +28,7 @@ add_library(logiccore
     StringTable.cpp StringTable.hpp
     Entity.hpp
     Colours.hpp
+    Columns.hpp
     CompoundName.cpp CompoundName.hpp
     Externs.cpp
     Fwd.hpp

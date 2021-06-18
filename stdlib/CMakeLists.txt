@@ -13,3 +13,5 @@ set_target_properties(stdlib PROPERTIES
 target_link_libraries(stdlib logiccore)
 
 add_test(NAME Print1a COMMAND logical ../../stdlib/tests/print1.dl)
+add_test(NAME Pi1 COMMAND logical ../../stdlib/tests/pi1.dl)
+add_test(NAME Pi2 COMMAND logical ../../stdlib/tests/pi2.dl)
