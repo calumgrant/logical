@@ -60,6 +60,9 @@ public:
 
     void LoadModule(const char*) override;
 
+    void AddRelation(const std::shared_ptr<Relation> & rel);
+    Relation & GetExtern(RelationId name, const CompoundName & cn) override;
+
 private:
     Optimizer & optimizer;
     
@@ -78,5 +81,4 @@ private:
     // -1 means there is no expected value.
     int expectedResults = -1;
     
-    void AddRelation(const std::shared_ptr<Relation> & rel);
 };

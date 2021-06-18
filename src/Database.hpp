@@ -108,4 +108,5 @@ public:
     virtual persist::shared_memory & Storage() =0;
     
     virtual void LoadModule(const char*) =0;
+    virtual Relation & GetExtern(RelationId name, const CompoundName & cn) =0;
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Fwd.hpp"
 #include "Entity.hpp"
 #include "CompoundName.hpp"
 
@@ -33,6 +34,8 @@ public:
     
     bool IsFullyBound(int arity) const { auto m = (1UL<<arity)-1; return (mask & m) == m; }
     
+    void Bind(int col) { mask |= (1UL<<col); }
+
     struct Hash
     {
         int operator()(Columns c) const { return c.mask; }
@@ -120,6 +123,7 @@ public:
     
     virtual void FirstIteration() =0;
     virtual void NextIteration() =0;
+    virtual void AddExtern(Columns cols, Logical::Extern ex) =0;
 
 protected:
     // Returns the number of rows.

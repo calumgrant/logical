@@ -81,6 +81,7 @@ public:
     bool IsSpecial() const override;
     void FirstIteration() override;
     void NextIteration() override;
+    void AddExtern(Columns cols, Logical::Extern ex) override;
 
 private:
 #if !NDEBUG
@@ -115,6 +116,17 @@ public:
     void QueryDelta(Entity*row, Columns columns, Receiver&v) override;
     int Arity() const override;
     bool IsSpecial() const override;
+};
+
+class ExternPredicate : public SpecialPredicate
+{
+public:
+    ExternPredicate(Database&db, int name, const CompoundName &cn);
+    
+    void AddExtern(Columns c, Logical::Extern fn) override;
+    void Query(Entity *row, Columns columns, Receiver&v) override;
+private:
+    std::unordered_map<Columns, Logical::Extern, Columns::Hash, Columns::EqualTo> functions;
 };
 
 class PrintRelation : public SpecialPredicate

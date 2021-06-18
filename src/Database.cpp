@@ -12,6 +12,13 @@
 #include <unordered_set>
 #include <iostream>
 
+struct HashHelper
+{
+    int operator()(const std::pair<int, CompoundName> &v) const
+    {
+        return v.first + 101 * CompoundName::Hash()(v.second);
+    }
+};
 
 class DataStore
 {
@@ -26,6 +33,7 @@ public:
     
     // Names, indexed on their first column
     unordered_map_helper<StringId, CompoundName>::multimap_type names;
+    unordered_map_helper<std::pair<RelationId, CompoundName>, std::shared_ptr<Relation>, HashHelper>::map_type externs;
 
     Relation * queryPredicate;
     
@@ -664,7 +672,8 @@ DataStore::DataStore(persist::shared_memory & mem) :
     reachesRelations({}, std::hash<RelationId>(), std::equal_to<RelationId>(), mem),
     relations({}, RelationHash(), std::equal_to<std::pair<RelationId, Arity>>(), mem),
     tables({}, CompoundName::Hash(), std::equal_to<CompoundName>(), mem),
-    names({}, std::hash<StringId>(), std::equal_to<StringId>(), mem)
+    names({}, std::hash<StringId>(), std::equal_to<StringId>(), mem),
+    externs({}, HashHelper(), std::equal_to<std::pair<int,CompoundName>>(), mem)
 {
 }
 
@@ -699,4 +708,31 @@ void DatabaseImpl::AddRelation(const std::shared_ptr<Relation> & rel)
             datastore->tables[*rel->GetCompoundName()] = rel;
             break;
     }
+}
+
+Relation &DatabaseImpl::GetExtern(RelationId name, const CompoundName & cn)
+{
+    auto & rel = datastore->externs[std::make_pair(name, cn)];
+    
+    if(!rel)
+        rel = allocate_shared<ExternPredicate>(datafile, *this, name, cn);
+    
+    int arity = 1 + cn.parts.size();
+    
+    switch(arity)
+    {
+        case 1:
+            datastore->unaryRelations[rel->Name()] = rel;
+            datastore->relations[std::make_pair(rel->Name(),1)] = rel;
+            break;
+        case 2:
+            datastore->binaryRelations[rel->Name()] = rel;
+            datastore->relations[std::make_pair(rel->Name(),2)] = rel;
+            // Fall through to the next case
+        default:
+            datastore->tables[*rel->GetCompoundName()] = rel;
+            break;
+    }
+    
+    return *rel;
 }

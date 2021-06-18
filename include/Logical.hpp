@@ -25,10 +25,13 @@ namespace Logical
         bool Get(int index, double & value);
         void Set(int index, double value);
 
-        Call(const Call&) = delete;
-        Call & operator=(const Call&) = delete;
 
         Module & GetModule();
+
+    protected:
+        Call();
+        Call(const Call&) = delete;
+        Call & operator=(const Call&) = delete;
     };
 
     enum Direction { In, Out };
@@ -38,9 +41,6 @@ namespace Logical
     class Module
     {
     public:
-        Module(const Module&) = delete;
-        Module & operator=(const Module&) = delete;
-
         void RegisterFunction(Extern, const char *, Direction);
         void RegisterFunction(Extern, const char *, Direction, const char *, Direction);
         void RegisterFunction(Extern, const char *, Direction, const char *, Direction, const char *, Direction);
@@ -50,8 +50,11 @@ namespace Logical
         void LoadModule(const char*);
         void ReportError(const char*);
         void LoadFile(const char*);
+        
     protected:
         Module();
+        Module(const Module&) = delete;
+        Module & operator=(const Module&) = delete;
     };
 }
 

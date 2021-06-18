@@ -644,3 +644,8 @@ bool ExecutionUnit::Recursive() const
 {
     return recursive;
 }
+
+void Predicate::AddExtern(Columns, Logical::Extern ex)
+{
+    database.Error("Attempt to redefine predicate as an extern");
+}

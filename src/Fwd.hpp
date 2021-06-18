@@ -30,3 +30,10 @@ namespace persist
 {
     class shared_memory;
 }
+
+namespace Logical
+{
+class Call;
+class Module;
+typedef void(*Extern)(Call&);
+}
