@@ -10,4 +10,6 @@ set_target_properties(stdlib PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
 
+target_link_libraries(stdlib logiccore)
+
 add_test(NAME Print1a COMMAND logical ../../stdlib/tests/print1.dl)

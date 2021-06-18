@@ -16,7 +16,7 @@ add_subdirectory(../stdlib stdlib)
 BISON_TARGET(MyParser logical.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/tokens.tab.h)
 FLEX_TARGET(MyScanner logical.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../external/persist/include ${CMAKE_CURRENT_SOURCE_DIR}/../external/simpletest)
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../external/persist/include ${CMAKE_CURRENT_SOURCE_DIR}/../external/simpletest ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 find_library(TERMCAP NAMES termcap)
 
@@ -29,8 +29,10 @@ add_library(logiccore
     Entity.hpp
     Colours.hpp
     CompoundName.cpp CompoundName.hpp
+    Externs.cpp
     Fwd.hpp
     Helpers.hpp
+    ../include/Logical.hpp
     Table.cpp Table.hpp TableImpl.hpp
     Evaluation.cpp Evaluation.hpp EvaluationImpl.hpp
     Compiler.cpp Compiler.hpp
@@ -43,8 +45,10 @@ add_executable(logical main.cpp)
 
 add_executable(logical-tests tests.cpp)
 target_link_libraries(logical-tests logiccore)
-target_link_libraries(logical logiccore)
+target_link_libraries(logical logiccore stdlib)
 target_link_libraries(logiccore ${TERMCAP} persist)
+
+add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:stdlib> $<TARGET_FILE_DIR:logical>)
 
 set_target_properties(logiccore PROPERTIES
     CXX_STANDARD 17

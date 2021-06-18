@@ -104,6 +104,8 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
 
         datastore->initialized = true;
     }
+    
+    LoadModule("stdlib");
 }
 
 DatabaseImpl::~DatabaseImpl()

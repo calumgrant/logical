@@ -106,4 +106,6 @@ public:
     virtual Relation & GetQueryRelation() const = 0;
     
     virtual persist::shared_memory & Storage() =0;
+    
+    virtual void LoadModule(const char*) =0;
 };

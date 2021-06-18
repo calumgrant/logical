@@ -58,6 +58,8 @@ public:
     
     Entity NewEntity() override;
 
+    void LoadModule(const char*) override;
+
 private:
     Optimizer & optimizer;
     

@@ -50,5 +50,9 @@ namespace Logical
         void LoadModule(const char*);
         void ReportError(const char*);
         void LoadFile(const char*);
+    protected:
+        Module();
     };
 }
+
+extern "C" void RegisterFunctions(Logical::Module&);
