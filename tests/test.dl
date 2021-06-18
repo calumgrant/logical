@@ -1,8 +1,8 @@
-X has parent Y if 0<=X<=100 and Y=X*2 and 0<=Y<=4.
+X has parent Y if 0<=X<=100 and Y=X*2 and 0<=Y<=100.
 
 X has ancestor Y if
     X has parent Y
     or
     X has parent Z and Z has ancestor Y.
 
-find _ has ancestor _.
+error "recursion 1" if not 2 has ancestor 64.

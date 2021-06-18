@@ -21,6 +21,7 @@ enum class BindingType
     Bound
 };
 
+// !! Move this into another file
 class Columns
 {
 public:

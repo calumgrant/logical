@@ -1,21 +1,34 @@
 # Work plan
 
-- Recursive branch optimization is unsound.
-  - recursion3.dl: has_parent and has:ancestor should not be in the same loop.
+## Semi-naive evaluation (SNE)
 
-- Not marking execution units as recursive properly.
+Two approaches:
+1. Make SNE implicitly part of any evaluating predicate
+2. Insert additional predicates and rewrite the program to be semi-naive.
 
-Optimization scope:
-1. Relation
-  - Compilation
-  - Preexecution
-2. Execution Unit
+I want to try approach 2, because it may throw up some interesting bugs/assumptions in the rest of the code.
 
-- Quick-eval needs to optimize the rule.
-- The binding analysis occurs at compilation stage
+Current problems:
+- `count1` problem with deduplication.
+- `recursion3` - `ancestor:B` is empty for some reason.
+
+## General ideas
+
 - In implementation of `uppercase` etc, don't implement the bound relation in the predicate. Instead, implement as `X = has:uppercase Y and Y=Z`.
 - Avoid evaluating rules twice.
 - Optimization step: Figure out if rules already run.
+
+- DLL imports to define additional functions or predicates. See `Logical.hpp`
+
+```
+external-function "foo", dll "foolib", operand1 @in, operand2 @out.
+external-function "sqrt", dll "foolib", number @in, sqrt @out.
+new external-function, dll "foolib", filename @in, values @out.
+```
+Usage:
+```
+find X in filename "foo.txt" has values X.
+```
 
 - Store the original source line for each rule, and highlight the parts of it as it executes (in Explain)
 ```
@@ -39,183 +52,16 @@ becomes (* = write, _ = read)
     new woman has *name* n if person _ has name n, gender @f.
 ```
 
-
-Optimization stages:
-- 1. Compilation
-- Preexecution
-- 
-- Bug: In recursion4, The bound predicate Bhas:next3 is not in the recursive loop.
-
-- Need to reenable deltas to make them work on the execution unit, not the relation.
-  `has:next2:3`
-- Rename Beta predicates and include their bound columns
-
-- problem in binary2: For some reason, Bhas:predecessor has not been evaluated.
-- Need to do whole-program semi-naive analysis, not just lazily on current predicate.
-- Need to assign a "loop" during recursion analysis.
-- Need to add *all* 
-
-Assign a loop to each node.
-
-
-- recursion1: `error` should not be in the loop (negative recursion!!)
-- rule6 assertion failure. Also, the rules aren't run as they should be.
-
-- When the optimiser changes a rule, it needs to update the recursive loop as well.
-
-Think more about identifying recursive loops.
-We need to detect a loop, and collapse the whole loop into one "node"/ExecutionUnit.
-
-Use a DFS to detect edges we have already been to. Then, we mark the target as "recursive", and mark all return nodes in the recursive loop. As soon as we are back at the original node, we stop marking nodes recursive.
-
-This gives a set of edges called "back-edges", wich are all joins.
-
-Once we have identified a back-edge, we mark the node as recursive-root. We mark all nodes on the path from the back-edge to the recursive root with the shared loop L. When we leave the recursive root node, we assign all nodes individual loops.
-
-The problem occurs when we encounter a loop whilst we are already in a loop.
-
-Each node has a "loop head" which is the recursive entry point.
-
-
-What about multiple cycles?
-
-
-
-
-What is the invariant property?
-Each node V has a loop L(V).
-P1: There is a cycle, such that V1 -...> V2 and V2 -...> V1, iff L(V1) = L(V2). 
-
-Property of DAG:
-For a DAG, all nodes V have a unique L(V). if L1(V1)=L2(V2) then V1=V2.
-Proof: There are no cycles, so the only time P1 holds is when V1=V2.
-
-Proof of existence
-For a graph with one node and no edges, we can assign L such that P1 holds.
-
-Algorithm: (inefficient)
-Assign a unique L to each V.
-For all pairs of nodes V1 and V2, check if they are in the same cycle. If they are in the same cycle, assign L(V2) = L(V1). Keep on iterating until all pairs hold for P1.
-
-Algorithm (efficient):
-
-
-
-
-
-- When we exit a recursive node, we need a recursive depth...
-
-- Need to validate the generated graph:
-  - 
-
-
-
-
-We don't need a "candidate", we just return the exiting loop-id.
-We also need a "stack depth" so that 
-
-
-
-
-When a predicate calls itself, all nodes on that path 
-
-A predicate is recursive if it can call itself. Predicates are mutually recursive if 
-
-
-
-EvaluationUnit
-- 
-
-```
-number X has name Y if ...
-function F has name Y if ...
-```
-
-The EvaluationUnit is found by (1) joining `number` and `name`, and secondly by joining `function` and `name`.
-A rule belongs in exactly one EvaluationUnit.
-
-
-- Bug seems to be that `NextIteration` does not advance the deltas of `number`. So we need to advance *all* LHS predicates, not just the one we are currently evaluating. The "loop" should perhaps contain the list of predicates in the loop.
-- Could we put all of the rules into the loop, and we can just run the loop?
-- This seems safer.
-
-- All predicates should implement a "recursive loop" that contains the rules. Bundle it into an "Evaluation" or something like that.
-
-Bugs:
-1. in recursion4, no results, and a mysterious rule that is run 0 times.
-2. in new4, there's a mysterious duplication of Bhas:value.
-
-
-
-
-
-
-
-- To make things more efficient, don't use shared pointers inside Evaluation steps. Just use `Relation&`
-
 - Avoid virtual functions for efficiency, for example in `Database` and `Relation`.
 
-- What about multiple rules? You surely need to have a different delta for each rule???
-
-- Problem is that we need to analyse the whole program for semi-naive, and cannot replace the rules one at a time.
-
-- Think about how API graphs can be modelled using `new`
-
-```
-new apinode root.
-
-What if tuples got an "ID". Could you store that "ID" elsewhere??
-Surely that's just a bottom-up Prolog and it would work just fine.
-person(parent(X)) :- person(X).
-
-All you need to do is create a reference to another table as an ID? E.g.
-tableID - 16 bits
-rowId - 32 bits.
-Becomes a "tuple ID"
-
-
-
-root has module r with name "Rails" and 
-  r has class activerecord with name "ActiveRecord".
-
-module r has name "Rails" and 
-r has parent root and
-root is root
-
-```
-
-
-
-- Special test, `-fclone` which simply clones all rules
-
-- Define the bound predicate: problem is
-  1. We don't know which variables are used in the outputs
-  2. With multiple branches, the output variables could be duplicated.
-  3. Output variables are sometimes computed.
-
-- Implement a variable checker
+- Implement a variable checker analyser
   - No undefined reads.
   - No duplicate writes.
   - No dead writes.
 
-- Remove some dead classes in EvaluationImpl
 - What about AddBBB ?? Implement as:
   c = a+b, c=d, 
 - Check negate FB (Same as negateBF)
-
-
-Solution: 
-1. Ensure a consistent set of variables are used for the inputs/outputs. Make them variables 0-n.
-   - Need to remap all of the variables so they are consistent? But how?
-   - For all writes, identify which variables are used, then remap all variables in the evaluation so that the
-     written variables are at the front.
-2. Insert an extra call at the head of each rule in the predicate.
-3. Call `Rebind(boundset)` on each evaluation node to get the correct binding.
-
-Step::RemapVariables(const std::vector<int> & map)
-std::vector<int> variableMap
-
-
 
 - Have an "abstract machine" calling convention, where a "ret" on the stack jumps to the address
   - stack pointer
@@ -223,7 +69,7 @@ std::vector<int> variableMap
   - 
 
 - new objects to define a variable, and use `and` to assert further facts, for example
-`new expression p has ...,p has parent e.`
+  `new expression p has ...,p has parent e.`
 
 # Parallelism
 
@@ -244,11 +90,12 @@ Options for parallelism:
     - This can only happen once the Table has been defined.
     - Could we just have a single cursor in the table??? No, anti-parallel.
 ```
-class MicroThread
+class Task
 {
+  virtual void Run() =0;
 };
 
-class EvalLoop : public MicroThread
+class EvalLoop : public Task
 {
   std::vector<Entity> locals;
   void Run() override
@@ -261,29 +108,20 @@ class EvalLoop : public MicroThread
 };
 ```
 
-The predicate
+Threading engine: An engine contains a threadpool, and you add new threads using `Database::RunTasks(Tasks[], int size)`. Generally we want more threads than the level of CPU parallelism. This will run all of the tasks to the required level of concurrency, then return. The main tasks are:
 
-Threading engine: An engine contains a
+1. Running a parallel query, particularly an unbound scan or the scan of a delta.
+2. Running execution units in parallel when it is safe to do so.
 
 Changes to make:
 1. Each table is threadsafe. What this means: Concurrent writes are possible and are safe. Use atomic counters in the execution unit. Reads are also threadsafe, and can overlap with writes. (May need to copy row data to avoid vector moving on write). 
 2. The persist memory allocator is threadsafe. Use atomic lists for the memory pool. Use atomic counters.
-3. Each row executes in a `MicroThread`, containing:
-   - The row data
-   - A linked list of "available threads" - atomic of course.
-   - A function to call to process the thread.
-   - A status: Ready, Running, Complete.
-4. Threading options: -t1, -t -t0 (infinite), -tn. Default for -O0 is -t1, and -
-5. The first join/read of an evaluation:
+3. Threading options: -t1, -t -t0 (infinite), -tn. Default for -O0 is -t1, and -
+4. The first read of an evaluation:
    - Keeps a vector of parallel stack frames as single array
-   - Keeps a vector of MicroThreads
+   - Keeps a vector of Tasks
    - OnRow: Performs the query, returning a list of rows. Dispatch the first n results as threads. Each thread: runs the next function, then when the function returns, gets the next row in the list. Keeps a "count" of active threads, and when the count goes to 0, OnRow can return.
    
-
-Implement a special thread pool:
-
-class
-
 # Datalog abstract machine
 
 State:
@@ -298,9 +136,6 @@ State:
   Call: target address, stack size
   Continue
   Return
-
-
-
 
 - Call the bound predicate
 
