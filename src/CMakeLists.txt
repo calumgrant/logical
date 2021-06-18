@@ -11,6 +11,7 @@ LIST(APPEND CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 FIND_LIBRARY(FL_LIBRARY NAMES libfl fl DOC "/opt/homebrew/opt/flex/lib")
 
 add_subdirectory(../external/persist/src persist)
+add_subdirectory(../stdlib stdlib)
 
 BISON_TARGET(MyParser logical.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/tokens.tab.h)
 FLEX_TARGET(MyScanner logical.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
