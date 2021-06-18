@@ -96,8 +96,8 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
     {
         datastore->queryPredicate = &GetUnaryRelation(queryId);
         
-        int print = GetStringId("print");
-        AddRelation(allocate_shared<PrintRelation>(datafile, *this, print));
+        //int print = GetStringId("print");
+        //AddRelation(allocate_shared<PrintRelation>(datafile, *this, print));
         AddRelation(allocate_shared<ErrorRelation>(datafile, *this));
         
         RelationId expected_results = GetStringId("expected-results");
@@ -715,23 +715,40 @@ Relation &DatabaseImpl::GetExtern(RelationId name, const CompoundName & cn)
     auto & rel = datastore->externs[std::make_pair(name, cn)];
     
     if(!rel)
+    {
         rel = allocate_shared<ExternPredicate>(datafile, *this, name, cn);
     
-    int arity = 1 + cn.parts.size();
-    
-    switch(arity)
-    {
-        case 1:
-            datastore->unaryRelations[rel->Name()] = rel;
-            datastore->relations[std::make_pair(rel->Name(),1)] = rel;
-            break;
-        case 2:
-            datastore->binaryRelations[rel->Name()] = rel;
-            datastore->relations[std::make_pair(rel->Name(),2)] = rel;
-            // Fall through to the next case
-        default:
-            datastore->tables[*rel->GetCompoundName()] = rel;
-            break;
+        int arity = 1 + cn.parts.size();
+        
+        switch(arity)
+        {
+            case 1:
+            {
+                auto & r = datastore->unaryRelations[rel->Name()];
+                if(!r)
+                {
+                    r = rel;
+                    datastore->relations[std::make_pair(rel->Name(),1)] = rel;
+                }
+                break;
+            }
+            case 2:
+            {
+                auto &r = datastore->binaryRelations[rel->Name()];
+                if(!r)
+                {
+                    r = rel;
+                    datastore->relations[std::make_pair(rel->Name(),2)] = rel;
+                }
+                // Fall through to the next case
+            }
+            default:
+            {
+                auto &r = datastore->tables[*rel->GetCompoundName()];
+                if(!r) r = rel;
+            }
+                break;
+        }
     }
     
     return *rel;

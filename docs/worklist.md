@@ -1,5 +1,11 @@
 # Work plan
 
+- Externs
+  - Register the extern in the list
+  - Dispatch to the right extern
+  - Pass the tests
+  - Port existing externs to new framework.
+
 ## Semi-naive evaluation (SNE)
 
 Two approaches:

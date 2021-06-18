@@ -21,14 +21,16 @@ class Entity
 public:
     EntityType Type() const
     {
-        return ((std::uint16_t)integral.type & 0xfff8) == 0xfff8 ?
+        return ((std::uint16_t)integral.type & 0xf8ff) != 0xf8ff ?
             EntityType::Float : integral.type;
     }
     
     bool IsInt() const { return integral.type == EntityType::Integer; }
-    bool IsFloat() const { return ((std::uint16_t)integral.type & 0xfff8) == 0xfff8; }
+    bool IsFloat() const { return ((std::uint16_t)integral.type & 0xf8ff) != 0xf8ff; }
     bool IsNone() const { return integral.type == EntityType::None; }
     bool IsString() const { return integral.type == EntityType::String; }
+    bool IsAtString() const { return integral.type == EntityType::AtString; }
+    bool IsBool() const { return integral.type == EntityType::Boolean; }
     
     Entity() : integral {EntityType::None,0} { }
     Entity(EntityType t, std::int64_t i) : integral { t, i } { }

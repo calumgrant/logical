@@ -34,8 +34,6 @@ void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char
         db.Error("Invalid number of parameters for extern");
         return;
     }
-
-    std::cout << "Registering function " << name[0] << std::endl;
     
     auto nameId = db.GetStringId(name[0]);
     std::vector<int> parts;
@@ -52,24 +50,6 @@ void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char
     
     exfn.AddExtern(columns, ex);
 }
-
-bool Logical::Call::Get(int index, const char * & value)
-{
-    return false;
-}
-
-void Logical::Call::Set(int index, const char * value)
-{
-}
-
-void Logical::Call::Set(int index, double value)
-{
-}
-
-void Logical::Call::YieldResult()
-{
-}
-
 
 void DatabaseImpl::LoadModule(const char*name)
 {
@@ -108,10 +88,167 @@ ExternPredicate::ExternPredicate(Database & db, int name, const CompoundName &cn
 
 void ExternPredicate::AddExtern(Columns c, Logical::Extern fn)
 {
-    
+    externs[c] = fn;
 }
 
-void ExternPredicate::Query(Entity *row, Columns columns, Receiver&v)
+class CallImpl : public Logical::Call
 {
+public:
+    ModuleImpl module;
+    CompoundName &cn;
+    Row row;
+    Receiver & recv;
     
+    CallImpl(Database &db, CompoundName &cn, Row row, Receiver & r) : module(db), cn(cn), recv(r), row(row)
+    {
+    }
+    
+    Entity &Index(int index)
+    {
+        return row[index==0 ? 0 : 1 + cn.parts[index-1]];
+    }
+};
+
+void Logical::Call::YieldResult()
+{
+    auto & call = (CallImpl&)*this;
+    call.recv.OnRow(call.row);
+}
+
+bool Logical::Call::Get(int index, const char * & value)
+{
+    auto & call = (CallImpl&)*this;
+    auto e = call.Index(index);
+    if(e.IsString())
+    {
+        value = call.module.database.GetString((std::int64_t)e).c_str();
+        return true;
+    }
+    return false;
+}
+
+bool Logical::Call::GetAtString(int index, const char * & value)
+{
+    auto & call = (CallImpl&)*this;
+    auto e = call.Index(index);
+    if(e.IsAtString())
+    {
+        value = call.module.database.GetAtString((std::int64_t)e).c_str();
+        return true;
+    }
+    return false;
+}
+
+
+bool Logical::Call::Get(int index, double & value)
+{
+    auto & call = (CallImpl&)*this;
+    auto e = call.Index(index);
+    if(e.IsFloat())
+    {
+        value = (double)e;
+        return true;
+    }
+    return false;
+}
+
+bool Logical::Call::Get(int index, long & value)
+{
+    auto & call = (CallImpl&)*this;
+    auto e = call.Index(index);
+    if(e.IsInt())
+    {
+        value = (std::int64_t)e;
+        return true;
+    }
+    return false;
+}
+
+bool Logical::Call::Get(int index, bool & value)
+{
+    auto & call = (CallImpl&)*this;
+    auto e = call.Index(index);
+    if(e.IsBool())
+    {
+        value = (std::int64_t)e;
+        return true;
+    }
+    return false;
+}
+
+
+void Logical::Call::Set(int index, const char * value)
+{
+}
+
+void Logical::Call::Set(int index, double value)
+{
+    auto & call = (CallImpl&)*this;
+    call.Index(index) = value;
+}
+
+Logical::Call::Call()
+{}
+
+void ExternPredicate::Query(Row row, Columns columns, Receiver & r)
+{
+    auto fn = externs[columns];
+    
+    if(fn)
+    {
+        CallImpl call(database, compoundName, row, r);
+        try
+        {
+            fn(call);
+        }
+        catch(std::exception & ex)
+        {
+            database.Error(ex.what());
+        }
+        catch (...)
+        {
+            database.Error("Uncaught exception in extern");
+        }
+    }
+    else
+    {
+        database.Error("Cannot bind to extern");
+    }
+}
+
+class NullReceiver : public Receiver
+{
+public:
+    void OnRow(Row row) { }
+};
+
+void ExternPredicate::Add(const Entity * row)
+{
+    int arity = 1 + compoundName.parts.size();
+    Columns columns((1 <<arity)-1);
+    
+    auto fn = externs[columns];
+    
+    if(fn)
+    {
+        NullReceiver r;
+        CallImpl call(database, compoundName, (Entity*)row, r);
+        try
+        {
+            fn(call);
+        }
+        catch(std::exception & ex)
+        {
+            database.Error(ex.what());
+        }
+        catch (...)
+        {
+            database.Error("Uncaught exception in extern");
+        }
+    }
+    else
+    {
+        database.Error("Cannot bind to extern");
+    }
+
 }

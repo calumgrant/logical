@@ -125,8 +125,9 @@ public:
     
     void AddExtern(Columns c, Logical::Extern fn) override;
     void Query(Entity *row, Columns columns, Receiver&v) override;
+    void Add(const Entity * row) override;
 private:
-    std::unordered_map<Columns, Logical::Extern, Columns::Hash, Columns::EqualTo> functions;
+    std::unordered_map<Columns, Logical::Extern, Columns::Hash, Columns::EqualTo> externs;
 };
 
 class PrintRelation : public SpecialPredicate
