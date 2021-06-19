@@ -82,7 +82,7 @@ public:
     bool IsSpecial() const override;
     void FirstIteration() override;
     void NextIteration() override;
-    void AddExtern(Columns cols, Logical::Extern ex) override;
+    void AddExtern(Columns cols, Logical::Extern ex, void * data) override;
 
 private:
 #if !NDEBUG
@@ -124,9 +124,14 @@ class ExternPredicate : public SpecialPredicate
 public:
     ExternPredicate(Database&db, int name, const CompoundName &cn);
     
-    void AddExtern(Columns c, Logical::Extern fn) override;
+    void AddExtern(Columns c, Logical::Extern fn, void * ) override;
     void Query(Entity *row, Columns columns, Receiver&v) override;
     void Add(const Entity * row) override;
 private:
-    std::unordered_map<Columns, Logical::Extern, Columns::Hash, Columns::EqualTo> externs;
+    struct ExternFn
+    {
+        Logical::Extern fn;
+        void * data;
+    };
+    std::unordered_map<Columns, ExternFn, Columns::Hash, Columns::EqualTo> externs;
 };

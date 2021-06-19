@@ -9,9 +9,13 @@ namespace Logical
 
     typedef std::int64_t Int;
 
+    // The Call object is passed to every extern, used primarily to
+    // read/write the arguments to the call, and to signal the return of results.
     class Call
     {
     public:
+        // Yield a result from a call, using the values previously set using Set.
+        // This can be called no times (failure/no result), one times or many times (multiple results).
         void YieldResult();
 
         bool Get(int index, Int & value);
@@ -29,8 +33,11 @@ namespace Logical
         bool Get(int index, double & value);
         void Set(int index, double value);
 
-
         Module & GetModule();
+        
+        // Gets the data previously passed to RegisterFunction().
+        // This is an opaque payload.
+        void * GetData();
 
     protected:
         Call();
@@ -40,8 +47,10 @@ namespace Logical
 
     enum Direction { In, Out };
 
+    // The type of all external functions.
     typedef void (*Extern)(Call&);
 
+    // The module object used primarily to register the externs in the module.
     class Module
     {
     public:
@@ -49,7 +58,7 @@ namespace Logical
         void RegisterFunction(Extern, const char *, Direction, const char *, Direction);
         void RegisterFunction(Extern, const char *, Direction, const char *, Direction, const char *, Direction);
         void RegisterFunction(Extern, const char *, Direction, const char *, Direction, const char *, Direction, const char *, Direction);
-        void RegisterFunction(Extern, int params, const char **, const Direction*);
+        void RegisterFunction(Extern, int params, const char **, const Direction*, void * data);
 
         void LoadModule(const char*);
         void ReportError(const char*);

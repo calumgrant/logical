@@ -77,6 +77,28 @@ becomes (* = write, _ = read)
 - new objects to define a variable, and use `and` to assert further facts, for example
   `new expression p has ...,p has parent e.`
 
+# Database interface
+
+```
+// Opens the "mysql" module
+load-module "mysql".
+
+// Opens a connection to the database
+// Creates predicates
+mysql:open @connection1, hostname "localhost", database "db1", username "admin", password "whoops".
+
+// Read from a table
+person X has name Y if mysql:names has id X, surname Y.
+
+// Write to a table
+mysql:results has 
+
+// Close the connection
+mysql:close @connection1.
+
+
+```
+
 # Parallelism
 
 Options for parallelism:

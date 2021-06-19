@@ -23,18 +23,18 @@ inline Logical::Module::Module() {}
 
 void Logical::Module::RegisterFunction(Logical::Extern ex, const char * name, Direction direction)
 {
-    RegisterFunction(ex, 1, &name, &direction);
+    RegisterFunction(ex, 1, &name, &direction, nullptr);
 }
 
 void Logical::Module::RegisterFunction(Logical::Extern ex, const char * name1, Direction direction1, const char * name2, Direction direction2)
 {
     const char *names[] = { name1, name2 };
     Direction dirs[] = { direction1, direction2 };
-    RegisterFunction(ex, 2, names, dirs);
+    RegisterFunction(ex, 2, names, dirs, nullptr);
 }
 
 
-void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char ** name, const Direction *direction)
+void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char ** name, const Direction *direction, void * data)
 {
     auto & db = ((ModuleImpl*)this)->database;
     if(count<1)
@@ -56,7 +56,7 @@ void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char
         if(direction[i]==Logical::In)
             columns.Bind(i);
     
-    exfn.AddExtern(columns, ex);
+    exfn.AddExtern(columns, ex, data);
 }
 
 void DatabaseImpl::LoadModule(const char*name)
@@ -96,9 +96,9 @@ ExternPredicate::ExternPredicate(Database & db, int name, const CompoundName &cn
     compoundName = cn;
 }
 
-void ExternPredicate::AddExtern(Columns c, Logical::Extern fn)
+void ExternPredicate::AddExtern(Columns c, Logical::Extern fn, void * data)
 {
-    externs[c] = fn;
+    externs[c] = ExternFn { fn, data };
 }
 
 class CallImpl : public Logical::Call
@@ -108,8 +108,9 @@ public:
     CompoundName &cn;
     Row row;
     Receiver & recv;
+    void * data;
     
-    CallImpl(Database &db, CompoundName &cn, Row row, Receiver & r) : module(db), cn(cn), recv(r), row(row)
+    CallImpl(Database &db, CompoundName &cn, Row row, Receiver & r, void * data) : module(db), cn(cn), recv(r), row(row), data(data)
     {
     }
     
@@ -261,8 +262,8 @@ void ExternPredicate::Query(Row row, Columns columns, Receiver & r)
     
     if(fn != externs.end())
     {
-        CallImpl call(database, compoundName, row, r);
-        call.call(fn->second);
+        CallImpl call(database, compoundName, row, r, fn->second.data);
+        call.call(fn->second.fn);
         return;
     }
 
@@ -277,8 +278,8 @@ void ExternPredicate::Query(Row row, Columns columns, Receiver & r)
                 if(e.first.IsBound(i))
                     tmp[i] = row[i];
             ChainReceiver rec(r, arity, e.first, columns, tmp, row);
-            CallImpl call(database, compoundName, tmp, rec);
-            call.call(e.second);
+            CallImpl call(database, compoundName, tmp, rec, e.second.data);
+            call.call(e.second.fn);
             return;
         }
     }
@@ -297,13 +298,13 @@ void ExternPredicate::Add(const Entity * row)
     int arity = 1 + compoundName.parts.size();
     Columns columns((1 <<arity)-1);
     
-    auto fn = externs[columns];
+    auto fn = externs.find(columns);
     
-    if(fn)
+    if(fn != externs.end())
     {
         NullReceiver r;
-        CallImpl call(database, compoundName, (Entity*)row, r);
-        call.call(fn);
+        CallImpl call(database, compoundName, (Entity*)row, r, fn->second.data);
+        call.call(fn->second.fn);
     }
     else
     {

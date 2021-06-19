@@ -84,7 +84,7 @@ public:
     
     virtual void FirstIteration() =0;
     virtual void NextIteration() =0;
-    virtual void AddExtern(Columns cols, Logical::Extern ex) =0;
+    virtual void AddExtern(Columns cols, Logical::Extern ex, void * data) =0;
 
 protected:
     // Returns the number of rows.
