@@ -56,12 +56,43 @@ static void strlen(Call & call)
     }
 }
 
+static void lowercase(Call & call)
+{
+    const char * str;
+    if(call.Get(0, str))
+    {
+        auto len = std::strlen(str);
+        char tmp[len+1];
+        for(int i=0; i<len; ++i)
+            tmp[i] = std::tolower(str[i]);
+        tmp[len]=0;
+        call.Set(1, tmp);
+        call.YieldResult();
+    }
+}
+
+static void uppercase(Call & call)
+{
+    const char * str;
+    if(call.Get(0, str))
+    {
+        auto len = std::strlen(str);
+        char tmp[len+1];
+        for(int i=0; i<len; ++i)
+            tmp[i] = std::toupper(str[i]);
+        tmp[len]=0;
+        call.Set(1, tmp);
+        call.YieldResult();
+    }
+}
+
+
 void RegisterFunctions(Module & module)
 {
     module.RegisterFunction(print, "print", In);
     module.RegisterFunction(pi, "pi", Out);
     module.RegisterFunction(error, "error", In);
-    module.RegisterFunction(strlen, "string", In, "length", Out);
-    
-    // string rep.
+    module.RegisterFunction(strlen, "string", In, "strlen", Out);
+    module.RegisterFunction(lowercase, "string", In, "lowercase", Out);
+    module.RegisterFunction(uppercase, "string", In, "uppercase", Out);
 }

@@ -205,6 +205,9 @@ bool Logical::Call::Get(int index, bool & value)
 
 void Logical::Call::Set(int index, const char * value)
 {
+    auto & call = (CallImpl&)*this;
+    auto & e = call.Index(index);
+    e = Entity(EntityType::String, call.module.database.GetStringId(value));
 }
 
 void Logical::Call::Set(int index, double value)
