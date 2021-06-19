@@ -1,0 +1,7 @@
+if
+    potentiallyDangerousFunction _ has message message
+then
+    query "Potentially dangerous function" has
+    message message.
+
+
