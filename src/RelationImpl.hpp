@@ -130,19 +130,3 @@ public:
 private:
     std::unordered_map<Columns, Logical::Extern, Columns::Hash, Columns::EqualTo> externs;
 };
-
-class EvaluationStepLimit : public SpecialPredicate
-{
-public:
-    EvaluationStepLimit(Database &db, RelationId name);
-    void Add(const Entity *row) override;
-};
-
-class ExpectedResults : public SpecialPredicate
-{
-public:
-    ExpectedResults(Database &db, RelationId name);
-    void Add(const Entity *row) override;
-};
-
-

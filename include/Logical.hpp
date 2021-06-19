@@ -1,17 +1,21 @@
 /* This is the external API for Logical.
  */
 
+#include <cstdint>
+
 namespace Logical
 {
     class Module;
+
+    typedef std::int64_t Int;
 
     class Call
     {
     public:
         void YieldResult();
 
-        bool Get(int index, long & value);
-        void Set(int index, long value);
+        bool Get(int index, Int & value);
+        void Set(int index, Int value);
 
         bool Get(int index, const char *& value);
         void Set(int index, const char * value);
@@ -50,6 +54,9 @@ namespace Logical
         void LoadModule(const char*);
         void ReportError(const char*);
         void LoadFile(const char*);
+        
+        void SetExpectedResults(Int expected);
+        void SetEvaluationStepLimit(Int limit);
         
     protected:
         Module();

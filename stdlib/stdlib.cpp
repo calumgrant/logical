@@ -10,7 +10,7 @@ static void print(Call &call, std::ostream & os)
 {
     const char * str;
     double d;
-    long i;
+    Int i;
     bool b;
     
     if(call.Get(0, str))
@@ -51,7 +51,7 @@ static void strlen(Call & call)
     const char * str;
     if(call.Get(0, str))
     {
-        call.Set(1, (long)std::strlen(str));
+        call.Set(1, (Int)std::strlen(str));
         call.YieldResult();
     }
 }
@@ -86,6 +86,31 @@ static void uppercase(Call & call)
     }
 }
 
+static void expectedresults(Call & call)
+{
+    Int value;
+    if(call.Get(0, value))
+    {
+        call.GetModule().SetExpectedResults(value);
+    }
+    else
+    {
+        call.GetModule().ReportError("Invalid number format to expected-results");
+    }
+}
+
+static void steplimit(Call & call)
+{
+    Int value;
+    if(call.Get(0, value))
+    {
+        call.GetModule().SetEvaluationStepLimit(value);
+    }
+    else
+    {
+        call.GetModule().ReportError("Invalid number format to evaluation-step-limit");
+    }
+}
 
 void RegisterFunctions(Module & module)
 {
@@ -95,4 +120,7 @@ void RegisterFunctions(Module & module)
     module.RegisterFunction(strlen, "string", In, "strlen", Out);
     module.RegisterFunction(lowercase, "string", In, "lowercase", Out);
     module.RegisterFunction(uppercase, "string", In, "uppercase", Out);
+    
+    module.RegisterFunction(expectedresults, "expected-results", In);
+    module.RegisterFunction(steplimit, "evaluation-step-limit", In);
 }

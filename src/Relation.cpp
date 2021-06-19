@@ -42,26 +42,6 @@ void SpecialPredicate::AddRule(const std::shared_ptr<Evaluation> &eval)
     Predicate::Query(nullptr, 0, receiver);
 }
 
-ExpectedResults::ExpectedResults(Database &db, RelationId name) : SpecialPredicate(db, name)
-{
-}
-
-void ExpectedResults::Add(const Entity *data)
-{
-    if (!data->IsInt())
-        database.Error("Invalid type for expected-results");
-
-    database.SetExpectedResults((std::int64_t)*data);
-}
-
-void EvaluationStepLimit::Add(const Entity *data)
-{
-    if (data->Type() != EntityType::Integer)
-        database.Error("Invalid type for evaluation-step-limit");
-
-    database.SetEvaluationLimit((std::int64_t)*data);
-}
-
 std::size_t SpecialPredicate::Count()
 {
     return 0;
@@ -143,10 +123,6 @@ SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name,
 }
 
 SpecialPredicate::SpecialPredicate(Database &db, const CompoundName & cn) : Predicate(db, cn, 1+cn.parts.size(), BindingType::Unbound, 0)
-{
-}
-
-EvaluationStepLimit::EvaluationStepLimit(Database &db, RelationId name) : SpecialPredicate(db, name)
 {
 }
 

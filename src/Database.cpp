@@ -95,13 +95,6 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
     if(!datastore->initialized)
     {
         datastore->queryPredicate = &GetUnaryRelation(queryId);
-                
-        RelationId expected_results = GetStringId("expected-results");
-        AddRelation(allocate_shared<ExpectedResults>(datafile, *this, expected_results));
-        
-        RelationId evaluation_step_limit = GetStringId("evaluation-step-limit");
-        AddRelation(allocate_shared<EvaluationStepLimit>(datafile, *this, evaluation_step_limit));
-
         datastore->initialized = true;
     }
     

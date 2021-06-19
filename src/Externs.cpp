@@ -178,7 +178,7 @@ bool Logical::Call::Get(int index, double & value)
     return false;
 }
 
-bool Logical::Call::Get(int index, long & value)
+bool Logical::Call::Get(int index, Logical::Int & value)
 {
     auto & call = (CallImpl&)*this;
     auto e = call.Index(index);
@@ -216,7 +216,7 @@ void Logical::Call::Set(int index, double value)
     call.Index(index) = value;
 }
 
-void Logical::Call::Set(int index, long value)
+void Logical::Call::Set(int index, Logical::Int value)
 {
     auto & call = (CallImpl&)*this;
     call.Index(index) = Entity(EntityType::Integer, (std::int64_t)value);
@@ -322,4 +322,16 @@ void Logical::Module::ReportError(const char * str)
 {
     auto & db = ((ModuleImpl*)this)->database;
     db.Error(str);
+}
+
+void Logical::Module::SetExpectedResults(Int expected)
+{
+    auto & db = ((ModuleImpl*)this)->database;
+    db.SetExpectedResults(expected);
+}
+
+void Logical::Module::SetEvaluationStepLimit(Int limit)
+{
+    auto & db = ((ModuleImpl*)this)->database;
+    db.SetEvaluationLimit(limit);
 }

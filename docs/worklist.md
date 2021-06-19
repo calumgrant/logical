@@ -3,9 +3,8 @@
 - Externs
   - expected-results
   - evaluation-step-limit
-  - strlen, lowercase, uppercase
-  - Check the fully bound version.
   - Check binding errors at compile time?
+  - Think about whether we want to change the "Table" not the predicate?
 
 ## Semi-naive evaluation (SNE)
 
