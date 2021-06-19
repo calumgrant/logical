@@ -83,6 +83,7 @@ public:
     void FirstIteration() override;
     void NextIteration() override;
     void AddExtern(Columns cols, Logical::Extern ex, void * data) override;
+    void AddExtern(Logical::Extern ex, void * data) override;
 
 private:
 #if !NDEBUG
@@ -125,6 +126,7 @@ public:
     ExternPredicate(Database&db, int name, const CompoundName &cn);
     
     void AddExtern(Columns c, Logical::Extern fn, void * ) override;
+    void AddExtern(Logical::Extern ex, void * data) override;
     void Query(Entity *row, Columns columns, Receiver&v) override;
     void Add(const Entity * row) override;
 private:
@@ -134,4 +136,5 @@ private:
         void * data;
     };
     std::unordered_map<Columns, ExternFn, Columns::Hash, Columns::EqualTo> externs;
+    ExternFn writer = { 0 };
 };

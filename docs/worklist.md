@@ -1,10 +1,13 @@
 # Work plan
 
 - Externs
-  - expected-results
-  - evaluation-step-limit
   - Check binding errors at compile time?
   - Think about whether we want to change the "Table" not the predicate?
+  - This would allow to define after use and generally break less stuff.
+- Refactor predicate name/compoundname as it's horrid and ugly.
+  `class PredicateName` ??
+- All errors to have locations
+- Locations to have filenames
 
 ## Semi-naive evaluation (SNE)
 

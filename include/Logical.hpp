@@ -45,7 +45,7 @@ namespace Logical
         Call & operator=(const Call&) = delete;
     };
 
-    enum Direction { In, Out };
+    enum Mode { In, Bound=In, Out, Unbound=Out, Write };
 
     // The type of all external functions.
     typedef void (*Extern)(Call&);
@@ -54,11 +54,11 @@ namespace Logical
     class Module
     {
     public:
-        void RegisterFunction(Extern, const char *, Direction);
-        void RegisterFunction(Extern, const char *, Direction, const char *, Direction);
-        void RegisterFunction(Extern, const char *, Direction, const char *, Direction, const char *, Direction);
-        void RegisterFunction(Extern, const char *, Direction, const char *, Direction, const char *, Direction, const char *, Direction);
-        void RegisterFunction(Extern, int params, const char **, const Direction*, void * data);
+        void RegisterFunction(Extern, const char *, Mode);
+        void RegisterFunction(Extern, const char *, Mode, const char *, Mode);
+        void RegisterFunction(Extern, const char *, Mode, const char *, Mode, const char *, Mode);
+        void RegisterFunction(Extern, const char *, Mode, const char *, Mode, const char *, Mode, const char *, Mode);
+        void RegisterFunction(Extern, int params, const char **, const Mode*, void * data);
 
         void LoadModule(const char*);
         void ReportError(const char*);

@@ -21,20 +21,20 @@ public:
 
 inline Logical::Module::Module() {}
 
-void Logical::Module::RegisterFunction(Logical::Extern ex, const char * name, Direction direction)
+void Logical::Module::RegisterFunction(Logical::Extern ex, const char * name, Mode direction)
 {
     RegisterFunction(ex, 1, &name, &direction, nullptr);
 }
 
-void Logical::Module::RegisterFunction(Logical::Extern ex, const char * name1, Direction direction1, const char * name2, Direction direction2)
+void Logical::Module::RegisterFunction(Logical::Extern ex, const char * name1, Mode direction1, const char * name2, Mode direction2)
 {
     const char *names[] = { name1, name2 };
-    Direction dirs[] = { direction1, direction2 };
+    Mode dirs[] = { direction1, direction2 };
     RegisterFunction(ex, 2, names, dirs, nullptr);
 }
 
 
-void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char ** name, const Direction *direction, void * data)
+void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char ** name, const Mode *direction, void * data)
 {
     auto & db = ((ModuleImpl*)this)->database;
     if(count<1)
@@ -56,7 +56,26 @@ void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char
         if(direction[i]==Logical::In)
             columns.Bind(i);
     
-    exfn.AddExtern(columns, ex, data);
+    bool allWrite = true;
+    bool someWrite = false;
+    for(int i=0; i<count; ++i)
+        if(direction[i] != Logical::Write)
+            allWrite = false;
+        else
+            someWrite = true;
+
+    if(someWrite && !allWrite)
+    {
+        db.Error("Extern predicate has invalid signature - if one parameter is Write then they must all be Write");
+    }
+    else if(allWrite)
+    {
+        exfn.AddExtern(ex, data);
+    }
+    else
+    {
+        exfn.AddExtern(columns, ex, data);
+    }
 }
 
 void DatabaseImpl::LoadModule(const char*name)
@@ -99,6 +118,11 @@ ExternPredicate::ExternPredicate(Database & db, int name, const CompoundName &cn
 void ExternPredicate::AddExtern(Columns c, Logical::Extern fn, void * data)
 {
     externs[c] = ExternFn { fn, data };
+}
+
+void ExternPredicate::AddExtern(Logical::Extern fn, void * data)
+{
+    writer = ExternFn { fn, data };
 }
 
 class CallImpl : public Logical::Call
@@ -295,22 +319,16 @@ public:
 
 void ExternPredicate::Add(const Entity * row)
 {
-    int arity = 1 + compoundName.parts.size();
-    Columns columns((1 <<arity)-1);
-    
-    auto fn = externs.find(columns);
-    
-    if(fn != externs.end())
+    if(writer.fn)
     {
         NullReceiver r;
-        CallImpl call(database, compoundName, (Entity*)row, r, fn->second.data);
-        call.call(fn->second.fn);
+        CallImpl call(database, compoundName, (Entity*)row, r, writer.data);
+        call.call(writer.fn);
     }
     else
     {
-        database.Error("Cannot bind to extern");
+        database.Error("This extern does not support writes");
     }
-
 }
 
 Logical::Module & Logical::Call::GetModule()

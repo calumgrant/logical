@@ -493,3 +493,8 @@ void Predicate::AddExtern(Columns, Logical::Extern, void *)
 {
     database.Error("Attempt to redefine predicate as an extern");
 }
+
+void Predicate::AddExtern(Logical::Extern, void *)
+{
+    database.Error("Attempt to redefine predicate as an extern");
+}

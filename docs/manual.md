@@ -304,7 +304,7 @@ person p has id id, name n, age a if
     mysql:Person p has ID id, Name n, Age a.
 
 // Writing data
-mysql:Person @connection1 has Name n, Age a if
+mysql:write:Person @connection1 has Name n, Age a if
     person _ has name n, age a.
 
 mysql:close @connection1.
@@ -328,6 +328,8 @@ string s has doublevalue d.
 ```
 
 ## Writing CSV files
+
+csv:write "
 
 ## Externs
 

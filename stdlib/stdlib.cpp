@@ -28,13 +28,13 @@ static void steplimit(Call & call)
 
 void RegisterFunctions(Module & module)
 {
-    module.RegisterFunction(print, "print", In);
+    module.RegisterFunction(print, "print", Write);
     module.RegisterFunction(pi, "pi", Out);
-    module.RegisterFunction(error, "error", In);
+    module.RegisterFunction(error, "error", Write);
     module.RegisterFunction(strlen, "string", In, "strlen", Out);
     module.RegisterFunction(lowercase, "string", In, "lowercase", Out);
     module.RegisterFunction(uppercase, "string", In, "uppercase", Out);
     
-    module.RegisterFunction(expectedresults, "expected-results", In);
-    module.RegisterFunction(steplimit, "evaluation-step-limit", In);
+    module.RegisterFunction(expectedresults, "expected-results", Write);
+    module.RegisterFunction(steplimit, "evaluation-step-limit", Write);
 }
