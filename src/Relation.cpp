@@ -498,3 +498,9 @@ void Predicate::AddExtern(Logical::Extern, void *)
 {
     database.Error("Attempt to redefine predicate as an extern");
 }
+
+std::ostream & operator<<(std::ostream & os, const Relation & relation)
+{
+    Evaluation::OutputRelation(os, relation.GetDatabase(), relation);
+    return os;
+}

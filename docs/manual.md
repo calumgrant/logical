@@ -157,6 +157,52 @@ new file has name f, parent d if directory d has file f.
 new person has name n+" Smith" if person _ has name "Fred".
 ```
 
+# Modules
+
+Modules are designed to avoid name clashes, and make the origin and purposes of a name clearer. Names of predicates may be prefixed with a module name (e.g. `mysql:open` or `xml:read`) to make it clearer which module a name belongs to.
+
+Module qualifiers may only appear on unary predicate names that are read in a rule (in the `if` part of a rule). Module qualifiers to not apply to attributes or variables.
+
+Under normal circumstances, the order in which predicates are defined does not make a difference. However with modules, it becomes important, as a name might be resolved to one module or another depending on the order of the statements.
+
+## Defining modules
+
+A module is defined using the `module/1` predicate, for example `module xml.` or `module "mysql".` The quotes are optional.
+
+The module has the scope of the current source file, or until the next `module` definition.
+
+It is possible to have several modules in a single file, and to define a module over several files.
+
+## The default module
+
+If no module is declared, then the current module has the name `""` (the empty string). Names in the default module are accessed using `:...`, with an empty qualifier name.  To switch back to the default module, define `module "".`
+
+## Using modules
+
+The predicates in a module can be accessed either by qualifying the name, or using the `using/1` predicate, for example `using xml.` or `using "mysql".` As with `module`, the quotes are optional.
+
+`using` means that the predicates in the module do not need to be qualified.
+
+`using` has the scope of the current file, and does not affect `import`ed files or have an effect beyond the scope of the current file.
+
+`using` only has an effect after the `using` declaration.
+
+## Name lookup
+
+All unary predicates in the `then`/left of a rule are qualified with the current module.
+
+When an unqualified predicate name is encountered, it looks for the predicate name in the current module. If it has been defined already (or, mentioned by being previously qualified), then the predicate from the current module is used.
+
+Then, the predicates from all of the `using` modules are used. The root module is also in the `using` set. If the predicate is defined in exactly one of those then it is used. If the predicate is defined in more than one `using` module, then it is an error.
+
+If the predicate is unknown, then it is assumed to be from the current module.
+
+`using` is not transitive. If a module imports predicates with `using`, then these imported predicates are not exported.
+
+If a predicate is undefined, then it is taken to be in the current module.
+
+`module` and `using` only apply to the current source file, and do not have an effect on imported files, or beyond the scope of the current file. `module` and `using` only apply to unqualified names.
+
 # External functions
 
 ## Using external functions
@@ -329,11 +375,28 @@ string s has doublevalue d.
 
 ## Writing CSV files
 
-csv:write "
+csv:write "foo.csv" has 
 
 ## Externs
 
 ## Reading XML
+
+The module `xml` provides predicates to read XML. It is load using `load-module "xml".` The `xml:read filename, has root n` loads an XML file and returns a reference to the root node `n`. `xml:node n` returns all XML nodes, or determines if `n` is a valid XML node.
+
+* `xml:node/1`
+* `xml:name/2`
+* `xml:attribute/2` Gets an attribute of a node.
+
+`xml:node node has xml:attribute attrib, xml:value v`
+`node has xml:child child`
+`node has xml:text text`
+`node has xml:attribute attrib`
+`attrib has xml:key key`
+`attrib has xml:value value`
+
+## Reading XML
+
+`xml:write "MyFile" has xml:root r.`
 
 ## Writing XML
 

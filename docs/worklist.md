@@ -1,5 +1,21 @@
 # Work plan
 
+- Requirements:
+  - Collapse cycles.
+  
+- Recursion is just broken.
+
+New super-robust algorithm:
+1. Perform a depth-first search, detecting back-edges.
+2. Mark all nodes on the path with the back-edge.
+3. When you reach the node again, stop marking back-edges.
+
+Problems:
+- You can be on multiple paths at the same time.
+
+
+
+
 - Externs
   - Check binding errors at compile time?
   - Think about whether we want to change the "Table" not the predicate?
@@ -8,6 +24,13 @@
   `class PredicateName` ??
 - All errors to have locations
 - Locations to have filenames
+- Ability to memoise external predicates??
+- Test projecting external predicates.
+- In a fact, unbound variables are treated as strings. E.g. `module fubar.` treats `fubar` as a string.
+- Think about how qualified names are supposed to with with attributes?
+  xml:node node has child c, index i. In this case we want a single predicate
+    `xml:node:child:index.`
+- Private symbols in modules?
 
 ## Semi-naive evaluation (SNE)
 
@@ -26,18 +49,6 @@ Current problems:
 - In implementation of `uppercase` etc, don't implement the bound relation in the predicate. Instead, implement as `X = has:uppercase Y and Y=Z`.
 - Avoid evaluating rules twice.
 - Optimization step: Figure out if rules already run.
-
-- DLL imports to define additional functions or predicates. See `Logical.hpp`
-
-```
-external-function "foo", dll "foolib", operand1 @in, operand2 @out.
-external-function "sqrt", dll "foolib", number @in, sqrt @out.
-new external-function, dll "foolib", filename @in, values @out.
-```
-Usage:
-```
-find X in filename "foo.txt" has values X.
-```
 
 - Store the original source line for each rule, and highlight the parts of it as it executes (in Explain)
 ```
@@ -75,7 +86,6 @@ becomes (* = write, _ = read)
 - Have an "abstract machine" calling convention, where a "ret" on the stack jumps to the address
   - stack pointer
   - stack of values (entities)
-  - 
 
 - new objects to define a variable, and use `and` to assert further facts, for example
   `new expression p has ...,p has parent e.`
@@ -98,8 +108,6 @@ mysql:results has
 
 // Close the connection
 mysql:close @connection1.
-
-
 ```
 
 # Parallelism
@@ -211,15 +219,9 @@ Implementation plan:
 6. Compile rules for the bound predicate, inserting a call to `args_n:` at the head, and rebinding all steps.
     `std::shared_ptr<Evaluation> Evaluation::Bind(std::vector<int> arguments_to_bind)`
 
-
-2. Change call sites to also write
-
-
 Need to remember that we need to continue evaluating the recursive predicate.
 
 How to implement a bound predicate:
-1. C
-
 2. Those queries that are always bound are compiled with their bound variables.
 
 

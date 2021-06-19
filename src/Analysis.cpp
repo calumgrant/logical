@@ -98,7 +98,8 @@ private:
         while(auto n = r2->backEdge)
             r2 = n;
         if(r1==r2) return r1;
-        if(r1<r2)
+        assert(r1->recursiveDepth != r2->recursiveDepth);
+        if(r1->recursiveDepth < r2->recursiveDepth)
         {
             r2->backEdge = r1;
             return r1;
@@ -113,6 +114,19 @@ private:
     // Returns a back edge if in a loop, or nullptr if this branch is not recursive
     static Relation * AnalyseRecursion(Database &database, Relation & node, bool parity, int depth, int root)
     {
+        /*
+        for(int i=0; i<depth; ++i)
+            std::cout << " ";
+        std::cout << node << std::endl;
+        */
+        
+        if(node.visiting)
+        {
+            // std::cout << node << " reaches itself\n";
+            return GetLoop(&node);
+        }
+
+        /*
         if(node.recursiveDepth>=0)
         {
             // This node has been analysed previously.
@@ -120,6 +134,7 @@ private:
             
             if(node.recursiveRoot == root)
             {
+                std::cout << node << " reaches itself\n";
                 // assert(node.recursiveDepth != depth);
                 
                 // A forward edge
@@ -135,6 +150,7 @@ private:
             // (note we have incremental analysis).
             return nullptr;
         }
+         */
         
         // BindingAnalysis binding;
         // binding.Analyse(node);
@@ -147,16 +163,19 @@ private:
         
         Relation * loop = nullptr;
 
+        node.visiting = true;
         node.VisitRules([&](Evaluation & eval)
         {
             auto l = AnalyseRecursion(database, eval, parity, depth, root);
             loop = MergeLoops(loop, l);
         });
+        node.visiting = false;
         
         if(!loop) return nullptr;
         
         if(loop == & node)
         {
+            // std::cout << "Node " << node << " is recursive\n";
             node.inRecursiveLoop = true;
             
             if(node.parity != parity)
@@ -166,10 +185,11 @@ private:
             
             return nullptr;
         }
-        
+                
         if(loop->recursiveDepth < node.recursiveDepth)
         {
             node.backEdge = loop;
+            // std::cout << "Node " << node << " has back-edge " << *loop << std::endl;
             return loop;
         }
         

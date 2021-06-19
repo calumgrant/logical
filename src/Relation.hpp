@@ -74,6 +74,7 @@ public:
     int recursiveRoot = -1;
     Relation * backEdge = nullptr;
     bool inRecursiveLoop = false;
+    bool visiting = false;
 
     std::shared_ptr<ExecutionUnit> loop;
     
@@ -86,9 +87,10 @@ public:
     virtual void NextIteration() =0;
     virtual void AddExtern(Columns cols, Logical::Extern ex, void * data) =0;
     virtual void AddExtern(Logical::Extern ex, void * data) =0;
-
+    
 protected:
     // Returns the number of rows.
     virtual std::size_t Count() =0;
 };
 
+std::ostream & operator<<(std::ostream & os, const Relation &rel);

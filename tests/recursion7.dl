@@ -1,3 +1,6 @@
+
+potentiallyDangerousFunction @f has message "This is dangerous".
+
 if
     potentiallyDangerousFunction _ has message message
 then

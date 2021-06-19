@@ -86,9 +86,6 @@ public:
     void AddExtern(Logical::Extern ex, void * data) override;
 
 private:
-#if !NDEBUG
-    std::string debugName;
-#endif
     bool rulesRun = false;
     const bool reaches;
     const BindingType bindingPredicate;
@@ -98,6 +95,10 @@ private:
     
     std::unordered_set<Relation*, std::hash<Relation*>, std::equal_to<Relation*>, persist::allocator<Relation*>> attributes;
 protected:
+#if !NDEBUG
+    std::string debugName;
+#endif
+
     Database &database;
     
     void Reset();

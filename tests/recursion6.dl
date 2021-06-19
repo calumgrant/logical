@@ -6,7 +6,6 @@ n has left-child 2*n if item n.
 n has right-child m+1 if n has left-child m.
 n has child m if n has left-child m or n has right-child m.
 
-// `count` isn't working correctly - spurious 0 appears.
 query "Number of children" has Count c if c = count n in (_ has child n and item n).
 query "Number of descendents" has Count c if c = count n in (_ reaches child n).
 

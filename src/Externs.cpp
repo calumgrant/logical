@@ -113,6 +113,9 @@ ExternPredicate::ExternPredicate(Database & db, int name, const CompoundName &cn
 {
     this->name = name;
     compoundName = cn;
+#if !NDEBUG
+    debugName = db.GetString(name).c_str();
+#endif
 }
 
 void ExternPredicate::AddExtern(Columns c, Logical::Extern fn, void * data)
