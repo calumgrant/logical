@@ -29,6 +29,7 @@ void Predicate::Reset()
     analysedForRecursion = false;
     recursiveDepth = -1;
     recursiveRoot = -1;
+    sealed = false;
 }
 
 void SpecialPredicate::AddRule(const std::shared_ptr<Evaluation> &eval)
@@ -100,13 +101,22 @@ Columns Predicate::GetBindingColumns() const
 
 void Predicate::AddRule(const std::shared_ptr<Evaluation> &rule)
 {
+    if(sealed)
+    {
+        database.Error("Adding a rule to a sealed predicate");
+        return;
+    }
+    assert(!sealed);
     auto p = rule;
-    AnalyseRule(database, p);
     rules.Add(p);
+    AnalyseRule(database, p);
+    //assert(!sealed);
 }
 
 void Predicate::RunRules()
 {
+    sealed = true;  // No more rules please.
+    
     AnalysePredicate(database, *this);
 
     assert(loop);
@@ -291,7 +301,7 @@ std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> &rul
     WriteAnalysis write(*rule, oldPredicate);
 
     auto clone = rule->Clone();
-    write.UpdateVariables(*clone);
+    // write.UpdateVariables(*clone);
     write.UpdateWrites(*clone, bindingRelation);
 
     return clone;
@@ -301,6 +311,7 @@ Relation &Predicate::GetBoundRelation(Columns columns)
 {
     assert(bindingPredicate == BindingType::Unbound);
     auto &i = boundRelations[columns];
+    sealed = true;
 
     if (!i)
     {
@@ -347,12 +358,6 @@ bool SpecialPredicate::IsSpecial() const
 void ExecutionUnit::AddRelation(Relation &rel)
 {
     relations.insert(&rel);
-    //    rel.VisitSteps([&](EvaluationPtr & step) {
-    //        step->VisitWrites([&](std::weak_ptr<Relation>&rel, int, const int*) {
-    //            relations.insert(&*rel.lock());
-    //        });
-    //    });
-
     rel.VisitRules([&](EvaluationPtr &rule)
                    { rules.rules.push_back(rule); });
 }

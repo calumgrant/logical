@@ -106,6 +106,7 @@ protected:
     std::shared_ptr<Table> table;
     RelationId name;
     CompoundName compoundName;
+    bool sealed = false;  // Allow rules to be added.
     std::unordered_map<Columns, std::shared_ptr<Relation>, Columns::Hash, Columns::EqualTo> bindingRelations, boundRelations;
 };
 
