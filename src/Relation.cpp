@@ -108,9 +108,9 @@ void Predicate::AddRule(const std::shared_ptr<Evaluation> &rule)
     }
     assert(!sealed);
     auto p = rule;
-    rules.Add(p);
     AnalyseRule(database, p);
-    //assert(!sealed);
+    rules.Add(p);
+    assert(!sealed);
 }
 
 void Predicate::RunRules()
@@ -357,9 +357,17 @@ bool SpecialPredicate::IsSpecial() const
 
 void ExecutionUnit::AddRelation(Relation &rel)
 {
+    for(auto i : relations)
+        if(i == &rel) return;
+    
     relations.insert(&rel);
     rel.VisitRules([&](EvaluationPtr &rule)
-                   { rules.rules.push_back(rule); });
+    {
+        // !! Quadratic algorithm - fixme
+        for(auto & r : rules.rules)
+            if(&*rule == &*r) return;
+        rules.rules.push_back(rule);
+    });
 }
 
 void ExecutionUnit::RunRules()

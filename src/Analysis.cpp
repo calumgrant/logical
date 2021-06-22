@@ -21,35 +21,39 @@ public:
     
     void Analyse(Relation & rel) const override
     {
-    }
-    
-    void Analyse(EvaluationPtr & rule) const override
-    {
-        if(rule->runBindingAnalysis) return;
-        rule->runBindingAnalysis = true;
-        
-        Evaluation::VisitSteps(rule, [](EvaluationPtr&eval) {
-            eval->VisitReads([&](Relation *& relation, Columns mask, const int * inputs) {
-                if(!mask.IsUnbound() && relation->GetBinding() == BindingType::Unbound)
-                {
-                    // std::cout << "Semi-naive opportunity: " << mask << "\n";
+        rel.VisitRules([&](EvaluationPtr & rule) {
+            if(rule->runBindingAnalysis) return;
+            rule->runBindingAnalysis = true;
 
-                    if(!relation->IsSpecial())
+            Evaluation::VisitSteps(rule, [&](EvaluationPtr&eval) {
+                eval->VisitReads([&](Relation *& relation, Columns mask, const int * inputs) {
+                    if(!mask.IsUnbound() && relation->GetBinding() == BindingType::Unbound)
                     {
-                        auto & guard = relation->GetBindingRelation(mask);
-                        auto & bound = relation->GetBoundRelation(mask);
-                        
-                        std::vector<int> writes;
-                        for(int i=0; i<relation->Arity(); ++i)
-                            if(inputs[i] != -1) writes.push_back(inputs[i]);
-                        
-                        auto write = std::make_shared<Writer>(guard, writes);
-                        eval = std::make_shared<OrEvaluation>(write, eval);
-                        relation = &bound;
+                        // std::cout << "Semi-naive opportunity: " << mask << "\n";
+
+                        if(!relation->IsSpecial())
+                        {
+                            auto & guard = relation->GetBindingRelation(mask);
+                            auto & bound = relation->GetBoundRelation(mask);
+                            
+                            std::vector<int> writes;
+                            for(int i=0; i<relation->Arity(); ++i)
+                                if(inputs[i] != -1) writes.push_back(inputs[i]);
+                            
+                            auto write = std::make_shared<Writer>(guard, writes);
+                            eval = std::make_shared<OrEvaluation>(write, eval);
+                            Analyse(*relation);  // Analyse unbound relation as well
+                            relation = &bound;
+                        }
                     }
-                }
+                    Analyse(*relation);
+                });
             });
         });
+    }
+    
+    void Analyse(EvaluationPtr &) const override
+    {
     }
 };
 
@@ -575,7 +579,7 @@ OptimizerImpl::OptimizerImpl()
     static Deltas deltas;
     static RecursiveBranch recursiveBranch;
     
-    // RegisterOptimization(binding);
+    RegisterOptimization(binding);
     RegisterOptimization(recursion);
     RegisterOptimization(deltas);
     RegisterOptimization(recursiveBranch);

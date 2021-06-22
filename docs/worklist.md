@@ -1,24 +1,22 @@
 # Work plan
 
-- Requirements:
-  - Collapse cycles.
-  
-- Recursion is just broken.
-
-New super-robust algorithm:
-1. Perform a depth-first search, detecting back-edges.
-2. Mark all nodes on the path with the back-edge.
-3. When you reach the node again, stop marking back-edges.
-
-Problems:
-- You can be on multiple paths at the same time.
+- Why isn't the write has:value turned into a has:value:B in the rewriter???
 
 
+- Binding analysis needs to be done just before recursion. Needs to be on a relation. Needs to operate recursively.
+  - Bug in `count1`: deduplication hasn't worked properly.
+  - `syntax`: Mysterious binding error assert failed.
+  - `new4`: Recursion failed somehow. For some reason, it's writing the results into `has:value` not `has:value:B`.
+  - Bug is that the same rule has appeared twice in the evaluation unit.
+  - The bound and unbound version of the rule appear in the same execution unit.
+  - Why no delta analysis on the called predicate?
+
+- Make sure that the binding analysis runs over the created bound predicates.
 
 
 - Externs
   - Check binding errors at compile time?
-  - Think about whether we want to change the "Table" not the predicate?
+  - Think about whether we want to change the `Table` not the predicate?
   - This would allow to define after use and generally break less stuff.
 - Refactor predicate name/compoundname as it's horrid and ugly.
   `class PredicateName` ??
@@ -44,9 +42,55 @@ Current problems:
 - `count1` problem with deduplication.
 - `recursion3` - `ancestor:B` is empty for some reason.
 
+## Task manager
+
+Lightweight thread manager. Could just use C++ taskflow library instead?
+
+```
+class Task
+{
+  std::atomic<Task*> list;
+
+  enum State { Inactive, Queued, Running, Finished } state;
+  virtual void Run(TaskManager & manager);
+  Task & next;
+};
+
+class Foo : public Task
+{
+
+};
+
+class TaskManager
+{
+public:
+  void Run(Task[] tasks, int length, Task & then);
+};
+
+class CompositeTask : public Task
+{
+
+};
+
+
+```
+Expressing execution as a graph.
+
 ## General ideas
 
-- In implementation of `uppercase` etc, don't implement the bound relation in the predicate. Instead, implement as `X = has:uppercase Y and Y=Z`.
+- Trap importer extern.
+```
+load-module codeql.
+
+codeql:import-trap().
+
+function f if codeql:trap:functions f
+
+```
+
+- Memoised externs. E.g. from a trap-import.
+- Allow commands of the form `codeql:import-trap` - nonary predicate.
+
 - Avoid evaluating rules twice.
 - Optimization step: Figure out if rules already run.
 
@@ -160,6 +204,13 @@ Changes to make:
    - Keeps a vector of parallel stack frames as single array
    - Keeps a vector of Tasks
    - OnRow: Performs the query, returning a list of rows. Dispatch the first n results as threads. Each thread: runs the next function, then when the function returns, gets the next row in the list. Keeps a "count" of active threads, and when the count goes to 0, OnRow can return.
+
+## Changes to "Persist"
+
+- Need to be able to extend the heap in a thread-safe manner.
+- mremap?
+- Need proper multi-threaded soak tests
+- Use atomics for the memory allocator
    
 # Datalog abstract machine
 

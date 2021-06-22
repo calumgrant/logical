@@ -1,5 +1,5 @@
 expected-results 2.
-evaluation-step-limit 23.
+evaluation-step-limit 29.  // 23
 
 1 has seq 2.
 

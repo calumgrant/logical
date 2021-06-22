@@ -320,9 +320,34 @@ Calls cannot (yet) store arbitrary objects, and are limited to the Logical datat
 
 It is an error to `Set()` a value that is marked as `In`. It is an error to call `YieldResult` without calling `Set()` on all `Out` parameters.
 
+## Argument modes
+
+Each argument to an extern is either "in"/"bound" or "out"/"unbound". The extern reads "in" arguments and writes "out" arguments. It is an error to read "out" arguments or to write "in" arguments, resulting in undefined behaviour. It is also an error to fail to write an "out" argument before calling `YieldResult()`, which also results in undefined behaviour.
+
+It is possible to "overload" a function with different combinations of modes, and the compiler will pick the most suitable version. If no suitable version is found (for example, the extern wants an "in" parameter and only an "out" parameter was provided), then it results in a compilation error.
+
+## Extern types
+
+Externs have three possible roles:
+
+1. As a regular predicate, with a mix of "in" and "out" parameters.
+2. As a command, that only has "in" parameters.
+3. As a table, that only has "out" parameters.
+
+Commands appear in the `then` part of rules, or are asserted as facts. For example
+
+```
+import mysql.
+expected-results 10.
+csv:read "File1.csv".
+error "Failed to find result" if not result _.
+```
+
+All of these commands will have some side-effect, and could for example create new predicates (as in the case `csv:read`).
+
+Tables behave as regular predicates, but Logical will evaluate the whole relation and store the results in a table where it can be queried efficiently. The extern will only be evaluated once. This is useful for example when reading datafiles.
+
 # The standard library
-
-
 
 # Reading and writing data
 

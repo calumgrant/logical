@@ -21,20 +21,20 @@ public:
 
 inline Logical::Module::Module() {}
 
-void Logical::Module::RegisterFunction(Logical::Extern ex, const char * name, Mode direction)
+void Logical::Module::AddFunction(Logical::Extern ex, const char * name, Mode direction)
 {
-    RegisterFunction(ex, 1, &name, &direction, nullptr);
+    AddFunction(ex, 1, &name, &direction, nullptr);
 }
 
-void Logical::Module::RegisterFunction(Logical::Extern ex, const char * name1, Mode direction1, const char * name2, Mode direction2)
+void Logical::Module::AddFunction(Logical::Extern ex, const char * name1, Mode direction1, const char * name2, Mode direction2)
 {
     const char *names[] = { name1, name2 };
     Mode dirs[] = { direction1, direction2 };
-    RegisterFunction(ex, 2, names, dirs, nullptr);
+    AddFunction(ex, 2, names, dirs, nullptr);
 }
 
 
-void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char ** name, const Mode *direction, void * data)
+void Logical::Module::AddFunction(Logical::Extern ex, int count, const char ** name, const Mode *direction, void * data)
 {
     auto & db = ((ModuleImpl*)this)->database;
     if(count<1)
@@ -56,26 +56,32 @@ void Logical::Module::RegisterFunction(Logical::Extern ex, int count, const char
         if(direction[i]==Logical::In)
             columns.Bind(i);
     
-    bool allWrite = true;
-    bool someWrite = false;
-    for(int i=0; i<count; ++i)
-        if(direction[i] != Logical::Write)
-            allWrite = false;
-        else
-            someWrite = true;
+    exfn.AddExtern(columns, ex, data);
+}
 
-    if(someWrite && !allWrite)
+void Logical::Module::AddCommand(Extern ex, const char*name)
+{
+    AddCommand(ex, 1, &name, nullptr);
+}
+
+void Logical::Module::AddCommand(Extern ex, int count, const char ** name, void * data)
+{
+    auto & db = ((ModuleImpl*)this)->database;
+    if(count<1)
     {
-        db.Error("Extern predicate has invalid signature - if one parameter is Write then they must all be Write");
+        db.Error("Invalid number of parameters for extern");
+        return;
     }
-    else if(allWrite)
-    {
-        exfn.AddExtern(ex, data);
-    }
-    else
-    {
-        exfn.AddExtern(columns, ex, data);
-    }
+    
+    auto nameId = db.GetStringId(name[0]);
+    std::vector<int> parts;
+    parts.reserve(count-1);
+    for(int i=1; i<count; ++i)
+        parts.push_back(db.GetStringId(name[i]));
+    CompoundName cn(parts);
+    auto & exfn = db.GetExtern(nameId, cn);
+    
+    exfn.AddExtern(ex, data);
 }
 
 void DatabaseImpl::LoadModule(const char*name)
