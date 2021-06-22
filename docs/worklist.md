@@ -1,5 +1,22 @@
 # Work plan
 
+- Cloning and deduplicating 
+- Fail to compile a clause on binding error.
+
+Binding bug in 
+`person X is rich if sum V over C in (X has cash C and C has value V) > 100.`
+Bug is that the LHS should not bind.
+
+`count1` problem: deduplicate is cloned and so is the underlying table. The original logic to join the branches didn't work.
+Solution: Clone should respect joins/deduplicate somehow.
+Solution 2: 
+
+
+Current problem: When we cloned the rule and created a semi-naive version, we still shared the old deduplication guard. Unfortunately, both rules are attached to the execution unit, and the non-recursive rule ran first and used the deduplication guard. The result is that when the second rule was run, the deduplication guard prevented it.
+
+
+
+
 - Why isn't the write has:value turned into a has:value:B in the rewriter???
 
 
@@ -78,6 +95,8 @@ Expressing execution as a graph.
 
 ## General ideas
 
+- Compile to a proper bytecode that can be stored in the datafile.
+
 - Trap importer extern.
 ```
 load-module codeql.
@@ -142,13 +161,16 @@ load-module "mysql".
 
 // Opens a connection to the database
 // Creates predicates
-mysql:open @connection1, hostname "localhost", database "db1", username "admin", password "whoops".
+mysql:connection @connection1 has hostname "localhost", database "db1", username "admin", password "whoops".
+
+mysql:connection @connection1 has cached-table "person".
+mysql:connection @connection1 has writable-table person.
 
 // Read from a table
 person X has name Y if mysql:names has id X, surname Y.
 
 // Write to a table
-mysql:results has 
+new mysql:results has id 123, location l1, 
 
 // Close the connection
 mysql:close @connection1.

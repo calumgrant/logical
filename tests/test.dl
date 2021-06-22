@@ -1,2 +1,4 @@
 
-print s if "ABcd123" has lowercase s.
+X is rich if sum V over C in (X has cash C and C has value V) > 100.
+
+find rich.

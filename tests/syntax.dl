@@ -150,15 +150,15 @@ delete _.
 delete person P if P has surname "Smith".
 
 // evaluation-step-limit 251.
-expected-results 40.
+expected-results 10.
 expected-errors 0.
 
 // Queries
-find person.
+// find person.
 
 1 has radius 2, diameter 3.
-find person P.
-find person.
+//find person P.
+//find person.
 find circle C, radius R.
 find C has radius R.
 find C has radius R, diameter D.

@@ -1302,7 +1302,8 @@ EvaluationPtr DeduplicateB::Clone() const
 
 EvaluationPtr DeduplicateV::Clone() const
 {
-    return cloneHelper = std::make_shared<DeduplicateV>(database, slots, table, next->Clone());
+    auto t = std::make_shared<TableImpl>(database.Storage(), slots.size());
+    return cloneHelper = std::make_shared<DeduplicateV>(database, slots, t, next->Clone());
 }
 
 EvaluationPtr OrEvaluation::Clone() const

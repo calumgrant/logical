@@ -48,7 +48,6 @@ void AST::Rule::Compile(Database &db)
     auto evaluation = rhs->Compile(db, compilation);
     
     evaluation = std::make_shared<RuleEvaluation>(compilation.locals, evaluation);
-
     
     lhs->AddRule(db, evaluation);
 }
