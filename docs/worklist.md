@@ -1,52 +1,26 @@
 # Work plan
 
-- Merge cloned branches.
-  1. Set "clone" = null in the branch
-  2. When we clone, return the cloned value 
-    Clone()
-      - Resets all clones
-      - Calls CloneInternal()
-    CloneInternal()
-      - Checks clone
-      - Calls MakeClone if needed
-      - returns the clone
-    MakeClone()
-      - Constructs a new object
-      - Calls CloneInternal on the next thing
+Reading files from extern.
 
-- Fix deduplication
-  1. Detect all bound variables and make a table.
-     - The "Compilation" object should help with this...
-     - Counting: Only look at the variables used in the body
-     - Visit all variables in the compiled body in order to get the guard.
-     (X=1 or Y=1) and z = count Z in f(X,Y,Z)
-     Problem here is: What is the bound set?
-     problem #2: need to 
-     Solution: join all of the branches and persist this with a clone.
+```
+print x if file "test.txt" has contents x.
+print x if x = "Hello world!".
+```
+
+Problem is that it queries `file/1` first, which fails.
+
+
+
+
+
+
 
 - Auto semi-naive
-- have a module "consistent writes" that ensures that all written variables have the same locations.
-- Deduplicate guard should still capture all variables and use a shared table.
-  - Everything that's bound?
-  - Everything that's counted
+- have an analysis "consistent writes" that ensures that all written variables have the same locations.
+
 - Optimization: Drop deduplication guard on things that are already deduplicated.
-- Predicate should keep deduplication guards for various combinations of locals?
-  - Using a bit mask???
-  - The cloner should help with this.
-  class CloneHelper
-  {
-    std::unordered_map<Columns, std::shared_ptr<Table>> tables
-  }
-
-
-- Cloning and deduplicating 
-  - Each deduplicate contains a syntax node that marks the "set"
-  - Or, we use branching correctly.
 
 - Binding could be solved using betas!! beta for “binding predicate”.
-
-Solution 1: Clone should respect joins/deduplicate somehow.
-Solution 2: Maintain the tree, but have an underlying identifier for the deduplication?
 
 - Fail to compile a clause on binding error. This actually crashes (`binding.dl`).
 - Don't auto-naive everything. It's not efficient (e.g. when counting something.) It just causes duplication. When to apply semi-naive?
@@ -56,13 +30,6 @@ Solution 2: Maintain the tree, but have an underlying identifier for the dedupli
   - It appears in the recursive case.
   - The callee decides what could make sense to semi-naive.
   - I'm thinking that auto semi-naive would actually be better.
-
-
-`count1` problem: deduplicate is cloned and so is the underlying table. The original logic to join the branches didn't work.
-
-Current problem: When we cloned the rule and created a semi-naive version, we still shared the old deduplication guard. Unfortunately, both rules are attached to the execution unit, and the non-recursive rule ran first and used the deduplication guard. The result is that when the second rule was run, the deduplication guard prevented it.
-
-- The bound and unbound version of the rule appear in the same execution unit.
 
 - Externs
   - Check binding errors at compile time?
@@ -83,7 +50,6 @@ Current problem: When we cloned the rule and created a semi-naive version, we st
 Predicate * p = module.PrepareQuery(extern1, extern1, "person", In, "name", Out);
 ```
 
-
 ## Semi-naive evaluation (SNE)
 
 Two approaches:
@@ -91,10 +57,6 @@ Two approaches:
 2. Insert additional predicates and rewrite the program to be semi-naive.
 
 I want to try approach 2, because it may throw up some interesting bugs/assumptions in the rest of the code.
-
-Current problems:
-- `count1` problem with deduplication.
-- `recursion3` - `ancestor:B` is empty for some reason.
 
 ## Task manager
 
@@ -125,9 +87,8 @@ class CompositeTask : public Task
 {
 
 };
-
-
 ```
+
 Expressing execution as a graph.
 
 ## General ideas
@@ -141,7 +102,6 @@ load-module codeql.
 codeql:import-trap().
 
 function f if codeql:trap:functions f
-
 ```
 
 - Memoised externs. E.g. from a trap-import.
@@ -636,6 +596,25 @@ find result, foo, bar.
         For (_0,_1) in has:next2:
             For (_2,_) in delta_has_next2(_,_1):
               Write has:next2(_0,_1)
+```
+
+# Files API
+
+read-file "filename".
+```
+// Cached
+file "filename" has line l, text t.
+
+file f has line l, section s if
+  file f has line l, text s
+  and
+  t has regex-match s
+
+file f has line l, key k, value v if
+
+
+
+
 ```
 
 ## Short term

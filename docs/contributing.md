@@ -15,11 +15,11 @@ make test
 
 Prerequisites:
 - Xcode (for MacOS build tools)
-- Homebrew (for `flex` and `bison`)
+- Homebrew (for `flex`, `bison` and `boost`)
 - CMake
 
 ```
-brew install flex bison
+brew install flex bison boost
 cmake ../src -DBISON_EXECUTABLE=/opt/homebrew/opt/bison/bin/bison -DFLEX_INCLUDE_DIR=/opt/homebrew/opt/flex/include -DFL_LIBRARY=/opt/homebrew/opt/flex/lib/libfl.a
 make
 make test

@@ -1,0 +1,6 @@
+"test.txt" has contents "Line 1\nLine 2\n\nLine 3\n".
+
+expected-results 4.
+
+query "Contents" has Line l, text t if
+    "test.txt" has line l, text t.

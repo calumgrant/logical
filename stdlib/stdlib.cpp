@@ -26,6 +26,11 @@ static void steplimit(Call & call)
     }
 }
 
+static void none(Call & call)
+{
+    // Fails always
+}
+
 void RegisterFunctions(Module & module)
 {
     module.AddCommand(print, "print");
@@ -37,4 +42,16 @@ void RegisterFunctions(Module & module)
     module.AddFunction(strlen, "string", In, "strlen", Out);
     module.AddFunction(lowercase, "string", In, "lowercase", Out);
     module.AddFunction(uppercase, "string", In, "uppercase", Out);
+    module.AddFunction(none, "none", Out);
+    
+    module.AddFunction(readcontents, "file", In, "contents", Out);
+    module.AddFunction(readlines, "file", In, "line", Out, "text", Out);
+    module.AddCommand(writecontents, "file", "contents");
+    module.AddCommand(writelines, "file", "line", "text");
+    
+    module.AddFunction(regexmatch, "regex", In, "regex-match", In);
+    module.AddFunction(regexmatchgroup, "regex", In, "regex-match", In, "group", Out, "value", Out);
+    // module.AddFunction(regexsearch, "regex", In, "regex-search", In, "index", Out, "position", Out);
+    //module.AddFunction(regexsearchgroup, "regex", In, "regex-search", In, "index", Out, "position", Out);
+
 }

@@ -4,6 +4,8 @@
 #include <cctype>
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <regex>
 
 static void print(Call &call, std::ostream & os)
 {
@@ -76,5 +78,86 @@ void uppercase(Call & call)
         tmp[len]=0;
         call.Set(1, tmp);
         call.YieldResult();
+    }
+}
+
+void readcontents(Call & call)
+{
+    const char * name;
+    if(call.Get(0, name))
+    {
+        std::ifstream file(name);
+        std::stringstream ss;
+        ss << file.rdbuf();
+        call.Set(1, ss.str().c_str());
+        call.YieldResult();
+    }
+}
+
+void readlines(Call & call)
+{
+    const char * name;
+    if(call.Get(0, name))
+    {
+        std::ifstream file(name);
+        for(Int line = 1; file; ++line)
+        {
+            std::string str;
+            std::getline(file, str);
+
+            if(file)
+            {
+                call.Set(1, line);
+                call.Set(2, str.c_str());
+                call.YieldResult();
+            }
+        }
+    }
+}
+
+void writelines(Call & call)
+{
+    
+}
+
+void writecontents(Call & call)
+{
+    const char * name;
+    const char * contents;
+    if(call.Get(0, name) && call.Get(1, contents))
+    {
+        std::ofstream file(name);
+        file << contents;
+    }
+}
+
+void regexmatch(Call & call)
+{
+    const char * str, *regex;
+    if(call.Get(0, str) && call.Get(1, regex))
+    {
+        std::regex re(regex);
+        if (std::regex_match(str, re))
+            call.YieldResult();
+    }
+}
+
+void regexmatchgroup(Call & call)
+{
+    const char * str, *regex;
+    if(call.Get(0, str) && call.Get(1, regex))
+    {
+        std::regex re(regex);
+        std::match_results<const char*> match;
+        if (std::regex_match(str, match, re))
+        {
+            Int index=0;
+            for(auto & m : match)
+            {
+                call.Set(2, index++);
+                call.Set(3, m.str().c_str());
+                call.YieldResult();
+            }
+        }
     }
 }

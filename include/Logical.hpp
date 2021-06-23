@@ -32,6 +32,8 @@ namespace Logical
 
         bool Get(int index, double & value);
         void Set(int index, double value);
+        
+        void SetNewObject(int index);
 
         Module & GetModule();
         

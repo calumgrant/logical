@@ -33,6 +33,20 @@ void Logical::Module::AddFunction(Logical::Extern ex, const char * name1, Mode d
     AddFunction(ex, 2, names, dirs, nullptr);
 }
 
+void Logical::Module::AddFunction(Logical::Extern ex, const char * name1, Mode direction1, const char * name2, Mode direction2, const char * name3, Mode direction3)
+{
+    const char *names[] = { name1, name2, name3 };
+    Mode dirs[] = { direction1, direction2, direction3 };
+    AddFunction(ex, 3, names, dirs, nullptr);
+}
+
+void Logical::Module::AddFunction(Logical::Extern ex, const char * name1, Mode direction1, const char * name2, Mode direction2, const char * name3, Mode direction3, const char * name4, Mode direction4)
+{
+    const char *names[] = { name1, name2, name3, name4 };
+    Mode dirs[] = { direction1, direction2, direction3, direction4 };
+    AddFunction(ex, 4, names, dirs, nullptr);
+}
+
 
 void Logical::Module::AddFunction(Logical::Extern ex, int count, const char ** name, const Mode *direction, void * data)
 {
@@ -63,6 +77,19 @@ void Logical::Module::AddCommand(Extern ex, const char*name)
 {
     AddCommand(ex, 1, &name, nullptr);
 }
+
+void Logical::Module::AddCommand(Extern ex, const char*name1, const char * name2)
+{
+    const char * names[] = { name1, name2 };
+    AddCommand(ex, 2, names, nullptr);
+}
+
+void Logical::Module::AddCommand(Extern ex, const char*name1, const char * name2, const char * name3)
+{
+    const char * names[] = { name1, name2, name3 };
+    AddCommand(ex, 3, names, nullptr);
+}
+
 
 void Logical::Module::AddCommand(Extern ex, int count, const char ** name, void * data)
 {

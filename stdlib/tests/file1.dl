@@ -1,0 +1,4 @@
+"test.txt" has contents "abc".
+
+error "File contents" if not "test.txt" has contents "abc".
+error "File contents" if "test.txt" has contents "def".

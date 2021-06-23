@@ -17,3 +17,7 @@ add_test(NAME Pi1 COMMAND logical ../../stdlib/tests/pi1.dl)
 add_test(NAME Pi2 COMMAND logical ../../stdlib/tests/pi2.dl)
 add_test(NAME Strings1 COMMAND logical ../../stdlib/tests/strings1.dl)
 add_test(NAME Strings2 COMMAND logical ../../stdlib/tests/strings2.dl)
+
+add_test(NAME File1 COMMAND logical ../../stdlib/tests/file1.dl)
+add_test(NAME File2 COMMAND logical ../../stdlib/tests/file2.dl)
+add_test(NAME Regex1 COMMAND logical ../../stdlib/tests/regex1.dl)

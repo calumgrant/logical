@@ -1,0 +1,7 @@
+
+query "Regex1" has result "passed" if
+    "aaabbc" has regex-match "a+b+c+".
+
+
+query "Regex 2" has group n, text t if
+    "aaabbc" has regex-match "(a+)(b+)(c+)", group n, value t.
