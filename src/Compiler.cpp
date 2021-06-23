@@ -584,7 +584,7 @@ public:
     
     std::size_t Count() const { return count; }
     
-    EvaluationPtr Clone() const override { return nullptr; }
+    EvaluationPtr MakeClone() const override { return nullptr; }
 
 private:
     Database & database;

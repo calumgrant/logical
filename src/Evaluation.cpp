@@ -1295,151 +1295,169 @@ void Writer::VisitWrites(const std::function<void(Relation *&rel, int, const int
     fn(relation, slots.size(), slots.data());
 }
 
-EvaluationPtr DeduplicateB::Clone() const
+EvaluationPtr DeduplicateB::MakeClone() const
 {
-    return cloneHelper = std::make_shared<DeduplicateB>(slot1, next->Clone());
+    return cloneHelper = std::make_shared<DeduplicateB>(slot1, next->CloneInternal());
 }
 
-EvaluationPtr DeduplicateV::Clone() const
+EvaluationPtr DeduplicateV::MakeClone() const
 {
     auto t = std::make_shared<TableImpl>(database.Storage(), slots.size());
-    return cloneHelper = std::make_shared<DeduplicateV>(database, slots, t, next->Clone());
+    return cloneHelper = std::make_shared<DeduplicateV>(database, slots, t, next->CloneInternal());
 }
 
-EvaluationPtr OrEvaluation::Clone() const
+EvaluationPtr OrEvaluation::MakeClone() const
 {
-    return std::make_shared<OrEvaluation>(left->Clone(), right->Clone());
+    return std::make_shared<OrEvaluation>(left->Clone(), right->CloneInternal());
 }
 
-EvaluationPtr SumCollector::Clone() const
+EvaluationPtr SumCollector::MakeClone() const
 {
     return std::make_shared<SumCollector>(slot, sumSlot);
 }
 
-EvaluationPtr DeduplicateBB::Clone() const
+EvaluationPtr DeduplicateBB::MakeClone() const
 {
-    return cloneHelper = std::make_shared<DeduplicateBB>(slot1, slot2, next->Clone());
+    return cloneHelper = std::make_shared<DeduplicateBB>(slot1, slot2, next->CloneInternal());
 }
 
-EvaluationPtr NotTerminator::Clone() const
+EvaluationPtr NotTerminator::MakeClone() const
 {
     return std::make_shared<NotTerminator>(slot);
 }
 
-EvaluationPtr NoneEvaluation::Clone() const
+EvaluationPtr NoneEvaluation::MakeClone() const
 {
     return std::make_shared<NoneEvaluation>();
 }
 
-EvaluationPtr CountCollector::Clone() const
+EvaluationPtr CountCollector::MakeClone() const
 {
     return std::make_shared<CountCollector>(slot);
 }
 
-EvaluationPtr RuleEvaluation::Clone() const
+EvaluationPtr RuleEvaluation::MakeClone() const
 {
-    return std::make_shared<RuleEvaluation>(locals, next->Clone());
+    return std::make_shared<RuleEvaluation>(locals, next->CloneInternal());
 }
 
-EvaluationPtr OrEvaluationForNot::Clone() const
+EvaluationPtr OrEvaluationForNot::MakeClone() const
 {
-    return std::make_shared<OrEvaluationForNot>(left->Clone(), right->Clone());
+    return std::make_shared<OrEvaluationForNot>(left->Clone(), right->CloneInternal());
 }
 
-EvaluationPtr Join::Clone() const
+EvaluationPtr Join::MakeClone() const
 {
-    return std::make_shared<Join>(*relation, inputs, outputs, next->Clone());
+    return std::make_shared<Join>(*relation, inputs, outputs, next->CloneInternal());
 }
 
-EvaluationPtr Load::Clone() const
+EvaluationPtr Load::MakeClone() const
 {
-    return std::make_shared<Load>(slot, value, next->Clone());
+    return std::make_shared<Load>(slot, value, next->CloneInternal());
 }
 
-EvaluationPtr AddBBF::Clone() const
+EvaluationPtr AddBBF::MakeClone() const
 {
-    return std::make_shared<AddBBF>(database, slot1, slot2, slot3, next->Clone());
+    return std::make_shared<AddBBF>(database, slot1, slot2, slot3, next->CloneInternal());
 }
 
-EvaluationPtr SubBBF::Clone() const
+EvaluationPtr SubBBF::MakeClone() const
 {
-    return std::make_shared<SubBBF>(slot1, slot2, slot3, next->Clone());
+    return std::make_shared<SubBBF>(slot1, slot2, slot3, next->CloneInternal());
 }
 
-EvaluationPtr MulBBF::Clone() const
+EvaluationPtr MulBBF::MakeClone() const
 {
-    return std::make_shared<MulBBF>(slot1, slot2, slot3, next->Clone());
+    return std::make_shared<MulBBF>(slot1, slot2, slot3, next->CloneInternal());
 }
 
-EvaluationPtr DivBBF::Clone() const
+EvaluationPtr DivBBF::MakeClone() const
 {
-    return std::make_shared<DivBBF>(slot1, slot2, slot3, next->Clone());
+    return std::make_shared<DivBBF>(slot1, slot2, slot3, next->CloneInternal());
 }
 
-EvaluationPtr ModBBF::Clone() const
+EvaluationPtr ModBBF::MakeClone() const
 {
-    return std::make_shared<ModBBF>(slot1, slot2, slot3, next->Clone());
+    return std::make_shared<ModBBF>(slot1, slot2, slot3, next->CloneInternal());
 }
 
-EvaluationPtr NotInB::Clone() const
+EvaluationPtr NotInB::MakeClone() const
 {
-    return std::make_shared<NotInB>(slot, *relation, next->Clone());
+    return std::make_shared<NotInB>(slot, *relation, next->CloneInternal());
 }
 
-EvaluationPtr RangeB::Clone() const
+EvaluationPtr RangeB::MakeClone() const
 {
-    return std::make_shared<RangeB>(slot1, cmp1, slot2, cmp2, slot3, next->Clone());
+    return std::make_shared<RangeB>(slot1, cmp1, slot2, cmp2, slot3, next->CloneInternal());
 }
 
-EvaluationPtr RangeU::Clone() const
+EvaluationPtr RangeU::MakeClone() const
 {
-    return std::make_shared<RangeU>(slot1, cmp1, slot2, cmp2, slot3, next->Clone());
+    return std::make_shared<RangeU>(slot1, cmp1, slot2, cmp2, slot3, next->CloneInternal());
 }
 
-EvaluationPtr EqualsBB::Clone() const
+EvaluationPtr EqualsBB::MakeClone() const
 {
-    return std::make_shared<EqualsBB>(slot1, slot2, next->Clone());
+    return std::make_shared<EqualsBB>(slot1, slot2, next->CloneInternal());
 }
 
-EvaluationPtr EqualsBF::Clone() const
+EvaluationPtr EqualsBF::MakeClone() const
 {
-    return std::make_shared<EqualsBF>(slot1, slot2, next->Clone());
+    return std::make_shared<EqualsBF>(slot1, slot2, next->CloneInternal());
 }
 
-EvaluationPtr CreateNew::Clone() const
+EvaluationPtr CreateNew::MakeClone() const
 {
-    return std::make_shared<CreateNew>(database, slot, next->Clone());
+    return std::make_shared<CreateNew>(database, slot, next->CloneInternal());
 }
 
-EvaluationPtr NotNone::Clone() const
+EvaluationPtr NotNone::MakeClone() const
 {
-    return std::make_shared<NotNone>(slot, next->Clone());
+    return std::make_shared<NotNone>(slot, next->CloneInternal());
 }
 
-EvaluationPtr CompareBB::Clone() const
+EvaluationPtr CompareBB::MakeClone() const
 {
-    return std::make_shared<CompareBB>(slot1, cmp, slot2, next->Clone());
+    return std::make_shared<CompareBB>(slot1, cmp, slot2, next->CloneInternal());
 }
 
-EvaluationPtr NegateBF::Clone() const
+EvaluationPtr NegateBF::MakeClone() const
 {
-    return std::make_shared<NegateBF>(slot1, slot2, next->Clone());
+    return std::make_shared<NegateBF>(slot1, slot2, next->CloneInternal());
 }
 
-EvaluationPtr Reader::Clone() const
+EvaluationPtr Reader::MakeClone() const
 {
-    return std::make_shared<Reader>(*relation, outputs, next->Clone());
+    return std::make_shared<Reader>(*relation, outputs, next->CloneInternal());
 }
 
-EvaluationPtr Writer::Clone() const
+EvaluationPtr Writer::MakeClone() const
 {
     return std::make_shared<Writer>(*relation, slots);
 }
 
-EvaluationPtr DeduplicationGuard::Clone() const
+EvaluationPtr DeduplicationGuard::MakeClone() const
 {
     // next->Clone will assign cloneHelper
-    auto n = next->Clone();
+    auto n = next->CloneInternal();
     assert(dedup->cloneHelper);
     return std::make_shared<DeduplicationGuard>(dedup->cloneHelper, n);
+}
+
+EvaluationPtr Evaluation::Clone()
+{
+    VisitSteps([&](Evaluation & eval) { eval.clone.reset(); });
+    return CloneInternal();
+}
+
+EvaluationPtr Evaluation::CloneInternal()
+{
+    if(!clone) clone = MakeClone();
+    return clone;
+}
+
+void Evaluation::VisitSteps(const std::function<void(Evaluation&)> &fn)
+{
+    fn(*this);
+    VisitNext([&](EvaluationPtr &p, bool) { p->VisitSteps(fn); });
 }

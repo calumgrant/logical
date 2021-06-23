@@ -78,6 +78,7 @@ namespace Logical
         void AddTable(Extern, const char*, const char*, const char*);
         void AddTable(Extern, int params, const char**names, void * data);
         
+        // Reads all data from a given predicate and passes it into Extern.
         void Read(Extern, const char*);
         void Read(Extern, int params, const char**names, void * data);
 

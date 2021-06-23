@@ -36,5 +36,5 @@ void RegisterFunctions(Module & module)
     module.AddFunction(pi, "pi", Out);
     module.AddFunction(strlen, "string", In, "strlen", Out);
     module.AddFunction(lowercase, "string", In, "lowercase", Out);
-    module.AddFunction(uppercase, "string", In, "uppercase", Out);    
+    module.AddFunction(uppercase, "string", In, "uppercase", Out);
 }

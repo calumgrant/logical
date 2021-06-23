@@ -44,6 +44,7 @@ public:
     static std::size_t GetGlobalCallCountLimit();
     
     static void VisitSteps(EvaluationPtr & ptr, const std::function<void(EvaluationPtr&)> &fn);
+    void VisitSteps(const std::function<void(Evaluation&)> & fn);
 
     // Options for analysis
     
@@ -76,14 +77,22 @@ public:
     enum class VariableAccess { Read, Write, ReadWrite };
     virtual void VisitVariables(const std::function<void(int&, VariableAccess)> &fn)=0;
     virtual void VisitWrites(const std::function<void(Relation*&, int, const int*)> &fn);
-    virtual EvaluationPtr Clone() const =0;
         
     // Clones this node but adds a new "Next"
     virtual EvaluationPtr WithNext(const EvaluationPtr & next) const;
-        
+
+    // Public interface to clone this evaluation
+    // Also clones the internal structure (including merged branches etc).
+    EvaluationPtr Clone();
+    EvaluationPtr CloneInternal();
+
 protected:    
     // Hide the implementation
     virtual void OnRow(Row row) =0;
+
+    EvaluationPtr clone;
+    virtual EvaluationPtr MakeClone() const =0;
+
 private:
     // The number of times Evaluate() has been called.
     std::size_t callCount;
