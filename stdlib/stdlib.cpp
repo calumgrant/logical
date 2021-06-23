@@ -44,10 +44,10 @@ void RegisterFunctions(Module & module)
     module.AddFunction(uppercase, "string", In, "uppercase", Out);
     module.AddFunction(none, "none", Out);
     
-    module.AddFunction(readcontents, "file", In, "contents", Out);
-    module.AddFunction(readlines, "file", In, "line", Out, "text", Out);
-    module.AddCommand(writecontents, "file", "contents");
-    module.AddCommand(writelines, "file", "line", "text");
+    module.AddFunction(readcontents, "file", In, "file-contents", Out);
+    module.AddFunction(readlines, "file", In, "file-line", Out, "text", Out);
+    module.AddCommand(writecontents, "file", "file-contents");
+    module.AddCommand(writelines, "file", "file-line", "text");
     
     module.AddFunction(regexmatch, "regex", In, "regex-match", In);
     module.AddFunction(regexmatchgroup, "regex", In, "regex-match", In, "group", Out, "value", Out);

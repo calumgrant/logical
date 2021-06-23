@@ -1,21 +1,10 @@
 # Work plan
 
-Reading files from extern.
+- Semi-naive
+  1. Insert extra guard at start of predicate
+  2. Rebind the remaining predicate
+  3. Profit!
 
-```
-print x if file "test.txt" has contents x.
-print x if x = "Hello world!".
-```
-
-Problem is that it queries `file/1` first, which fails.
-
-
-
-
-
-
-
-- Auto semi-naive
 - have an analysis "consistent writes" that ensures that all written variables have the same locations.
 
 - Optimization: Drop deduplication guard on things that are already deduplicated.
@@ -93,6 +82,7 @@ Expressing execution as a graph.
 
 ## General ideas
 
+- Optimization: A regex pool to speed up regex search.
 - Compile to a proper bytecode that can be stored in the datafile.
 
 - Trap importer extern.

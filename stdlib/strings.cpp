@@ -134,7 +134,7 @@ void writecontents(Call & call)
 void regexmatch(Call & call)
 {
     const char * str, *regex;
-    if(call.Get(0, str) && call.Get(1, regex))
+    if(call.Get(1, str) && call.Get(0, regex))
     {
         std::regex re(regex);
         if (std::regex_match(str, re))
@@ -145,7 +145,7 @@ void regexmatch(Call & call)
 void regexmatchgroup(Call & call)
 {
     const char * str, *regex;
-    if(call.Get(0, str) && call.Get(1, regex))
+    if(call.Get(1, str) && call.Get(0, regex))
     {
         std::regex re(regex);
         std::match_results<const char*> match;
