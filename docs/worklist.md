@@ -1,35 +1,68 @@
 # Work plan
 
-- Cloning and deduplicating 
-- Fail to compile a clause on binding error.
+- Merge cloned branches.
+  1. Set "clone" = null in the branch
+  2. When we clone, return the cloned value 
+    Clone()
+      - Resets all clones
+      - Calls CloneInternal()
+    CloneInternal()
+      - Checks clone
+      - Calls MakeClone if needed
+      - returns the clone
+    MakeClone()
+      - Constructs a new object
+      - Calls CloneInternal on the next thing
 
-Binding bug in 
-`person X is rich if sum V over C in (X has cash C and C has value V) > 100.`
-Bug is that the LHS should not bind.
+- Fix deduplication
+  1. Detect all bound variables and make a table.
+     - The "Compilation" object should help with this...
+     - Counting: Only look at the variables used in the body
+     - Visit all variables in the compiled body in order to get the guard.
+     (X=1 or Y=1) and z = count Z in f(X,Y,Z)
+     Problem here is: What is the bound set?
+     problem #2: need to 
+     Solution: join all of the branches and persist this with a clone.
+
+- Auto semi-naive
+- have a module "consistent writes" that ensures that all written variables have the same locations.
+- Deduplicate guard should still capture all variables and use a shared table.
+  - Everything that's bound?
+  - Everything that's counted
+- Optimization: Drop deduplication guard on things that are already deduplicated.
+- Predicate should keep deduplication guards for various combinations of locals?
+  - Using a bit mask???
+  - The cloner should help with this.
+  class CloneHelper
+  {
+    std::unordered_map<Columns, std::shared_ptr<Table>> tables
+  }
+
+
+- Cloning and deduplicating 
+  - Each deduplicate contains a syntax node that marks the "set"
+  - Or, we use branching correctly.
+
+- Binding could be solved using betas!! beta for “binding predicate”.
+
+Solution 1: Clone should respect joins/deduplicate somehow.
+Solution 2: Maintain the tree, but have an underlying identifier for the deduplication?
+
+- Fail to compile a clause on binding error. This actually crashes (`binding.dl`).
+- Don't auto-naive everything. It's not efficient (e.g. when counting something.) It just causes duplication. When to apply semi-naive?
+- Need a cost-estimate. It can be applied when
+  - The output value appears in a join.
+  - It's the first join (or, it could be the first join).
+  - It appears in the recursive case.
+  - The callee decides what could make sense to semi-naive.
+  - I'm thinking that auto semi-naive would actually be better.
+
 
 `count1` problem: deduplicate is cloned and so is the underlying table. The original logic to join the branches didn't work.
-Solution: Clone should respect joins/deduplicate somehow.
-Solution 2: 
-
 
 Current problem: When we cloned the rule and created a semi-naive version, we still shared the old deduplication guard. Unfortunately, both rules are attached to the execution unit, and the non-recursive rule ran first and used the deduplication guard. The result is that when the second rule was run, the deduplication guard prevented it.
 
-
-
-
-- Why isn't the write has:value turned into a has:value:B in the rewriter???
-
-
-- Binding analysis needs to be done just before recursion. Needs to be on a relation. Needs to operate recursively.
-  - Bug in `count1`: deduplication hasn't worked properly.
-  - `syntax`: Mysterious binding error assert failed.
-  - `new4`: Recursion failed somehow. For some reason, it's writing the results into `has:value` not `has:value:B`.
-  - Bug is that the same rule has appeared twice in the evaluation unit.
-  - The bound and unbound version of the rule appear in the same execution unit.
-  - Why no delta analysis on the called predicate?
-
-- Make sure that the binding analysis runs over the created bound predicates.
-
+- The bound and unbound version of the rule appear in the same execution unit.
 
 - Externs
   - Check binding errors at compile time?
@@ -39,13 +72,17 @@ Current problem: When we cloned the rule and created a semi-naive version, we st
   `class PredicateName` ??
 - All errors to have locations
 - Locations to have filenames
-- Ability to memoise external predicates??
 - Test projecting external predicates.
 - In a fact, unbound variables are treated as strings. E.g. `module fubar.` treats `fubar` as a string.
 - Think about how qualified names are supposed to with with attributes?
   xml:node node has child c, index i. In this case we want a single predicate
     `xml:node:child:index.`
 - Private symbols in modules?
+- Idea: Compile queries to a DLL/ ensure that the public API is sufficiently powerful for this, perhaps by enabling queries.
+```
+Predicate * p = module.PrepareQuery(extern1, extern1, "person", In, "name", Out);
+```
+
 
 ## Semi-naive evaluation (SNE)
 

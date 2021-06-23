@@ -376,7 +376,7 @@ void ExecutionUnit::RunRules()
         return;
     evaluated = true;
 
-    if (database.GetVerbosity() >= 2)
+    if (database.GetVerbosity() > 2)
     {
         std::cout << "About to evaluate:" << std::endl;
         std::cout << rules.rules.size() << " rules:\n";
@@ -402,7 +402,7 @@ void ExecutionUnit::RunRules()
 
         loopSize = numberOfResults;
 
-        if (database.GetVerbosity() >= 2)
+        if (database.GetVerbosity() > 2)
         {
             std::cout << "Number of results in loop = " << loopSize << std::endl;
             Explain();
