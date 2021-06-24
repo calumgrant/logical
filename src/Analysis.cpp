@@ -44,6 +44,8 @@ public:
                             eval = std::make_shared<OrEvaluation>(write, eval);
                             Analyse(*relation);  // Analyse unbound relation as well
                             relation = &bound;
+                            
+                            guard.AddRule(rule);
                         }
                     }
                     Analyse(*relation);
@@ -579,7 +581,7 @@ OptimizerImpl::OptimizerImpl()
     static Deltas deltas;
     static RecursiveBranch recursiveBranch;
     
-    RegisterOptimization(binding);
+//    RegisterOptimization(binding);
     RegisterOptimization(recursion);
     RegisterOptimization(deltas);
     RegisterOptimization(recursiveBranch);

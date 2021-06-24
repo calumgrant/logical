@@ -296,14 +296,37 @@ private:
     std::unordered_map<int, int> variableMapping;
 };
 
-std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> &rule, Predicate &oldPredicate, Relation &bindingRelation, Columns columns)
+std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> &rule, Predicate &oldPredicate, Relation &bindingRelation, Columns columns, Relation & binding2)
 {
     WriteAnalysis write(*rule, oldPredicate);
 
     auto clone = rule->Clone();
     // write.UpdateVariables(*clone);
     write.UpdateWrites(*clone, bindingRelation);
+    
+    int ba = binding2.Arity();
+    std::vector<int> inputs, outputs;
+    inputs.reserve(ba);
+    outputs.reserve(ba);
+    
+    for(int i=0; i<ba; ++i)
+    {
+        inputs.push_back(-1);
+        outputs.push_back(i);
+    }
 
+    Evaluation::VisitSteps(clone, [&](EvaluationPtr &p) {
+        auto re = std::dynamic_pointer_cast<RuleEvaluation>(p);
+        if(re)
+        {
+            re->VisitNext([&](EvaluationPtr & next, bool) {
+                for(int i=0; i<ba; ++i)
+                    next->BindVariable(next, i);
+                next = std::make_shared<Join>(binding2, inputs, outputs, next);
+            });
+        }
+    });
+    
     return clone;
 }
 
@@ -323,7 +346,8 @@ Relation &Predicate::GetBoundRelation(Columns columns)
         auto &binding = GetBindingRelation(columns);
         for (auto &r : rules.rules)
         {
-            auto b = MakeBoundRule(r, *this, *i, columns);
+            auto b = MakeBoundRule(r, *this, *i, columns, binding);
+            //binding.AddRule(b);
             i->AddRule(b);
         }
 

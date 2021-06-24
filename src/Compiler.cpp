@@ -309,7 +309,7 @@ std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compil
     clause->SetNext(handler);
     auto bodyEval = clause->Compile(db, compilation);
 
-    return std::make_shared<Load>(slot, ::Entity(EntityType::Boolean,1),
+    return std::make_shared<LoadF>(slot, ::Entity(EntityType::Boolean,1),
                                   std::make_shared<OrEvaluationForNot>(bodyEval, std::make_shared<NotNone>(slot, nextEval)));
 }
 
@@ -555,7 +555,7 @@ int AST::Value::BindVariables(Database &db, Compilation &c, bool &bound)
 
 std::shared_ptr<Evaluation> AST::Value::Compile(Database &db, Compilation &c, const std::shared_ptr<Evaluation> & next) const
 {
-    return std::make_shared<Load>(slot, value, next);
+    return std::make_shared<LoadF>(slot, value, next);
 }
 
 class ResultsPrinterEval : public Evaluation
@@ -812,7 +812,7 @@ std::shared_ptr<Evaluation> AST::Count::Compile(Database &db, Compilation&c, con
         
     c.Branch(branch);
     
-    return std::make_shared<Load>(slot, db.CreateInt(0), std::make_shared<OrEvaluation>(eval, next));
+    return std::make_shared<LoadF>(slot, db.CreateInt(0), std::make_shared<OrEvaluation>(eval, next));
 };
 
 int AST::Aggregate::BindVariables(Database & db, Compilation &c, bool & bound)
@@ -876,5 +876,5 @@ std::shared_ptr<Evaluation> AST::Sum::Compile(Database &db, Compilation&c, const
     c.Branch(branch);
     eval = std::make_shared<DeduplicationGuard>(terminator.result, eval);
     
-    return std::make_shared<Load>(slot, db.CreateInt(0), std::make_shared<OrEvaluation>(eval, next));
+    return std::make_shared<LoadF>(slot, db.CreateInt(0), std::make_shared<OrEvaluation>(eval, next));
 };

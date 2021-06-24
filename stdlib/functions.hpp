@@ -16,3 +16,8 @@ void writecontents(Call & call);
 void writelines(Call & call);
 void regexmatch(Call & call);
 void regexmatchgroup(Call & call);
+
+void messages(Call & call);
+void messageoftheday(Call & call);
+void rand(Call & call);
+void srand(Call & call);

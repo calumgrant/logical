@@ -80,6 +80,7 @@ public:
         
     // Clones this node but adds a new "Next"
     virtual EvaluationPtr WithNext(const EvaluationPtr & next) const;
+    virtual void BindVariable(EvaluationPtr & p, int variable);
 
     // Public interface to clone this evaluation
     // Also clones the internal structure (including merged branches etc).

@@ -1,4 +1,6 @@
 #include "functions.hpp"
+#include <cstring>
+#include <string>
 
 static void expectedresults(Call & call)
 {
@@ -31,6 +33,23 @@ static void none(Call & call)
     // Fails always
 }
 
+extern char ** environ;
+
+static void environment(Call & call)
+{
+    for(auto e = environ; *e; ++e)
+    {
+        auto eq = strchr(*e, '=');
+        if(eq)
+        {
+            std::string key(*e, eq);
+            call.Set(0, key.c_str());
+            call.Set(1, eq+1);
+            call.YieldResult();
+        }
+    }
+}
+
 void RegisterFunctions(Module & module)
 {
     module.AddCommand(print, "print");
@@ -53,5 +72,18 @@ void RegisterFunctions(Module & module)
     module.AddFunction(regexmatchgroup, "regex", In, "regex-match", In, "group", Out, "value", Out);
     // module.AddFunction(regexsearch, "regex", In, "regex-search", In, "index", Out, "position", Out);
     //module.AddFunction(regexsearchgroup, "regex", In, "regex-search", In, "index", Out, "position", Out);
-
+    
+    // TODO: Add this as a table.
+    module.AddFunction(messages, "std:messages", Out);
+    module.AddFunction(messages, "messages", Out);
+    module.AddFunction(messageoftheday, "std:message-of-the-day", Out);
+    
+    // Gets the nth random number.
+    module.AddFunction(rand, "index", In, "random", Out);
+    
+    // TODO: Make a table
+    module.AddFunction(environment, "key", Out, "environment", Out);
+    
+    // Directory listing functions
+    
 }

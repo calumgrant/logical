@@ -161,3 +161,25 @@ void regexmatchgroup(Call & call)
         }
     }
 }
+
+static const char * messageText[] = { "Promogulating",
+    "Spawning", "Refining", "Reifying", "Injecting", "Pronouncing", "Ephemerating", "Proscribing", "Transliterating", "Emptying the bath", "Watching the paint dry", "Cleaning the patio", "Sweeping under the rug", "Asserting assertions", "Retracting", "Stating facts", "Stating the obvious", "Proliferating", "Expunging", "Counting tuples", "AcquiAcquiring locksringlocks", "Cleaning the toilet", "Collecting garbage", "Effusing results", "Starting cloud service", "Bootstrapping bootstraps", "Boosting availability", "Boosting productivity", "Counting cores", "Starting botnet", "Laying plans", "Setting traps", "Pontificating", "Respawning", "Prevaricating", "Navel-gazing", "Counting sheep", "Backtracking", "Starting infinite loop", "Increasing entropy", "Commutating commutators", "Closing transitively", "Assuming a closed world", "Enjoying the weather", "Raising the dead", "Invoking dark magic", "Summoning Bal'thazaar", "Trying to remember De Morgan", "Being optimistic", "Opening portal", "Untangling spaghetti", "Staring at feet", "Finding fixed-points", "Out to lunch", "Chasing wild geese", "Iterating", "Recursing", "Cursing again", "Trying on shoes", "Herding cats", "Praying", "Begging for mercy", "Crossing fingers", "Touching wood", "Allocating memory", "Cursing Bill Gates", "Raising expectations", "Weighing alternatives", "Reordering joins", "Going on a diet",
+    
+    nullptr };
+
+void messages(Call & call)
+{
+    for(auto m = messageText; *m; ++m)
+    {
+        call.Set(0, *m);
+        call.YieldResult();
+    }
+}
+
+void messageoftheday(Call & call)
+{
+    const auto count = sizeof(messageText)/sizeof(messageText[0]);
+    // int n =
+}
+
+

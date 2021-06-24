@@ -469,7 +469,10 @@ void DatabaseImpl::CreateProjection(const CompoundName &from, const CompoundName
     
     auto writer = allocate_shared<Writer>(datafile, *datastore->tables[to], projection);
     
-    auto reader = allocate_shared<Reader>(datafile, *datastore->tables[from], cols, writer);
+    std::vector<int> inputs(cols);
+    std::fill(inputs.begin(), inputs.end(), -1);
+    
+    auto reader = allocate_shared<Join>(datafile, *datastore->tables[from], inputs, cols, writer);
     
     auto eval = allocate_shared<RuleEvaluation>(datafile, cols.size(), reader);
     

@@ -1,0 +1,6 @@
+
+find _ has environment _.
+
+user X if "USER" has environment X.
+
+find user.

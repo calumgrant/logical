@@ -164,6 +164,7 @@ Arity TableImpl::GetArity() const
 
 void TableImpl::QueryDelta(Row row, Columns columns, Receiver &v)
 {
+    /*
     if(deltaStart == deltaEnd)
     {
         // This feels like a hack
@@ -172,6 +173,7 @@ void TableImpl::QueryDelta(Row row, Columns columns, Receiver &v)
         deltaStart = 0;
         deltaEnd = data.size();
     }
+     */
     
     if(columns.IsUnbound())
     {

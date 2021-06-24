@@ -21,3 +21,7 @@ add_test(NAME Strings2 COMMAND logical ../../stdlib/tests/strings2.dl)
 add_test(NAME File1 COMMAND logical ../../stdlib/tests/file1.dl)
 add_test(NAME File2 COMMAND logical ../../stdlib/tests/file2.dl)
 add_test(NAME Regex1 COMMAND logical ../../stdlib/tests/regex1.dl)
+
+add_test(NAME Random COMMAND logical ../../stdlib/tests/random.dl)
+add_test(NAME Environment COMMAND logical ../../stdlib/tests/environment.dl)
+add_test(NAME MessageOfTheDay COMMAND logical ../../stdlib/tests/messages.dl)

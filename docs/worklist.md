@@ -11,6 +11,15 @@
 
 - Binding could be solved using betas!! beta for “binding predicate”.
 
+- Message of the day.
+
+- Functions for
+  - message of the day
+  - randomness
+  - time
+
+- How to implement a parsing predicate? E.g. 
+
 - Fail to compile a clause on binding error. This actually crashes (`binding.dl`).
 - Don't auto-naive everything. It's not efficient (e.g. when counting something.) It just causes duplication. When to apply semi-naive?
 - Need a cost-estimate. It can be applied when
@@ -19,6 +28,12 @@
   - It appears in the recursive case.
   - The callee decides what could make sense to semi-naive.
   - I'm thinking that auto semi-naive would actually be better.
+
+- Write lines???
+```
+"file1.txt" has file-line n, text t if
+  n=1
+```
 
 - Externs
   - Check binding errors at compile time?
@@ -38,6 +53,16 @@
 ```
 Predicate * p = module.PrepareQuery(extern1, extern1, "person", In, "name", Out);
 ```
+
+- Prefix `std:` does not work.
+
+## Running as a server
+
+(As an alternative to using "persist"). TODO: Get "Persist" working.
+
+The `-S` option creates a new server, killing the existing server if required. The `-s` option connects to an existing server.
+
+You can specify the name of the socket, for example `-ssocket1` which will create a socket `socket1` in the local directory. If no name is specified, then Logical will use the name `logical.socket` in the current directory.
 
 ## Semi-naive evaluation (SNE)
 

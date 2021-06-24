@@ -652,22 +652,44 @@ void SumCollector::Explain(Database &db, std::ostream &os, int indent) const
     std::cout << std::endl;
 }
 
-Load::Load(int slot, const Entity &v, const std::shared_ptr<Evaluation> &next) : slot(slot), value(v), ChainedEvaluation(next)
+LoadF::LoadF(int slot, const Entity &v, const std::shared_ptr<Evaluation> &next) : slot(slot), value(v), ChainedEvaluation(next)
 {
 }
 
-void Load::OnRow(Entity *locals)
+LoadB::LoadB(int slot, const Entity &v, const std::shared_ptr<Evaluation> &next) : slot(slot), value(v), ChainedEvaluation(next)
+{
+}
+
+void LoadF::OnRow(Entity *locals)
 {
     locals[slot] = value;
     next->Evaluate(locals);
 }
 
-void Load::Explain(Database &db, std::ostream &os, int indent) const
+void LoadB::OnRow(Entity *locals)
+{
+    if(locals[slot] == value)
+        next->Evaluate(locals);
+}
+
+void LoadF::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
     os << "Load ";
     OutputIntroducedVariable(os, slot);
     os << " := ";
+    db.PrintQuoted(value, os);
+    OutputCallCount(os);
+    os << " ->\n";
+    next->Explain(db, os, indent + 4);
+}
+
+void LoadB::Explain(Database &db, std::ostream &os, int indent) const
+{
+    Indent(os, indent);
+    os << "Test ";
+    OutputIntroducedVariable(os, slot);
+    os << " == ";
     db.PrintQuoted(value, os);
     OutputCallCount(os);
     os << " ->\n";
@@ -1150,9 +1172,14 @@ void DeduplicationGuard::VisitVariables(const std::function<void(int &, Variable
 {
 }
 
-void Load::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
+void LoadF::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
     fn(slot, VariableAccess::Write);
+}
+
+void LoadB::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
+{
+    fn(slot, VariableAccess::Read);
 }
 
 void DeduplicateV::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
@@ -1351,9 +1378,14 @@ EvaluationPtr Join::MakeClone() const
     return std::make_shared<Join>(*relation, inputs, outputs, next->CloneInternal());
 }
 
-EvaluationPtr Load::MakeClone() const
+EvaluationPtr LoadF::MakeClone() const
 {
-    return std::make_shared<Load>(slot, value, next->CloneInternal());
+    return std::make_shared<LoadF>(slot, value, next->CloneInternal());
+}
+
+EvaluationPtr LoadB::MakeClone() const
+{
+    return std::make_shared<LoadB>(slot, value, next->CloneInternal());
 }
 
 EvaluationPtr AddBBF::MakeClone() const
@@ -1460,4 +1492,112 @@ void Evaluation::VisitSteps(const std::function<void(Evaluation&)> &fn)
 {
     fn(*this);
     VisitNext([&](EvaluationPtr &p, bool) { p->VisitSteps(fn); });
+}
+
+void Evaluation::BindVariable(EvaluationPtr & p, int v)
+{
+}
+
+void OrEvaluation::BindVariable(EvaluationPtr & p, int v)
+{
+    left->BindVariable(left, v);
+    right->BindVariable(right, v);
+}
+
+void ChainedEvaluation::BindVariable(EvaluationPtr & p, int v)
+{
+    next->BindVariable(next, v);
+}
+
+void Join::BindVariable(EvaluationPtr &p, int variable)
+{
+    bool changed = false;
+    
+    for(int i=0; i<inputs.size(); ++i)
+    {
+        if(outputs[i] == variable)
+        {
+            inputs[i] = variable;
+            outputs[i] = -1;
+            changed = true;
+            mask.Bind(i);
+        }
+    }
+    
+    if(!changed)
+    {
+        next->BindVariable(next, variable);
+    }
+}
+
+void LoadF::BindVariable(EvaluationPtr &p, int variable)
+{
+    if(slot == variable)
+    {
+        p = std::make_shared<LoadB>(variable, value, next);
+    }
+    else
+    {
+        next->BindVariable(next, variable);
+    }
+}
+
+void Reader::BindVariable(EvaluationPtr &p, int variable)
+{
+    assert(0);
+    // Deleteme
+}
+
+void AddBBF::BindVariable(EvaluationPtr &p, int variable)
+{
+    assert(0);  // TODO
+}
+
+void SubBBF::BindVariable(EvaluationPtr &p, int variable)
+{
+    assert(0);  // TODO
+}
+
+void DivBBF::BindVariable(EvaluationPtr &p, int variable)
+{
+    assert(0);  // TODO
+}
+
+void ModBBF::BindVariable(EvaluationPtr &p, int variable)
+{
+    assert(0);  // TODO
+}
+
+void MulBBF::BindVariable(EvaluationPtr &p, int variable)
+{
+    assert(0);  // TODO
+}
+
+void NegateBF::BindVariable(EvaluationPtr &p, int variable)
+{
+    assert(0);  // TODO
+}
+
+void RangeU::BindVariable(EvaluationPtr &p, int variable)
+{
+    if(variable == slot2)
+    {
+        p = std::make_shared<RangeB>(slot1, cmp1, slot2, cmp2, slot3, next);
+    }
+    else
+    {
+        next->BindVariable(next, variable);
+    }
+}
+
+void EqualsBF::BindVariable(EvaluationPtr &p, int variable)
+{
+    if(slot2 == variable)
+    {
+        p = std::make_shared<EqualsBB>(slot1, slot2, next);
+    }
+    else
+    {
+        next->BindVariable(next, variable);
+    }
 }
