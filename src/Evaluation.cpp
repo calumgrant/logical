@@ -1220,7 +1220,7 @@ void CreateNew::VisitVariables(const std::function<void(int &, VariableAccess)> 
 
 void CountCollector::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)
 {
-    fn(slot, VariableAccess::Write);
+    fn(slot, VariableAccess::ReadWrite);
 }
 
 void ReaderEvaluation::VisitVariables(const std::function<void(int &, VariableAccess)> &fn)

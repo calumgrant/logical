@@ -627,6 +627,7 @@ public:
     
     void Analyse(EvaluationPtr & rule) const override
     {
+        VerifyWrites2(*rule, 0);
     }
     
     void Analyse(ExecutionUnit & exec) const override
@@ -637,6 +638,26 @@ public:
     {
     }
 
+    void VerifyWrites2(Evaluation & eval, Columns boundVars) const
+    {
+        auto load = dynamic_cast<NotTerminator*>(&eval);
+        bool loadNone = load;
+        
+        // Check current reads
+        eval.VisitVariables([&](int & variable, Evaluation::VariableAccess access) {
+            if(access == Evaluation::VariableAccess::Write)
+            {
+                if(!loadNone)
+                    assert(!boundVars.IsBound(variable));
+                boundVars.Bind(variable);
+            }
+        });
+        
+        eval.VisitNext([&](EvaluationPtr & next, bool) {
+            VerifyWrites2(*next, boundVars);
+        });
+    }
+    
 };
 
 class DeadCodeElimination : public Optimization
