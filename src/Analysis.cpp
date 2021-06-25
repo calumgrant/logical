@@ -667,8 +667,54 @@ public:
     {
     }
     
+    Columns Reads(EvaluationPtr & r) const
+    {
+        Columns result{0};
+        
+        r->VisitNext([&](EvaluationPtr & next, bool) {
+            result = result | Reads(next);
+        });
+
+        bool isNot = dynamic_cast<NotTerminator*>(&*r);
+        
+        if(!isNot)
+        {
+
+                r->VisitVariables([&](int & variable, Evaluation::VariableAccess access) {
+                switch(access)
+                {
+                    case Evaluation::VariableAccess::Write:
+                        // assert(result.IsBound(variable));
+                        if(!result.IsBound(variable))
+                            r->EliminateWrite(r, variable);
+                        break;
+                    default:
+                        break;
+                }
+            });
+        }
+
+        // Process reads after the writes
+        
+        r->VisitVariables([&](int & variable, Evaluation::VariableAccess access) {
+            switch(access)
+            {
+                case Evaluation::VariableAccess::Read:
+                case Evaluation::VariableAccess::ReadWrite:
+                    result.Bind(variable);
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        
+        return result;
+    }
+    
     void Analyse(EvaluationPtr & rule) const override
     {
+        Reads(rule);
     }
     
     void Analyse(ExecutionUnit & exec) const override

@@ -125,6 +125,7 @@ public:
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
     EvaluationPtr MakeClone() const override;
     void BindVariable(EvaluationPtr & p, int variable) override;
+    void EliminateWrite(EvaluationPtr & ptr, int variable) override;
 };
 
 class BinaryRelationEvaluation : public ReaderEvaluation
@@ -439,6 +440,7 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override;
     EvaluationPtr MakeClone() const override;
     void BindVariable(EvaluationPtr & p, int variable) override;
+    void EliminateWrite(EvaluationPtr & ptr, int variable) override;
 };
 
 class CreateNew : public ChainedEvaluation

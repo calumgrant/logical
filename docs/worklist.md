@@ -1,7 +1,5 @@
 # Work plan
 
-- assert in `arithmetic4.dl`
-
 - Implement semi-naive optimization another way:
   - Identify which predicates can be semi-naive
     If it's singly-recursive
@@ -14,7 +12,9 @@
     - Table of "queries" (optional)
     - Table of "results" (as before).
 
-- Dead variable checker.
+- Dead variable checker
+
+- Optimization: Can "push" all results to the first tuple. Can auto-inline any predicate that is never queried. We can "push" all results to other predicates without storing them.
 
 - rule5.dl:
    - Adding a new loop introduces a negative recursion

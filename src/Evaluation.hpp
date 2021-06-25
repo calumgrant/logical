@@ -86,6 +86,8 @@ public:
     // Also clones the internal structure (including merged branches etc).
     EvaluationPtr Clone();
     EvaluationPtr CloneInternal();
+    
+    virtual void EliminateWrite(EvaluationPtr & ptr, int variable);
 
 protected:    
     // Hide the implementation

@@ -1601,3 +1601,25 @@ void EqualsBF::BindVariable(EvaluationPtr &p, int variable)
         next->BindVariable(next, variable);
     }
 }
+
+void Evaluation::EliminateWrite(EvaluationPtr & ptr, int variable)
+{
+    // Do not eliminate anything. This is safe.
+}
+
+void Join::EliminateWrite(EvaluationPtr &ptr, int variable)
+{
+    for(int i=0; i<outputs.size(); ++i)
+    {
+        if(outputs[i] == variable)
+        {
+            outputs[i] = -1;
+        }
+    }
+}
+
+void EqualsBF::EliminateWrite(EvaluationPtr & ptr, int variable)
+{
+    assert(variable == slot2);
+    ptr = next;
+}
