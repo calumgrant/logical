@@ -355,6 +355,35 @@ There are many different ways to read and write data from Logical. The most basi
 
 The most general way to read and write data is to use external predicates, written in C++. This is actually not too complicated, and is very powerful and efficient. All of the other ways to read and write data are build on externs written in C++.
 
+## Reading and writing text files
+
+The `file-contents/2` predicate can be used to read or write the entire contents of a text file.
+
+```
+print "The contents are: " + c if "foo.txt" has file-contents c.
+
+// Write the file now
+"password.txt" has file-contents "letmein".
+
+// Concatenate two files
+"foo.txt" has file-contents a+b if "bar.txt" has file-contents a and "baz.txt" has file-contents b.
+
+// Dump the environment
+"env.txt" has file-line k+"="+v if
+    k has environment-variable v.
+```
+
+Externs can be used for reading or writing data, depending on where they appear in the clause.
+
+// Appending to a file
+
+Since `file-contents/2` is an extern, it is executed at the point that the clause appears in the file.
+
+
+
+
+
+
 ## MySQL interface
 
 ```

@@ -573,6 +573,91 @@ void OptimizerImpl::Optimize(EvaluationPtr & rule) const
         o->Analyse(rule);
 }
 
+// Verifies that all reads have a prior write
+class VerifyReads : public Optimization
+{
+public:
+    VerifyReads() : Optimization("reads", "Checks that all reads have a prior write", 0)
+    {
+    }
+    
+    void Analyse(EvaluationPtr & rule) const override
+    {
+        VerifyReads2(*rule, 0);
+    }
+    
+    void VerifyReads2(Evaluation & eval, Columns boundVars) const
+    {
+        // Check current reads
+        eval.VisitVariables([&](int & variable, Evaluation::VariableAccess access) {
+            switch(access)
+            {
+                case Evaluation::VariableAccess::Read:
+                case Evaluation::VariableAccess::ReadWrite:
+                    assert(boundVars.IsBound(variable));
+                    break;
+                case Evaluation::VariableAccess::Write:
+                    boundVars.Bind(variable);
+                    break;
+            }
+        });
+        
+        eval.VisitNext([&](EvaluationPtr & next, bool) {
+            VerifyReads2(*next, boundVars);
+        });
+    }
+    
+    void Analyse(ExecutionUnit & exec) const override
+    {
+    }
+    
+    void Analyse(Relation & relation) const override
+    {
+    }
+
+};
+
+// Verifies that no writes have a prior write
+class VerifyWrites : public Optimization
+{
+public:
+    VerifyWrites() : Optimization("writes", "Checks that no write has a prior write", 0)
+    {
+    }
+    
+    void Analyse(EvaluationPtr & rule) const override
+    {
+    }
+    
+    void Analyse(ExecutionUnit & exec) const override
+    {
+    }
+    
+    void Analyse(Relation & relation) const override
+    {
+    }
+
+};
+
+class DeadCodeElimination : public Optimization
+{
+public:
+    DeadCodeElimination() : Optimization("deadcode", "Eliminates dead code", 1)
+    {
+    }
+    
+    void Analyse(EvaluationPtr & rule) const override
+    {
+    }
+    
+    void Analyse(ExecutionUnit & exec) const override
+    {
+    }
+    
+    void Analyse(Relation & relation) const override
+    {
+    }
+};
 
 OptimizerImpl::OptimizerImpl()
 {
@@ -580,11 +665,22 @@ OptimizerImpl::OptimizerImpl()
     static Recursion recursion;
     static Deltas deltas;
     static RecursiveBranch recursiveBranch;
+    static DeadCodeElimination deadCode;
+    static VerifyReads reads;
+    static VerifyWrites writes;
     
-//    RegisterOptimization(binding);
+    //RegisterOptimization(binding);
+    
+    RegisterOptimization(reads);
+    RegisterOptimization(writes);
+    
+    RegisterOptimization(deadCode);
     RegisterOptimization(recursion);
     RegisterOptimization(deltas);
     RegisterOptimization(recursiveBranch);
     
+    RegisterOptimization(reads);
+    RegisterOptimization(writes);
+
     SetLevel(0);
 }

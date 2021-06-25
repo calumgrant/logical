@@ -89,8 +89,8 @@ P is orphan if P has no parent _.
 person P is retired if 
     P has age A and (P is male and A>=65 or P is female and A>=60).
 
-person X is old if X has age A and A>=80.
-person X is young if not X is old.
+X is old if X has age A and A>=80.
+X is young if person X and not X is old.
 
 
 
@@ -98,10 +98,10 @@ person X is young if not X is old.
 
 1 has cash 2.
 2 has value 3.
-person X has money M if M = sum V over C in (X has cash C and C has value V).
-person X has money sum V over C in (X has cash C and C has amount V).
-person X has coins count C in (X has cash C).
-person X is rich if sum V over C in (X has cash C and C has value V) > 100.
+X has money M if person X and M = sum V over C in (X has cash C and C has value V).
+X has money sum V over C in (X has cash C and C has amount V) if person X.
+X has coins count C in (X has cash C) if person X.
+X is rich if person X and sum V over C in (X has cash C and C has value V) > 100.
 
 person X is rich if 
     all (rich X) in X has parent P and rich P.

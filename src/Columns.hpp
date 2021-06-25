@@ -11,7 +11,7 @@ public:
     
     bool IsFullyBound(int arity) const { auto m = (1UL<<arity)-1; return (mask & m) == m; }
     
-    void Bind(int col) { mask |= (1UL<<col); }
+    Columns & Bind(int col) { mask |= (1UL<<col); return *this; }
 
     struct Hash
     {
@@ -34,4 +34,6 @@ public:
     }
 
     std::uint64_t mask;
+    
+    Columns operator|(Columns c) const { return mask | c.mask; }
 };

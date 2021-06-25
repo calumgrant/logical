@@ -1,9 +1,31 @@
 # Work plan
 
+- assert in `arithmetic4.dl`
+
+- Implement semi-naive optimization another way:
+  - Identify which predicates can be semi-naive
+    If it's singly-recursive
+    If it's only called as a bindingset
+    If there are only joins?
+    basically just `reaches` at this point.
+  - Get rid of binding predicates for now.
+  - Create a semi-naive predicate version (using B), and call that.
+  - Implement semi-naive predicates
+    - Table of "queries" (optional)
+    - Table of "results" (as before).
+
+- Dead variable checker.
+
+- rule5.dl:
+   - Adding a new loop introduces a negative recursion
+   - Need to separate out the different branches into completely different clauses.
+   - Mustn't evaluate the consumer of the result before clause fully evaluated.
+
 - Semi-naive
-  1. Insert extra guard at start of predicate
-  2. Rebind the remaining predicate
-  3. Profit!
+- Fix up existing tests or abandon it.
+- Write proper predicate names into the `debugName`
+- Split recursive predicates up into two loops (non-recursive and recursive).
+- Optimization: Eliminate dead reads.
 
 - have an analysis "consistent writes" that ensures that all written variables have the same locations.
 

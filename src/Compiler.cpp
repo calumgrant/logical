@@ -563,7 +563,6 @@ class ResultsPrinterEval : public Evaluation
 public:
     ResultsPrinterEval(Database & db, int rs) : database(db), rowSize(rs), count() { }
     
-    
     void OnRow(Entity * row) override
     {
         database.AddResult(row, rowSize, true);
@@ -585,7 +584,7 @@ public:
     std::size_t Count() const { return count; }
     
     EvaluationPtr MakeClone() const override { return nullptr; }
-
+        
 private:
     Database & database;
     const int rowSize;
@@ -707,9 +706,10 @@ std::shared_ptr<Evaluation> AST::Entity::Compile(Database &db, Compilation&, con
     return next;
 }
 
-std::shared_ptr<Evaluation> AST::NegateEntity::Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const
+std::shared_ptr<Evaluation> AST::NegateEntity::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const
 {
-    return std::make_shared<NegateBF>(slot1, resultSlot, next);
+    auto eval = std::make_shared<NegateBF>(slot1, resultSlot, next);
+    return entity->Compile(db, c, eval);
 }
 
 std::shared_ptr<Evaluation> AST::AddEntity::Compile(Database &db, Compilation&c, const std::shared_ptr<Evaluation> & next) const

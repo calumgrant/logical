@@ -406,10 +406,12 @@ void ExecutionUnit::RunRules()
         std::cout << rules.rules.size() << " rules:\n";
         Explain();
     }
-
     
     for (auto r : relations)
+    {
+        assert(&*r->loop == this);
         r->FirstIteration();
+    }
 
     for (auto &p : rules.rules)
     {
