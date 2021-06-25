@@ -856,6 +856,7 @@ Join::Join(Relation &relation, const std::vector<int> &inputs, const std::vector
             mask.mask |= shift;
         shift <<= 1;
     }
+    UpdateHasOutput();
 }
 
 void Join::OnRow(Entity *locals)
@@ -887,8 +888,10 @@ void Join::OnRow(Entity *locals)
 
     if (useDelta)
         relation->QueryDelta(&data[0], mask, visitor);
-    else
+    else if(hasOutput)
         relation->Query(&data[0], mask, visitor);
+    else if(relation->QueryExists(&data[0], mask))
+        next->Evaluate(locals);
 }
 
 void Evaluation::OutputVariable(std::ostream &os, int variable)
@@ -1614,6 +1617,20 @@ void Join::EliminateWrite(EvaluationPtr &ptr, int variable)
         if(outputs[i] == variable)
         {
             outputs[i] = -1;
+        }
+    }
+    UpdateHasOutput();
+}
+
+void ReaderEvaluation::UpdateHasOutput()
+{
+    hasOutput = false;
+
+    for(int i=0; i<outputs.size(); ++i)
+    {
+        if(outputs[i] != -1)
+        {
+            hasOutput = true;
         }
     }
 }

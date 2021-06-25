@@ -18,6 +18,8 @@ public:
     // Queries all items in the current delta
     virtual void QueryDelta(Row row, Columns columns, Receiver &r) =0;
     
+    virtual bool QueryExists(Row row, Columns columns) =0;
+    
     // Iteration management
     
     // Sets the delta to be the whole table.

@@ -67,8 +67,9 @@ public:
     void VisitRules(const std::function<void(Evaluation&)> &) override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
     
-    void Query(Entity * row, Columns columns, Receiver &r) override;
-    void QueryDelta(Entity * row, Columns columns, Receiver &r) override;
+    void Query(Row row, Columns columns, Receiver &r) override;
+    void QueryDelta(Row row, Columns columns, Receiver &r) override;
+    bool QueryExists(Row row, Columns columns) override;
     void Add(const Entity * data) override;
     ::Arity Arity() const override;
     Size Count() override;
@@ -119,6 +120,7 @@ public:
     std::size_t Count() override;
     void Query(Entity *row, Columns columns, Receiver&v) override;
     void QueryDelta(Entity*row, Columns columns, Receiver&v) override;
+    bool QueryExists(Entity * row, Columns columns) override;
     bool IsSpecial() const override;
 };
 

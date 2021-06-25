@@ -58,6 +58,24 @@ void SpecialPredicate::QueryDelta(Row row, Columns columns, Receiver &v)
     Query(row, columns, v);
 }
 
+class BoolReceiver : public Receiver
+{
+public:
+    bool hasResult = false;
+    
+    void OnRow(Row row) override
+    {
+        hasResult = true;
+    }
+};
+
+bool SpecialPredicate::QueryExists(Row row, Columns columns)
+{
+    BoolReceiver receiver;
+    Query(row, columns, receiver);
+    return receiver.hasResult;
+}
+
 Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType binding, Columns cols) : rulesRun(false), name(name), database(db),
     attributes({}, std::hash<Relation *>(), std::equal_to<Relation *>(), db.Storage()),
     reaches(reaches), bindingPredicate(binding), bindingColumns(cols),
@@ -186,6 +204,12 @@ void Predicate::QueryDelta(Entity *row, Columns columns, Receiver &r)
 {
     RunRules();
     table->QueryDelta(row, columns, r);
+}
+
+bool Predicate::QueryExists(Row row, Columns columns)
+{
+    RunRules();
+    return table->QueryExists(row, columns);
 }
 
 void Predicate::Add(const Entity *data)

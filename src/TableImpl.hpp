@@ -26,9 +26,10 @@ public:
     TableImpl(persist::shared_memory &mem, Arity arity);
     
     Size Rows() const override;
-    void Query(Entity * row, Columns columns, Receiver&v) override;
-    void QueryDelta(Entity*row, Columns columns, Receiver&v) override;
-    void OnRow(Entity*row) override;
+    void Query(Row row, Columns columns, Receiver&v) override;
+    void QueryDelta(Row row, Columns columns, Receiver&v) override;
+    bool QueryExists(Row row, Columns columns) override;
+    void OnRow(Row row) override;
     bool Add(const Entity *e) override;
     void Clear() override;
     Arity GetArity() const override;

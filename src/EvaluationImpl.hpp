@@ -25,6 +25,8 @@ protected:
     Relation* relation;
     Columns mask;
     std::vector<int> inputs, outputs;
+    bool hasOutput;
+    void UpdateHasOutput();
 };
 
 class WriterEvaluation : public Evaluation

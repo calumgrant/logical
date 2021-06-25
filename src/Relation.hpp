@@ -31,6 +31,7 @@ public:
     // Call back v.OnRow for each result,
     virtual void Query(Row query, Columns columns, Receiver &v) =0;
     virtual void QueryDelta(Row query, Columns columns, Receiver &v) =0;
+    virtual bool QueryExists(Row query, Columns columns) =0;
 
     // Insert a row into this table.
     virtual void Add(const Entity * row) =0;

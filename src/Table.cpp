@@ -137,7 +137,6 @@ void TableImpl::Query(Row row, Columns mask, Receiver&v)
         }
         else
         {
-            bool debugHadIndex = indexes.find(mask) != indexes.end();
             auto & index = GetIndex(mask);
             assert(index.size() == deltaEnd/arity);
             
@@ -157,6 +156,33 @@ void TableImpl::Query(Row row, Columns mask, Receiver&v)
     }    
 }
 
+bool TableImpl::QueryExists(Row row, Columns mask)
+{
+    if(mask.IsUnbound())
+        return deltaEnd>0;
+    else if(mask.IsFullyBound(arity))
+    {
+        auto s = data.size();
+        data.insert(data.end(), row, row+arity);
+        auto i = hash.find(s);
+        data.resize(s);
+        
+        return i != hash.end() && *i<deltaEnd;
+    }
+    else
+    {
+        auto & index = GetIndex(mask);
+        assert(index.size() == deltaEnd/arity);
+        
+        auto s = data.size();
+        data.insert(data.end(), row, row+arity);
+        auto result = index.equal_range(s);
+        data.resize(s);
+        
+        return result.first != result.second;
+    }
+}
+
 Arity TableImpl::GetArity() const
 {
     return arity;
@@ -164,17 +190,6 @@ Arity TableImpl::GetArity() const
 
 void TableImpl::QueryDelta(Row row, Columns columns, Receiver &v)
 {
-    /*
-    if(deltaStart == deltaEnd)
-    {
-        // This feels like a hack
-        // it comes about when data is asserted directly into the table
-        // but I don't feel this is right.
-        deltaStart = 0;
-        deltaEnd = data.size();
-    }
-     */
-    
     if(columns.IsUnbound())
     {
         // This is an optimization on the next part
