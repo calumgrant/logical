@@ -12,26 +12,14 @@
     - Table of "queries" (optional)
     - Table of "results" (as before).
 
-- Dead variable checker
-
 - Optimization: Can "push" all results to the first tuple. Can auto-inline any predicate that is never queried. We can "push" all results to other predicates without storing them.
-
-- rule5.dl:
-   - Adding a new loop introduces a negative recursion
-   - Need to separate out the different branches into completely different clauses.
-   - Mustn't evaluate the consumer of the result before clause fully evaluated.
 
 - Semi-naive
 - Fix up existing tests or abandon it.
 - Write proper predicate names into the `debugName`
-- Split recursive predicates up into two loops (non-recursive and recursive).
-- Optimization: Eliminate dead reads.
-
-- have an analysis "consistent writes" that ensures that all written variables have the same locations.
+- Split recursive predicates up into two loops (base case and recursive).
 
 - Optimization: Drop deduplication guard on things that are already deduplicated.
-
-- Binding could be solved using betas!! beta for “binding predicate”.
 
 - Message of the day.
 
@@ -40,16 +28,7 @@
   - randomness
   - time
 
-- How to implement a parsing predicate? E.g. 
-
 - Fail to compile a clause on binding error. This actually crashes (`binding.dl`).
-- Don't auto-naive everything. It's not efficient (e.g. when counting something.) It just causes duplication. When to apply semi-naive?
-- Need a cost-estimate. It can be applied when
-  - The output value appears in a join.
-  - It's the first join (or, it could be the first join).
-  - It appears in the recursive case.
-  - The callee decides what could make sense to semi-naive.
-  - I'm thinking that auto semi-naive would actually be better.
 
 - Write lines???
 ```
@@ -186,6 +165,95 @@ becomes (* = write, _ = read)
 
 - new objects to define a variable, and use `and` to assert further facts, for example
   `new expression p has ...,p has parent e.`
+
+# Compilation to C
+
+The external interface should also support the ability to run compiled predicates.
+
+```
+auto & index = Module::GetIndex(predicatename, Binding, columnname, Binding, ...);
+
+```
+
+Each execution unit must be sequenced - this is done as part of a graph.
+
+void eval()
+{
+
+}
+
+# Proper bytecode
+
+
+
+Bytecode readily translated into C.
+
+Format of a predicate:
+- List of referenced calls (e.g. entry point into predicate; table read; table write; extern etc.)
+
+Rules are compiled to bytecode that is executed. The execution environment is:
+
+- instruction pointer (IP), as a pointer (index) into the sequence of instructions of the whole program.
+- stack pointer (SP) into a stack
+- Top stack frame (TP)
+- Current stack frame:
+  - arguments to predicate at SP[-1], SP[-2] (inputs and outputs)
+  - continuation address at SP[0]
+  - continuation SP at SP[1]
+  - local variables - SP[1] ...
+- Return stack (RS)
+  - Return IP address
+  - Return SP
+  - Previous TOP
+
+Return operation (`ret`)
+- IP = RS[0]
+- SP = RS[1]
+- TP = RS[2]
+- RS = RS-2
+
+Query operation (`query`)
+- Puts an iterator on the stack (2 slots maybe)
+- Sets the "return" to be the end of the loop
+
+Succeeed operation (`continue s`)
+- SP += size
+- SP[0] = IP+1
+- SP[1] = ...
+
+- Load constant operation (`load n`)
+- SP[i] = n
+- IP += 9
+
+Write operation - just a call really
+- Copy args to end of stack
+- SP += ...
+- SP[0] = 
+
+- Jump `jmp n`
+- IP += n
+
+Call operation (`call addr`)
+- Copies args to the stack
+- SP += n
+- SP[0] = IP + 4
+- IP = addr
+
+Read from a table:
+- Loop over table:
+  - Push onto RS
+  - IP = SP[0]
+  - SP = SP[1]
+  - SP[1] = create_cursor in table
+  - Address:
+    - Advance cursor
+    - 
+
+
+Main evaluation loop:
+- Read code at IP
+
+
 
 # Database interface
 

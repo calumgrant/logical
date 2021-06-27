@@ -13,9 +13,9 @@ public:
     int level;
     bool enabled;
     
-    virtual void Analyse(EvaluationPtr & relation) const =0;
-    virtual void Analyse(Relation & relation) const =0;
-    virtual void Analyse(ExecutionUnit & exec) const =0;
+    virtual void Analyse(EvaluationPtr & relation) const;
+    virtual void Analyse(Relation & relation) const;
+    virtual void Analyse(ExecutionUnit & exec) const;
 protected:
     Optimization(const char * name, const char * description, int level);
 };

@@ -7,6 +7,8 @@
 #include "DatabaseImpl.hpp"
 #include "OptimizerImpl.hpp"
 
+#include "Program.hpp"
+
 #include <simpletest.hpp>
 
 #undef _NDEBUG
@@ -109,6 +111,60 @@ public:
     
 } stt;
 
+
+class ProgramTests : public Test::Fixture<ProgramTests>
+{
+public:
+    ProgramTests() : base("Program tests")
+    {
+        AddTest(&ProgramTests::Test);
+    }
+
+    class DummyCall : public Logical::Call
+    {
+    };
+
+    void Test()
+    {
+        using namespace Logical;
+
+        DummyCall call;
+        Program<10> program1(call);
+        
+        Int testData[] = { 0, 0, 2, 4, 6, 6 };
+        
+        Logical::Internal::TableData t1 { testData, 6 };
+        
+        program1.tables = &t1;
+        
+        // Lower/upper bound with 0 columns (all unbound = scan whole table)
+        
+        auto p = program1.lower_bound<1>(t1.data, t1.rows);
+        EQUALS(t1.data, p);
+        p = program1.upper_bound<1>(t1.data, t1.rows);
+        EQUALS(t1.data + t1.rows, p);
+        
+        // Lower/upper bound with 1 columns
+        
+        program1.sp[0] = 0;
+        p = program1.lower_bound<1, 0>(t1.data, t1.rows);
+        EQUALS(t1.data, p);
+        p = program1.upper_bound<1, 0>(t1.data, t1.rows);
+ //       EQUALS(2, p - t1.data);
+        
+        program1.sp[0] = 1;
+        p = program1.lower_bound<1, 0>(t1.data, t1.rows);
+        EQUALS(2, p - t1.data);
+        p = program1.upper_bound<1, 0>(t1.data, t1.rows);
+        EQUALS(2, p - t1.data);
+        
+        program1.sp[0] = 2;
+        p = program1.lower_bound<1, 0>(t1.data, t1.rows);
+        EQUALS(t1.data + 2, p);
+        p = program1.upper_bound<1, 0>(t1.data, t1.rows);
+        EQUALS(3, p - t1.data);
+    }
+} pt;
 
 int main()
 {

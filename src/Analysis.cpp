@@ -8,14 +8,11 @@
 #include <iostream>
 
 
+// Delete me - failed experiment
 class BindingAnalysis : public Optimization
 {
 public:
     BindingAnalysis() : Optimization("semi-naive", "Implements semi-naive binding", 1)
-    {
-    }
-    
-    void Analyse(ExecutionUnit & exec) const override
     {
     }
     
@@ -53,10 +50,6 @@ public:
             });
         });
     }
-    
-    void Analyse(EvaluationPtr &) const override
-    {
-    }
 };
 
 
@@ -70,14 +63,6 @@ public:
     void Analyse(Relation & relation) const override
     {
         AnalyseRecursion(relation.GetDatabase(), relation);
-    }
-    
-    void Analyse(ExecutionUnit & exec) const override
-    {
-    }
-
-    void Analyse(EvaluationPtr & rule) const override
-    {
     }
 
 private:
@@ -470,17 +455,9 @@ public:
 
     };
     
-    void Analyse(Relation & relation) const override
-    {
-    }
-    
     void Analyse(ExecutionUnit & exec) const override
     {
         BranchImpl(exec.database, exec);
-    }
-    
-    void Analyse(EvaluationPtr & rule) const override
-    {
     }
 };
 
@@ -497,14 +474,6 @@ public:
             if(eval->readDelta)
                 eval->useDelta = true;
         });
-    }
-    
-    void Analyse(Relation & rel) const override
-    {
-    }
-    
-    void Analyse(EvaluationPtr & ptr) const override
-    {
     }
 };
 
@@ -606,15 +575,6 @@ public:
             VerifyReads2(*next, boundVars);
         });
     }
-    
-    void Analyse(ExecutionUnit & exec) const override
-    {
-    }
-    
-    void Analyse(Relation & relation) const override
-    {
-    }
-
 };
 
 // Verifies that no writes have a prior write
@@ -628,14 +588,6 @@ public:
     void Analyse(EvaluationPtr & rule) const override
     {
         VerifyWrites2(*rule, 0);
-    }
-    
-    void Analyse(ExecutionUnit & exec) const override
-    {
-    }
-    
-    void Analyse(Relation & relation) const override
-    {
     }
 
     void VerifyWrites2(Evaluation & eval, Columns boundVars) const
@@ -716,27 +668,87 @@ public:
     {
         Reads(rule);
     }
+};
+
+void Optimization::Analyse(EvaluationPtr &relation) const {}
+
+void Optimization::Analyse(Relation &relation) const {}
+
+void Optimization::Analyse(ExecutionUnit &exec) const {}
+
+class SemiNaive : public Optimization
+{
+public:
+    SemiNaive() : Optimization("semi-naive", "Enables semi-naive evaluation for selected predicates", 1) {}
     
-    void Analyse(ExecutionUnit & exec) const override
+    class Collector
     {
-    }
+    public:
+        void Analyse(Relation & rel)
+        {
+            rel.VisitRules([&](EvaluationPtr&ptr) { Analyse(ptr); });
+        }
+        
+        int recursiveRules=0;
+        int nonRecursiveRules=0;
+        int eligibleRule=0;
+        
+        bool makeSemiNaive() const { return recursiveRules>0 && recursiveRules == eligibleRule; }
+        
+        void Analyse(EvaluationPtr & rule)
+        {
+            auto isOr = std::dynamic_pointer_cast<OrEvaluation>(rule);
+            
+            if(isOr)
+            {
+                rule->VisitNext([&](EvaluationPtr & p, bool) {
+                    Analyse(p);
+                });
+            }
+            else if(auto isRule = std::dynamic_pointer_cast<RuleEvaluation>(rule))
+            {
+                rule->VisitNext([&](EvaluationPtr & p, bool) {
+                    Analyse(p);
+                });
+            }
+            else
+            {
+                if(rule->onRecursivePath)
+                {
+                    recursiveRules++;
+                    // Must consist of a series of joins
+                    auto r = rule;
+                    while(auto join = std::dynamic_pointer_cast<ReaderEvaluation>(r))
+                        r = join->next;
+                    if(std::dynamic_pointer_cast<WriterEvaluation>(r))
+                        eligibleRule++;
+                }
+                else
+                    nonRecursiveRules++;
+            }
+        }
+    };
     
     void Analyse(Relation & relation) const override
     {
+        Collector c;
+        c.Analyse(relation);
+        relation.enableSemiNaive = c.makeSemiNaive();
     }
 };
 
 OptimizerImpl::OptimizerImpl()
 {
-    static BindingAnalysis binding;
     static Recursion recursion;
     static Deltas deltas;
     static RecursiveBranch recursiveBranch;
     static DeadCodeElimination deadCode;
     static VerifyReads reads;
     static VerifyWrites writes;
+    static SemiNaive seminaive;
     
-    //RegisterOptimization(binding);
+    // The order of these optimizations is important
+    // so do not reorder this list unless you know what you are doing.
     
     RegisterOptimization(reads);
     RegisterOptimization(writes);
@@ -745,6 +757,7 @@ OptimizerImpl::OptimizerImpl()
     RegisterOptimization(recursion);
     RegisterOptimization(deltas);
     RegisterOptimization(recursiveBranch);
+    RegisterOptimization(seminaive);
     
     RegisterOptimization(reads);
     RegisterOptimization(writes);

@@ -107,7 +107,7 @@ namespace Test
         {
             bool p = a == b;
             if(!p)
-                std::cerr << name << ": Expecting a " << a << " but got " << b << std::endl;
+                std::cerr << name << ": Expecting " << a << " but got " << b << std::endl;
             Check(p, file, line);
         }
 

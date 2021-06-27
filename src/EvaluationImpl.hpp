@@ -9,10 +9,9 @@ public:
     void VisitNext(const std::function<void(EvaluationPtr&, bool)> &f) override;
     void BindVariable(EvaluationPtr & p, int variable) override;
 
-protected:
-    ChainedEvaluation(const EvaluationPtr & next);
-    
     EvaluationPtr next;
+protected:
+    ChainedEvaluation(const EvaluationPtr & next);    
 };
 
 class ReaderEvaluation : public ChainedEvaluation

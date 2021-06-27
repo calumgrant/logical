@@ -76,6 +76,7 @@ public:
     Relation * backEdge = nullptr;
     bool inRecursiveLoop = false;
     bool visiting = false;
+    bool enableSemiNaive = false;
 
     std::shared_ptr<ExecutionUnit> loop;
     
