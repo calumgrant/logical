@@ -10,45 +10,49 @@
 /*
     void MyFunction(Call & call)
     {
-        Program<4> program(call);
-        Join join1, join2;
+        TableData p1, p2;
+        JoinData join1, join2;
         Int a, b, c;
+ 
+        InitTable(call, 0, p1);
+        InitTable(call, 1, p2);
 
-        join1 = program.join<0,2>();
+        InitJoin(p1, join1);
     l1:
-        if (!program.next<2,0>(join1, a, b)) goto l3;
-        join2 = program.join<1,2>(b);
+        if (!Next<2>(join1, a, b)) goto l3;
+        InitJoin<2>(join2, p2, b);
     l2:
-        if (!program.next<1>(join2, b, c)) goto l1;
-        program.write(a, c);
+        if (!Next<2>(join2, c)) goto l1;
+        Write(call, a, c);
         goto l2;
     l3:
     }
 
     void MyFunction2(Call & call)
     {
-        Program<1> program(call);
-        program.load<0>("Hello world!");
-        program.write<0>();
+        Write(call, CreateString(call, "Hello world!"));
     }
 
     void RegisterFunctions(Module & module)
     {
         module.AddPredicate(MyFunction, name, dependencies);
+        auto table1 = module.FindTable({ "helloworld" });
+        module.AddTable(MyFunction2, "helloworld", {});
     }
 */
 
 namespace Logical
 {
+    // The data stored in a computed table.
+    // The data is stored deduplicated in lexographical order.
+    struct TableData
+    {
+        const Int * data;  // Contiguous row/column data
+        Int rows;  // Number of rows of data
+    };
+
     namespace Internal
     {
-        // The data stored in a computed table.
-        // The data is stored deduplicated in lexographical order.
-        struct TableData
-        {
-            const Int * data;  // Contiguous row/column data
-            Int rows;  // Number of rows of data
-        };
     
         class Writer
         {
@@ -136,162 +140,93 @@ namespace Logical
         void copy_row(const Int *p) {}
         void copy_row(const Int *p, Int &v) { v = *p; }
         void copy_row(const Int *p, Int &v, Int &vs...) { v = *p; copy_row(p+1, vs); }
-
-        void copy_row(const Int *p, Int *v) { *v = *p; }
-        void copy_row(const Int *p, Int *v, Int &vs...) { *v = *p; copy_row(p+1, vs); }
-
     
         bool equals_row(const Int *p) { return true; }
         bool equals_row(const Int *p, Int v) { return v == *p; }
         bool equals_row(const Int *p, Int v, Int vs...) { return v == *p && equals_row(p+1, vs); }
 
                                                            
-        struct JoinData
-        {
-            const Int * p, *end;
-                        
-            bool Empty() const { return p==end; }
-        };
     }
 
-
-    template<int Arity, int BoundCols>
-    struct JoinData : public Internal::JoinData
+    struct JoinData
     {
-        bool Next()
-        {
-            if(p<end)
-            {
-                p=end;
-                return true;
-            }
-            return false;
-        }
-
-        template<typename...Int>
-        bool Next(Int & ... vs)
-        {
-            if(p<end)
-            {
-                Internal::copy_row(p+BoundCols, vs...);
-                do
-                {
-                    // Skip over equal results
-                    p+=Arity;
-                } while(p<end && Internal::equals_row(p+BoundCols, vs...));
-                return true;
-            }
-            return false;
-        }
-
-        
-        Int RawCount() const { return (end-p)/Arity; }
+        const Int * p, *end;
     };
 
+    bool Empty(const JoinData &join)
+    {
+        return join.p == join.end;
+    }
+
+    bool Next(JoinData &join)
+    {
+        if(join.p<join.end)
+        {
+            join.p = join.end;
+            return true;
+        }
+        return false;
+    }
 
     template<int Arity>
-    struct UniqueJoinData : public Internal::JoinData
+    Int RawCount(JoinData & join)
     {
-        bool Next()
-        {
-            if(p<end)
-            {
-                p=end;
-                return true;
-            }
-            return false;
-        }
+        return (join.end-join.p)/Arity;
+    }
 
-        template<typename...Int>
-        bool Next(Int & ... vs)
+    template<int Arity, int BoundCols, typename...Int>
+    bool Next(JoinData & join, Int & ... vs)
+    {
+        if(join.p<join.end)
         {
-            if(p<end)
+            Internal::copy_row(join.p+BoundCols, vs...);
+            do
             {
-                Internal::copy_row(p, vs...);
-                p+=Arity;
-                // No need to deduplicate
-                return true;
-            }
-            return false;
+                // Skip over equal results
+                join.p += Arity;
+            } while(join.p<join.end && Internal::equals_row(join.p+BoundCols, vs...));
+            return true;
         }
-        
-        Int RawCount() const { return (end-p)/Arity; }
-    };
+        return false;
+    }
 
+    template<int Arity, typename...Int>
+    bool NextScan(JoinData & join, Int & ... vs)
+    {
+        if(join.p<join.end)
+        {
+            Internal::copy_row(join.p, vs...);
+            join.p += Arity;
+            // No need to deduplicate
+            return true;
+        }
+        return false;
+    }
+ 
+    template<int Arity, typename...Int>
+    void InitJoin(TableData & table, JoinData & join, Int... vs)
+    {
+        join.p = Internal::lower_bound<Arity>(table.data, table.rows, vs...);
+        join.end = Internal::upper_bound<Arity>(table.data, table.rows, vs...);
+    }
 
     template<int Arity>
-    struct TableData : Internal::TableData
+    void InitScan(TableData & table, JoinData & join)
     {
-        template<typename...Int>
-        auto Join(Int... vs) const
-        {
-            return JoinData<Arity, sizeof...(Int)>{Internal::lower_bound<Arity>(data, rows, vs...), Internal::upper_bound<Arity>(data, rows, vs...)};
-        }
+        join.p = Internal::lower_bound<Arity>(table.data, table.rows);
+        join.end = Internal::upper_bound<Arity>(table.data, table.rows);
+    }
         
-        auto Join() const
-        {
-            return UniqueJoinData<Arity>{Internal::lower_bound<Arity>(data, rows), Internal::upper_bound<Arity>(data, rows)};
-        }
-        
-        bool Probe() const
-        {
-            return rows>0;
-        }
-        
-        bool Probe(Int vs...) const
-        {
-            return Join(vs).Empty();
-        }
-    };
-
-
-    // The instruction set used to run a program.
-    class Program
+    bool Probe(TableData & table)
     {
-    public:
-        Program(Call & call)
-        {
-            // tables = call.GetTables();
-        }
-
-        // Starts a query
-        template<int Table, int Arity, int Slot, int... Slots>
-        void join()
-        {
-            // Make arity/inputs explicit (even though it's in )
-            // Layout of the scan:
-            // sp[slot] = current position
-            // sp[slot+1] = end position
-            // sp[slot+2 .. slot+2+inputs-1] = inputs
-            // sp[slot+2+inputs .. slot+2+t.arity] = outputs (copied from table)
-        }
-
-
-        // Probes a table to test if a given tuple exists in it
-        template<int Table, int Arity>
-        bool probe(Int vs...)
-        {
-            auto & tableData = tables[Table];
-            return Internal::lower_bound<Arity>(tableData.data, tableData.rows, vs) < Internal::upper_bound<Arity>(tableData.data, tableData.rows, vs);
-        }
-
-        // Advances the query
-        template<int Table, int Arity>
-        bool next()
-        {
-        }
-
-        template<int Table, int Slot>
-        void write()
-        {
-        }
-
-        Int load_int(Int value)
-        {
-        }
-        
-    // protected:
-        Internal::TableData * tables;
-        Internal::Writer ** writers;
-    };
+        return table.rows>0;
+    }
+    
+    template<int Arity>
+    bool Probe(TableData & table, Int vs...)
+    {
+        JoinData join;
+        InitJoin<Arity>(table, join, vs);
+        return !Empty(join);
+    }
 }

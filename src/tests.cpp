@@ -121,24 +121,15 @@ public:
         AddTest(&ProgramTests::TestJoin);
     }
 
-    class DummyCall : public Logical::Call
-    {
-    };
-
     void TestBounds()
     {
         using namespace Logical;
-
-        DummyCall call;
-        Program program1(call);
         
         Int testData[] = { 0, 0, 2, 4, 6, 6 };
         Int testData2[] = { 0,0, 2,0, 2,0, 2, 1};
                 
-        Logical::Internal::TableData tables[] = { { testData, 6 }, { testData2, 3 }};
-        
-        program1.tables = tables;
-        
+        Logical::TableData tables[] = { { testData, 6 }, { testData2, 3 }};
+                
         // Lower/upper bound with 0 columns (all unbound = scan whole table)
         
         auto p = Internal::lower_bound<1>(testData, 6);
@@ -226,75 +217,83 @@ public:
     void TestJoin()
     {
         using namespace Logical;
-        TableData<1> t1;
+        TableData t1;
         Int data1[] = { 0, 2, 3, 4 };
         t1.data = data1;
         t1.rows = 5;
         
-        auto j = t1.Join();
-        EQUALS(5, j.RawCount());
+        JoinData j;
+        InitScan<1>(t1, j);
+        EQUALS(5, RawCount<1>(j));
         
-        auto j2 = t1.Join(2);
-        EQUALS(1, j2.RawCount());
+        JoinData j2;
+        InitJoin<1>(t1, j2, 2);
+        EQUALS(1, RawCount<1>(j2));
         
-        CHECK(j2.Next());
-        CHECK(t1.Join(1).Empty());
-        CHECK(!t1.Join(2).Empty());
+        CHECK((Next<1,1>(j2)));
+        InitJoin<1>(t1, j, 1);
+        CHECK(Empty(j));
+        InitJoin<1>(t1, j, 2);
+        CHECK(!Empty(j));
         
         Int data2[] = { 0, 2, 0, 3, 0, 4, 1, 2, 1, 3, 1, 5 };
-        TableData<2> t2 { data2, 6 };
-        auto j3 = t2.Join(0);
-        CHECK(!j3.Empty());
-        CHECK(j3.RawCount() == 3);
+        TableData t2 { data2, 6 };
+        JoinData j3;
+        InitJoin<2>(t2, j3, 0);
+        CHECK(!Empty(j3));
+        CHECK(RawCount<2>(j3) == 3);
         
         Int r, r1, r2;
-        CHECK(j3.Next(r));
+        CHECK((Next<2,1>(j3, r)));
         EQUALS(2, r);
-        CHECK(j3.Next(r));
+        CHECK((Next<2,1>(j3, r)));
         EQUALS(3, r);
-        CHECK(j3.Next(r));
+        CHECK((Next<2,1>(j3, r)));
         EQUALS(4, r);
-        CHECK(!j3.Next(r));
+        CHECK((!Next<2,1>(j3, r)));
         
         // Whole table join (regression test)
-        auto j3a = t2.Join();
-        CHECK(j3a.Next(r1, r2));
+        JoinData j3a;
+        InitJoin<2>(t2,j3a);
+        CHECK(NextScan<2>(j3a, r1, r2));
         EQUALS(0, r1);
         EQUALS(2, r2);
-        CHECK(j3a.Next(r1, r2));
+        CHECK(NextScan<2>(j3a, r1, r2));
         EQUALS(0, r1);
         EQUALS(3, r2);
 
         Int data3[] = { 0, 2, 1, 0, 2, 2, 0, 3, 1, 0, 3, 2, 1, 0, 0, 1, 0, 1 };
-        TableData<3> t3{data3, 6};
-        auto j4 = t3.Join(0);
-        CHECK(j4.Next(r));
+        TableData t3{data3, 6};
+        JoinData j4;
+        InitJoin<3>(t3, j4, 0);
+        CHECK((Next<3,1>(j4, r)));
         EQUALS(2, r);
-        CHECK(j4.Next(r));
+        CHECK((Next<3,1>(j4, r)));
         EQUALS(3, r);
-        CHECK(!j3.Next(r));
+        CHECK((!Next<3,1>(j4, r)));
         
-        j4 = t3.Join(0);
-        CHECK(j4.Next(r1, r2));
+        InitJoin<3>(t3,j4,0);
+        CHECK((Next<3,1>(j4, r1, r2)));
         EQUALS(2, r1);
         EQUALS(1, r2);
-        CHECK(j4.Next(r1,r2));
+        CHECK((Next<3,1>(j4,r1,r2)));
         EQUALS(r1, 2);
         EQUALS(r2, 2);
-        CHECK(j4.Next(r1,r2));
+        CHECK((Next<3,1>(j4,r1,r2)));
         EQUALS(r1, 3);
         EQUALS(r2, 1);
-        CHECK(j4.Next(r1,r2));
+        CHECK((Next<3,1>(j4,r1,r2)));
         EQUALS(r1, 3);
         EQUALS(r2, 2);
-        CHECK(!j4.Next(r1,r2));
+        CHECK((!Next<3,1>(j4,r1,r2)));
         
-        auto j5 = t3.Join(0,2);
-        CHECK(j5.Next(r));
+        JoinData j5;
+        InitJoin<3>(t3,j5,0,2);
+        CHECK((Next<3,2>(j5,r)));
         EQUALS(1, r);
-        CHECK(j5.Next(r));
+        CHECK((Next<3,2>(j5,r)));
         EQUALS(2, r);
-        CHECK(!j5.Next(r));
+        CHECK((!Next<3,2>(j5, r)));
     }
 } pt;
 
