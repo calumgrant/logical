@@ -118,6 +118,7 @@ public:
     ProgramTests() : base("Program tests")
     {
         AddTest(&ProgramTests::TestBounds);
+        AddTest(&ProgramTests::TestJoin);
     }
 
     class DummyCall : public Logical::Call
@@ -129,7 +130,7 @@ public:
         using namespace Logical;
 
         DummyCall call;
-        Program<10> program1(call);
+        Program program1(call);
         
         Int testData[] = { 0, 0, 2, 4, 6, 6 };
         Int testData2[] = { 0,0, 2,0, 2,0, 2, 1};
@@ -140,102 +141,160 @@ public:
         
         // Lower/upper bound with 0 columns (all unbound = scan whole table)
         
-        auto p = program1.lower_bound<1>(testData, 6);
+        auto p = Internal::lower_bound<1>(testData, 6);
         EQUALS(testData, p);
-        p = program1.upper_bound<1>(testData, 6);
+        p = Internal::upper_bound<1>(testData, 6);
         EQUALS(testData + 6, p);
         
         // Lower/upper bound with 1 columns
 
-        program1.sp[0] = -1;
-        p = program1.lower_bound<1, 0>(testData, 6);
+        p = Internal::lower_bound<1>(testData, 6, -1);
         EQUALS(0, p-testData);
-        p = program1.upper_bound<1, 0>(testData, 6);
+        p = Internal::upper_bound<1>(testData, 6, -1);
         EQUALS(0, p - testData);
 
-        program1.sp[0] = 0;
-        p = program1.lower_bound<1, 0>(testData, 6);
+        p = Internal::lower_bound<1>(testData, 6, 0);
         EQUALS(0, p - testData);
-        p = program1.upper_bound<1, 0>(testData, 6);
+        p = Internal::upper_bound<1>(testData, 6, 0);
         EQUALS(2, p - testData);
         
-        program1.sp[0] = 1;
-        p = program1.lower_bound<1, 0>(testData, 6);
+        p = Internal::lower_bound<1>(testData, 6, 1);
         EQUALS(2, p - testData);
-        p = program1.upper_bound<1, 0>(testData, 6);
+        p = Internal::upper_bound<1>(testData, 6, 1);
         EQUALS(2, p - testData);
         
-        program1.sp[0] = 2;
-        p = program1.lower_bound<1, 0>(testData, 6);
+        p = Internal::lower_bound<1>(testData, 6, 2);
         EQUALS(2, p - testData);
-        p = program1.upper_bound<1, 0>(testData, 6);
+        p = Internal::upper_bound<1>(testData, 6, 2);
         EQUALS(3, p - testData);
         
-        program1.sp[0] = 4;
-        p = program1.lower_bound<1,0>(testData, 6);
+        p = Internal::lower_bound<1>(testData, 6, 4);
         EQUALS(3, p - testData);
-        p = program1.upper_bound<1,0>(testData, 6);
+        p = Internal::upper_bound<1>(testData, 6, 4);
         EQUALS(4, p - testData);
 
-        program1.sp[0] = 6;
-        p = program1.lower_bound<1,0>(testData, 6);
+        p = Internal::lower_bound<1>(testData, 6, 6);
         EQUALS(4, p - testData);
-        p = program1.upper_bound<1,0>(testData, 6);
+        p = Internal::upper_bound<1>(testData, 6, 6);
         EQUALS(6, p - testData);
 
-        program1.sp[0] = 7;
-        p = program1.lower_bound<1,0>(testData, 6);
+        p = Internal::lower_bound<1>(testData, 6, 7);
         EQUALS(6, p - testData);
-        p = program1.upper_bound<1,0>(testData, 6);
+        p = Internal::upper_bound<1>(testData, 6, 7);
         EQUALS(6, p - testData);
 
         // arity=2, columns = 0
-        p = program1.lower_bound<2>(testData2, 3);
+        p = Internal::lower_bound<2>(testData2, 3);
         EQUALS(0, p - testData2);
-        p = program1.upper_bound<2>(testData2, 3);
+        p = Internal::upper_bound<2>(testData2, 3);
         EQUALS(6, p - testData2);
         
         // arity=2, columns=1
         
-        program1.sp[3] = 0;
-        p = program1.lower_bound<2,3>(testData2, 3);
+        p = Internal::lower_bound<2>(testData2, 3, 0);
         EQUALS(0, p-testData2);
-        p = program1.upper_bound<2,3>(testData2, 3);
+        p = Internal::upper_bound<2>(testData2, 3, 0);
         EQUALS(2, p-testData2);
         
-        program1.sp[3] = 1;
-        p = program1.lower_bound<2,3>(testData2, 3);
+        p = Internal::lower_bound<2>(testData2, 3, 1);
         EQUALS(2, p-testData2);
-        p = program1.upper_bound<2,3>(testData2, 3);
+        p = Internal::upper_bound<2>(testData2, 3, 1);
         EQUALS(2, p-testData2);
 
-        program1.sp[3] = 2;
-        p = program1.lower_bound<2,3>(testData2, 3);
+        p = Internal::lower_bound<2>(testData2, 3, 2);
         EQUALS(2, p-testData2);
-        p = program1.upper_bound<2,3>(testData2, 3);
+        p = Internal::upper_bound<2>(testData2, 3, 2);
         EQUALS(6, p-testData2);
         
         // arity=2, columns=2
-        program1.sp[3] = 0;
-        program1.sp[2] = 0;
-        p = program1.lower_bound<2,3,2>(testData2, 3);
+        p = Internal::lower_bound<2>(testData2, 3, 0, 0);
         EQUALS(0, p-testData2);
-        p = program1.upper_bound<2,3,2>(testData2, 3);
+        p = Internal::upper_bound<2>(testData2, 3, 0, 0);
         EQUALS(2, p-testData2);
 
-        program1.sp[3] = 1;
-        program1.sp[2] = 1;
-        p = program1.lower_bound<2,3>(testData2, 3);
+        p = Internal::lower_bound<2>(testData2, 3,1,1);
         EQUALS(2, p-testData2);
-        p = program1.upper_bound<2,3>(testData2, 3);
+        p = Internal::upper_bound<2>(testData2, 3,1,1);
         EQUALS(2, p-testData2);
 
-        program1.sp[3] = 2;
-        program1.sp[2] = 0;
-        p = program1.lower_bound<2,3>(testData2, 3);
+        p = Internal::lower_bound<2>(testData2, 3, 2, 0);
         EQUALS(2, p-testData2);
-        p = program1.upper_bound<2,3>(testData2, 3);
+        p = Internal::upper_bound<2>(testData2, 3, 2, 0);
         EQUALS(6, p-testData2);
+    }
+    
+    void TestJoin()
+    {
+        using namespace Logical;
+        TableData<1> t1;
+        Int data1[] = { 0, 2, 3, 4 };
+        t1.data = data1;
+        t1.rows = 5;
+        
+        auto j = t1.Join();
+        EQUALS(5, j.RawCount());
+        
+        auto j2 = t1.Join(2);
+        EQUALS(1, j2.RawCount());
+        
+        CHECK(j2.Next());
+        CHECK(t1.Join(1).Empty());
+        CHECK(!t1.Join(2).Empty());
+        
+        Int data2[] = { 0, 2, 0, 3, 0, 4, 1, 2, 1, 3, 1, 5 };
+        TableData<2> t2 { data2, 6 };
+        auto j3 = t2.Join(0);
+        CHECK(!j3.Empty());
+        CHECK(j3.RawCount() == 3);
+        
+        Int r, r1, r2;
+        CHECK(j3.Next(r));
+        EQUALS(2, r);
+        CHECK(j3.Next(r));
+        EQUALS(3, r);
+        CHECK(j3.Next(r));
+        EQUALS(4, r);
+        CHECK(!j3.Next(r));
+        
+        // Whole table join (regression test)
+        auto j3a = t2.Join();
+        CHECK(j3a.Next(r1, r2));
+        EQUALS(0, r1);
+        EQUALS(2, r2);
+        CHECK(j3a.Next(r1, r2));
+        EQUALS(0, r1);
+        EQUALS(3, r2);
+
+        Int data3[] = { 0, 2, 1, 0, 2, 2, 0, 3, 1, 0, 3, 2, 1, 0, 0, 1, 0, 1 };
+        TableData<3> t3{data3, 6};
+        auto j4 = t3.Join(0);
+        CHECK(j4.Next(r));
+        EQUALS(2, r);
+        CHECK(j4.Next(r));
+        EQUALS(3, r);
+        CHECK(!j3.Next(r));
+        
+        j4 = t3.Join(0);
+        CHECK(j4.Next(r1, r2));
+        EQUALS(2, r1);
+        EQUALS(1, r2);
+        CHECK(j4.Next(r1,r2));
+        EQUALS(r1, 2);
+        EQUALS(r2, 2);
+        CHECK(j4.Next(r1,r2));
+        EQUALS(r1, 3);
+        EQUALS(r2, 1);
+        CHECK(j4.Next(r1,r2));
+        EQUALS(r1, 3);
+        EQUALS(r2, 2);
+        CHECK(!j4.Next(r1,r2));
+        
+        auto j5 = t3.Join(0,2);
+        CHECK(j5.Next(r));
+        EQUALS(1, r);
+        CHECK(j5.Next(r));
+        EQUALS(2, r);
+        CHECK(!j5.Next(r));
     }
 } pt;
 

@@ -53,15 +53,199 @@ namespace Logical
         class Writer
         {
         };
+
+        inline bool less(const Int*row, Int v);
+        inline bool greater(const Int*row, Int v);
+
+        bool less(const Int*row, Int v, Int vs...)
+        {
+            return v < *row || (v == *row && less(row+1, vs));
+        }
+
+        bool greater(const Int*row, Int v, Int vs...)
+        {
+            return v > *row || (v == *row && greater(row+1, vs));
+        }
+
+        inline bool less(const Int*row, Int v)
+        {
+            return v < *row;
+        }
+        
+        bool greater(const Int*row, Int v)
+        {
+            return v > *row;
+        }
+        
+        // Returns the highest pointer that is <= value
+        template<int Arity, typename ... Ints>
+        const Int * lower_bound(const Int * p, Int n, Ints ... vs)
+        {
+            Int l=0, r=n;
+            while(l<r)
+            {
+                auto m = (l+r)>>1;
+                            
+                if (greater(p + m*Arity, vs...))
+                {
+                    l = m+1;
+                }
+                else
+                {
+                    r = m;
+                }
+            }
+            return p + l*Arity;
+        }
+        
+        template<int Arity>
+        const Int * lower_bound(const Int * p, Int n)
+        {
+            // Optimization of previous case
+            return p;
+        }
+
+        // Returns the smallest pointer that is > value
+        template<int Arity, typename...Ints>
+        const Int * upper_bound(const Int * p, Int n, Ints... vs)
+        {
+            Int l=0, r=n;
+            while(l<r)
+            {
+                auto m = (l+r)>>1;
+
+                if(less(p + m * Arity, vs...))
+                {
+                    r = m;
+                }
+                else
+                {
+                    l = m+1;
+                }
+            }
+            return p+Arity*r;
+        }
+        
+        template<int Arity>
+        const Int * upper_bound(const Int * p, Int size)
+        {
+            // Optimization of previous case
+            return p + Arity * size;
+        }
+
+        void copy_row(const Int *p) {}
+        void copy_row(const Int *p, Int &v) { v = *p; }
+        void copy_row(const Int *p, Int &v, Int &vs...) { v = *p; copy_row(p+1, vs); }
+
+        void copy_row(const Int *p, Int *v) { *v = *p; }
+        void copy_row(const Int *p, Int *v, Int &vs...) { *v = *p; copy_row(p+1, vs); }
+
+    
+        bool equals_row(const Int *p) { return true; }
+        bool equals_row(const Int *p, Int v) { return v == *p; }
+        bool equals_row(const Int *p, Int v, Int vs...) { return v == *p && equals_row(p+1, vs); }
+
+                                                           
+        struct JoinData
+        {
+            const Int * p, *end;
+                        
+            bool Empty() const { return p==end; }
+        };
     }
 
-    struct JoinData
+
+    template<int Arity, int BoundCols>
+    struct JoinData : public Internal::JoinData
     {
-        const Int * p, *end;
+        bool Next()
+        {
+            if(p<end)
+            {
+                p=end;
+                return true;
+            }
+            return false;
+        }
+
+        template<typename...Int>
+        bool Next(Int & ... vs)
+        {
+            if(p<end)
+            {
+                Internal::copy_row(p+BoundCols, vs...);
+                do
+                {
+                    // Skip over equal results
+                    p+=Arity;
+                } while(p<end && Internal::equals_row(p+BoundCols, vs...));
+                return true;
+            }
+            return false;
+        }
+
+        
+        Int RawCount() const { return (end-p)/Arity; }
     };
 
+
+    template<int Arity>
+    struct UniqueJoinData : public Internal::JoinData
+    {
+        bool Next()
+        {
+            if(p<end)
+            {
+                p=end;
+                return true;
+            }
+            return false;
+        }
+
+        template<typename...Int>
+        bool Next(Int & ... vs)
+        {
+            if(p<end)
+            {
+                Internal::copy_row(p, vs...);
+                p+=Arity;
+                // No need to deduplicate
+                return true;
+            }
+            return false;
+        }
+        
+        Int RawCount() const { return (end-p)/Arity; }
+    };
+
+
+    template<int Arity>
+    struct TableData : Internal::TableData
+    {
+        template<typename...Int>
+        auto Join(Int... vs) const
+        {
+            return JoinData<Arity, sizeof...(Int)>{Internal::lower_bound<Arity>(data, rows, vs...), Internal::upper_bound<Arity>(data, rows, vs...)};
+        }
+        
+        auto Join() const
+        {
+            return UniqueJoinData<Arity>{Internal::lower_bound<Arity>(data, rows), Internal::upper_bound<Arity>(data, rows)};
+        }
+        
+        bool Probe() const
+        {
+            return rows>0;
+        }
+        
+        bool Probe(Int vs...) const
+        {
+            return Join(vs).Empty();
+        }
+    };
+
+
     // The instruction set used to run a program.
-    template<int StackSize>
     class Program
     {
     public:
@@ -82,134 +266,31 @@ namespace Logical
             // sp[slot+2+inputs .. slot+2+t.arity] = outputs (copied from table)
         }
 
-        template<int Slot, int Slot2, int...Slots>
-        bool less(const Int*row) const
-        {
-            return sp[Slot] < *row || (sp[Slot] == *row && less<Slot2, Slots...>(row+1));
-        }
-
-        template<int Slot, int Slot2, int...Slots>
-        bool greater(const Int*row) const
-        {
-            return sp[Slot] > *row || (sp[Slot] == *row && greater<Slot2, Slots...>(row+1));
-        }
-
-        template<int Slot>
-        bool less(const Int*row) const
-        {
-            return sp[Slot] < *row || sp[Slot] == *row;
-        }
-        
-        template<int Slot>
-        bool greater(const Int*row) const
-        {
-            return sp[Slot] > *row || sp[Slot] == *row;
-        }
-        
-        // Returns the highest pointer that is <= value
-        template<int Arity, int Slot, int...Slots>
-        const Int * lower_bound(const Int * p, Int n) const
-        {
-            Int l=0, r=n;
-            while(l<r)
-            {
-                auto m = (l+r)>>1;
-                            
-                if (!less<Slot, Slots...>(p + m*Arity))
-                {
-                    l = m+1;
-                }
-                else
-                {
-                    r = m;
-                }
-            }
-            return p + l*Arity;
-        }
-        
-        template<int Arity>
-        const Int * lower_bound(const Int * p, Int size) const
-        {
-            // Optimization of previous case
-            return p;
-        }
-
-        // Returns the smallest pointer that is > value
-        template<int Arity, int Slot, int...Slots>
-        const Int * upper_bound(const Int * p,  Int n) const
-        {
-            Int l=0, r=n;
-            while(l<r)
-            {
-                auto m = (l+r)>>1;
-
-                if(!greater<Slot, Slots...>(p + m * Arity))
-                {
-                    r = m;
-                }
-                else
-                {
-                    l = m+1;
-                }
-            }
-            return p+Arity*r;
-        }
-        
-        template<int Arity>
-        const Int * upper_bound(const Int * p, Int size) const
-        {
-            // Optimization of previous case
-            return p + Arity * size;
-        }
 
         // Probes a table to test if a given tuple exists in it
-        template<int Table, int Arity, int... Inputs>
-        bool probe()
+        template<int Table, int Arity>
+        bool probe(Int vs...)
         {
             auto & tableData = tables[Table];
-            return lower_bound<Arity, Inputs...>(tableData.data, tableData.rows) < upper_bound<Arity, Inputs...>(tableData.data, tableData.rows);
+            return Internal::lower_bound<Arity>(tableData.data, tableData.rows, vs) < Internal::upper_bound<Arity>(tableData.data, tableData.rows, vs);
         }
 
         // Advances the query
-        template<int Table, int Arity, int Slot, int... Outputs>
+        template<int Table, int Arity>
         bool next()
         {
-            // TODO: Skip equal values where possible.
-            if(sp[Slot].i < sp[Slot+1].i)
-            {
-                // copy data
-
-                //for(int i=Inputs; i<Arity; ++i)
-                //    sp[Slot+i] = t.data[sp[Slot].i + i];
-
-                // Advance the iterator
-            }
-            // Check iterators
-            // Load values onto stack
-            // Advance iterator
         }
 
         template<int Table, int Slot>
         void write()
         {
-            static_assert(Slot>=0 && Slot<StackSize, "Slot out of range");
         }
 
-        template<typename Slot>
-        void load_int(Int value)
+        Int load_int(Int value)
         {
-        }
-
-        template<int From, int To>
-        void copy()
-        {
-            static_assert(From>=0 && From<StackSize, "From out of range");
-            static_assert(To>=0 && To<StackSize, "To out of range");
-            sp[To] = sp[To];
         }
         
     // protected:
-        Int sp[StackSize];
         Internal::TableData * tables;
         Internal::Writer ** writers;
     };
