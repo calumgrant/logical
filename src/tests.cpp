@@ -117,14 +117,14 @@ class ProgramTests : public Test::Fixture<ProgramTests>
 public:
     ProgramTests() : base("Program tests")
     {
-        AddTest(&ProgramTests::Test);
+        AddTest(&ProgramTests::TestBounds);
     }
 
     class DummyCall : public Logical::Call
     {
     };
 
-    void Test()
+    void TestBounds()
     {
         using namespace Logical;
 
@@ -132,37 +132,110 @@ public:
         Program<10> program1(call);
         
         Int testData[] = { 0, 0, 2, 4, 6, 6 };
+        Int testData2[] = { 0,0, 2,0, 2,0, 2, 1};
+                
+        Logical::Internal::TableData tables[] = { { testData, 6 }, { testData2, 3 }};
         
-        Logical::Internal::TableData t1 { testData, 6 };
-        
-        program1.tables = &t1;
+        program1.tables = tables;
         
         // Lower/upper bound with 0 columns (all unbound = scan whole table)
         
-        auto p = program1.lower_bound<1>(t1.data, t1.rows);
-        EQUALS(t1.data, p);
-        p = program1.upper_bound<1>(t1.data, t1.rows);
-        EQUALS(t1.data + t1.rows, p);
+        auto p = program1.lower_bound<1>(testData, 6);
+        EQUALS(testData, p);
+        p = program1.upper_bound<1>(testData, 6);
+        EQUALS(testData + 6, p);
         
         // Lower/upper bound with 1 columns
-        
+
+        program1.sp[0] = -1;
+        p = program1.lower_bound<1, 0>(testData, 6);
+        EQUALS(0, p-testData);
+        p = program1.upper_bound<1, 0>(testData, 6);
+        EQUALS(0, p - testData);
+
         program1.sp[0] = 0;
-        p = program1.lower_bound<1, 0>(t1.data, t1.rows);
-        EQUALS(t1.data, p);
-        p = program1.upper_bound<1, 0>(t1.data, t1.rows);
- //       EQUALS(2, p - t1.data);
+        p = program1.lower_bound<1, 0>(testData, 6);
+        EQUALS(0, p - testData);
+        p = program1.upper_bound<1, 0>(testData, 6);
+        EQUALS(2, p - testData);
         
         program1.sp[0] = 1;
-        p = program1.lower_bound<1, 0>(t1.data, t1.rows);
-        EQUALS(2, p - t1.data);
-        p = program1.upper_bound<1, 0>(t1.data, t1.rows);
-        EQUALS(2, p - t1.data);
+        p = program1.lower_bound<1, 0>(testData, 6);
+        EQUALS(2, p - testData);
+        p = program1.upper_bound<1, 0>(testData, 6);
+        EQUALS(2, p - testData);
         
         program1.sp[0] = 2;
-        p = program1.lower_bound<1, 0>(t1.data, t1.rows);
-        EQUALS(t1.data + 2, p);
-        p = program1.upper_bound<1, 0>(t1.data, t1.rows);
-        EQUALS(3, p - t1.data);
+        p = program1.lower_bound<1, 0>(testData, 6);
+        EQUALS(2, p - testData);
+        p = program1.upper_bound<1, 0>(testData, 6);
+        EQUALS(3, p - testData);
+        
+        program1.sp[0] = 4;
+        p = program1.lower_bound<1,0>(testData, 6);
+        EQUALS(3, p - testData);
+        p = program1.upper_bound<1,0>(testData, 6);
+        EQUALS(4, p - testData);
+
+        program1.sp[0] = 6;
+        p = program1.lower_bound<1,0>(testData, 6);
+        EQUALS(4, p - testData);
+        p = program1.upper_bound<1,0>(testData, 6);
+        EQUALS(6, p - testData);
+
+        program1.sp[0] = 7;
+        p = program1.lower_bound<1,0>(testData, 6);
+        EQUALS(6, p - testData);
+        p = program1.upper_bound<1,0>(testData, 6);
+        EQUALS(6, p - testData);
+
+        // arity=2, columns = 0
+        p = program1.lower_bound<2>(testData2, 3);
+        EQUALS(0, p - testData2);
+        p = program1.upper_bound<2>(testData2, 3);
+        EQUALS(6, p - testData2);
+        
+        // arity=2, columns=1
+        
+        program1.sp[3] = 0;
+        p = program1.lower_bound<2,3>(testData2, 3);
+        EQUALS(0, p-testData2);
+        p = program1.upper_bound<2,3>(testData2, 3);
+        EQUALS(2, p-testData2);
+        
+        program1.sp[3] = 1;
+        p = program1.lower_bound<2,3>(testData2, 3);
+        EQUALS(2, p-testData2);
+        p = program1.upper_bound<2,3>(testData2, 3);
+        EQUALS(2, p-testData2);
+
+        program1.sp[3] = 2;
+        p = program1.lower_bound<2,3>(testData2, 3);
+        EQUALS(2, p-testData2);
+        p = program1.upper_bound<2,3>(testData2, 3);
+        EQUALS(6, p-testData2);
+        
+        // arity=2, columns=2
+        program1.sp[3] = 0;
+        program1.sp[2] = 0;
+        p = program1.lower_bound<2,3,2>(testData2, 3);
+        EQUALS(0, p-testData2);
+        p = program1.upper_bound<2,3,2>(testData2, 3);
+        EQUALS(2, p-testData2);
+
+        program1.sp[3] = 1;
+        program1.sp[2] = 1;
+        p = program1.lower_bound<2,3>(testData2, 3);
+        EQUALS(2, p-testData2);
+        p = program1.upper_bound<2,3>(testData2, 3);
+        EQUALS(2, p-testData2);
+
+        program1.sp[3] = 2;
+        program1.sp[2] = 0;
+        p = program1.lower_bound<2,3>(testData2, 3);
+        EQUALS(2, p-testData2);
+        p = program1.upper_bound<2,3>(testData2, 3);
+        EQUALS(6, p-testData2);
     }
 } pt;
 

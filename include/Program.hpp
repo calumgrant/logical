@@ -11,15 +11,16 @@
     void MyFunction(Call & call)
     {
         Program<4> program(call);
+        Join join1, join2;
+        Int a, b, c;
 
-        program.join<0,2,0>();
+        join1 = program.join<0,2>();
     l1:
-        if (!program.next<0,2,0,2,3>()) goto l3;
-        program.copy<3,6>();
-        program.join<1,2,2,1>();
+        if (!program.next<2,0>(join1, a, b)) goto l3;
+        join2 = program.join<1,2>(b);
     l2:
-        if (!program.next<1,6,2,1>()) goto l1;
-        program.write<2,4>();
+        if (!program.next<1>(join2, b, c)) goto l1;
+        program.write(a, c);
         goto l2;
     l3:
     }
@@ -53,6 +54,11 @@ namespace Logical
         {
         };
     }
+
+    struct JoinData
+    {
+        const Int * p, *end;
+    };
 
     // The instruction set used to run a program.
     template<int StackSize>
@@ -153,7 +159,7 @@ namespace Logical
         const Int * upper_bound(const Int * p, Int size) const
         {
             // Optimization of previous case
-            return p + size;
+            return p + Arity * size;
         }
 
         // Probes a table to test if a given tuple exists in it
@@ -161,6 +167,7 @@ namespace Logical
         bool probe()
         {
             auto & tableData = tables[Table];
+            return lower_bound<Arity, Inputs...>(tableData.data, tableData.rows) < upper_bound<Arity, Inputs...>(tableData.data, tableData.rows);
         }
 
         // Advances the query
