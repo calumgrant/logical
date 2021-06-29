@@ -22,10 +22,52 @@ namespace Logical
     };
 
     template<typename Arity>
+    std::vector<Int> CompactTable(Arity arity, const std::vector<Int> & values)
+    {
+        auto s = values.size()/arity.value;
+        std::vector<int> indexes(s);
+        for(int i=0; i<s; ++i)
+            indexes[i] = i * arity.value;
+        
+        std::sort(indexes.begin(), indexes.end(), [&](int a, int b) { return row_less(arity, &values[a], &values[b]); });
+
+        std::vector<Int> results;
+        results.reserve(values.size());
+        
+        // Now, mark duplicates
+        for(int i=0; i<s; ++i)
+            if(i==0 || !row_equals(arity, &values[indexes[i-1]], &values[indexes[i]]))
+            {
+                auto p = &values[indexes[i]];
+                for(int i=0; i<arity.value; ++i)
+                    results.push_back(p[i]);
+            }
+        
+        return std::move(results);
+    }
+
+    // Specialisation of previous case.
+    std::vector<Int> CompactTable(FixedArity<1>, std::vector<Int> & values)
+    {
+        std::sort(values.begin(), values.end());
+        Int out=0;
+        
+        for(Int in=0; in < values.size(); ++in)
+        {
+            if(in==0 || values[in-1] != values[in])
+                values[out++] = values[in];
+        }
+        
+        values.resize(out);
+        
+        return std::move(values);
+    }
+
+    template<typename Arity>
     class Table
     {
     public:
-        Table(int a) : arity(a) {}
+        Table(Arity a) : arity(a) {}
         Table() {}
 
         std::vector<Int> values;
@@ -39,27 +81,7 @@ namespace Logical
         
         void Compact()
         {
-            // TODO: Optimize for the case where arity=1.
-            auto s = size();
-            std::vector<int> indexes(s);
-            for(int i=0; i<s; ++i)
-                indexes[i] = i * arity.value;
-            
-            std::sort(indexes.begin(), indexes.end(), [&](int a, int b) { return row_less(arity, &values[a], &values[b]); });
-
-            std::vector<Int> results;
-            results.reserve(values.size());
-            
-            // Now, mark duplicates
-            for(int i=0; i<s; ++i)
-                if(i==0 || !row_equals(arity, &values[indexes[i-1]], &values[indexes[i]]))
-                {
-                    auto p = &values[indexes[i]];
-                    for(int i=0; i<arity.value; ++i)
-                        results.push_back(p[i]);
-                }
-            
-            values.swap(results);
+            values = CompactTable(arity, values);
         }
     };
 
@@ -85,33 +107,51 @@ namespace Logical
     };
 
     template<typename Arity>
-    class SortedTable : Table<Arity>
+    class SortedTable : public Table<Arity>
     {
     public:
-        SortedTable(const Table<Arity> & src)
+        SortedTable(Table<Arity> && src) : Table<Arity>(src.arity)
         {
+            this->values = CompactTable(src.arity, src.values);
         }
-        
+
         template<int BoundColumns>
         class enumerator
         {
+        public:
+            enumerator(Arity a, const Int * x, const Int *y) : arity(a), current(x), end(y) {}
+
+            template<typename...Ints>
+            bool Next(Ints&... outputs)
+            {
+                auto old_current = current;
+                if(current < end)
+                {
+                    Internal::read_row(current+BoundColumns, outputs...);
+                    current += arity.value;
+                    
+                    if(BoundColumns + sizeof...(outputs) < arity.value)
+                    {
+                        while(current<end && row_equals(arity, old_current, current))
+                            current += arity.value;
+                    }
+                    
+                    return true;
+                }
+                return false;
+            }
+        private:
+            Arity arity;
             const Int * current, *end;
-
-            template<typename...Ints>
-            bool Next(Ints&... outputs);
         };
-        
-        template<>
-        class enumerator<0>
+
+        enumerator<0> Find() const
         {
-            template<typename...Ints>
-            bool Next(Ints&... outputs);
-        };
-
-        enumerator<0> Find() const;
+            return enumerator<0>{this->arity, &*this->values.begin(), &*this->values.end()};
+        }
 
         template<typename...Ints>
-        auto Find(Ints... vs) -> enumerator<sizeof...(vs)>
+        auto Find(Int a, Ints... vs) const -> enumerator<1+sizeof...(vs)>
         {
         }
     };
@@ -130,7 +170,7 @@ namespace Logical
         template<typename... Ints>
         void Add(Ints... v)
         {
-            static_assert(sizeof...(v) % Arity::value == 0);
+            // static_assert(sizeof...(v) % Arity::value == 0);
             AddInternal(v...);
         }
         
