@@ -1,5 +1,5 @@
 
-#include "../../include/Table.hpp"
+#include "../../include/HashTable.hpp"
 #include "../../external/simpletest/simpletest.hpp"
 
 using namespace Logical;

@@ -85,26 +85,6 @@ namespace Logical
         }
     };
 
-    template<typename Arity>
-    class HashTable : public Table<Arity>
-    {
-    public:
-        void Finalise();
-    private:
-        std::vector<Int> values;
-    };
-
-    template<typename Arity>
-    class QueryableHashTable : public HashTable<Arity>
-    {
-        class iterator
-        {
-
-        };
-
-        template<typename...Ints>
-        iterator Find(Ints...is);
-    };
 
     template<typename Arity>
     class SortedTable : public Table<Arity>
