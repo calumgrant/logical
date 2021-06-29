@@ -17,12 +17,12 @@
         InitTable(call, 0, p1);
         InitTable(call, 1, p2);
 
-        InitJoin(p1, join1);
+        InitJoin<2>(p1, join1);
     l1:
-        if (!Next<2>(join1, a, b)) goto l3;
+        if (!NextScan<2>(join1, a, b)) goto l3;
         InitJoin<2>(join2, p2, b);
     l2:
-        if (!Next<2>(join2, c)) goto l1;
+        if (!Next<2,1>(join2, c)) goto l1;
         Write(call, a, c);
         goto l2;
     l3:
@@ -139,11 +139,15 @@ namespace Logical
 
         void copy_row(const Int *p) {}
         void copy_row(const Int *p, Int &v) { v = *p; }
-        void copy_row(const Int *p, Int &v, Int &vs...) { v = *p; copy_row(p+1, vs); }
+    
+        template<typename...Ints>
+        void copy_row(const Int *p, Int &v, Ints&...vs) { v = *p; copy_row(p+1, vs...); }
     
         bool equals_row(const Int *p) { return true; }
         bool equals_row(const Int *p, Int v) { return v == *p; }
-        bool equals_row(const Int *p, Int v, Int vs...) { return v == *p && equals_row(p+1, vs); }
+    
+        template<typename...Ints>
+        bool equals_row(const Int *p, Int v, Ints... vs) { return v == *p && equals_row(p+1, vs...); }
 
                                                            
     }
@@ -174,8 +178,8 @@ namespace Logical
         return (join.end-join.p)/Arity;
     }
 
-    template<int Arity, int BoundCols, typename...Int>
-    bool Next(JoinData & join, Int & ... vs)
+    template<int Arity, int BoundCols, typename...Ints>
+    bool Next(JoinData & join, Ints & ... vs)
     {
         if(join.p<join.end)
         {
@@ -190,8 +194,8 @@ namespace Logical
         return false;
     }
 
-    template<int Arity, typename...Int>
-    bool NextScan(JoinData & join, Int & ... vs)
+    template<int Arity, typename...Ints>
+    bool NextScan(JoinData & join, Ints & ... vs)
     {
         if(join.p<join.end)
         {
@@ -203,8 +207,8 @@ namespace Logical
         return false;
     }
  
-    template<int Arity, typename...Int>
-    void InitJoin(TableData & table, JoinData & join, Int... vs)
+    template<int Arity, typename...Ints>
+    void InitJoin(TableData & table, JoinData & join, Ints... vs)
     {
         join.p = Internal::lower_bound<Arity>(table.data, table.rows, vs...);
         join.end = Internal::upper_bound<Arity>(table.data, table.rows, vs...);
@@ -222,11 +226,11 @@ namespace Logical
         return table.rows>0;
     }
     
-    template<int Arity>
-    bool Probe(TableData & table, Int vs...)
+    template<int Arity, typename... Ints>
+    bool Probe(TableData & table, Ints... vs)
     {
         JoinData join;
-        InitJoin<Arity>(table, join, vs);
+        InitJoin<Arity>(table, join, vs...);
         return !Empty(join);
     }
 }

@@ -45,7 +45,7 @@ add_library(logiccore SHARED
 
 add_executable(logical main.cpp)
 
-add_executable(logical-tests tests.cpp)
+add_executable(logical-tests ../tests/unittests/tests.cpp ../tests/unittests/tables.cpp)
 target_link_libraries(logical-tests logiccore)
 target_link_libraries(logical logiccore stdlib)
 target_link_libraries(logiccore ${TERMCAP} persist)

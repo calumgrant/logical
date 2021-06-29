@@ -1,5 +1,11 @@
 # Work plan
 
+- Think more about compilation scheme
+  - Control flow for count, sum and not.
+  - Deduplication
+  - FIFOs for recursion.
+  - Semi-naive evaluation and recursion.
+  - Microthreads
 - Implement semi-naive optimization another way:
   - Identify which predicates can be semi-naive
     If it's singly-recursive
@@ -13,6 +19,103 @@
     - Table of "results" (as before).
 
 - Optimization: Can "push" all results to the first tuple. Can auto-inline any predicate that is never queried. We can "push" all results to other predicates without storing them.
+
+```
+void MyTc(Call & call)
+{
+  TableData p;
+  FifoData f;
+  JoinData j1, j2;
+  Int a,b,c;
+
+  InitTable(call, p);
+  InitFifo<2>(f);
+
+  // Base case
+  InitJoin<2>(j1, p);
+l1:
+  if(!Next<2>(j1, a, b)) goto l3;
+  Write(f, a, b);
+  goto l1;
+
+  // Recursive case
+l3:
+  InitJoin(j1, f);  // ??
+l4:
+  if(!Next<2>(f, a, b)) goto l6;
+  InitJoin<2>(j2, p, b);
+l5:
+  if(!Next<2>(j2, c)) goto l4;
+  Write(f, a, c);
+  goto l5;
+
+  // End
+l6:
+}
+
+```
+
+// How is the FIFO implemented??
+// The FIFO data contains an index to the "next" result in the hash table.
+// You can create indexes as arguments to the InitFifo<> command.
+`bool FifoNext<Arity, Index>(fifoData, inputs, outputs);
+
+
+
+
+```
+auto table1 = MakeHashTable<3>();
+auto table3 = MakeUnique
+auto table2 = call.GetTable(predicate);
+
+// Right at the end:
+// Compresses the table
+// Grabs ownership.
+call.AttachResults(table);
+
+auto iterator = table.FindAll();
+
+auto enumerator = table.Find(Ints... bound);
+
+iterator.Current()
+iterator.Next();
+
+
+
+struct FifoBase
+{
+    Int size;
+    const Int * base;
+
+    // Methods for query etc.
+    // void Add(const Int * row);
+
+    // varargs method
+    virtual void Add(Int a...);
+
+    virtual void Find
+
+    // Query??
+};
+
+struct FifoData
+{
+    Int next;
+    FifoBase * base;
+};
+
+struct Task
+{
+  std::atomic<Task *> next;
+  virtual void Run()=0;
+};
+```
+
+- How does "Write" work??
+  1. Perform a probe (hash table)
+  2. Maybe push onto the Fifo. (No need to worry about iterations).
+- How does "Query" work??
+
 
 - Semi-naive
 - Fix up existing tests or abandon it.
@@ -170,90 +273,18 @@ becomes (* = write, _ = read)
 
 The external interface should also support the ability to run compiled predicates.
 
-```
-auto & index = Module::GetIndex(predicatename, Binding, columnname, Binding, ...);
-
-```
-
-Each execution unit must be sequenced - this is done as part of a graph.
-
-void eval()
-{
-
-}
-
 # Proper bytecode
 
-
+The C compilation gives a clue into how to compile as bytecode.
 
 Bytecode readily translated into C.
 
-Format of a predicate:
-- List of referenced calls (e.g. entry point into predicate; table read; table write; extern etc.)
-
-Rules are compiled to bytecode that is executed. The execution environment is:
-
-- instruction pointer (IP), as a pointer (index) into the sequence of instructions of the whole program.
-- stack pointer (SP) into a stack
-- Top stack frame (TP)
-- Current stack frame:
-  - arguments to predicate at SP[-1], SP[-2] (inputs and outputs)
-  - continuation address at SP[0]
-  - continuation SP at SP[1]
-  - local variables - SP[1] ...
-- Return stack (RS)
-  - Return IP address
-  - Return SP
-  - Previous TOP
-
-Return operation (`ret`)
-- IP = RS[0]
-- SP = RS[1]
-- TP = RS[2]
-- RS = RS-2
-
-Query operation (`query`)
-- Puts an iterator on the stack (2 slots maybe)
-- Sets the "return" to be the end of the loop
-
-Succeeed operation (`continue s`)
-- SP += size
-- SP[0] = IP+1
-- SP[1] = ...
-
-- Load constant operation (`load n`)
-- SP[i] = n
-- IP += 9
-
-Write operation - just a call really
-- Copy args to end of stack
-- SP += ...
-- SP[0] = 
-
-- Jump `jmp n`
-- IP += n
-
-Call operation (`call addr`)
-- Copies args to the stack
-- SP += n
-- SP[0] = IP + 4
-- IP = addr
-
-Read from a table:
-- Loop over table:
-  - Push onto RS
-  - IP = SP[0]
-  - SP = SP[1]
-  - SP[1] = create_cursor in table
-  - Address:
-    - Advance cursor
-    - 
-
-
-Main evaluation loop:
-- Read code at IP
-
-
+Instruction-set:
+- Function: number of tables, number of joins, number of locals.
+- Init: Start a join or a scan
+- Next: Find next result
+- Copy: Copy a result
+- Write: Write data to result predicate/table.
 
 # Database interface
 
