@@ -35,6 +35,7 @@ add_library(logiccore SHARED
     Helpers.hpp
     ../include/Logical.hpp
     ../include/Program.hpp
+    ../include/Utils.hpp
     Table.cpp Table.hpp TableImpl.hpp
     Evaluation.cpp Evaluation.hpp EvaluationImpl.hpp
     Compiler.cpp Compiler.hpp

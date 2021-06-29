@@ -6,6 +6,7 @@
 
 
 #include "Logical.hpp"
+#include "Utils.hpp"
 
 /*
     void MyFunction(Call & call)
@@ -51,106 +52,7 @@ namespace Logical
         Int rows;  // Number of rows of data
     };
 
-    namespace Internal
-    {
-    
-        class Writer
-        {
-        };
 
-        inline bool less(const Int*row, Int v);
-        inline bool greater(const Int*row, Int v);
-
-        bool less(const Int*row, Int v, Int vs...)
-        {
-            return v < *row || (v == *row && less(row+1, vs));
-        }
-
-        bool greater(const Int*row, Int v, Int vs...)
-        {
-            return v > *row || (v == *row && greater(row+1, vs));
-        }
-
-        inline bool less(const Int*row, Int v)
-        {
-            return v < *row;
-        }
-        
-        bool greater(const Int*row, Int v)
-        {
-            return v > *row;
-        }
-        
-        // Returns the highest pointer that is <= value
-        template<int Arity, typename ... Ints>
-        const Int * lower_bound(const Int * p, Int n, Ints ... vs)
-        {
-            Int l=0, r=n;
-            while(l<r)
-            {
-                auto m = (l+r)>>1;
-                            
-                if (greater(p + m*Arity, vs...))
-                {
-                    l = m+1;
-                }
-                else
-                {
-                    r = m;
-                }
-            }
-            return p + l*Arity;
-        }
-        
-        template<int Arity>
-        const Int * lower_bound(const Int * p, Int n)
-        {
-            // Optimization of previous case
-            return p;
-        }
-
-        // Returns the smallest pointer that is > value
-        template<int Arity, typename...Ints>
-        const Int * upper_bound(const Int * p, Int n, Ints... vs)
-        {
-            Int l=0, r=n;
-            while(l<r)
-            {
-                auto m = (l+r)>>1;
-
-                if(less(p + m * Arity, vs...))
-                {
-                    r = m;
-                }
-                else
-                {
-                    l = m+1;
-                }
-            }
-            return p+Arity*r;
-        }
-        
-        template<int Arity>
-        const Int * upper_bound(const Int * p, Int size)
-        {
-            // Optimization of previous case
-            return p + Arity * size;
-        }
-
-        void copy_row(const Int *p) {}
-        void copy_row(const Int *p, Int &v) { v = *p; }
-    
-        template<typename...Ints>
-        void copy_row(const Int *p, Int &v, Ints&...vs) { v = *p; copy_row(p+1, vs...); }
-    
-        bool equals_row(const Int *p) { return true; }
-        bool equals_row(const Int *p, Int v) { return v == *p; }
-    
-        template<typename...Ints>
-        bool equals_row(const Int *p, Int v, Ints... vs) { return v == *p && equals_row(p+1, vs...); }
-
-                                                           
-    }
 
     struct JoinData
     {
@@ -183,7 +85,7 @@ namespace Logical
     {
         if(join.p<join.end)
         {
-            Internal::copy_row(join.p+BoundCols, vs...);
+            Internal::read_row(join.p+BoundCols, vs...);
             do
             {
                 // Skip over equal results
@@ -199,7 +101,7 @@ namespace Logical
     {
         if(join.p<join.end)
         {
-            Internal::copy_row(join.p, vs...);
+            Internal::read_row(join.p, vs...);
             join.p += Arity;
             // No need to deduplicate
             return true;

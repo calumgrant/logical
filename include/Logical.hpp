@@ -1,3 +1,5 @@
+#pragma once
+
 /* This is the external API for Logical.
  */
 
