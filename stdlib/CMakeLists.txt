@@ -12,16 +12,16 @@ set_target_properties(stdlib PROPERTIES
 
 target_link_libraries(stdlib logiccore)
 
-add_test(NAME Print1a COMMAND logical ../../stdlib/tests/print1.dl)
-add_test(NAME Pi1 COMMAND logical ../../stdlib/tests/pi1.dl)
-add_test(NAME Pi2 COMMAND logical ../../stdlib/tests/pi2.dl)
-add_test(NAME Strings1 COMMAND logical ../../stdlib/tests/strings1.dl)
-add_test(NAME Strings2 COMMAND logical ../../stdlib/tests/strings2.dl)
+add_test(NAME Print1a COMMAND logical ../../tests/stdlib/print1.dl)
+add_test(NAME Pi1 COMMAND logical ../../tests/stdlib/pi1.dl)
+add_test(NAME Pi2 COMMAND logical ../../tests/stdlib/pi2.dl)
+add_test(NAME Strings1 COMMAND logical ../../tests/stdlib/strings1.dl)
+add_test(NAME Strings2 COMMAND logical ../../tests/stdlib/strings2.dl)
 
-add_test(NAME File1 COMMAND logical ../../stdlib/tests/file1.dl)
-add_test(NAME File2 COMMAND logical ../../stdlib/tests/file2.dl)
-add_test(NAME Regex1 COMMAND logical ../../stdlib/tests/regex1.dl)
+add_test(NAME File1 COMMAND logical ../../tests/stdlib/file1.dl)
+add_test(NAME File2 COMMAND logical ../../tests/stdlib/file2.dl)
+add_test(NAME Regex1 COMMAND logical ../../tests/stdlib/regex1.dl)
 
-add_test(NAME Random COMMAND logical ../../stdlib/tests/random.dl)
-add_test(NAME Environment COMMAND logical ../../stdlib/tests/environment.dl)
-add_test(NAME MessageOfTheDay COMMAND logical ../../stdlib/tests/messages.dl)
+add_test(NAME Random COMMAND logical ../../tests/stdlib/random.dl)
+add_test(NAME Environment COMMAND logical ../../tests/stdlib/environment.dl)
+add_test(NAME MessageOfTheDay COMMAND logical ../../tests/stdlib/messages.dl)
