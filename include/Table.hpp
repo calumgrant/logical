@@ -10,14 +10,14 @@
 namespace Logical
 {
     template<int Arity>
-    struct FixedArity
+    struct StaticArity
     {
         static const int value = Arity;
     };
 
-    struct VariableArity
+    struct DynamicArity
     {
-        VariableArity(int a) : value(a) {}
+        DynamicArity(int a) : value(a) {}
         int value;
     };
 
@@ -29,14 +29,14 @@ namespace Logical
         for(int i=0; i<s; ++i)
             indexes[i] = i * arity.value;
         
-        std::sort(indexes.begin(), indexes.end(), [&](int a, int b) { return row_less(arity, &values[a], &values[b]); });
+        std::sort(indexes.begin(), indexes.end(), [&](int a, int b) { return Internal::row_less(arity, &values[a], &values[b]); });
 
         std::vector<Int> results;
         results.reserve(values.size());
         
         // Now, mark duplicates
         for(int i=0; i<s; ++i)
-            if(i==0 || !row_equals(arity, &values[indexes[i-1]], &values[indexes[i]]))
+            if(i==0 || !Internal::row_equals(arity, &values[indexes[i-1]], &values[indexes[i]]))
             {
                 auto p = &values[indexes[i]];
                 for(int i=0; i<arity.value; ++i)
@@ -47,7 +47,7 @@ namespace Logical
     }
 
     // Specialisation of previous case.
-    std::vector<Int> CompactTable(FixedArity<1>, std::vector<Int> & values)
+    std::vector<Int> CompactTable(StaticArity<1>, std::vector<Int> & values)
     {
         std::sort(values.begin(), values.end());
         Int out=0;
@@ -112,7 +112,7 @@ namespace Logical
                     
                     if(BoundColumns + sizeof...(outputs) < arity.value)
                     {
-                        while(current<end && row_equals(arity, old_current, current))
+                        while(current<end && Internal::row_equals(arity, old_current, current))
                             current += arity.value;
                     }
                     

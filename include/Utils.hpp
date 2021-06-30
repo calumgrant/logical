@@ -130,6 +130,28 @@ namespace Internal
         for(int i=0; i<arity.value; ++i)
             std::swap(target[i], source[i]);
     }
+
+    template<typename Arity>
+    bool row_less(Arity a, const Int * x, const Int *y)
+    {
+        for(int i=0; i<a.value; ++i)
+        {
+            if(x[i] < y[i]) return true;
+            if(x[i] > y[i]) return false;
+        }
+        return false;
+    }
+
+    template<typename Arity>
+    bool row_equals(Arity a, const Int * x, const Int *y)
+    {
+        for(int i=0; i<a.value; ++i)
+        {
+            if(x[i] != y[i]) return false;
+        }
+        return true;
+    }
+
 }
 
 
@@ -266,27 +288,6 @@ template<typename A, typename I>
 std::ostream & operator<<(std::ostream & os, const row_iterator<A,I> & rr)
 {
     return os << "(" << rr->p << "...)";
-}
-
-template<typename Arity>
-bool row_less(Arity a, const Int * x, const Int *y)
-{
-    for(int i=0; i<a.value; ++i)
-    {
-        if(x[i] < y[i]) return true;
-        if(x[i] > y[i]) return false;
-    }
-    return false;
-}
-
-template<typename Arity>
-bool row_equals(Arity a, const Int * x, const Int *y)
-{
-    for(int i=0; i<a.value; ++i)
-    {
-        if(x[i] != y[i]) return false;
-    }
-    return true;
 }
 
 
