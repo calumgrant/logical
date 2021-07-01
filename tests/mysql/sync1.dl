@@ -5,4 +5,11 @@ load-module mysql.
 mysql:execute "DROP TABLE IF EXISTS Test".
 mysql:execute "CREATE TABLE Test ( id int, name varchar(40) )".
 
-mysql:sync @.
+mysql:execute "DROP TABLE IF EXISTS Test2".
+mysql:execute "CREATE TABLE Test2 ( id int, name varchar(40) )".
+
+mysql sync.
+
+expected-results 2.
+
+find mysql:table.
