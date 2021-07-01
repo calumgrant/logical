@@ -9,127 +9,6 @@ namespace Logical
 {
     namespace Internal
     {
-        inline Int MakeMask() { return 0; }
-        
-        template<typename...Bs>
-        Int MakeMask(bool b, Bs... bs)
-        {
-            return ((Int)b) + (MakeMask(bs...)<<1);
-        }
-    }
-
-    template<bool...Binding>
-    struct StaticBinding
-    {
-    };
-
-    struct DynamicBinding
-    {
-        template<typename...Bools>
-        DynamicBinding(Bools... bs) : mask(Internal::MakeMask(bs...)) {}
-        
-        DynamicBinding(Int m) : mask(m) {}
-        
-        Int mask;
-    };
-
-
-    namespace Internal
-    {
-        const int P = 317;
-    
-        inline Int Hash(Int i) { return i; }
-
-        template<typename...Ints>
-        Int Hash(Int i, Ints... is)
-        {
-            return i + P * Hash(is...);
-        }
-
-        template<bool...Binding>
-        struct HashHelper;
-
-        template<>
-        struct HashHelper<>
-        {
-            static Int Hash() { return 0; }
-            static Int Hash(const Int * row) { return 0; }
-        };
-
-
-        template<bool...Binding>
-        struct HashHelper<true, Binding...>
-        {
-            template<typename...Ints>
-            static Int Hash(Int i, Ints... is) { return i + P * HashHelper<Binding...>::Hash(is...); }
-            static Int Hash(const Int * row) { return *row + P * HashHelper<Binding...>::Hash(row+1); }
-        };
-
-        template<bool...Binding>
-        struct HashHelper<false, Binding...>
-        {
-            template<typename...Ints>
-            static Int Hash(Int i, Ints... is) { return HashHelper<Binding...>::Hash(is...); }
-            static Int Hash(const Int * row) { return HashHelper<Binding...>::Hash(row+1); }
-        };
-    
-        template<bool...Bound, typename...Ints>
-        Int BoundHash(Ints... is) { return HashHelper<Bound...>::Hash(is...); }
-
-        template<bool...Bound>
-        Int BoundHash(const Int * row) { return HashHelper<Bound...>::Hash(row); }
-
-        inline Int Hash(DynamicBinding b, const Int * row)
-        {
-            Int h=0;
-            Int mul = 1;
-            for(auto m = b.mask; m; row++, m>>=1)
-            {
-                if(m&1) { h += mul * *row; mul = mul*P; }
-            }
-            return h;
-        }
-    
-        template<bool...Bs>
-        Int Hash(StaticBinding<Bs...> b, const Int * row)
-        {
-            return HashHelper<Bs...>::Hash(row);
-        }
-
-        template<bool...Bs, typename...Ints>
-        Int Hash(StaticBinding<Bs...> b, Ints...is)
-        {
-            return HashHelper<Bs...>::Hash(is...);
-        }
-    
-        inline Int HashWithMask(Int m) { return 0; }
-    
-        template<typename...Ints>
-        Int HashWithMask(Int m, Int i, Ints...is)
-        {
-            return (m&1)? i + 317 * HashWithMask(m>>1, is...) : HashWithMask(m>>1, is...);
-        }
-    
-        template<typename...Ints>
-        Int Hash(DynamicBinding b, Int i, Ints...is)
-        {
-            return HashWithMask(b.mask, i, is...);
-        }
-
-        template<typename Arity>
-        Int Hash(Arity arity, const Int *p)
-        {
-            Int h = 0;
-            Int mul = 1;
-            for(int i=0; i<arity.value; ++i, mul*=P)
-                h += mul*p[i];
-            return h;
-        }
-    
-        inline Int Hash(DynamicArity) { return 0; }
-    
-        inline Int Hash(StaticArity<0>) { return 0; }
-    
         class HashIndex
         {
         public:
@@ -170,7 +49,6 @@ namespace Logical
             int items;
         };
     }
-
 
 
     template<typename Arity>
@@ -226,10 +104,10 @@ namespace Logical
             Index(HashTable<Arity> & table);
         };
         
-        template<bool...Bound, typename...Ints>
-        void Find(Ints... is)
+        template<typename Binding, typename...Ints>
+        void Find(Binding b, Ints... is)
         {
-            
+            // Find a suitable integer???
         }
         
     private:
@@ -277,6 +155,45 @@ namespace Logical
                 
                 index.swap(index2);
             }
+        }
+    };
+
+
+    /*
+     To look something up in here, use the hash function on the row
+     */
+    template<typename Binding>
+    class ExternHashTable
+    {
+    public:
+        Binding binding;
+        
+        const Int **first;
+        Int size;
+    
+        template<typename...Ints>
+        Int Find(Ints... is)
+        {
+            return Internal::Hash(binding, is...) % size;
+        }
+        
+        Int Find(const Int * row)
+        {
+            return Internal::Hash(binding, row) % size;
+        }
+
+        template<typename...Ints>
+        bool Next(Int & e, Ints...is)
+        {
+            auto current = first[e];
+            if(current && Internal::BoundEquals(binding, current, is...))
+            {
+                Internal::BindRow(binding, current, is...);
+                e++;
+                if(e>=size) e-=size;
+                return true;
+            }
+            return false;
         }
     };
 }

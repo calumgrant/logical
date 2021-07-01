@@ -6,14 +6,55 @@
 
 namespace Logical
 {
-namespace Internal
-{
-    class Writer
+    template<int Arity>
+    struct StaticArity
+    {
+        static const int value = Arity;
+    };
+
+    struct DynamicArity
+    {
+        DynamicArity(int a) : value(a) {}
+        int value;
+    };
+
+    namespace Internal
+    {
+        inline Int MakeMask() { return 0; }
+        
+        template<typename...Bs>
+        Int MakeMask(bool b, Bs... bs)
+        {
+            return (Int)b + (MakeMask(bs...)<<1);
+        }
+    }
+
+    template<bool...Binding>
+    struct StaticBinding
     {
     };
 
-    inline bool less(const Int*row, Int v);
-    inline bool greater(const Int*row, Int v);
+    struct DynamicBinding
+    {
+        template<typename...Bools>
+        DynamicBinding(Bools... bs) : mask(Internal::MakeMask(bs...)) {}
+        
+        DynamicBinding(Int m) : mask(m) {}
+        
+        Int mask;
+    };
+
+namespace Internal
+{
+    inline bool less(const Int*row, Int v)
+    {
+        return v < *row;
+    }
+
+    inline bool greater(const Int*row, Int v)
+    {
+        return v > *row;
+    }
 
     template<typename...Ints>
     bool less(const Int*row, Int v, Ints... vs)
@@ -27,15 +68,6 @@ namespace Internal
         return v > *row || (v == *row && greater(row+1, vs...));
     }
 
-    inline bool less(const Int*row, Int v)
-    {
-        return v < *row;
-    }
-    
-    bool greater(const Int*row, Int v)
-    {
-        return v > *row;
-    }
     
     // Returns the highest pointer that is <= value
     template<int Arity, typename ... Ints>
@@ -152,142 +184,194 @@ namespace Internal
         return true;
     }
 
-}
+    const int P = 317;
 
+    inline Int Hash(Int i) { return i; }
 
-
-// ?? How to swap two rows?
-// ?? How to use std::sort
-template<typename Arity, typename I>
-struct rowref
-{
-    I * p;
-    Arity a;
-
-    rowref & operator=(const rowref&other)
+    template<typename...Ints>
+    Int Hash(Int i, Ints... is)
     {
-        copy_row(a, p, other.p);
-        return *this;
+        return i + P * Hash(is...);
     }
 
-    bool operator<(const rowref & other) const
+    template<bool...Binding>
+    struct HashHelper;
+
+    template<>
+    struct HashHelper<>
     {
-        for(int i=0; i<a.value; ++i)
+        static Int Hash() { return 0; }
+        static Int Hash(const Int * row) { return 0; }
+        static bool BoundEquals(const Int * row) { return true; }
+
+        static void BindRow(const Int * row) { }
+        static void BindRow(const Int * row, Int * output) { }
+    };
+
+
+    template<bool...Binding>
+    struct HashHelper<true, Binding...>
+    {
+        template<typename...Ints>
+        static Int Hash(Int i, Ints... is) { return i + P * HashHelper<Binding...>::Hash(is...); }
+        static Int Hash(const Int * row) { return *row + P * HashHelper<Binding...>::Hash(row+1); }
+        template<typename...Ints>
+        static bool BoundEquals(const Int * row, Int i, Ints...is) { return i==*row && HashHelper<Binding...>::BoundEquals(row+1, is...); }
+        template<typename...Ints>
+        static void BindRow(const Int * row, Int &i, Ints...is) { i=*row; HashHelper<Binding...>::BindRow(row+1, is...); }
+
+        static void BindRow(const Int * row, Int * output) { *output = *row; HashHelper<Binding...>::BindRow(row+1, output+1); }
+    };
+
+    template<bool...Binding>
+    struct HashHelper<false, Binding...>
+    {
+        template<typename...Ints>
+        static Int Hash(Int i, Ints... is) { return HashHelper<Binding...>::Hash(is...); }
+        static Int Hash(const Int * row) { return HashHelper<Binding...>::Hash(row+1); }
+
+        template<typename...Ints>
+        static bool BoundEquals(const Int * row, Int i, Ints...is) { return HashHelper<Binding...>::BoundEquals(row+1, is...); }
+
+        template<typename...Ints>
+        static void BindRow(const Int * row, Int i, Ints...is) { HashHelper<Binding...>::BindRow(row+1, is...); }
+
+        static void BindRow(const Int * row, Int * output) { HashHelper<Binding...>::BindRow(row+1, output+1); }
+    };
+
+    template<bool...Bound, typename...Ints>
+    Int BoundHash(Ints... is) { return HashHelper<Bound...>::Hash(is...); }
+
+    template<bool...Bound>
+    Int BoundHash(const Int * row) { return HashHelper<Bound...>::Hash(row); }
+
+    inline Int Hash(DynamicBinding b, const Int * row)
+    {
+        Int h=0;
+        Int mul = 1;
+        for(auto m = b.mask; m; row++, m>>=1)
         {
-            if(p[i]<other.p[i]) return true;
-            if(p[i]>other.p[i]) return false;
+            if(m&1) { h += mul * *row; mul = mul*P; }
         }
-        return false;
+        return h;
     }
 
-    bool operator==(const rowref & other) const
+    template<bool...Bs>
+    Int Hash(StaticBinding<Bs...> b, const Int * row)
     {
-        for(int i=0; i<a.value; ++i)
+        return HashHelper<Bs...>::Hash(row);
+    }
+
+    template<bool...Bs, typename...Ints>
+    Int Hash(StaticBinding<Bs...> b, Ints...is)
+    {
+        return HashHelper<Bs...>::Hash(is...);
+    }
+
+    inline Int HashWithMask(Int m) { return 0; }
+
+    template<typename...Ints>
+    Int HashWithMask(Int m, Int i, Ints...is)
+    {
+        return (m&1)? i + P * HashWithMask(m>>1, is...) : HashWithMask(m>>1, is...);
+    }
+
+    template<typename...Ints>
+    Int Hash(DynamicBinding b, Int i, Ints...is)
+    {
+        return HashWithMask(b.mask, i, is...);
+    }
+
+    template<typename Arity>
+    Int Hash(Arity arity, const Int *p)
+    {
+        Int h = 0;
+        Int mul = 1;
+        for(int i=0; i<arity.value; ++i, mul*=P)
+            h += mul*p[i];
+        return h;
+    }
+
+    inline Int Hash(DynamicArity) { return 0; }
+
+    inline Int Hash(StaticArity<0>) { return 0; }
+
+    // Compares two rows, but only on the bound columns
+    template<bool... Binding, typename...Ints>
+    bool BoundEquals(StaticBinding<Binding...>, const Int * row, Ints... is)
+    {
+        return HashHelper<Binding...>::BoundEquals(row, is...);
+    }
+
+    template<bool... Binding>
+    bool BoundEquals(StaticBinding<Binding...>, const Int * row1, const Int * row2)
+    {
+        return HashHelper<Binding...>::BoundEquals(row1, row2);
+    }
+
+    template<typename...Ints>
+    bool BoundEquals(Int mask, const Int * row, Int i, Ints... is)
+    {
+        return mask && (!(mask&1) || i == *row) && BoundEquals(mask>>1, row+1, is...);
+    }
+
+    inline bool BoundEquals(Int mask, const Int * row) { return true; }
+
+    template<typename...Ints>
+    bool BoundEquals(DynamicBinding b, const Int * row, Ints... is)
+    {
+        return BoundEquals(b.mask, row, is...);
+    }
+
+    inline bool BoundEquals(DynamicBinding b, const Int * row1, const Int * row2)
+    {
+        for(Int m = b.mask; m; m>>=1, row1++, row2++)
         {
-            if(p[i]!=other.p[i]) return false;
+            if((m&1) && *row1 != *row2) return false;
         }
         return true;
     }
-};
 
+    template<bool... Binding, typename...Ints>
+    void BindRow(StaticBinding<Binding...>, const Int * row, Ints... is)
+    {
+        HashHelper<Binding...>::BindRow(row, is...);
+    }
 
-// An iterator pointing to a row in a table
-// Deleteme
-template<typename Arity, typename I>
-class row_iterator
-{
-public:
-    rowref<Arity, I> rr;
-    
-    row_iterator(I * p, Arity a) : rr{p,a} {}
+    template<bool... Binding>
+    void BindRow(StaticBinding<Binding...>, const Int * row, Int * output)
+    {
+        HashHelper<Binding...>::BindRow(row, output);
+    }
 
-    typedef Int size_type;
-    typedef Int difference_type;
-    typedef rowref<Arity, I> value_type;
-    typedef value_type * pointer;
-    typedef value_type reference;
-    typedef std::random_access_iterator_tag iterator_category;
-    
+    inline void BindRow(Int mask, const Int * row) {}
+
     template<typename...Ints>
-    void get(Ints... is) const
+    void BindRow(Int mask, const Int * row, Int &i, Ints... is)
     {
-        read_row(rr.p, is...);
+        if(mask&1) i=*row;
+        BindRow(mask>>1, row+1, is...);
     }
 
-    reference operator*()
+    template<typename...Ints>
+    void BindRow(Int mask, const Int * row, Int i, Ints... is)
     {
-        return rr;
-    }
-    
-    pointer operator->()
-    {
-        return &rr;
+        BindRow(mask>>1, row+1, is...);
     }
 
-    const value_type * operator->() const
+    template<typename...Ints>
+    void BindRow(DynamicBinding b, const Int * row, Ints... is)
     {
-        return &rr;
-    }
-    
-    // random-access stuff
-    row_iterator & operator++()
-    {
-        rr.p += rr.a.value;
-        return *this;
+        BindRow(b.mask, row, is...);
     }
 
-    row_iterator &operator--()
+    inline void BindRow(DynamicBinding b, const Int * row, Int * output)
     {
-        rr.p -= rr.a.value;
-        return *this;
+        for(auto m=b.mask; m; m>>=1, row++, output++)
+        {
+            if(m&1) *output = *row;
+        }
     }
-
-    row_iterator & operator+=(Int i)
-    {
-        rr.p += i * rr.a.value;
-        return *this;
-    }
-    
-    row_iterator operator+(Int i) const
-    {
-        return row_iterator(rr.p+rr.a.value * i, rr.a);
-    }
-
-    Int operator-(const row_iterator & other) const
-    {
-        return (rr.p - other.rr.p)/rr.a.value;
-    }
-    
-    bool operator==(const row_iterator & other) const
-    {
-        return rr.p == other.rr.p;
-    }
-
-    bool operator!=(const row_iterator & other) const
-    {
-        return rr.p != other.rr.p;
-    }
-
-    bool operator>=(const row_iterator & other) const
-    {
-        return rr.p >= other.rr.p;
-    }
-
-    bool operator<(const row_iterator & other) const
-    {
-        return rr.p < other.rr.p;
-    }
-
-    bool operator>(const row_iterator & other) const
-    {
-        return rr.p > other.rr.p;
-    }
-};
-
-template<typename A, typename I>
-std::ostream & operator<<(std::ostream & os, const row_iterator<A,I> & rr)
-{
-    return os << "(" << rr->p << "...)";
 }
 
 

@@ -1,5 +1,11 @@
 # Work plan
 
+- Implementing tables
+  - Fixed hash table
+  - Fixed sorted table
+  - Dynamic hash table
+
+
 - Think more about compilation scheme
   - Control flow for count, sum and not.
   - Deduplication

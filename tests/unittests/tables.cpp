@@ -88,11 +88,9 @@ public:
         EQUALS(2, Internal::Hash(DynamicBinding(false,true), row));
         EQUALS(2*317+1, Internal::Hash(DynamicBinding(true,true), row));
         
-        // TODO: Check arity versions (fully bound)
         EQUALS(2*317+1, Internal::Hash(DynamicArity(2), row));
         EQUALS(2*317+1, Internal::Hash(StaticArity<2>(), row));
 
-        // TODO: Check nullary versions (always 0).
         EQUALS(0, Internal::Hash(DynamicArity(0), row));
         EQUALS(0, Internal::Hash(StaticArity<0>(), row));
 
@@ -104,6 +102,6 @@ public:
     {
         HashTable<StaticArity<1>> t1;
         
-        t1.Find<true, false, true>(1,2,3);
+        t1.Find(StaticBinding<true,false,true>(), 1,2,3);
     }
 } tt;

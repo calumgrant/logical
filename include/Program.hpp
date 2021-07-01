@@ -52,8 +52,6 @@ namespace Logical
         Int rows;  // Number of rows of data
     };
 
-
-
     struct JoinData
     {
         const Int * p, *end;

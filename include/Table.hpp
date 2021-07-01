@@ -9,20 +9,8 @@
 
 namespace Logical
 {
-    template<int Arity>
-    struct StaticArity
-    {
-        static const int value = Arity;
-    };
-
-    struct DynamicArity
-    {
-        DynamicArity(int a) : value(a) {}
-        int value;
-    };
-
-    template<typename Arity>
-    std::vector<Int> CompactTable(Arity arity, const std::vector<Int> & values)
+    template<typename Arity, typename Alloc>
+    std::vector<Int,Alloc> CompactTable(Arity arity, const std::vector<Int,Alloc> & values)
     {
         auto s = values.size()/arity.value;
         std::vector<int> indexes(s);
@@ -31,7 +19,7 @@ namespace Logical
         
         std::sort(indexes.begin(), indexes.end(), [&](int a, int b) { return Internal::row_less(arity, &values[a], &values[b]); });
 
-        std::vector<Int> results;
+        std::vector<Int,Alloc> results(values.get_allocator());
         results.reserve(values.size());
         
         // Now, mark duplicates
@@ -47,7 +35,8 @@ namespace Logical
     }
 
     // Specialisation of previous case.
-    std::vector<Int> CompactTable(StaticArity<1>, std::vector<Int> & values)
+    template<typename Alloc>
+    std::vector<Int,Alloc> CompactTable(StaticArity<1>, std::vector<Int,Alloc> & values)
     {
         std::sort(values.begin(), values.end());
         Int out=0;
@@ -63,14 +52,14 @@ namespace Logical
         return std::move(values);
     }
 
-    template<typename Arity>
+    template<typename Arity, typename Alloc = std::allocator<Int>>
     class Table
     {
     public:
         Table(Arity a) : arity(a) {}
         Table() {}
 
-        std::vector<Int> values;
+        std::vector<Int, Alloc> values;
         Arity arity;
 
         int get_arity() const { return arity.value; }
@@ -85,6 +74,14 @@ namespace Logical
         }
     };
 
+
+    struct Segment
+    {
+        const Int * first, * last;
+    };
+
+    template<typename Arity, typename Bound, typename...Ints>
+    bool Next(Segment &s, Ints... is);
 
     template<typename Arity>
     class SortedTable : public Table<Arity>
@@ -124,16 +121,27 @@ namespace Logical
             Arity arity;
             const Int * current, *end;
         };
-
+        
         enumerator<0> Find() const
         {
             return enumerator<0>{this->arity, &*this->values.begin(), &*this->values.end()};
         }
-
+        
         template<typename...Ints>
         auto Find(Int a, Ints... vs) const -> enumerator<1+sizeof...(vs)>
         {
         }
+        
+        template<typename Bound, typename...Ints>
+        auto Find(Bound b, Ints...is)
+        {
+        }
+        
+        template<typename Bound>
+        auto Find(Bound b, const Int * row);
+        
+        template<typename Bound, int E>
+        bool Next(Bound b, enumerator<E> e, Int * row);
     };
 
     /*
@@ -168,6 +176,39 @@ namespace Logical
             this->values.push_back(a);
             AddInternal(v...);
         }
+    };
+
+
+    template<typename Arity>
+    class ExternSortedTable
+    {
+    public:
+        Arity arity;
+        Segment data;
+
+        typedef Segment enumerator;
+        
+        enumerator Find() const
+        {
+            return data;
+        }
+        
+        template<typename... Ints>
+        bool Next(enumerator & e, Ints... is)
+        {
+            if(e.first < e.last)
+            {
+                Internal::read_row(e.first, is...);
+                e.first += arity.value;
+                return true;
+            }
+        }
+    };
+
+    template<typename Arity>
+    class ExternTable
+    {
+        Segment data;
     };
 }
 
