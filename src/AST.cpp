@@ -66,17 +66,36 @@ void AST::EntityClause::AssertFacts(Database &db) const
     auto v = entity->IsValue();
     if(v)
     {
-        auto & e(v->GetValue());
-        if(predicates)
-            predicates->Assert(db, e);  // Bug: These should be on the right hand side?
-        if(isPredicates)
-            isPredicates->Assert(db, e);
-        
-        if(attributes)
-            attributes->Assert(db, e);
+        auto e = v->GetValue();
+        AssertEntity(db, e);
+    }
+    else if(auto var = entity->IsVariable())
+    {
+        auto nv = var->IsNamedVariable();
+        if(nv)
+        {
+            // Treat variables as strings when asserting facts.
+            auto string = ::Entity(EntityType::String, nv->nameId);
+            AssertEntity(db, string);
+        }
+        else
+        {
+            entity->UnboundError(db);
+        }
     }
     else
         entity->UnboundError(db);
+}
+
+void AST::EntityClause::AssertEntity(Database &db, ::Entity e) const
+{
+    if(predicates)
+        predicates->Assert(db, e);  // Bug: These should be on the right hand side?
+    if(isPredicates)
+        isPredicates->Assert(db, e);
+    
+    if(attributes)
+        attributes->Assert(db, e);
 }
 
 

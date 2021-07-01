@@ -312,6 +312,8 @@ namespace AST
         std::unique_ptr<AttributeList> attributes;
         
         std::shared_ptr<Table> newEntityTable;
+        
+        void AssertEntity(Database &db, ::Entity e) const;
     };
 
     class EntityIs : public EntityClause

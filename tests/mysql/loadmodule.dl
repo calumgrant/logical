@@ -1,1 +1,1 @@
-load-module "mysql".
+load-module mysql.
