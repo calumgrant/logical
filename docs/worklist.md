@@ -1,5 +1,17 @@
 # Work plan
 
+- MySQL
+  - Replace `1 has mysql:Test1:name "calum".` with
+  `mysql:Test1:ID 1 has name "calum".`
+  - Defined predicates, for example
+
+  person X has name Y if mysql:query "SELECT * FROM Person" has column1 X, column2 Y.
+
+  mysql:query "INSERT ({0},{1}) INTO Person" has column1 X, column2 Y if
+    person X has name Y.
+
+
+
 - Implementing tables
   - Fixed hash table
   - Fixed sorted table

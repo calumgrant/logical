@@ -3,13 +3,26 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 
 using namespace Logical;
 
 // TODO: Have a connection pool, potentially.
 
+class MySqlTable
+{
+public:
+    std::string name;
+    int numberOfColumns;
+    MySqlTable(const std::string & name, Int cols) : name(name), numberOfColumns(cols) {}
+};
+
+static void addrow(Call & call);
+static void querytable(Call & call);
+
 class MySqlConnection
 {
+public:
     MYSQL mysql;
     
 public:
@@ -41,7 +54,7 @@ public:
     
     std::vector<std::string> tables;
     
-    void sync()
+    void sync(Module & module)
     {
         auto q = query("SHOW TABLES");
         
@@ -55,10 +68,114 @@ public:
         }
         
         mysql_free_result(result);
+        
+        for(auto & table : tables)
+        {
+            // !! SQL injection
+            q = query(("DESCRIBE " + table).c_str());
+            result = mysql_use_result(&mysql);
+            int count = mysql_field_count(&mysql);
+            auto lengths = mysql_fetch_lengths(result);
+            
+            std::vector<std::string> names;
+            std::string prefix = "mysql:" + table + ":";
+            
+            while(auto row = mysql_fetch_row(result))
+            {
+                auto name = prefix + row[0];
+                auto type = row[1];
+                names.push_back(name);
+                std::cout << "Row " << name << " has type " << type << std::endl;
+                // Now create a predicate
+    
+            }
+            
+            mysql_free_result(result);
+
+            const char * nameArray[names.size()];
+            std::vector<Mode> mode(names.size());
+            for(int i=0; i<names.size(); ++i)
+            {
+                nameArray[i] = names[i].c_str();
+                mode[i] = Out;
+            }
+            
+            
+            auto data = new MySqlTable(table, names.size());
+            module.AddCommand(addrow, names.size(), nameArray, data);
+            
+            module.AddFunction(querytable, names.size(), nameArray, mode.data(), data);
+        }
     }
 } connection;
 
+void Write(std::ostream & os, Call &c, int i)
+{
+    const char * strval;
+    Int ival;
+    double dval;
+    
+    if(c.Get(i, strval))
+    {
+        int len = strlen(strval);
+        char escaped[len+1];
+        mysql_escape_string(escaped, strval, len);
+        os << "\"" << escaped << "\"";
+    }
+    else if(c.Get(i, ival))
+    {
+        os << ival;
+    }
+    else if(c.Get(i, dval))
+    {
+        os << dval;
+    }
+    else
+    {
+        os << "NULL";
+    }
+}
 
+static void addrow(Call & call)
+{
+    auto data = (MySqlTable*)call.GetData();
+    std::stringstream ss;
+    ss << "INSERT INTO " << data->name << " VALUES (";
+    for(int i=0; i<data->numberOfColumns; ++i)
+    {
+        if(i>0) ss << ", ";
+        Write(ss, call, i);
+    }
+    
+    ss << ")";
+    
+    if(connection.query(ss.str().c_str()))
+        call.GetModule().ReportError(connection.error());
+}
+
+static void querytable(Call & call)
+{
+    auto data = (MySqlTable*)call.GetData();
+    std::stringstream ss;
+    ss << "SELECT * FROM " << data->name;
+    connection.query(ss.str().c_str());
+    
+    auto result = mysql_use_result(&connection.mysql);
+    int count = mysql_field_count(&connection.mysql);
+
+    while(auto row = mysql_fetch_row(result))
+    {
+        for(int i=0; i<count; ++i)
+            if(row[i])
+                call.Set(i, row[i]);
+            else
+                call.Set(i, "");
+        call.YieldResult();
+    }
+    
+    mysql_free_result(result);
+
+}
 
 static void connectdb(Call & call)
 {
@@ -96,15 +213,10 @@ static void error(Call & call)
     }
 }
 
-void syncTables(Module & module)
-{
-    
-}
-
-
 static void sync(Call & call)
 {
-    connection.sync();
+    // !! Check that we got a "sync"
+    connection.sync(call.GetModule());
 }
 
 static void table1(Call & call)

@@ -202,6 +202,12 @@ void Logical::Call::YieldResult()
     call.recv.OnRow(call.row);
 }
 
+void * Logical::Call::GetData()
+{
+    auto & call = (CallImpl&)*this;
+    return call.data;
+}
+
 bool Logical::Call::Get(int index, const char * & value)
 {
     auto & call = (CallImpl&)*this;

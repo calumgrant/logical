@@ -2,14 +2,20 @@ load-module mysql.
 
 "logical" has mysql:user "root".
 
-mysql:execute "DROP TABLE IF EXISTS Test".
-mysql:execute "CREATE TABLE Test ( id int, name varchar(40) )".
+mysql:execute "DROP TABLE IF EXISTS Test1".
+mysql:execute "CREATE TABLE Test1 ( id int, name varchar(40) )".
 
 mysql:execute "DROP TABLE IF EXISTS Test2".
 mysql:execute "CREATE TABLE Test2 ( id int, name varchar(40) )".
 
 mysql sync.
 
-expected-results 2.
+expected-results 12.
 
 find mysql:table.
+
+2 has mysql:Test2:name "fred".
+x has mysql:Test1:name "calum"+x if 1<=x<=10.
+
+query "Database query" has id I, name N if
+    I has mysql:Test1:name N.
