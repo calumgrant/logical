@@ -50,6 +50,19 @@ static void environment(Call & call)
     }
 }
 
+static void loadmodule(Call &call)
+{
+    const char * name;
+    if(call.Get(0, name))
+    {
+        call.GetModule().LoadModule(name);
+    }
+    else
+    {
+        call.GetModule().ReportError("Module is not a string");
+    }
+}
+
 void RegisterFunctions(Module & module)
 {
     module.AddCommand(print, "print");
@@ -67,6 +80,7 @@ void RegisterFunctions(Module & module)
     module.AddFunction(readlines, "file", In, "file-line", Out, "text", Out);
     module.AddCommand(writecontents, "file", "file-contents");
     module.AddCommand(writelines, "file", "file-line", "text");
+    module.AddCommand(loadmodule, "load-module");
     
     module.AddFunction(regexmatch, "regex", In, "regex-match", In);
     module.AddFunction(regexmatchgroup, "regex", In, "regex-match", In, "group", Out, "value", Out);

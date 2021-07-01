@@ -390,3 +390,9 @@ void Logical::Module::SetEvaluationStepLimit(Int limit)
     auto & db = ((ModuleImpl*)this)->database;
     db.SetEvaluationLimit(limit);
 }
+
+void Logical::Module::LoadModule(const char * name)
+{
+    auto & db = ((ModuleImpl*)this)->database;
+    db.LoadModule(name);
+}

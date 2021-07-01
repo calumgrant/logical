@@ -12,6 +12,7 @@ FIND_LIBRARY(FL_LIBRARY NAMES libfl fl DOC "/opt/homebrew/opt/flex/lib")
 
 add_subdirectory(../external/persist/src persist)
 add_subdirectory(../modules/stdlib stdlib)
+add_subdirectory(../modules/mysql mysql)
 
 BISON_TARGET(MyParser logical.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/tokens.tab.h)
 FLEX_TARGET(MyScanner logical.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
@@ -53,6 +54,7 @@ target_link_libraries(logical logiccore stdlib)
 target_link_libraries(logiccore ${TERMCAP} persist)
 
 add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:stdlib> $<TARGET_FILE_DIR:logical>)
+add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:mysql> $<TARGET_FILE_DIR:logical>)
 
 set_target_properties(logiccore PROPERTIES
     CXX_STANDARD 17
