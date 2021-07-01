@@ -4,7 +4,7 @@ enable_testing()
 
 add_library(stdlib SHARED stdlib.cpp math.cpp strings.cpp functions.hpp)
 
-include_directories(../include)
+include_directories(../../include)
 
 set_target_properties(stdlib PROPERTIES
     CXX_STANDARD 17
