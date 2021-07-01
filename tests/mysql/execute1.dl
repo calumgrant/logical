@@ -1,0 +1,6 @@
+load-module mysql.
+
+"logical" has mysql:user "root".
+
+mysql:execute "DROP TABLE IF EXISTS Test".
+mysql:execute "CREATE TABLE Test ( id int, name varchar(40) )".

@@ -16,6 +16,7 @@
 %option yylineno
 %option reentrant bison-bridge bison-locations
 
+IDENTIFIER   [a-zA-Z_]([a-zA-Z0-9_]|[a-zA-Z]-[a-zA-Z])*
 %%
 
 a       return tok_a;
@@ -60,7 +61,7 @@ true    return tok_true;
 %       return tok_mod;
 
 _       return tok_underscore;
-[a-zA-Z_]([a-zA-Z0-9_]|[a-zA-Z]-[a-zA-Z])* { yylval->ival = yyextra->GetStringId(yytext); return tok_identifier; }
+{IDENTIFIER}|{IDENTIFIER}?(:{IDENTIFIER})+ { yylval->ival = yyextra->GetStringId(yytext); return tok_identifier; }
 
 @[a-zA-Z_\-0-9]*    { yylval->ival = yyextra->GetAtStringId(yytext+1); return tok_atstring; }
 [0-9]+            { yylval->ival = atoi(yytext); return tok_integer; }
