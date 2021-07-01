@@ -162,13 +162,30 @@ void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
     {
         if(attribute.entityOpt)
         {
-            auto v = attribute.entityOpt->IsValue();
-            if(!v)
+            ::Entity e;
+            if(auto v = attribute.entityOpt->IsValue())
+            {
+                e = v->GetValue();
+            }
+            else if(auto v2 = attribute.entityOpt->IsVariable())
+            {
+                if(auto v3 = v2->IsNamedVariable())
+                {
+                     e = ::Entity(EntityType::String, v3->nameId);
+                }
+                else
+                {
+                    attribute.entityOpt->UnboundError(db);
+                    return;
+                }
+            }
+            else
             {
                 attribute.entityOpt->UnboundError(db);
                 return;
             }
-            entities[compoundName.mapFromInputToOutput[index]+1] = v->GetValue();
+
+            entities[compoundName.mapFromInputToOutput[index]+1] = e;
         }
         // TODO: Else report error
                      

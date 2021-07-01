@@ -53,8 +53,7 @@ target_link_libraries(logical-tests logiccore)
 target_link_libraries(logical logiccore stdlib)
 target_link_libraries(logiccore ${TERMCAP} persist)
 
-add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:stdlib> $<TARGET_FILE_DIR:logical>)
-add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:mysql> $<TARGET_FILE_DIR:logical>)
+# add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:mysql> $<TARGET_FILE_DIR:logical>)
 
 set_target_properties(logiccore PROPERTIES
     CXX_STANDARD 17

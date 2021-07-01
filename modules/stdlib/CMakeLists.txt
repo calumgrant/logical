@@ -12,6 +12,8 @@ set_target_properties(stdlib PROPERTIES
 
 target_link_libraries(stdlib logiccore)
 
+add_custom_command(TARGET stdlib POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:stdlib> $<TARGET_FILE_DIR:logical>)
+
 add_test(NAME Print1a COMMAND logical ../../tests/stdlib/print1.dl)
 add_test(NAME Pi1 COMMAND logical ../../tests/stdlib/pi1.dl)
 add_test(NAME Pi2 COMMAND logical ../../tests/stdlib/pi2.dl)

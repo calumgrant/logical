@@ -1,1 +1,5 @@
 load-module mysql.
+
+"logical" has mysql-user "root".
+
+error e if mysql-error e.

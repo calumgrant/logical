@@ -580,7 +580,7 @@ void DatabaseImpl::SetExpectedResults(int count)
 void Database::Error(const char * msg)
 {
     ReportUserError();
-    std::cerr << Colours::Error << msg << Colours::Normal << std::endl;
+    std::cerr << Colours::Error << "Error: " << msg << Colours::Normal << std::endl;
 }
 
 void Database::SetEvaluationLimit(std::size_t limit)
