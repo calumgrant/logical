@@ -108,21 +108,21 @@ namespace Logical
         }
         
         template<typename Binding, typename Int>
-        void Find(Enumerator &e, Binding b, Int * query)
+        void Find(Enumerator &e, Binding b, Int * query) const
         {
             e.i = Internal::LowerBound(arity, b, data, size, (const Int*)query);
             e.j = Internal::UpperBound(arity, b, data, size, (const Int*)query);
         }
 
         template<typename Binding, typename...Ints>
-        void Find(Enumerator &e, Binding b, Ints... query)
+        void Find(Enumerator &e, Binding b, Ints... query) const
         {
             e.i = Internal::LowerBound(arity, b, data, size, query...);
             e.j = Internal::UpperBound(arity, b, data, size, query...);
         }
         
         template<typename Binding>
-        bool Next(Enumerator &e, Binding b, Int * result)
+        bool Next(Enumerator &e, Binding b, Int * result) const
         {
             if(e.i < e.j)
             {
@@ -134,7 +134,7 @@ namespace Logical
         }
 
         template<typename Binding, typename...Ints>
-        bool Next(Enumerator &e, Binding b, Ints&&... result)
+        bool Next(Enumerator &e, Binding b, Ints&&... result) const
         {
             if(e.i < e.j)
             {
@@ -144,7 +144,6 @@ namespace Logical
             }
             return false;
         }
-
         
     private:
         Arity arity;

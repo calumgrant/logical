@@ -13,6 +13,7 @@ public:
         AddTest(&TablesTest::TestHash);
         AddTest(&TablesTest::HashTable1);
         AddTest(&TablesTest::UnaryTableTests);
+        AddTest(&TablesTest::BinaryTableTests);
     }
 
     template<typename Table>
@@ -191,5 +192,59 @@ public:
         HashTable<StaticArity<1>> t1;
         
         t1.Find(StaticBinding<true,false,true>(), 1,2,3);
+    }
+
+    template<typename Table>
+    void MakeBinary(Table &t)
+    {
+        EQUALS(0, t.size());
+        Int data[] = { 1, 1, 1, 0, 2, 2, 2, 3, 2, 2 };
+        
+        for(int i=0; i<10; i+=2)
+        {
+            t.Add(data[i], data[i+1]);
+            t.Add(data+i);
+        }
+        EQUALS(10, t.size());
+    }
+    
+    template<typename FF, typename BF, typename BB, typename Index>
+    void TestBinary(FF ff, BF bf, BB bb, const Index & i)
+    {
+        Enumerator e;
+        Int x, y;
+        
+        // Find all (scan)
+        i.Find(e, ff);
+        CHECK(i.Next(e, ff, x, y));
+        EQUALS(1, x);
+        EQUALS(0, y);
+        CHECK(i.Next(e, ff, x, y));
+        EQUALS(1, x);
+        EQUALS(1, y);
+
+        
+        // Find one columns
+        
+        
+        // Find two columns (probe)
+        x=2, y=2;
+        
+    }
+    
+    void BinaryTableTests()
+    {
+        BasicTable<StaticArity<2>> t1;
+        BasicTable<DynamicArity> t2(2);
+        
+        MakeBinary(t1);
+        SortedTable<StaticArity<2>> t3(std::move(t1));
+        EQUALS(4, t3.size());
+        TestBinary(StaticBinding<false,false>(), StaticBinding<true,false>(), StaticBinding<true,true>(), t3.GetIndex());
+        
+        MakeBinary(t2);
+        SortedTable<DynamicArity> t4(std::move(t2));
+        EQUALS(4, t4.size());
+        TestBinary(DynamicBinding(false,false), DynamicBinding(true,false), DynamicBinding(true,true), t4.GetIndex());
     }
 } tt;

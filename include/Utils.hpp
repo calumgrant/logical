@@ -314,7 +314,7 @@ namespace Internal
         static bool BoundGreater(const Int * row, Int i, Ints...is) { return *row > i || (*row==i && HashHelper<Binding...>::BoundGreater(row+1, is...)); }
 
         template<typename...Ints>
-        static void BindRow(const Int * row, Int i, Ints...is) { HashHelper<Binding...>::BindRow(row+1, is...); }
+        static void BindRow(const Int * row, Int i, Ints&&...is) { HashHelper<Binding...>::BindRow(row+1, is...); }
 
         static void BindRow(const Int * row, Int * output) { HashHelper<Binding...>::BindRow(row+1, output+1); }
         static const int BindCount = 1 + HashHelper<Binding...>::BindCount;
@@ -340,7 +340,7 @@ namespace Internal
 
         // Bind the unbound columns
         template<typename...Ints>
-        static void BindRow(const Int * row, Int & i, Ints...is) { i=*row; HashHelper<Binding...>::BindRow(row+1, is...); }
+        static void BindRow(const Int * row, Int & i, Ints&&...is) { i=*row; HashHelper<Binding...>::BindRow(row+1, is...); }
 
         // Bind the unbound columns
         static void BindRow(const Int * row, Int * output) { *output = *row; HashHelper<Binding...>::BindRow(row+1, output+1); }
@@ -486,7 +486,7 @@ namespace Internal
     inline void BindRow(Int mask, const Int * row) {}
 
     template<typename...Ints>
-    void BindRow(Int mask, const Int * row, Int &i, Ints... is)
+    void BindRow(Int mask, const Int * row, Int &i, Ints&&... is)
     {
         if(0==(mask&1)) i=*row;
         BindRow(mask>>1, row+1, is...);

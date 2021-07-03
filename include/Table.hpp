@@ -80,7 +80,7 @@ namespace Logical
 
         SortedIndex<Arity> GetIndex() const
         {
-            return SortedIndex<Arity>(this->arity, this->values.data(), this->values.size());
+            return SortedIndex<Arity>(this->arity, this->values.data(), this->values.size()/this->arity.value);
         }
     };
 
@@ -99,6 +99,12 @@ namespace Logical
         {
             // static_assert(sizeof...(v) % Arity::value == 0);
             AddInternal(v...);
+        }
+        
+        template<typename Int>
+        void Add(Int * data)
+        {
+            this->values.insert(this->values.end(), data, data+this->arity.value);
         }
         
         UnsortedIndex<Arity> GetIndex() const
