@@ -215,7 +215,6 @@ static void error(Call & call)
 
 static void sync(Call & call)
 {
-    // !! Check that we got a "sync"
     connection.sync(call.GetModule());
 }
 

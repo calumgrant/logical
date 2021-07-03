@@ -97,6 +97,34 @@ namespace Internal
         return p;
     }
 
+    typedef std::uint32_t ShortIndex;
+
+    template<typename Arity, typename Binding, typename... Ints>
+    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n, Ints... vs)
+    {
+        ShortIndex l=0, r=n;
+        while(l<r)
+        {
+            auto m = (l+r)>>1;
+                        
+            if (greater(p + m*a.value, vs...))
+            {
+                l = m+1;
+            }
+            else
+            {
+                r = m;
+            }
+        }
+        return l*a.value;
+    }
+
+    template<typename Arity, typename Binding>
+    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n)
+    {
+        return 0;
+    }
+
     // Returns the smallest pointer that is > value
     template<int Arity, typename...Ints>
     const Int * upper_bound(const Int * p, Int n, Ints... vs)
@@ -117,12 +145,41 @@ namespace Internal
         }
         return p+Arity*r;
     }
-    
+
+    // Returns the smallest pointer that is > value
+    template<typename Arity, typename Binding, typename...Ints>
+    ShortIndex UpperBound(Arity a, Binding b, const Int * p, ShortIndex n, Ints... vs)
+    {
+        ShortIndex l=0, r=n;
+        while(l<r)
+        {
+            auto m = (l+r)>>1;
+
+            if(less(p + m * a.value, vs...))
+            {
+                r = m;
+            }
+            else
+            {
+                l = m+1;
+            }
+        }
+        return a.value*r;
+    }
+
+
+
     template<int Arity>
     const Int * upper_bound(const Int * p, Int size)
     {
         // Optimization of previous case
         return p + Arity * size;
+    }
+
+    template<typename Arity, typename Binding>
+    ShortIndex UpperBound(Arity a, Binding b, const Int * p, ShortIndex n)
+    {
+        return n * a.value;
     }
 
     inline void read_row(const Int *p) {}
@@ -206,6 +263,8 @@ namespace Internal
 
         static void BindRow(const Int * row) { }
         static void BindRow(const Int * row, Int * output) { }
+
+        static const int BindCount = 0;
     };
 
 
@@ -218,9 +277,10 @@ namespace Internal
         template<typename...Ints>
         static bool BoundEquals(const Int * row, Int i, Ints...is) { return i==*row && HashHelper<Binding...>::BoundEquals(row+1, is...); }
         template<typename...Ints>
-        static void BindRow(const Int * row, Int &i, Ints...is) { i=*row; HashHelper<Binding...>::BindRow(row+1, is...); }
+        static void BindRow(const Int * row, Int i, Ints...is) { HashHelper<Binding...>::BindRow(row+1, is...); }
 
-        static void BindRow(const Int * row, Int * output) { *output = *row; HashHelper<Binding...>::BindRow(row+1, output+1); }
+        static void BindRow(const Int * row, Int * output) { HashHelper<Binding...>::BindRow(row+1, output+1); }
+        static const int BindCount = 1 + HashHelper<Binding...>::BindCount;
     };
 
     template<bool...Binding>
@@ -233,10 +293,14 @@ namespace Internal
         template<typename...Ints>
         static bool BoundEquals(const Int * row, Int i, Ints...is) { return HashHelper<Binding...>::BoundEquals(row+1, is...); }
 
+        // Bind the unbound columns
         template<typename...Ints>
-        static void BindRow(const Int * row, Int i, Ints...is) { HashHelper<Binding...>::BindRow(row+1, is...); }
+        static void BindRow(const Int * row, Int & i, Ints...is) { i=*row; HashHelper<Binding...>::BindRow(row+1, is...); }
 
-        static void BindRow(const Int * row, Int * output) { HashHelper<Binding...>::BindRow(row+1, output+1); }
+        // Bind the unbound columns
+        static void BindRow(const Int * row, Int * output) { *output = *row; HashHelper<Binding...>::BindRow(row+1, output+1); }
+        
+        static const int BindCount = HashHelper<Binding...>::BindCount;
     };
 
     template<bool...Bound, typename...Ints>
@@ -333,7 +397,7 @@ namespace Internal
     }
 
     template<bool... Binding, typename...Ints>
-    void BindRow(StaticBinding<Binding...>, const Int * row, Ints... is)
+    void BindRow(StaticBinding<Binding...>, const Int * row, Ints&&... is)
     {
         HashHelper<Binding...>::BindRow(row, is...);
     }
@@ -349,7 +413,7 @@ namespace Internal
     template<typename...Ints>
     void BindRow(Int mask, const Int * row, Int &i, Ints... is)
     {
-        if(mask&1) i=*row;
+        if(0==(mask&1)) i=*row;
         BindRow(mask>>1, row+1, is...);
     }
 
@@ -371,6 +435,20 @@ namespace Internal
         {
             if(m&1) *output = *row;
         }
+    }
+
+    inline DynamicArity Count(DynamicBinding b)
+    {
+        int c=0;
+        for(int m=b.mask; m; m>>=1)
+            if(m&1) c++;
+        return c;
+    }
+
+    template<bool...Binding>
+    constexpr auto Count(StaticArity<Binding...> arity) -> StaticBinding<HashHelper<Binding...>::BindCount>
+    {
+        return StaticBinding<HashHelper<Binding...>::BindCount>();
     }
 }
 

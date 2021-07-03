@@ -1,22 +1,98 @@
-# Work plan
+Current work:
 
-- MySQL
-  - Replace `1 has mysql:Test1:name "calum".` with
-  `mysql:Test1:ID 1 has name "calum".`
-  - Defined predicates, for example
+For `horse h has name n`, create a single predicate `horse,name`. Create projections to `,name` and `horse`.
 
-  person X has name Y if mysql:query "SELECT * FROM Person" has column1 X, column2 Y.
+For `large horse h has name n`, create a single predicate `horse&large,name` with projections to `large`, `horse` and `_,name`.
 
-  mysql:query "INSERT ({0},{1}) INTO Person" has column1 X, column2 Y if
-    person X has name Y.
+For `large horse h` create predicate `horse&large` (sorted alphabetically), with projections to `large` and `horse`.
+
+Use the string pool to represent compound names? Should be more efficient and generally simpler. Sort the attributes alphabetically. Represent the permutation as an integer: 2*3*4*5* ... 
+  first position x%5; x/=5
+  second position = x%4; x/=4.
+  64 bits = 16 positions. [4 bits each].
+
+For externs, the "object" is always required, e.g. `std:string x has length y`. The name of this is `std:string,length`.
+
+When querying an extern, we query the predicate 
+
+Allow unnamed variables, e.g. `mysql:query "..." has x, y, z.`
+
+For externs, allow a variable number of arguments. `module.AddVariadic(extern, "mysql:query")`
 
 
+# Plan for next week
+- [ ] Finish implementing tables for the external API
+- [ ] Finish external API
+- [ ] Finish SQL connector
+- [ ] Finish semi-naive evaluation
 
-- Implementing tables
-  - Fixed hash table
-  - Fixed sorted table
-  - Dynamic hash table
+## Tables
+- [ ] Implement different table types. Perhaps using a strategy pattern?
+  - Writable table concept
+    - `table.Add(Int...)`, `void Add(const Int*)`    
+  - Queryable table concept
+    - `bool table.Find(Enumerator, BoundColumns, const Int*)`, `bool table.Find(Enumerator, BoundColumns, Int...)`
+    - `bool table.Next(Enumerator, BoundColumns, Int*)`, `bool table.Next(Enumerator, BoundColumns, Int...)`)
+    - Query types: Scan, Probe, Join (which columns)
+    - `bool CanFind(BoundColumns)`
+  - Delta concept
+    - `void table.Add(bool&, Int...)`, `void table.Add(bool&, const Int*)`
+    - `table.NextIteration()` - applies to all tables in the delta
+    - `enumerator table.FindDelta(Enumerator, BoundColumns, const Int*)`, `enumerator table.FindDelta(BoundColumns, Int...)`
+  - Table implementations:
+    - `BasicTable<Arity>` (Writable) - just accumulates values
+    - `SortedTable<Arity>` (Querable) - sorted and deduplicated
+    - `CompactSortedTable<Arity>` (Queryable) - sorted, deduplicated and stored in 32-bit form
+    - `BasicHashTable<Arity>` (Writable, Queryable, Delta) - queries limited to delta/fully bound
+    - `QueryableHashTable<Arity, Indexes...>` (Writable, Queryable, Delta)
+    - `UnsortedIndex<Arity>` (Queryable) - supports scan
+    - `SortedIndex<Arity>` (Queryable) - supports join 
+    - `HashIndex<BoundColumns>` (Queryable) - supports scan, join
+    - `CompactTableIndex<Arity>` - stored in 32-bit form. Has a pointer to an array of `EntityType`.
+  - Compact tables
+    - Stores values as `std::int32_t` and has a set of columns (EntityType)
+    - All entitytypes can support `Entity(t, v)` which converts an entity from short form to long form.
+  - All enumerators consist of a class `Enumerator` containing 2 32-bit ints.
+- [ ] Implement internal tables in terms of these tables
+  - Finalise table after evaluation -> turn it into a `SortedTable<>`
 
+## Finish the external API
+- [ ] Fix naming scheme, e.g. `mysql:database db has username foo`. `mysql:Test:person id has name name`
+- [ ] Refactor `CompoundName`
+- [ ] Variadic externs
+- [ ] External API supports queries
+  - `ExternalSortedTable<> call.GetResults(index)`
+  - `call.SetResults(...)`
+  - `module.AddPredicate(name, dependencies)`
+- [ ] Computed predicates - cached.
+- [ ] External predicates as tables not predicates.
+
+## Finish MySQL
+- [ ] Queries with inserts, e.g. `mysql:query "SELECT surname {1} FROM Person WHERE id={0}" has name "Frank", surname S.
+  `mysql:query "INSERT ({0},{1}) INTO Person" has column1 X, column2 Y if person X has name Y.`
+- [ ] Queries on bound columns, e.g. `mysql:Test:Person 123 has surname X`
+- [ ] What about projections??
+- [ ] Connection pool
+
+## Finish semi-naive evaluation
+- [ ] Mark some predicates as semi-naive
+- [ ] Callee implicitly implements semi-naive
+  - [ ] Table of already-bound columns
+  - [ ] Bound evaluation rules
+
+
+# General ideas
+
+- Optimization to discard items that won't be used again?
+- Compilation hints
+  - `[keep]` Don't unload the results
+  - `[noreorder]` Don't reorder evaluation
+  - `[inline]` Make inline wherever possible.
+  - `[...]` Consistent with opimization options wherever possible.
+  - `[..., ...]` A list of options.
+  - `[first]`
+  - `[last]` perform something last
+  - `[immediate]` evaluate this immediately.
 
 - Think more about compilation scheme
   - Control flow for count, sum and not.
@@ -24,17 +100,6 @@
   - FIFOs for recursion.
   - Semi-naive evaluation and recursion.
   - Microthreads
-- Implement semi-naive optimization another way:
-  - Identify which predicates can be semi-naive
-    If it's singly-recursive
-    If it's only called as a bindingset
-    If there are only joins?
-    basically just `reaches` at this point.
-  - Get rid of binding predicates for now.
-  - Create a semi-naive predicate version (using B), and call that.
-  - Implement semi-naive predicates
-    - Table of "queries" (optional)
-    - Table of "results" (as before).
 
 - Optimization: Can "push" all results to the first tuple. Can auto-inline any predicate that is never queried. We can "push" all results to other predicates without storing them.
 
@@ -71,17 +136,6 @@ l5:
 l6:
 }
 
-```
-
-// How is the FIFO implemented??
-// The FIFO data contains an index to the "next" result in the hash table.
-// You can create indexes as arguments to the InitFifo<> command.
-`bool FifoNext<Arity, Index>(fifoData, inputs, outputs);
-
-
-
-
-```
 auto table1 = MakeHashTable<3>();
 auto table3 = MakeUnique
 auto table2 = call.GetTable(predicate);
@@ -98,30 +152,6 @@ auto enumerator = table.Find(Ints... bound);
 iterator.Current()
 iterator.Next();
 
-
-
-struct FifoBase
-{
-    Int size;
-    const Int * base;
-
-    // Methods for query etc.
-    // void Add(const Int * row);
-
-    // varargs method
-    virtual void Add(Int a...);
-
-    virtual void Find
-
-    // Query??
-};
-
-struct FifoData
-{
-    Int next;
-    FifoBase * base;
-};
-
 struct Task
 {
   std::atomic<Task *> next;
@@ -129,14 +159,7 @@ struct Task
 };
 ```
 
-- How does "Write" work??
-  1. Perform a probe (hash table)
-  2. Maybe push onto the Fifo. (No need to worry about iterations).
-- How does "Query" work??
-
-
 - Semi-naive
-- Fix up existing tests or abandon it.
 - Write proper predicate names into the `debugName`
 - Split recursive predicates up into two loops (base case and recursive).
 
@@ -144,39 +167,20 @@ struct Task
 
 - Message of the day.
 
-- Functions for
-  - message of the day
-  - randomness
-  - time
-
 - Fail to compile a clause on binding error. This actually crashes (`binding.dl`).
-
-- Write lines???
-```
-"file1.txt" has file-line n, text t if
-  n=1
-```
 
 - Externs
   - Check binding errors at compile time?
   - Think about whether we want to change the `Table` not the predicate?
-  - This would allow to define after use and generally break less stuff.
 - Refactor predicate name/compoundname as it's horrid and ugly.
   `class PredicateName` ??
 - All errors to have locations
 - Locations to have filenames
 - Test projecting external predicates.
-- In a fact, unbound variables are treated as strings. E.g. `module fubar.` treats `fubar` as a string.
 - Think about how qualified names are supposed to with with attributes?
   xml:node node has child c, index i. In this case we want a single predicate
     `xml:node:child:index.`
 - Private symbols in modules?
-- Idea: Compile queries to a DLL/ ensure that the public API is sufficiently powerful for this, perhaps by enabling queries.
-```
-Predicate * p = module.PrepareQuery(extern1, extern1, "person", In, "name", Out);
-```
-
-- Prefix `std:` does not work.
 
 ## Running as a server
 
@@ -185,14 +189,6 @@ Predicate * p = module.PrepareQuery(extern1, extern1, "person", In, "name", Out)
 The `-S` option creates a new server, killing the existing server if required. The `-s` option connects to an existing server.
 
 You can specify the name of the socket, for example `-ssocket1` which will create a socket `socket1` in the local directory. If no name is specified, then Logical will use the name `logical.socket` in the current directory.
-
-## Semi-naive evaluation (SNE)
-
-Two approaches:
-1. Make SNE implicitly part of any evaluating predicate
-2. Insert additional predicates and rewrite the program to be semi-naive.
-
-I want to try approach 2, because it may throw up some interesting bugs/assumptions in the rest of the code.
 
 ## Task manager
 
@@ -280,16 +276,8 @@ becomes (* = write, _ = read)
   c = a+b, c=d, 
 - Check negate FB (Same as negateBF)
 
-- Have an "abstract machine" calling convention, where a "ret" on the stack jumps to the address
-  - stack pointer
-  - stack of values (entities)
-
 - new objects to define a variable, and use `and` to assert further facts, for example
   `new expression p has ...,p has parent e.`
-
-# Compilation to C
-
-The external interface should also support the ability to run compiled predicates.
 
 # Proper bytecode
 
@@ -384,78 +372,10 @@ Changes to make:
 - mremap?
 - Need proper multi-threaded soak tests
 - Use atomics for the memory allocator
-   
-# Datalog abstract machine
 
-State:
-- A stack of values
-- A stack of continue/return pointers. Previous stack pointer (on return)
-- instruction pointer
-- stack pointer
-
-- Instructions:
-  Load immediate value.
-  Assign, Check equal
-  Call: target address, stack size
-  Continue
-  Return
-
-- Call the bound predicate
-
-Creating a bound predicate: Problems if there are multiple branches in a rule
-- Don't know which variables to bind on input as it's different per branch.
-- Morally it's just before the write, but we need to reorder it.
-
-Semi-naive evaluation:
-1. Implement BindingAnalysis, that marks columns that are always bound.
-2. Implement CallBoundPredicates, which creates a separate relation for the bound columns, and calls that.
-3. Implement a BoundPredicate, which must be called with the given fields set.
-  a. Implement a "Load argument" evaluation step that loads values from the query. Basically a delta request. `delta-semi-naive (_0,_1)` -> 
-  b. 
-  b. Implement a "Write result" evaluation that writes values to caller or intermediate table.
-  c. Implement a cache of results: 1. A table of inputs that have already been computed, and 2. The regular table of outputs.
-
-Recursive bound predicates: When a recursive bound-predicate is called, the arguments are added to the table of arguments, and they are evaluated the next iteration.
-
-q1(X) :- descendent1(5, X).
-q2(X) :- descendent2(5, X).
-descendent(X,Y) :- child (X,Y); child(X,Z), descendent(Z,Y).
-descendent2(X,Y) :- child (X,Y); descendent(X,Z), child(Z,Y).
-
-This notices that descendent is always bound in the first argument. (Hard as it's conditional). The rules become:
-
-descendent1(X,Y) :- args1(X), (child (X,Y); child(X,Z), descendent(Z,Y)).
-descendent2(X,Y) :- args2(X), (child(X,Y); descendent2(X,Z), child(Z,Y)).
-args2(5). // From q2
-args1(5). // From q1
-args1(Z) :- args1(X), child(X,Z).
-
-What about things that aren't recursive?
-
-The beauty of this idea is that it does not need changes to the rule engine.
-
-Implementation plan:
-1. Implement bindinganalysis
-2. Create "binding" predicates: `bind_bff:descendent`
-3. For all calls, insert an additional "write" to the binding predicates.
-4. Add rules to the binding predicates.
-5. For relevent calls, call the bound predicate instead. `has_bf:descendent`
-6. Compile rules for the bound predicate, inserting a call to `args_n:` at the head, and rebinding all steps.
-    `std::shared_ptr<Evaluation> Evaluation::Bind(std::vector<int> arguments_to_bind)`
-
-Need to remember that we need to continue evaluating the recursive predicate.
-
-How to implement a bound predicate:
+- How to implement a bound predicate:
 2. Those queries that are always bound are compiled with their bound variables.
 
-
-- Implement a CallAnalysis, that collects information on bound variables.
-  - flag: Will enumerate all
-  - mask: boundfields: Fields that are bound for every query.
-  - Perform a whole-program analysis maybe?
-  - Problem: How does this interact with the join orderer?
-
-- Works top-down:
 
 - Avoid reanalysis of shared steps in queries.
 
@@ -464,21 +384,14 @@ How to implement a bound predicate:
 - Optimization: delete tables when finished.
 - Garbage collection: 
 
-Newtypes:
 - Performance bug in `performance/new3.dl` - too much memory used.
-
-Implement semi-naive recursion:
-- Implement the new optimization SemiNaive
-- Determine how predicates are called
-- Flag certain predicates as semi-naive.
-- Determine whether the predicate is recursive
 
 - Analysis: Query types. For each relation, store a set of how the relation would be indexed, ahead of time.
 - After the rules are run, clean them up to save memory.
 - Optimization: Merge heads.
 - Optimization: Parallelize.
 
-- Predicate: clear "all". To run multiple tests in the same run.
+- Predicate: clear all. To run multiple tests in the same run.
 
 - Optimization: Compressed table type. Only for streaming. Use deltas or something.
 
@@ -693,8 +606,6 @@ List of predicates:
 
 2. Implement `-f` and `-fno-` to enable and disable options.
 
-## Semi-naive evaluation
-
 - Use square brackets for special annotations, such as: `[in]`, `[out]`
 - Syntax highlighter
 
@@ -765,27 +676,16 @@ file f has line l, section s if
   t has regex-match s
 
 file f has line l, key k, value v if
-
-
-
-
 ```
 
 ## Short term
 
-Problems to solve
-- Defining data like `temperature -5.`
 - Reporting the line number of negative recursion.
-
 - Use termcap library
-
-For each predicate:
 - Successful evaluation message in bright green.
 - Join order: Put the recursive delta first (special case of the join orderer)
 - Optimization: Or: merge identical steps (can do this after local variable optimization maybe).
-
 - Merge identical predicates (optimization)
-
 - Idea: Have an optimization threshold. If two sizes are equivalent to within a factor of N, then don't reorder them.
 So the existing evaluation order is taken as a compiler hint.
 - Idea: Have options controlling optimization
@@ -801,10 +701,6 @@ logical:reorder false.
 - non-ary predicates
 foo if bar and baz.
 
-6. Implement some of the optimizations
-  - Unused variables.
-  - Mark certain predicates as deltas.
-
 - Put information into each evaluation step:
 
 - Create a `VariableInfo` structure
@@ -812,8 +708,6 @@ foo if bar and baz.
   - bound
   - last use?
   - With pretty printing?
-- Detect last use and use an "exists" predicate as needed.
-  - `bool Relation::Exists(const char * Entity, int mask)`
 - `order by` as a database concept...
 
 - Better results
@@ -839,12 +733,9 @@ foo if bar and baz.
 - Warning empty relation:
   - Create a line number
   - Make it red.
-- Syntax errors - Count in the error count.
-- Debug steps: expect... to expect a certain number of results, or a certain number of evaluation steps.
-  - Parser error recovery with `.`
+- Parser error recovery with `.`
 - Embedding Logical
 - Extending Logical
-- Perhaps have an `Evaluation::SetRow()` so that it's possible to store the row?
 - Report duplicate attributes a bit better.
 - Count total number of rows stored.
 - Count total number of predicates.
@@ -876,43 +767,16 @@ foo if bar and baz.
 - Build and test on github actions
 - Optimization: Tables should assume a single type, then fall back onto polymorphic behaviour which is slower.
 - Free intermediate tables, for example tables used for deduplicating.
-- Or just delete the rules?
+  - Or just delete the rules?
 - Problem with adding rules on demand if a predicate is already being evaluated.
 - Implement efficient indexing of inequality: `p has Age a and a>10`
-
-## Recursion
-
-- Error on negative recursion
- - How to even detect it
- - Have a flag called 'Evaluating', as well as a parity.
- - Probably want some kind of static analysis to be honest.
- - When can we use the delta??
-- Can we avoid unnecessary branches in the recursive step??
-- Can we just use the deltas??
-
-## Semi-naive evaluation
-
-- Can we use context when compiling a rule?
-  - Yes! When we call eval, we know which variables are already bound
-
-# Unresolved issues
 - Putting `-` into identifiers?
-- Semi-naive evaluation where some of the variables are already bound.
-- Recursion. Needs to work with semi-naive evaluation.
 
 ## Datalog predicates
 
 - nary predicates
 - Perhaps mix Datalog syntax with Logical syntax.
 - Syntax for all, count etc.
-
-## Last use optimization
-
-## Recursion
-
-## Memory management
-
-Implement memory mapped memory allocator.
 
 # Project ideas
 
@@ -930,8 +794,6 @@ Implement memory mapped memory allocator.
 - [ ] Command line option to pass code
 - [ ] A compiled bytecode for Datalog.
 - [ ] Resources limits - memory, time and tuple-counts.
-- [ ] MySQL connector. Implemented using DLLs?
-- [ ] Dynamic-linked libraries
 - [ ] Reading external data.
 
 # Optimizer

@@ -38,6 +38,8 @@ add_library(logiccore SHARED
     ../include/Program.hpp
     ../include/Utils.hpp
     ../include/HashTable.hpp
+    ../include/Table.hpp
+    ../include/Index.hpp
     Table.cpp Table.hpp TableImpl.hpp
     Evaluation.cpp Evaluation.hpp EvaluationImpl.hpp
     Compiler.cpp Compiler.hpp

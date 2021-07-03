@@ -12,7 +12,10 @@ mysql sync.
 
 expected-results 12.
 
-find mysql:table.
+query "Tables" has table-name t if
+    t is a mysql:table.
+
+// find mysql:table.
 
 2 has mysql:Test2:name "fred".
 x has mysql:Test1:name "calum"+x if 1<=x<=10.

@@ -16,7 +16,7 @@ public:
     
     void SimpleUnaryTableTest()
     {
-        SimpleTable<StaticArity<1>> t1;
+        BasicTable<StaticArity<1>> t1;
         
         EQUALS(0, t1.size());
         
@@ -29,17 +29,20 @@ public:
         SortedTable<StaticArity<1>> t2(std::move(t1));
         EQUALS(3, t2.size());
         
-        auto e = t2.Find();
+        auto i1 = t2.GetIndex();
+        Enumerator e;
+        StaticBinding<false> b;
+        i1.Find(e, b);
         Int v;
-        CHECK(e.Next(v));
+        CHECK(i1.Next(e, b, v));
         EQUALS(0, v);
-        CHECK(e.Next(v));
+        CHECK(i1.Next(e,b,v));
         EQUALS(2, v);
-        CHECK(e.Next(v));
+        CHECK(i1.Next(e,b,v));
         EQUALS(3, v);
-        CHECK(!e.Next(v));
+        CHECK(!i1.Next(e,b,v));
         
-        SimpleTable<DynamicArity> t3(1);
+        BasicTable<DynamicArity> t3(1);
         EQUALS(0, t3.size());
         
         t3.Add(0);
@@ -50,14 +53,15 @@ public:
         SortedTable<DynamicArity> t4(std::move(t3));
         EQUALS(3, t4.size());
 
-        auto e2 = t4.Find();
-        CHECK(e2.Next(v));
+        auto i4 = t4.GetIndex();
+        i4.Find(e, b);
+        CHECK(i4.Next(e, b, v));
         EQUALS(0, v);
-        CHECK(e2.Next(v));
+        CHECK(i4.Next(e, b, v));
         EQUALS(2, v);
-        CHECK(e2.Next(v));
+        CHECK(i4.Next(e, b, v));
         EQUALS(3, v);
-        CHECK(!e2.Next(v));
+        CHECK(!i4.Next(e, b, v));
     }
     
     void TestHash()
