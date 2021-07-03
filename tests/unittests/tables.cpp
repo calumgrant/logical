@@ -213,6 +213,7 @@ public:
     {
         Enumerator e;
         Int x, y;
+        Int row[2];
         
         // Find all (scan)
         i.Find(e, ff);
@@ -222,11 +223,54 @@ public:
         CHECK(i.Next(e, ff, x, y));
         EQUALS(1, x);
         EQUALS(1, y);
+        CHECK(i.Next(e, ff, x, y));
+        EQUALS(2, x);
+        EQUALS(2, y);
+        CHECK(i.Next(e, ff, x, y));
+        EQUALS(2, x);
+        EQUALS(3, y);
+        CHECK(!i.Next(e, ff, x, y));
 
+        i.Find(e, ff);
+        CHECK(i.Next(e, ff, row));
+        EQUALS(1, row[0]);
+        EQUALS(0, row[1]);
+        CHECK(i.Next(e, ff, row));
+        EQUALS(1, row[0]);
+        EQUALS(1, row[1]);
+        CHECK(i.Next(e, ff, row));
+        EQUALS(2, row[0]);
+        EQUALS(2, row[1]);
+        CHECK(i.Next(e, ff, row));
+        EQUALS(2, row[0]);
+        EQUALS(3, row[1]);
+        CHECK(!i.Next(e, ff, row));
+
+        // Find one column
+        x = 2;
+        y = -1;
+        i.Find(e, bf, x);
+        CHECK(i.Next(e, bf, x, y));
+        EQUALS(2, y);
+        CHECK(i.Next(e, bf, x, y));
+        EQUALS(3, y);
+        CHECK(!i.Next(e, bf, x, y));
+
+        x = 10;
+        i.Find(e, bf, x);
+        CHECK(!i.Next(e, bf, x, y));
         
-        // Find one columns
-        
-        
+        row[0] = 2;
+        row[1] = -1;
+        i.Find(e, bf, row);
+        CHECK(i.Next(e, bf, row));
+        EQUALS(2, row[1]);
+        CHECK(i.Next(e, bf, row));
+        EQUALS(3, row[1]);
+        CHECK(!i.Next(e, bf, row));
+
+
+
         // Find two columns (probe)
         x=2, y=2;
         

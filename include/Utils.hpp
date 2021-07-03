@@ -52,7 +52,7 @@ namespace Logical
     struct DynamicBinding
     {
         template<bool...Bs>
-        DynamicBinding(StaticBinding<Bs...>) :
+        explicit DynamicBinding(StaticBinding<Bs...>) :
             mask(Internal::ConvertMask<Bs...>::value), arity(sizeof...(Bs))
         {
             
@@ -122,32 +122,6 @@ namespace Internal
 
     typedef std::uint32_t ShortIndex;
 
-    template<typename Arity, typename Binding, typename... Ints>
-    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n, Ints... vs)
-    {
-        ShortIndex l=0, r=n;
-        while(l<r)
-        {
-            auto m = (l+r)>>1;
-                        
-            if (greater(p + m*a.value, vs...))
-            {
-                l = m+1;
-            }
-            else
-            {
-                r = m;
-            }
-        }
-        return l*a.value;
-    }
-
-
-    template<typename Arity, typename Binding>
-    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n)
-    {
-        return 0;
-    }
 
     // Returns the smallest pointer that is > value
     template<int Arity, typename...Ints>
@@ -286,7 +260,9 @@ namespace Internal
         static bool BoundEquals(const Int * row) { return true; }
         static bool BoundLess(const Int * row) { return false; }
         static bool BoundLess(const Int * i, const Int * j) { return false; }
-        static bool BoundGreater(const Int * row) { return false; }
+        
+        template<typename... Ints>
+        static bool BoundGreater(const Int * row, Ints...is) { return false; }
 
         static void BindRow(const Int * row) { }
         static void BindRow(const Int * row, Int * output) { }
@@ -335,9 +311,13 @@ namespace Internal
 
         static bool BoundLess(const Int * i, const Int * j) { return HashHelper<Binding...>::BoundLess(i+1, j+1); }
 
-                                                                                     template<typename...Ints>
+        template<typename...Ints>
         static bool BoundGreater(const Int * row, Int i, Ints...is) { HashHelper<Binding...>::BoundGreater(row+1, is...); }
 
+        static bool BoundGreater(const Int * row) { return HashHelper<Binding...>::BoundGreater(row+1); }
+
+        static bool BoundLess(const Int * row) { return HashHelper<Binding...>::BoundGreater(row+1); }
+        
         // Bind the unbound columns
         template<typename...Ints>
         static void BindRow(const Int * row, Int & i, Ints&&...is) { i=*row; HashHelper<Binding...>::BindRow(row+1, is...); }
@@ -418,6 +398,12 @@ namespace Internal
         return HashHelper<Binding...>::BoundLess(row, is...);
     }
 
+    template<bool... Binding, typename...Ints>
+    bool BoundGreater(StaticBinding<Binding...>, const Int * row, Ints... is)
+    {
+        return HashHelper<Binding...>::BoundGreater(row, is...);
+    }
+
     template<bool... Binding>
     bool BoundLess(StaticBinding<Binding...>, const Int * i, const Int * j)
     {
@@ -435,6 +421,57 @@ namespace Internal
             }
         }
         return false;
+    }
+
+    inline bool BoundLess(Int m, const Int *i)
+    {
+        return false;
+    }
+
+    template<typename...Ints>
+    bool BoundLess(Int m, const Int *i, Int j, Ints...js)
+    {
+        if(m&1)
+        {
+            if(*i<j) return true;
+            if(*i>j) return false;
+        }
+        return BoundLess(m>>1, i+1, js...);
+    }
+
+    template<typename...Ints>
+    bool BoundLess(DynamicBinding b, const Int *i, Ints...j)
+    {
+        return BoundLess(b.mask, i, j...);
+    }
+
+    inline bool BoundGreater(Int m, const Int *i)
+    {
+        return false;
+    }
+
+    template<typename...Ints>
+    bool BoundGreater(Int m, const Int *i, Int j, Ints...js)
+    {
+        if(m&1)
+        {
+            if(*i>j) return true;
+            if(*i<j) return false;
+        }
+        return BoundLess(m>>1, i+1, js...);
+    }
+
+    template<typename...Ints>
+    bool BoundGreater(DynamicBinding b, const Int *i, Ints...j)
+    {
+        return BoundGreater(b.mask, i, j...);
+    }
+
+
+    template<bool...Binding>
+    bool BoundGreater(StaticBinding<Binding...> b, const Int *i, const Int *j)
+    {
+        return BoundLess(b, j, i);
     }
 
     inline bool BoundGreater(DynamicBinding b, const Int *i, const Int *j)
@@ -538,7 +575,7 @@ namespace Internal
         {
             auto m = (l+r)>>1;
 
-            if(BoundLess(b, p + m * a.value, vs))
+            if(BoundGreater(b, p + m * a.value, vs))
             {
                 r = m;
             }
@@ -550,15 +587,15 @@ namespace Internal
         return a.value*r;
     }
 
-    template<typename Arity, typename Binding>
-    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n, const Int * vs)
+    template<typename Arity, typename Binding, typename... Ints>
+    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n, Ints... vs)
     {
         ShortIndex l=0, r=n;
         while(l<r)
         {
             auto m = (l+r)>>1;
                         
-            if (BoundGreater(b, p + m*a.value, vs))
+            if (BoundLess(b, p + m*a.value, vs...))
             {
                 l = m+1;
             }
@@ -570,7 +607,31 @@ namespace Internal
         return l*a.value;
     }
 
+
+    template<typename Arity, typename Binding>
+    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n, const Int * vs)
+    {
+        ShortIndex l=0, r=n;
+        while(l<r)
+        {
+            auto m = (l+r)>>1;
+                        
+            if (BoundLess(b, p + m*a.value, vs))
+            {
+                l = m+1;
+            }
+            else
+            {
+                r = m;
+            }
+        }
+        return l*a.value;
+    }
+
+    template<typename Arity, typename Binding>
+    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n)
+    {
+        return 0;
+    }
 }
-
-
 }
