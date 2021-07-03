@@ -12,6 +12,90 @@ public:
         AddTest(&TablesTest::SimpleUnaryTableTest);
         AddTest(&TablesTest::TestHash);
         AddTest(&TablesTest::HashTable1);
+        AddTest(&TablesTest::UnaryTableTests);
+    }
+
+    template<typename Table>
+    void AddTableData(Table & t)
+    {
+        EQUALS(0, t.size());
+        
+        Int testData[] = { 0, 3, 2, 0 };
+        
+        for(auto i : testData)
+        {
+            t.Add(i);
+        }
+        EQUALS(4, t.size());
+    }
+
+    template<typename Unbound, typename Bound, typename Index>
+    void TestIndexBinding(Unbound u, Bound b, Index i)
+    {
+        // Scan all data
+        Enumerator e;
+        Int v;
+        Int sorted[] = { 0, 2, 3 };
+
+        i.Find(e, u);
+        for(int j=0; j<3; ++j)
+        {
+            CHECK(i.Next(e, u, v));
+            EQUALS(sorted[j], v);
+        }
+        CHECK(!i.Next(e, u, v));
+        
+        Int k = -1;
+        i.Find(e, b, k);
+        CHECK(!i.Next(e, u, k));
+        for(int j=0; j<3; ++j)
+        {
+            k = sorted[j];
+            i.Find(e, b, k);
+            CHECK(i.Next(e, u, k));
+            CHECK(!i.Next(e, u, k));
+        }
+
+        i.Find(e, u);
+        for(int j=0; j<3; ++j)
+        {
+            CHECK(i.Next(e, u, &v));
+            EQUALS(sorted[j], v);
+        }
+        CHECK(!i.Next(e, u, &v));
+        
+        k = -1;
+        i.Find(e, b, &k);
+        CHECK(!i.Next(e, u, &k));
+        for(int j=0; j<3; ++j)
+        {
+            k = sorted[j];
+            i.Find(e, b, k);
+            CHECK(i.Next(e, u, &k));
+            CHECK(!i.Next(e, u, &k));
+        }
+    }
+    
+    template<typename Index>
+    void TestIndex(Index t)
+    {
+        TestIndexBinding(StaticBinding<false>(), StaticBinding<true>(), t);
+        TestIndexBinding(DynamicBinding(false), DynamicBinding(true), t);
+    }
+    
+    void UnaryTableTests()
+    {
+        BasicTable<StaticArity<1>> t1;
+        AddTableData(t1);
+
+        SortedTable<StaticArity<1>> t2(std::move(t1));
+        TestIndex(t2.GetIndex());
+
+        BasicTable<DynamicArity> t3(1);
+        AddTableData(t3);
+
+        SortedTable<DynamicArity> t4(std::move(t3));
+        TestIndex(t4.GetIndex());
     }
     
     void SimpleUnaryTableTest()

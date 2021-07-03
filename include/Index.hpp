@@ -1,5 +1,34 @@
-#pragma once
+/*
+    Index.hpp
+    Efficiently finding data int tables.
+    As "index" is a lookup table used to locate data quickly.
+    There are two main types of index: a sorted index (SortedIndex), and a hash table (HashIndex).
+    A sorted index references a table of Int, stored contiguously in rows.
+    A hashed index references a list of offsets into a table of rows. A "linear probing" algorithm is used,
+    whereby the next item in the hash chain is at the next position in the hash table.
+ 
+    Each index takes an Arity to store the width of the table,
+    and a Binding to indicate which columns are bound (inputs) or unbound (outputs).
+    There are Static- and Dynamic- versions of the arity and binding, which allows the compiler to generate
+    more efficient code if the shape of the index is known at compile-time.
+ 
+    An Enumerator is used to store the position in the index when iterating over results. The Find() method
+    performs a query and sets up the Enumerator to point to the results in the index. The Next() method
+    is used to retrieve a result and store the values in the supplied location.
+ 
+    Enumerator e;
+    DynamicBinding b(true, false);
+    Int x=12, y;
+    index.Find(e, b, x);
+    while(index.Next(e,b,x,y))
+    {
+        std::cout << "Result is (" << x << "," << y << ")\n";
+    }
+ 
+ 
+ */
 
+#pragma once
 #include "Logical.hpp"
 #include "Utils.hpp"
 
@@ -9,7 +38,7 @@ namespace Logical
 
     struct Enumerator
     {
-        std::uint32_t i, j;
+        Internal::ShortIndex i, j;
     };
 
     /*
@@ -78,11 +107,11 @@ namespace Logical
         {
         }
         
-        template<typename Binding>
-        void Find(Enumerator &e, Binding b, const Int * query)
+        template<typename Binding, typename Int>
+        void Find(Enumerator &e, Binding b, Int * query)
         {
-            e.i = Internal::lower_bound(arity, b, data, size, query);
-            e.j = Internal::upper_bound(arity, b, data, size, query);
+            e.i = Internal::LowerBound(arity, b, data, size, (const Int*)query);
+            e.j = Internal::UpperBound(arity, b, data, size, (const Int*)query);
         }
 
         template<typename Binding, typename...Ints>
@@ -133,9 +162,9 @@ namespace Logical
     class HashIndex
     {
     public:
-        static const int empty = 0xffffffff;
+        static const Internal::ShortIndex empty = 0xffffffff;
         
-        HashIndex(const Int * data, const uint32_t * table, std::uint32_t size) :
+        HashIndex(const Int * data, const Internal::ShortIndex * table, Internal::ShortIndex size) :
             data(data), table(table), size(size)
         {
         }
@@ -169,7 +198,7 @@ namespace Logical
         template<typename... Ints>
         bool Next(Enumerator &e, Binding b, Ints... result)
         {
-            std::uint32_t row;
+            Internal::ShortIndex row;
             while((row=table[e.i++]) != empty)
             {
                 if(e.i > size) e.i -= size;
@@ -184,8 +213,8 @@ namespace Logical
         
     private:
         const Int * data;
-        const uint32_t * table;
-        std::uint32_t size;
+        const Internal::ShortIndex * table;
+        Internal::ShortIndex size;
     };
 
     /*
