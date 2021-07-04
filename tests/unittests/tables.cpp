@@ -17,6 +17,7 @@ public:
         AddTest(&TablesTest::NaryTableTests);
         AddTest(&TablesTest::HashTable2);
         AddTest(&TablesTest::HashTable3);
+        AddTest(&TablesTest::HashTable4);
     }
 
     template<typename Table>
@@ -496,11 +497,12 @@ public:
         EQUALS(4, d);
     }
 
-    template<typename Table, typename Arity>
-    void TestIndexes(Arity a)
+    template<typename Table, typename Arity, typename Binding>
+    void TestIndexes(Arity a, Binding fbf)
     {
         Table t(a);
-        auto fbf = StaticBinding<false,true, false>();
+//        auto fbf = StaticBinding<false,true, false>();
+//        auto fbf = DynamicBinding(false,true,false);
         auto i1 = t.MakeIndex(fbf);
         bool added;
         Enumerator e;
@@ -586,9 +588,24 @@ public:
         
     }
     
+    template<typename Table, typename Arity>
+    void TestIndexes2(Arity a)
+    {
+        
+    }
+    
     void HashTable3()
     {
-        TestIndexes<BasicHashTable<StaticArity<3>>>(StaticArity<3>());
-        TestIndexes<BasicHashTable<DynamicArity>>(3);
+        TestIndexes<BasicHashTable<StaticArity<3>>>(StaticArity<3>(), StaticBinding<false,true,false>());
+        TestIndexes<BasicHashTable<DynamicArity>>(3, DynamicBinding(false,true,false));
+        TestIndexes<BasicHashTable<StaticArity<3>>>(StaticArity<3>(), DynamicBinding(false,true,false));
+        TestIndexes<BasicHashTable<DynamicArity>>(3, StaticBinding<false,true,false>());
     }
+
+    void HashTable4()
+    {
+        TestIndexes2<BasicHashTable<StaticArity<3>>>(StaticArity<3>());
+        TestIndexes2<BasicHashTable<DynamicArity>>(3);
+    }
+
 } tt;

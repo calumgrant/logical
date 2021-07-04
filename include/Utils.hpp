@@ -505,7 +505,7 @@ namespace Internal
     template<typename...Ints>
     bool BoundEquals(Int mask, const Int * row, Int i, Ints... is)
     {
-        return mask && (!(mask&1) || i == *row) && BoundEquals(mask>>1, row+1, is...);
+        return !mask || ((!(mask&1) || i == *row) && BoundEquals(mask>>1, row+1, is...));
     }
 
     template<typename...Ints>
