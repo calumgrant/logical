@@ -59,9 +59,9 @@ namespace Logical
         }
         
         template<typename...Bools>
-        DynamicBinding(Bools... bs) : mask(Internal::MakeMask(bs...)), arity(sizeof...(bs)) {}
+        explicit DynamicBinding(Bools... bs) : mask(Internal::MakeMask(bs...)), arity(sizeof...(bs)) {}
         
-        DynamicBinding(Int m) : mask(m) {}
+        DynamicBinding(Int m, int a) : mask(m), arity(a) {}
         
         Int mask;
         int arity;
@@ -266,6 +266,7 @@ namespace Internal
         static Int Hash() { return 0; }
         static Int Hash(const Int * row) { return 0; }
         static bool BoundEquals(const Int * row) { return true; }
+        static bool BoundEquals(const Int * x, const Int *y) { return true; }
         static bool BoundLess(const Int * row) { return false; }
         static bool BoundLess(const Int * i, const Int * j) { return false; }
         
@@ -288,6 +289,8 @@ namespace Internal
         
         template<typename...Ints>
         static bool BoundEquals(const Int * row, Int i, Ints...is) { return i==*row && HashHelper<Binding...>::BoundEquals(row+1, is...); }
+        
+        static bool BoundEquals(const Int * x, const Int *y) { return *x==*y && HashHelper<Binding...>::BoundEquals(x+1, y+1); }
 
         template<typename...Ints>
         static bool BoundLess(const Int * row, Int i, Ints...is) { return *row < i || (*row==i && HashHelper<Binding...>::BoundLess(row+1, is...)); }
@@ -316,6 +319,8 @@ namespace Internal
         template<typename...Ints>
         static bool BoundEquals(const Int * row, Int i, Ints...is) { return HashHelper<Binding...>::BoundEquals(row+1, is...); }
 
+        static bool BoundEquals(const Int * x, const Int *y) { return HashHelper<Binding...>::BoundEquals(x+1, y+1); }
+        
         template<typename...Ints>
         static bool BoundLess(const Int * row, Int i, Ints...is) { return HashHelper<Binding...>::BoundLess(row+1, is...); }
 
@@ -495,13 +500,13 @@ namespace Internal
         return HashHelper<Binding...>::BoundEquals(row1, row2);
     }
 
+    inline bool BoundEquals(Int mask, const Int * row) { return true; }
+
     template<typename...Ints>
     bool BoundEquals(Int mask, const Int * row, Int i, Ints... is)
     {
         return mask && (!(mask&1) || i == *row) && BoundEquals(mask>>1, row+1, is...);
     }
-
-    inline bool BoundEquals(Int mask, const Int * row) { return true; }
 
     template<typename...Ints>
     bool BoundEquals(DynamicBinding b, const Int * row, Ints... is)
@@ -646,12 +651,12 @@ namespace Internal
 
     inline DynamicBinding GetBoundBinding(DynamicArity a)
     {
-        return (1<<a.value)-1;
+        return DynamicBinding(Int(1<<a.value)-1, a.value);
     }
 
     inline DynamicBinding GetUnboundBinding(DynamicArity a)
     {
-        return 0;
+        return DynamicBinding(Int(0), a.value);
     }
 
     template<bool b, typename SB> struct BindingCons;

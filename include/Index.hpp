@@ -174,10 +174,10 @@ namespace Logical
         {
         }
 
-        template<typename Binding>
-        void Find(Enumerator &e, Binding b, const Int * query) const
+        template<typename Binding, typename Int>
+        void Find(Enumerator &e, Binding b, Int * query) const
         {
-            e.i = Internal::Hash(b, query) % size;
+            e.i = Internal::Hash(b, (const Int*)query) % size;
         };
 
         template<typename Binding, typename... Ints>
@@ -193,7 +193,7 @@ namespace Logical
             while((row=table[e.i++]) != empty)
             {
                 if(e.i > size) e.i -= size;
-                if(Internal::BoundEquals(b, data+row, result))
+                if(Internal::BoundEquals(b, data+row, (const Int*)result))
                 {
                     Internal::BindRow(b, data+row, result);
                     return true;

@@ -75,6 +75,21 @@ namespace Logical
             return HashIndex(this->values.data(), index.index.data(), index.capacity());
         }
         
+        template<typename Int>
+        void Add(bool & added, Int * data)
+        {
+            auto h = Internal::Hash(this->arity, (const Int*)data);
+
+            if(ProbeWithHash(h, (const Int*)data)) return;
+            
+            rehash();
+            
+            auto row = this->values.size();
+            AddInternal((const Int*)data);
+            index.Add(h, row);
+            added = true;
+        }
+        
         template<typename...Ints>
         void Add(bool & added, Ints... is)
         {
@@ -105,6 +120,21 @@ namespace Logical
         
     private:
         
+        bool ProbeWithHash(Int h, const Int * is)
+        {
+            int p;
+            while( (p=index[h]) != HashIndex::empty)
+            {
+                // Compare the contents
+                if(Internal::row_equals(this->arity, &this->values[p], is))
+                    return true;
+                
+                h = h+1;
+            }
+            
+            return false;
+        }
+        
         template<typename...Ints>
         bool ProbeWithHash(Int h, Ints... is)
         {
@@ -119,6 +149,12 @@ namespace Logical
             }
             
             return false;
+        }
+        
+        void AddInternal(const Int * p)
+        {
+            for(int i=0; i<this->arity.value; ++i)
+                AddInternal(p[i]);
         }
 
         void AddInternal(Int i)

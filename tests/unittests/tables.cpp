@@ -188,8 +188,66 @@ public:
         EQUALS(0, Internal::Hash(StaticArity<0>()));
     }
     
+    template<typename T, typename Arity>
+    void TestUnaryHashTable(Arity a)
+    {
+        bool added;
+        Int x;
+        Enumerator e;
+        T t1(a);
+
+        EQUALS(0, t1.size());
+        added = false;
+        t1.Add(added, 1);
+        x=2;
+        t1.Add(added, &x);
+        t1.Add(added, 3);
+        CHECK(added);
+        EQUALS(3, t1.size());
+        added = false;
+        t1.Add(added, 2);
+        CHECK(!added);
+        EQUALS(3, t1.size());
+        
+        auto b = Internal::GetBoundBinding(a);
+        auto f = Internal::GetUnboundBinding(a);
+        
+        auto i1 = t1.GetScanIndex();
+
+        i1.Find(e, f);
+        CHECK(i1.Next(e,f,x));
+        CHECK(i1.Next(e,f,x));
+        CHECK(i1.Next(e,f,x));
+        CHECK(!i1.Next(e,f,x));
+        
+        i1.Find(e, f);
+        CHECK(i1.Next(e,f,&x));
+        CHECK(i1.Next(e,f,&x));
+        CHECK(i1.Next(e,f,&x));
+        CHECK(!i1.Next(e,f,&x));
+
+        auto i2 = t1.GetProbeIndex();
+        x = 2;
+        i2.Find(e, b, x);
+        CHECK(i2.Next(e,b,x));
+        CHECK(!i2.Next(e,b,x));
+
+        i2.Find(e, b, &x);
+        CHECK(i2.Next(e,b,&x));
+        
+        x=10;
+        i2.Find(e, b, x);
+        CHECK(!i2.Next(e,b,x));
+
+        i2.Find(e, b, &x);
+        CHECK(!i2.Next(e,b,&x));
+    }
+    
     void HashTable1()
     {
+        TestUnaryHashTable<BasicHashTable<StaticArity<1>>>(StaticArity<1>());
+        TestUnaryHashTable<BasicHashTable<DynamicArity>>(DynamicArity(1));
+
         // Unary hash table tests
         
         BasicHashTable<StaticArity<1>> t1;
