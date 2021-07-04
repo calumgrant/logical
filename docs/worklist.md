@@ -52,7 +52,7 @@ For externs, allow a variable number of arguments. `module.AddVariadic(extern, "
   - Compact tables
     - Stores values as `std::int32_t` and has a set of columns (EntityType)
     - All entitytypes can support `Entity(t, v)` which converts an entity from short form to long form.
-  - All enumerators consist of a class `Enumerator` containing 2 32-bit ints.
+  - [X] All enumerators consist of a class `Enumerator` containing 2 32-bit ints.
 - [ ] Implement internal tables in terms of these tables
   - Finalise table after evaluation -> turn it into a `SortedTable<>`
 

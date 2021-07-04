@@ -94,6 +94,8 @@ namespace Logical
             return false;
         }
         
+        Internal::ShortIndex rows() const { return size; }
+        
     private:
         Arity arity;
         const Int * data;

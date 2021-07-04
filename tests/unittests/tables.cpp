@@ -15,6 +15,7 @@ public:
         AddTest(&TablesTest::UnaryTableTests);
         AddTest(&TablesTest::BinaryTableTests);
         AddTest(&TablesTest::NaryTableTests);
+        AddTest(&TablesTest::HashTable2);
     }
 
     template<typename Table>
@@ -241,6 +242,23 @@ public:
 
         i2.Find(e, b, &x);
         CHECK(!i2.Next(e,b,&x));
+        
+        for(Int i=0; i<1000; ++i)
+            t1.Add(added, i);
+
+        for(Int i=0; i<1000; ++i)
+            t1.Add(added, i);
+
+        i1 = t1.GetScanIndex();
+        i2 = t1.GetProbeIndex();
+        EQUALS(1000, i1.rows());
+        
+        for(Int i=0; i<1000; ++i)
+        {
+            i2.Find(e, b, i);
+            CHECK(i2.Next(e, b, i));
+            CHECK(!i2.Next(e, b, i));
+        }
     }
     
     void HashTable1()
@@ -297,6 +315,12 @@ public:
         x = 4;
         i2.Find(e, b, x);
         CHECK(!i2.Next(e, b, x));
+    }
+    
+    
+
+    void HashTable2()
+    {
     }
 
     template<typename Table>
