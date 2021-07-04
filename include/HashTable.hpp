@@ -9,12 +9,13 @@ namespace Logical
 {
     namespace Internal
     {
+        template<typename Alloc>
         class HashIndex
         {
         public:
             static const int empty = -1;
             
-            HashIndex(int len) : index(len)
+            HashIndex(ShortIndex len) : index(len)
             {
                 items = 0;
                 for(int i=0; i<len; ++i)
@@ -44,68 +45,60 @@ namespace Logical
                 index.swap(other.index);
             }
             
+            std::vector<ShortIndex> index;
         private:
-            std::vector<int> index;
-            int items;
+            ShortIndex items;
         };
     }
 
 
-    template<typename Arity>
-    class HashTable : public Table<Arity>
+/*
+ A hash table that supports basic lookups.
+ */
+    template<typename Arity, typename Alloc = std::allocator<Int>>
+    class BasicHashTable : public Table<Arity, Alloc>
     {
     public:
-        HashTable(Arity a = Arity()) : Table<Arity>(a), index(512) {}
+        BasicHashTable(Arity a = Arity()) : Table<Arity>(a), index(256) {}
+        
+        typedef UnsortedIndex<Arity> ScanIndexType;
+        typedef HashIndex ProbeIndexType;
+        
+        // Note that calling Add() invalidates this index.
+        ScanIndexType GetScanIndex() const
+        {
+            return ScanIndexType(this->arity, this->values.data(), this->values.size()/this->arity.value);
+        }
+        
+        ProbeIndexType GetProbeIndex()
+        {
+            return HashIndex(this->values.data(), index.index.data(), index.capacity());
+        }
         
         template<typename...Ints>
-        bool Add(Ints... is)
+        void Add(bool & added, Ints... is)
         {
-            auto h = Hash(is...);
+            auto h = Internal::Hash(is...);
 
-            if(ProbeWithHash(h, is...)) return false;
+            if(ProbeWithHash(h, is...)) return;
             
             rehash();
             
             auto row = this->values.size();
             AddInternal(is...);
             index.Add(h, row);
+            added = true;
+        }
 
-            return true;
+        template<typename Binding>
+        void Find(Enumerator e, Binding b)
+        {
+            e.i = 0;
+            e.j = this->size();
         }
-                
-        template<typename...Ints>
-        bool Probe(Ints... is)
-        {
-            return ProbeWithHash(Hash(is...), is...);
-        }
-        
-        // A reentrant enumerator
-        struct tableenumerator
-        {
-            HashTable<Arity> & table;
-            int current;
-        };
-        
-        // A reentrant index.
-        struct indexenumerator
-        {
-            HashTable<Arity> & table;
-            Internal::HashIndex & index;
-            int current;
-            // What happens if the index resizes???
-            // When is the index resized?
-            // One idea is to have a shared pointer into the index.
-        };
-        
-        template<bool...Bound>
-        class Index
-        {
-        public:
-            Index(HashTable<Arity> & table);
-        };
         
         template<typename Binding, typename...Ints>
-        void Find(Binding b, Ints... is)
+        void Find(Enumerator e, Binding b, Ints... is)
         {
             // Find a suitable integer???
         }
@@ -116,10 +109,10 @@ namespace Logical
         bool ProbeWithHash(Int h, Ints... is)
         {
             int p;
-            while( (p=index[h]) != Internal::HashIndex::empty)
+            while( (p=index[h]) != HashIndex::empty)
             {
                 // Compare the contents
-                if(row_equals(&this->values[p], is...))
+                if(Internal::row_equals(&this->values[p], is...))
                     return true;
                 
                 h = h+1;
@@ -140,17 +133,17 @@ namespace Logical
             AddInternal(is...);
         }
         
-        Internal::HashIndex index;
+        Internal::HashIndex<Alloc> index;
 
         void rehash()
         {
             if(index.capacity() < 2 * index.size())
             {
-                Internal::HashIndex index2(2*index.capacity());
+                Internal::HashIndex<Alloc> index2(2*index.capacity());
                 
                 for(Int i=0; i<this->values.size(); i+=this->arity.value)
                 {
-                    index2.Add(Hash(this->arity, &this->values[i]), i);
+                    index2.Add(Internal::Hash(this->arity, &this->values[i]), i);
                 }
                 
                 index.swap(index2);

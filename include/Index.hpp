@@ -1,9 +1,9 @@
 /*
     Index.hpp
-    Efficiently finding data int tables.
+    Efficiently finding data in tables.
     As "index" is a lookup table used to locate data quickly.
     There are two main types of index: a sorted index (SortedIndex), and a hash table (HashIndex).
-    A sorted index references a table of Int, stored contiguously in rows.
+    A sorted index references a table of Int (a 64-bit value), stored contiguously in rows.
     A hashed index references a list of offsets into a table of rows. A "linear probing" algorithm is used,
     whereby the next item in the hash chain is at the next position in the hash table.
  
@@ -15,7 +15,14 @@
     An Enumerator is used to store the position in the index when iterating over results. The Find() method
     performs a query and sets up the Enumerator to point to the results in the index. The Next() method
     is used to retrieve a result and store the values in the supplied location.
- 
+
+    Find() and Next() can take either lists of arguments, or a pointer to an array. Next() returns a bool,
+    where true indicates that a result is available, or false that no more results are available.
+    When Next() returns true, the values in the result are stored in the arguments (or array) passed to Next.
+
+    The arguments to Find() and Next() are in column-order, and the arguments to Next() must be the same as the
+    arguments to Find().
+
     Enumerator e;
     DynamicBinding b(true, false);
     Int x=12, y;
@@ -56,7 +63,7 @@ namespace Logical
         }
 
         template<typename Binding>
-        bool Find(Enumerator &e, Binding)
+        bool Find(Enumerator &e, Binding) const
         {
             e.i = 0;
             e.j = size;
@@ -64,7 +71,7 @@ namespace Logical
         }
         
         template<typename Binding>
-        bool Next(Enumerator &e, Binding, Int * result)
+        bool Next(Enumerator &e, Binding, Int * result) const
         {
             if(e.i < e.j)
             {
@@ -76,7 +83,7 @@ namespace Logical
         }
 
         template<typename Binding, typename...Ints>
-        bool Next(Enumerator &e, Binding b, Ints... result)
+        bool Next(Enumerator &e, Binding b, Ints... result) const
         {
             if(e.i < e.j)
             {
@@ -157,7 +164,6 @@ namespace Logical
         Linear hashing is used so the query just needs to scan forward in the hash table
         until it reaches an empty cell storing -1.
      */
-    template<typename Binding>
     class HashIndex
     {
     public:
@@ -168,18 +174,20 @@ namespace Logical
         {
         }
 
-        void Find(Enumerator &e, Binding b, const Int * query)
+        template<typename Binding>
+        void Find(Enumerator &e, Binding b, const Int * query) const
         {
             e.i = Internal::Hash(b, query) % size;
         };
 
-        template<typename... Ints>
-        void Find(Enumerator &e, Binding b, Ints... query)
+        template<typename Binding, typename... Ints>
+        void Find(Enumerator &e, Binding b, Ints... query) const
         {
             e.i = Internal::Hash(b, query...) % size;
         };
         
-        bool Next(Enumerator &e, Binding b, Int * result)
+        template<typename Binding>
+        bool Next(Enumerator &e, Binding b, Int * result) const
         {
             std::uint32_t row;
             while((row=table[e.i++]) != empty)
@@ -194,8 +202,8 @@ namespace Logical
             return false;
         }
         
-        template<typename... Ints>
-        bool Next(Enumerator &e, Binding b, Ints... result)
+        template<typename Binding, typename... Ints>
+        bool Next(Enumerator &e, Binding b, Ints... result) const
         {
             Internal::ShortIndex row;
             while((row=table[e.i++]) != empty)

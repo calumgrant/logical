@@ -14,6 +14,7 @@ public:
         AddTest(&TablesTest::HashTable1);
         AddTest(&TablesTest::UnaryTableTests);
         AddTest(&TablesTest::BinaryTableTests);
+        AddTest(&TablesTest::NaryTableTests);
     }
 
     template<typename Table>
@@ -189,9 +190,55 @@ public:
     
     void HashTable1()
     {
-        HashTable<StaticArity<1>> t1;
+        // Unary hash table tests
         
-        t1.Find(StaticBinding<true,false,true>(), 1,2,3);
+        BasicHashTable<StaticArity<1>> t1;
+        bool added = false;
+        Enumerator e;
+        StaticBinding<false> f;
+        StaticBinding<true> b;
+        Int x;
+        
+        EQUALS(0, t1.size());
+        t1.Add(added, 1);
+        t1.Add(added, 2);
+        t1.Add(added, 3);
+        CHECK(added);
+        EQUALS(3, t1.size());
+        added = false;
+        t1.Add(added, 2);
+        CHECK(!added);
+        EQUALS(3, t1.size());
+        
+        // Try a scan
+        auto i1 = t1.GetScanIndex();
+        i1.Find(e, f);
+        CHECK(i1.Next(e,f,x));
+        CHECK(i1.Next(e,f,x));
+        CHECK(i1.Next(e,f,x));
+        CHECK(!i1.Next(e,f,x));
+        
+        i1.Find(e, f);
+        CHECK(i1.Next(e,f,&x));
+        CHECK(i1.Next(e,f,&x));
+        CHECK(i1.Next(e,f,&x));
+        CHECK(!i1.Next(e,f,&x));
+        
+        // Try a probe
+        auto i2 = t1.GetProbeIndex();
+        x = 2;
+        i2.Find(e, b, x);
+        CHECK(i2.Next(e, b, x));
+        CHECK(!i2.Next(e, b, x));
+        
+        x = 3;
+        i2.Find(e, b, x);
+        CHECK(i2.Next(e, b, x));
+        CHECK(!i2.Next(e, b, x));
+
+        x = 4;
+        i2.Find(e, b, x);
+        CHECK(!i2.Next(e, b, x));
     }
 
     template<typename Table>
@@ -268,12 +315,24 @@ public:
         CHECK(i.Next(e, bf, row));
         EQUALS(3, row[1]);
         CHECK(!i.Next(e, bf, row));
-
-
-
+        
+        row[0] = 10;
+        i.Find(e, bf, row);
+        CHECK(!i.Next(e, bf, row));
+        
         // Find two columns (probe)
         x=2, y=2;
+        i.Find(e, bb, x, y);
+        CHECK(i.Next(e, bb));
+        CHECK(!i.Next(e, bb));
         
+        y = 100;
+        i.Find(e, bb, x, y);
+        CHECK(!i.Next(e, bb));
+        
+        row[0] = 100;
+        i.Find(e, bb, row);
+        CHECK(!i.Next(e, bb));
     }
     
     void BinaryTableTests()
@@ -290,5 +349,31 @@ public:
         SortedTable<DynamicArity> t4(std::move(t2));
         EQUALS(4, t4.size());
         TestBinary(DynamicBinding(false,false), DynamicBinding(true,false), DynamicBinding(true,true), t4.GetIndex());
+    }
+    
+    void NaryTableTests()
+    {
+        BasicTable<StaticArity<4>> t1;
+        t1.Add(1,2,3,4);
+        t1.Add(1,2,3,3);
+        t1.Add(1,2,3,3);
+        SortedTable<StaticArity<4>> t2(std::move(t1));
+        
+        Int a,b,c,d;
+        Int row[4];
+        StaticBinding<true,true,false,false> bbff;
+        Enumerator e;
+        auto index = t2.GetIndex();
+        
+        a=1;
+        b=2;
+        index.Find(e, bbff, a, b);
+        index.Find(e, bbff, a, b, c, d);
+        CHECK(index.Next(e, bbff, a, b, c, d));
+        EQUALS(3, c);
+        EQUALS(3, d);
+        CHECK(index.Next(e, bbff, a, b, c, d));
+        EQUALS(3, c);
+        EQUALS(4, d);
     }
 } tt;

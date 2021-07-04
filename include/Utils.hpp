@@ -205,7 +205,7 @@ namespace Internal
     }
 
     template<typename Arity>
-    void copy_row(Arity arity, Int * target, const Int * source)
+    void copy_row(Arity arity, const Int * source, Int * target)
     {
         for(int i=0; i<arity.value; ++i)
             target[i] = source[i];
@@ -237,6 +237,14 @@ namespace Internal
             if(x[i] != y[i]) return false;
         }
         return true;
+    }
+
+    inline bool row_equals(const Int *x) { return true; }
+
+    template<typename...Ints>
+    bool row_equals(const Int * x, Int y, Ints...ys)
+    {
+        return *x == y && row_equals(x+1, ys...);
     }
 
     const int P = 317;
@@ -294,6 +302,8 @@ namespace Internal
 
         static void BindRow(const Int * row, Int * output) { HashHelper<Binding...>::BindRow(row+1, output+1); }
         static const int BindCount = 1 + HashHelper<Binding...>::BindCount;
+        
+        static void BindRow(const Int * row) { HashHelper<Binding...>::BindRow(row+1); }
     };
 
     template<bool...Binding>
@@ -633,5 +643,65 @@ namespace Internal
     {
         return 0;
     }
+
+    inline DynamicBinding GetBoundBinding(DynamicArity a)
+    {
+        return (1<<a.value)-1;
+    }
+
+    inline DynamicBinding GetUnboundBinding(DynamicArity a)
+    {
+        return 0;
+    }
+
+    template<bool b, typename SB> struct BindingCons;
+
+    template<bool b, bool...bs>
+    struct BindingCons<b, StaticBinding<bs...>>
+    {
+        typedef StaticBinding<b, bs...> type;
+    };
+
+    template<int Arity>
+    struct MakeBinding
+    {
+        typedef typename BindingCons<true, typename MakeBinding<Arity-1>::bound>::type bound;
+        typedef typename BindingCons<false, typename MakeBinding<Arity-1>::unbound>::type unbound;
+    };
+
+    template<> struct MakeBinding<0>
+    {
+        typedef StaticBinding<> bound;
+        typedef StaticBinding<> unbound;
+    };
+
+    template<int Arity>
+    auto GetBoundBinding(StaticArity<Arity>) { return typename MakeBinding<Arity>::bound(); }
+
+    template<int Arity>
+    auto GetUnboundBinding(StaticArity<Arity>) { return typename MakeBinding<Arity>::unbound(); }
+
+    template<typename T> struct BoundTypeFromArity;
+    template<typename T> struct UnboundTypeFromArity;
+
+    template<> struct BoundTypeFromArity<DynamicArity>
+    {
+        typedef DynamicBinding type;
+    };
+
+    template<> struct UnboundTypeFromArity<DynamicArity>
+    {
+        typedef DynamicBinding type;
+    };
+
+    template<int A> struct BoundTypeFromArity<StaticArity<A>>
+    {
+        typedef typename MakeBinding<A>::bound type;
+    };
+
+    template<int A> struct UnboundTypeFromArity<StaticArity<A>>
+    {
+        typedef typename MakeBinding<A>::unbound type;
+    };
 }
 }
