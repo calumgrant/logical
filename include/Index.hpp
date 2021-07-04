@@ -179,13 +179,13 @@ namespace Logical
         template<typename Binding, typename Int>
         void Find(Enumerator &e, Binding b, Int * query) const
         {
-            e.i = (37 * Internal::Hash(b, (const Int*)query)) % size;
+            e.i = (Internal::P * Internal::Hash(b, (const Int*)query)) % size;
         };
 
         template<typename Binding, typename... Ints>
         void Find(Enumerator &e, Binding b, Ints... query) const
         {
-            e.i = (37 * Internal::Hash(b, query...)) % size;
+            e.i = (Internal::P * Internal::Hash(b, query...)) % size;
         };
         
         template<typename Binding>
@@ -194,7 +194,7 @@ namespace Logical
             std::uint32_t row;
             while((row=table[e.i++]) != empty)
             {
-                if(e.i > size) e.i -= size;
+                if(e.i >= size) e.i -= size;
                 if(Internal::BoundEquals(b, data+row, (const Int*)result))
                 {
                     Internal::BindRow(b, data+row, result);
@@ -205,12 +205,12 @@ namespace Logical
         }
         
         template<typename Binding, typename... Ints>
-        bool Next(Enumerator &e, Binding b, Ints... result) const
+        bool Next(Enumerator &e, Binding b, Ints&&... result) const
         {
             Internal::ShortIndex row;
             while((row=table[e.i++]) != empty)
             {
-                if(e.i > size) e.i -= size;
+                if(e.i >= size) e.i -= size;
                 if(Internal::BoundEquals(b, data+row, result...))
                 {
                     Internal::BindRow(b, data+row, result...);

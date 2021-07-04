@@ -52,6 +52,43 @@ namespace Logical
     }
 
 
+    template<typename Arity, typename Alloc, typename Binding>
+    class HashColumns
+    {
+    public:
+        HashColumns(const Table<Arity, Alloc> & source, Binding binding) :
+            source(source), binding(binding), index(128) {}
+        
+        // This is valid until the next call to NextIteration()
+        // Attempts to use t
+        HashIndex GetIndex()
+        {
+            NextIteration();
+            return HashIndex(source.values.data(), index.index.data(), index.index.size());
+        }
+    private:
+        const Table<Arity> & source;
+        Binding binding;
+        Internal::HashIndex<Alloc> index;
+        
+        void NextIteration()
+        {
+            if(source.size() * 2 > index.capacity())
+            {
+                // Trigger a rehash
+                index = Internal::HashIndex<Alloc>(2 * source.size());
+            }
+            
+            for(auto row = index.size(); row<source.size(); ++row)
+            {
+                auto i = row * source.arity.value;
+                auto h = Internal::P * Internal::Hash(binding, &source.values[i]);
+                index.Add(h, i);
+            }
+        }
+    };
+
+
 /*
  A hash table that supports basic lookups.
  */
@@ -78,7 +115,7 @@ namespace Logical
         template<typename Int>
         void Add(bool & added, Int * data)
         {
-            auto h = Internal::Hash(this->arity, (const Int*)data) * 37;
+            auto h = Internal::Hash(this->arity, (const Int*)data) * Internal::P;
 
             if(ProbeWithHash(h, (const Int*)data)) return;
             
@@ -93,7 +130,7 @@ namespace Logical
         template<typename...Ints>
         void Add(bool & added, Ints... is)
         {
-            auto h = Internal::Hash(is...) * 37;
+            auto h = Internal::Hash(is...) * Internal::P;
 
             if(ProbeWithHash(h, is...)) return;
             
@@ -103,6 +140,12 @@ namespace Logical
             AddInternal(is...);
             index.Add(h, row);
             added = true;
+        }
+        
+        template<typename Binding>
+        HashColumns<Arity, Alloc, Binding> MakeIndex(Binding binding) const
+        {
+            return HashColumns<Arity, Alloc, Binding>(*this, binding);
         }
         
     private:
@@ -166,11 +209,12 @@ namespace Logical
                 
                 for(Int i=0; i<this->values.size(); i+=this->arity.value)
                 {
-                    index2.Add(37 * Internal::Hash(this->arity, &this->values[i]), i);
+                    index2.Add(Internal::P * Internal::Hash(this->arity, &this->values[i]), i);
                 }
                 
                 index.swap(index2);
             }
         }
     };
+
 }

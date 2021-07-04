@@ -16,6 +16,7 @@ public:
         AddTest(&TablesTest::BinaryTableTests);
         AddTest(&TablesTest::NaryTableTests);
         AddTest(&TablesTest::HashTable2);
+        AddTest(&TablesTest::HashTable3);
     }
 
     template<typename Table>
@@ -487,12 +488,107 @@ public:
         a=1;
         b=2;
         index.Find(e, bbff, a, b);
-        index.Find(e, bbff, a, b, c, d);
         CHECK(index.Next(e, bbff, a, b, c, d));
         EQUALS(3, c);
         EQUALS(3, d);
         CHECK(index.Next(e, bbff, a, b, c, d));
         EQUALS(3, c);
         EQUALS(4, d);
+    }
+
+    template<typename Table, typename Arity>
+    void TestIndexes(Arity a)
+    {
+        Table t(a);
+        auto fbf = StaticBinding<false,true, false>();
+        auto i1 = t.MakeIndex(fbf);
+        bool added;
+        Enumerator e;
+        Int x,y,z;
+
+        t.Add(added, 1, 2, 3);
+        auto i2 = i1.GetIndex();
+        
+        y = 2;
+        i2.Find(e, fbf, x, y, z);
+        CHECK(i2.Next(e, fbf, x,y,z));
+        CHECK(!i2.Next(e, fbf, x,y,z));
+        
+        for(x=0; x<10; ++x)
+            for(y=0; y<10; ++y)
+                for(z=0; z<10; ++z)
+                    t.Add(added, x,y,z);
+        
+        EQUALS(1000, t.size());
+
+        i2 = i1.GetIndex();
+        for(y=0; y<10; ++y)
+        {
+            int count=0;
+            i2.Find(e, fbf, x, y, z);
+            while(i2.Next(e, fbf, x, y, z))
+            {
+                ++count;
+            }
+            if(count != 100)
+            {
+                i2.Find(e, fbf, x, y, z);
+                while(i2.Next(e, fbf, x, y, z))
+                {
+                    std::cout << "(" << x << "," << y << "," << z << ")\n";
+                    ++count;
+                }
+            }
+            EQUALS(100, count);
+        }
+        
+        t=Table(a);
+        auto i3 = t.MakeIndex(fbf);
+        Int row[3];
+
+        row[0] = 1;
+        row[1] = 2;
+        row[2] = 3;
+        t.Add(added, row);
+        i2 = i3.GetIndex();
+
+        row[1] = 2;
+        i2.Find(e, fbf, row);
+        CHECK(i2.Next(e, fbf, row));
+        CHECK(!i2.Next(e, fbf, row));
+        
+        for(x=0; x<10; ++x)
+            for(y=0; y<10; ++y)
+                for(z=0; z<10; ++z)
+                {
+                    row[0] = x;
+                    row[1] = y;
+                    row[2] = z;
+                    t.Add(added, row);
+                }
+        
+        EQUALS(1000, t.size());
+
+        i2 = i1.GetIndex();
+        for(y=0; y<10; ++y)
+        {
+            int count=0;
+            row[1] = y;
+            i2.Find(e, fbf, row);
+            while(i2.Next(e, fbf, row))
+            {
+                ++count;
+            }
+            if(count != 100)
+                EQUALS(100, count);
+        }
+
+        
+    }
+    
+    void HashTable3()
+    {
+        TestIndexes<BasicHashTable<StaticArity<3>>>(StaticArity<3>());
+        TestIndexes<BasicHashTable<DynamicArity>>(3);
     }
 } tt;
