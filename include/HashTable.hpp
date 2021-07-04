@@ -78,7 +78,7 @@ namespace Logical
         template<typename Int>
         void Add(bool & added, Int * data)
         {
-            auto h = Internal::Hash(this->arity, (const Int*)data);
+            auto h = Internal::Hash(this->arity, (const Int*)data) * 37;
 
             if(ProbeWithHash(h, (const Int*)data)) return;
             
@@ -93,7 +93,7 @@ namespace Logical
         template<typename...Ints>
         void Add(bool & added, Ints... is)
         {
-            auto h = Internal::Hash(is...);
+            auto h = Internal::Hash(is...) * 37;
 
             if(ProbeWithHash(h, is...)) return;
             
@@ -103,19 +103,6 @@ namespace Logical
             AddInternal(is...);
             index.Add(h, row);
             added = true;
-        }
-
-        template<typename Binding>
-        void Find(Enumerator e, Binding b)
-        {
-            e.i = 0;
-            e.j = this->size();
-        }
-        
-        template<typename Binding, typename...Ints>
-        void Find(Enumerator e, Binding b, Ints... is)
-        {
-            // Find a suitable integer???
         }
         
     private:
@@ -179,50 +166,11 @@ namespace Logical
                 
                 for(Int i=0; i<this->values.size(); i+=this->arity.value)
                 {
-                    index2.Add(Internal::Hash(this->arity, &this->values[i]), i);
+                    index2.Add(37 * Internal::Hash(this->arity, &this->values[i]), i);
                 }
                 
                 index.swap(index2);
             }
-        }
-    };
-
-
-    /*
-     To look something up in here, use the hash function on the row
-     */
-    template<typename Binding>
-    class ExternHashTable
-    {
-    public:
-        Binding binding;
-        
-        const Int **first;
-        Int size;
-    
-        template<typename...Ints>
-        Int Find(Ints... is)
-        {
-            return Internal::Hash(binding, is...) % size;
-        }
-        
-        Int Find(const Int * row)
-        {
-            return Internal::Hash(binding, row) % size;
-        }
-
-        template<typename...Ints>
-        bool Next(Int & e, Ints...is)
-        {
-            auto current = first[e];
-            if(current && Internal::BoundEquals(binding, current, is...))
-            {
-                Internal::BindRow(binding, current, is...);
-                e++;
-                if(e>=size) e-=size;
-                return true;
-            }
-            return false;
         }
     };
 }

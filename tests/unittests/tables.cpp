@@ -317,10 +317,47 @@ public:
         CHECK(!i2.Next(e, b, x));
     }
     
-    
+    template<typename Table, typename Arity>
+    void TestNaryHash(Arity a)
+    {
+        Table t1(a);
+        bool added = false;
+        Enumerator e;
+        
+        t1.Add(added, 1, 2, 3);
+        t1.Add(added, 1, 2, 4);
+        t1.Add(added, 1, 3, 5);
+        CHECK(added);
 
+        Int row[3] = { 1, 3, 5 };
+        added = false;
+        t1.Add(added, row);
+        CHECK(!added);
+        
+        auto i1 = t1.GetProbeIndex();
+        auto bbb = Internal::GetBoundBinding(a);
+        i1.Find(e, bbb, 1, 2, 3);
+        Int x=1,y=2,z=3;
+        CHECK(i1.Next(e, bbb, x, y, z));
+        CHECK(!i1.Next(e, bbb, x, y, z));
+
+        x=4;
+        i1.Find(e, bbb, x,y,z);
+        CHECK(!i1.Next(e, bbb, x, y, z));
+
+        i1.Find(e, bbb, row);
+        CHECK(i1.Next(e, bbb, row));
+        CHECK(!i1.Next(e, bbb, x, y, z));
+
+        row[0] = 10;
+        i1.Find(e, bbb, row);
+        CHECK(!i1.Next(e, bbb, row));
+    }
+    
     void HashTable2()
     {
+        TestNaryHash<BasicHashTable<StaticArity<3>>>(StaticArity<3>());
+        TestNaryHash<BasicHashTable<DynamicArity>>(3);
     }
 
     template<typename Table>

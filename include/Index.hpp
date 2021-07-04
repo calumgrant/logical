@@ -179,13 +179,13 @@ namespace Logical
         template<typename Binding, typename Int>
         void Find(Enumerator &e, Binding b, Int * query) const
         {
-            e.i = Internal::Hash(b, (const Int*)query) % size;
+            e.i = (37 * Internal::Hash(b, (const Int*)query)) % size;
         };
 
         template<typename Binding, typename... Ints>
         void Find(Enumerator &e, Binding b, Ints... query) const
         {
-            e.i = Internal::Hash(b, query...) % size;
+            e.i = (37 * Internal::Hash(b, query...)) % size;
         };
         
         template<typename Binding>
