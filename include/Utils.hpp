@@ -575,41 +575,6 @@ namespace Internal
         }
     }
 
-    inline DynamicArity Count(DynamicBinding b)
-    {
-        int c=0;
-        for(int m=b.mask; m; m>>=1)
-            if(m&1) c++;
-        return c;
-    }
-
-    template<bool...Binding>
-    constexpr auto Count(StaticArity<Binding...> arity) -> StaticBinding<HashHelper<Binding...>::BindCount>
-    {
-        return StaticBinding<HashHelper<Binding...>::BindCount>();
-    }
-
-    // Returns the smallest pointer that is > value
-    template<typename Arity, typename Binding>
-    ShortIndex UpperBound(Arity a, Binding b, const Int * p, ShortIndex n, const Int* vs)
-    {
-        ShortIndex l=0, r=n;
-        while(l<r)
-        {
-            auto m = (l+r)>>1;
-
-            if(BoundGreater(b, p + m * a.value, vs))
-            {
-                r = m;
-            }
-            else
-            {
-                l = m+1;
-            }
-        }
-        return a.value*r;
-    }
-
     // Returns the smallest pointer that is > value
     template<typename Arity, typename Binding, typename...Ints>
     ShortIndex UpperBound(Arity a, Binding b, const Int * p, ShortIndex n, Ints... vs)
@@ -641,27 +606,6 @@ namespace Internal
             auto m = (l+r)>>1;
                         
             if (BoundLess(b, p + m*a.value, vs...))
-            {
-                l = m+1;
-            }
-            else
-            {
-                r = m;
-            }
-        }
-        return l*a.value;
-    }
-
-    // Delete this!
-    template<typename Arity, typename Int2, typename Binding>
-    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n, Int2 * vs)
-    {
-        ShortIndex l=0, r=n;
-        while(l<r)
-        {
-            auto m = (l+r)>>1;
-                        
-            if (BoundLess(b, p + m*a.value, vs))
             {
                 l = m+1;
             }
