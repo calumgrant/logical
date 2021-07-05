@@ -144,26 +144,6 @@ namespace Internal
         return p+Arity*r;
     }
 
-    // Returns the smallest pointer that is > value
-    template<typename Arity, typename Binding, typename...Ints>
-    ShortIndex UpperBound(Arity a, Binding b, const Int * p, ShortIndex n, Ints... vs)
-    {
-        ShortIndex l=0, r=n;
-        while(l<r)
-        {
-            auto m = (l+r)>>1;
-
-            if(less(p + m * a.value, vs...))
-            {
-                r = m;
-            }
-            else
-            {
-                l = m+1;
-            }
-        }
-        return a.value*r;
-    }
 
 
 
@@ -272,6 +252,7 @@ namespace Internal
         
         template<typename... Ints>
         static bool BoundGreater(const Int * row, Ints...is) { return false; }
+        static bool BoundGreater(const Int * row) { return false; }
 
         static void BindRow(const Int * row) { }
         static void BindRow(const Int * row, Int * output) { }
@@ -332,7 +313,7 @@ namespace Internal
         static bool BoundGreater(const Int * row) { return HashHelper<Binding...>::BoundGreater(row+1); }
 
         static bool BoundLess(const Int * row) { return HashHelper<Binding...>::BoundGreater(row+1); }
-        
+                
         // Bind the unbound columns
         template<typename...Ints>
         static void BindRow(const Int * row, Int & i, Ints&&...is) { i=*row; HashHelper<Binding...>::BindRow(row+1, is...); }
@@ -419,6 +400,7 @@ namespace Internal
         return HashHelper<Binding...>::BoundGreater(row, is...);
     }
 
+
     template<bool... Binding>
     bool BoundLess(StaticBinding<Binding...>, const Int * i, const Int * j)
     {
@@ -454,6 +436,19 @@ namespace Internal
         return BoundLess(m>>1, i+1, js...);
     }
 
+    inline bool BoundLess(Int m, const Int *i, const Int *j)
+    {
+        for(; m; m>>=1, ++i, ++j)
+        {
+            if(m&1)
+            {
+                if(*i<*j) return true;
+                if(*i>*j) return false;
+            }
+        }
+        return false;
+    }
+
     template<typename...Ints>
     bool BoundLess(DynamicBinding b, const Int *i, Ints...j)
     {
@@ -473,7 +468,7 @@ namespace Internal
             if(*i>j) return true;
             if(*i<j) return false;
         }
-        return BoundLess(m>>1, i+1, js...);
+        return BoundGreater(m>>1, i+1, js...);
     }
 
     template<typename...Ints>
@@ -482,9 +477,22 @@ namespace Internal
         return BoundGreater(b.mask, i, j...);
     }
 
+    template<typename Int2>
+    bool BoundGreater(DynamicBinding b, const Int *i, Int2 *j)
+    {
+        for(auto m = b.mask; m; m>>=1, i++, j++)
+        {
+            if(m&1)
+            {
+                if(*i>*j) return true;
+                if(*i<*j) return false;
+            }
+        }
+        return false;
+    }
 
-    template<bool...Binding>
-    bool BoundGreater(StaticBinding<Binding...> b, const Int *i, const Int *j)
+    template<bool...Binding, typename Int2>
+    bool BoundGreater(StaticBinding<Binding...> b, const Int *i, Int2 *j)
     {
         return BoundLess(b, j, i);
     }
@@ -602,6 +610,28 @@ namespace Internal
         return a.value*r;
     }
 
+    // Returns the smallest pointer that is > value
+    template<typename Arity, typename Binding, typename...Ints>
+    ShortIndex UpperBound(Arity a, Binding b, const Int * p, ShortIndex n, Ints... vs)
+    {
+        ShortIndex l=0, r=n;
+        while(l<r)
+        {
+            auto m = (l+r)>>1;
+
+            if(BoundGreater(b, p + m * a.value, vs...))
+            {
+                r = m;
+            }
+            else
+            {
+                l = m+1;
+            }
+        }
+        return a.value*r;
+    }
+
+
     template<typename Arity, typename Binding, typename... Ints>
     ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n, Ints... vs)
     {
@@ -622,9 +652,9 @@ namespace Internal
         return l*a.value;
     }
 
-
-    template<typename Arity, typename Binding>
-    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n, const Int * vs)
+    // Delete this!
+    template<typename Arity, typename Int2, typename Binding>
+    ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n, Int2 * vs)
     {
         ShortIndex l=0, r=n;
         while(l<r)

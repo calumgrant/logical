@@ -53,13 +53,13 @@ public:
         
         Int k = -1;
         i.Find(e, b, k);
-        CHECK(!i.Next(e, u, k));
+        CHECK(!i.Next(e, b, k));
         for(int j=0; j<3; ++j)
         {
             k = sorted[j];
             i.Find(e, b, k);
-            CHECK(i.Next(e, u, k));
-            CHECK(!i.Next(e, u, k));
+            CHECK(i.Next(e, b, k));
+            CHECK(!i.Next(e, b, k));
         }
 
         i.Find(e, u);

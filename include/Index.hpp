@@ -1,7 +1,13 @@
 /*
     Index.hpp
     Efficiently finding data in tables.
-    As "index" is a lookup table used to locate data quickly.
+    An "index" is a lookup table used to locate data quickly.
+    It is efficient for three reasons:
+ 
+    1. The algorithms are "efficient", based on binary search or hashing
+    2. The library is inlined in header files, used for native code gen.
+    3. There is the option to specify the "shape" of the table (arity, indexing) at compile time to reduce run-time checks.
+ 
     There are two main types of index: a sorted index (SortedIndex), and a hash table (HashIndex).
     A sorted index references a table of Int (a 64-bit value), stored contiguously in rows.
     A hashed index references a list of offsets into a table of rows. A "linear probing" algorithm is used,
@@ -24,14 +30,13 @@
     arguments to Find().
 
     Enumerator e;
-    DynamicBinding b(true, false);
+    DynamicBinding bf(true, false);
     Int x=12, y;
-    index.Find(e, b, x);
-    while(index.Next(e,b,x,y))
+    index.Find(e, bf, x);
+    while(index.Next(e, bf, x, y))
     {
         std::cout << "Result is (" << x << "," << y << ")\n";
     }
- 
  
  */
 
@@ -41,8 +46,6 @@
 
 namespace Logical
 {
-    enum EntityType { None };
-
     struct Enumerator
     {
         Internal::ShortIndex i, j;
@@ -70,20 +73,8 @@ namespace Logical
             return size>0;
         }
         
-        template<typename Binding>
-        bool Next(Enumerator &e, Binding, Int * result) const
-        {
-            if(e.i < e.j)
-            {
-                Internal::copy_row(arity, data+e.i, result);
-                e.i += arity.value;
-                return true;
-            }
-            return false;
-        }
-
         template<typename Binding, typename...Ints>
-        bool Next(Enumerator &e, Binding b, Ints... result) const
+        bool Next(Enumerator &e, Binding b, Ints&&... result) const
         {
             if(e.i < e.j)
             {
@@ -117,7 +108,7 @@ namespace Logical
         }
         
         template<typename Binding, typename Int>
-        void Find(Enumerator &e, Binding b, Int * query) const
+        void FindXX(Enumerator &e, Binding b, Int * query) const
         {
             e.i = Internal::LowerBound(arity, b, data, size, (const Int*)query);
             e.j = Internal::UpperBound(arity, b, data, size, (const Int*)query);
@@ -129,6 +120,15 @@ namespace Logical
             e.i = Internal::LowerBound(arity, b, data, size, query...);
             e.j = Internal::UpperBound(arity, b, data, size, query...);
         }
+
+        // DELETE THIS:::
+        template<typename Binding, typename Int>
+        void Find(Enumerator &e, Binding b, Int * query) const
+        {
+            e.i = Internal::LowerBound(arity, b, data, size, (const Int*)query);
+            e.j = Internal::UpperBound(arity, b, data, size, query);
+        }
+
         
         template<typename Binding>
         bool Next(Enumerator &e, Binding b, Int * result) const
@@ -226,18 +226,4 @@ namespace Logical
         const Internal::ShortIndex * table;
         Internal::ShortIndex size;
     };
-
-    /*
-        An index where the data is stored in a sorted table.
-        The storage is in a "compact" 32-bit representation.
-        Not implemented yet.
-     */
-    template<typename Arity>
-    class CompactIndex
-    {
-    public:
-    private:
-        EntityType *types;
-        std::int32_t * data, size;
-    };    
 }
