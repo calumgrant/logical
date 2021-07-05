@@ -87,44 +87,6 @@ namespace Internal
         return n * a.value;
     }
 
-    inline void read_row(const Int *p) {}
-    inline void read_row(const Int *p, Int &v) { v = *p; }
-
-    template<typename...Ints>
-    void read_row(const Int *p, Int &v, Ints&...vs) { v = *p; read_row(p+1, vs...); }
-
-    inline bool equals_row(const Int *p) { return true; }
-    inline bool equals_row(const Int *p, Int v) { return v == *p; }
-
-    template<typename...Ints>
-    bool equals_row(const Int *p, Int v, Ints... vs) { return v == *p && equals_row(p+1, vs...); }
-
-    inline void write_row(Int * row, Int i)
-    {
-        *row = i;
-    }
-
-    template<typename...Ints>
-    void write_row(Int * row, Int i, Ints... is)
-    {
-        *row = i;
-        write_row(row+1, is...);
-    }
-
-    template<typename Arity>
-    void copy_row(Arity arity, const Int * source, Int * target)
-    {
-        for(int i=0; i<arity.value; ++i)
-            target[i] = source[i];
-    }
-
-    template<typename Arity>
-    void swap_rows(Arity arity, Int * target, Int * source)
-    {
-        for(int i=0; i<arity.value; ++i)
-            std::swap(target[i], source[i]);
-    }
-
     template<typename Arity>
     bool row_less(Arity a, const Int * x, const Int *y)
     {
@@ -167,10 +129,10 @@ namespace Internal
     }
 
     template<bool...Binding>
-    struct HashHelper;
+    struct BindingHelper;
 
     template<>
-    struct HashHelper<>
+    struct BindingHelper<>
     {
         static Int Hash() { return 0; }
         static Int Hash(const Int * row) { return 0; }
@@ -191,73 +153,73 @@ namespace Internal
 
 
     template<bool...Binding>
-    struct HashHelper<true, Binding...>
+    struct BindingHelper<true, Binding...>
     {
         template<typename...Ints>
-        static Int Hash(Int i, Ints... is) { return i + P * HashHelper<Binding...>::Hash(is...); }
-        static Int Hash(const Int * row) { return *row + P * HashHelper<Binding...>::Hash(row+1); }
+        static Int Hash(Int i, Ints... is) { return i + P * BindingHelper<Binding...>::Hash(is...); }
+        static Int Hash(const Int * row) { return *row + P * BindingHelper<Binding...>::Hash(row+1); }
         
         template<typename...Ints>
-        static bool BoundEquals(const Int * row, Int i, Ints...is) { return i==*row && HashHelper<Binding...>::BoundEquals(row+1, is...); }
+        static bool BoundEquals(const Int * row, Int i, Ints...is) { return i==*row && BindingHelper<Binding...>::BoundEquals(row+1, is...); }
         
-        static bool BoundEquals(const Int * x, const Int *y) { return *x==*y && HashHelper<Binding...>::BoundEquals(x+1, y+1); }
+        static bool BoundEquals(const Int * x, const Int *y) { return *x==*y && BindingHelper<Binding...>::BoundEquals(x+1, y+1); }
 
         template<typename...Ints>
-        static bool BoundLess(const Int * row, Int i, Ints...is) { return *row < i || (*row==i && HashHelper<Binding...>::BoundLess(row+1, is...)); }
+        static bool BoundLess(const Int * row, Int i, Ints...is) { return *row < i || (*row==i && BindingHelper<Binding...>::BoundLess(row+1, is...)); }
 
-        static bool BoundLess(const Int * i, const Int * j) { return *i < *j || (*i==*j && HashHelper<Binding...>::BoundLess(i+1, j+1)); }
-
-        template<typename...Ints>
-        static bool BoundGreater(const Int * row, Int i, Ints...is) { return *row > i || (*row==i && HashHelper<Binding...>::BoundGreater(row+1, is...)); }
+        static bool BoundLess(const Int * i, const Int * j) { return *i < *j || (*i==*j && BindingHelper<Binding...>::BoundLess(i+1, j+1)); }
 
         template<typename...Ints>
-        static void BindRow(const Int * row, Int i, Ints&&...is) { HashHelper<Binding...>::BindRow(row+1, is...); }
+        static bool BoundGreater(const Int * row, Int i, Ints...is) { return *row > i || (*row==i && BindingHelper<Binding...>::BoundGreater(row+1, is...)); }
 
-        static void BindRow(const Int * row, Int * output) { HashHelper<Binding...>::BindRow(row+1, output+1); }
-        static const int BindCount = 1 + HashHelper<Binding...>::BindCount;
+        template<typename...Ints>
+        static void BindRow(const Int * row, Int i, Ints&&...is) { BindingHelper<Binding...>::BindRow(row+1, is...); }
+
+        static void BindRow(const Int * row, Int * output) { BindingHelper<Binding...>::BindRow(row+1, output+1); }
+        static const int BindCount = 1 + BindingHelper<Binding...>::BindCount;
         
-        static void BindRow(const Int * row) { HashHelper<Binding...>::BindRow(row+1); }
+        static void BindRow(const Int * row) { BindingHelper<Binding...>::BindRow(row+1); }
     };
 
     template<bool...Binding>
-    struct HashHelper<false, Binding...>
+    struct BindingHelper<false, Binding...>
     {
         template<typename...Ints>
-        static Int Hash(Int i, Ints... is) { return HashHelper<Binding...>::Hash(is...); }
-        static Int Hash(const Int * row) { return HashHelper<Binding...>::Hash(row+1); }
+        static Int Hash(Int i, Ints... is) { return BindingHelper<Binding...>::Hash(is...); }
+        static Int Hash(const Int * row) { return BindingHelper<Binding...>::Hash(row+1); }
 
         template<typename...Ints>
-        static bool BoundEquals(const Int * row, Int i, Ints...is) { return HashHelper<Binding...>::BoundEquals(row+1, is...); }
+        static bool BoundEquals(const Int * row, Int i, Ints...is) { return BindingHelper<Binding...>::BoundEquals(row+1, is...); }
 
-        static bool BoundEquals(const Int * x, const Int *y) { return HashHelper<Binding...>::BoundEquals(x+1, y+1); }
+        static bool BoundEquals(const Int * x, const Int *y) { return BindingHelper<Binding...>::BoundEquals(x+1, y+1); }
         
         template<typename...Ints>
-        static bool BoundLess(const Int * row, Int i, Ints...is) { return HashHelper<Binding...>::BoundLess(row+1, is...); }
+        static bool BoundLess(const Int * row, Int i, Ints...is) { return BindingHelper<Binding...>::BoundLess(row+1, is...); }
 
-        static bool BoundLess(const Int * i, const Int * j) { return HashHelper<Binding...>::BoundLess(i+1, j+1); }
+        static bool BoundLess(const Int * i, const Int * j) { return BindingHelper<Binding...>::BoundLess(i+1, j+1); }
 
         template<typename...Ints>
-        static bool BoundGreater(const Int * row, Int i, Ints...is) { HashHelper<Binding...>::BoundGreater(row+1, is...); }
+        static bool BoundGreater(const Int * row, Int i, Ints...is) { BindingHelper<Binding...>::BoundGreater(row+1, is...); }
 
-        static bool BoundGreater(const Int * row) { return HashHelper<Binding...>::BoundGreater(row+1); }
+        static bool BoundGreater(const Int * row) { return BindingHelper<Binding...>::BoundGreater(row+1); }
 
-        static bool BoundLess(const Int * row) { return HashHelper<Binding...>::BoundGreater(row+1); }
+        static bool BoundLess(const Int * row) { return BindingHelper<Binding...>::BoundGreater(row+1); }
                 
         // Bind the unbound columns
         template<typename...Ints>
-        static void BindRow(const Int * row, Int & i, Ints&&...is) { i=*row; HashHelper<Binding...>::BindRow(row+1, is...); }
+        static void BindRow(const Int * row, Int & i, Ints&&...is) { i=*row; BindingHelper<Binding...>::BindRow(row+1, is...); }
 
         // Bind the unbound columns
-        static void BindRow(const Int * row, Int * output) { *output = *row; HashHelper<Binding...>::BindRow(row+1, output+1); }
+        static void BindRow(const Int * row, Int * output) { *output = *row; BindingHelper<Binding...>::BindRow(row+1, output+1); }
         
-        static const int BindCount = HashHelper<Binding...>::BindCount;
+        static const int BindCount = BindingHelper<Binding...>::BindCount;
     };
 
     template<bool...Bound, typename...Ints>
-    Int BoundHashI(Ints... is) { return HashHelper<Bound...>::Hash(is...); }
+    Int BoundHashI(Ints... is) { return BindingHelper<Bound...>::Hash(is...); }
 
     template<bool...Bound>
-    Int BoundHashI(const Int * row) { return HashHelper<Bound...>::Hash(row); }
+    Int BoundHashI(const Int * row) { return BindingHelper<Bound...>::Hash(row); }
 
     inline Int BoundHash(DynamicBinding b, const Int * row)
     {
@@ -273,13 +235,13 @@ namespace Internal
     template<bool...Bs>
     Int BoundHash(StaticBinding<Bs...> b, const Int * row)
     {
-        return HashHelper<Bs...>::Hash(row);
+        return BindingHelper<Bs...>::Hash(row);
     }
 
     template<bool...Bs, typename...Ints>
     Int BoundHash(StaticBinding<Bs...> b, Ints...is)
     {
-        return HashHelper<Bs...>::Hash(is...);
+        return BindingHelper<Bs...>::Hash(is...);
     }
 
     inline Int HashWithMask(Int m) { return 0; }
@@ -314,26 +276,26 @@ namespace Internal
     template<bool... Binding, typename...Ints>
     bool BoundEquals(StaticBinding<Binding...>, const Int * row, Ints... is)
     {
-        return HashHelper<Binding...>::BoundEquals(row, is...);
+        return BindingHelper<Binding...>::BoundEquals(row, is...);
     }
 
     template<bool... Binding, typename...Ints>
     bool BoundLess(StaticBinding<Binding...>, const Int * row, Ints... is)
     {
-        return HashHelper<Binding...>::BoundLess(row, is...);
+        return BindingHelper<Binding...>::BoundLess(row, is...);
     }
 
     template<bool... Binding, typename...Ints>
     bool BoundGreater(StaticBinding<Binding...>, const Int * row, Ints... is)
     {
-        return HashHelper<Binding...>::BoundGreater(row, is...);
+        return BindingHelper<Binding...>::BoundGreater(row, is...);
     }
 
 
     template<bool... Binding>
     bool BoundLess(StaticBinding<Binding...>, const Int * i, const Int * j)
     {
-        return HashHelper<Binding...>::BoundLess(i, j);
+        return BindingHelper<Binding...>::BoundLess(i, j);
     }
 
     inline bool BoundLess(DynamicBinding b, const Int *i, const Int *j)
@@ -434,7 +396,7 @@ namespace Internal
     template<bool... Binding>
     bool BoundEquals(StaticBinding<Binding...>, const Int * row1, const Int * row2)
     {
-        return HashHelper<Binding...>::BoundEquals(row1, row2);
+        return BindingHelper<Binding...>::BoundEquals(row1, row2);
     }
 
     inline bool BoundEquals(Int mask, const Int * row) { return true; }
@@ -464,13 +426,13 @@ namespace Internal
     template<bool... Binding, typename...Ints>
     void BindRow(StaticBinding<Binding...>, const Int * row, Ints&&... is)
     {
-        HashHelper<Binding...>::BindRow(row, is...);
+        BindingHelper<Binding...>::BindRow(row, is...);
     }
 
     template<bool... Binding>
     void BindRow(StaticBinding<Binding...>, const Int * row, Int * output)
     {
-        HashHelper<Binding...>::BindRow(row, output);
+        BindingHelper<Binding...>::BindRow(row, output);
     }
 
     inline void BindRow(Int mask, const Int * row) {}
