@@ -708,5 +708,7 @@ namespace Internal
     {
         typedef typename MakeBinding<A>::unbound type;
     };
+
+    static const ShortIndex EmptyCell = -1;
 }
 }

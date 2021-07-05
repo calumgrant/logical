@@ -18,6 +18,7 @@ public:
         AddTest(&TablesTest::HashTable2);
         AddTest(&TablesTest::HashTable3);
         AddTest(&TablesTest::HashTable4);
+        AddTest(&TablesTest::Deltas);
     }
 
     template<typename Table>
@@ -501,8 +502,6 @@ public:
     void TestIndexes(Arity a, Binding fbf)
     {
         Table t(a);
-//        auto fbf = StaticBinding<false,true, false>();
-//        auto fbf = DynamicBinding(false,true,false);
         auto i1 = t.MakeIndex(fbf);
         bool added;
         Enumerator e;
@@ -588,10 +587,43 @@ public:
         
     }
     
-    template<typename Table, typename Arity>
-    void TestIndexes2(Arity a)
+    template<typename Table, typename Arity, typename Binding>
+    void TestIndexes2(Arity a, Binding fbb)
     {
+        // Test
+        Table t(a);
+        auto i1 = t.MakeIndex(fbb);
+        bool added;
+        Enumerator e;
+        Int x,y,z;
+        Int row[3];
         
+        for(x=0; x<10; ++x)
+            for(y=0; y<10; ++y)
+                for(z=0; z<10; ++z)
+                    t.Add(added, x,y,z);
+        
+        EQUALS(1000, t.size());
+
+        auto i2 = i1.GetIndex();
+        for(y=0; y<10; ++y)
+        {
+            for(z=0; z<10; ++z)
+            {
+                int count=0;
+                for(i2.Find(e, fbb, x, y, z); i2.Next(e, fbb, x, y, z); count++)
+                    ;
+                EQUALS(10, count);
+
+                count=0;
+                row[1] = y;
+                row[2] = z;
+                for(i2.Find(e, fbb, row); i2.Next(e, fbb, row); count++)
+                    ;
+                EQUALS(10, count);
+
+            }
+        }
     }
     
     void HashTable3()
@@ -604,8 +636,15 @@ public:
 
     void HashTable4()
     {
-        TestIndexes2<BasicHashTable<StaticArity<3>>>(StaticArity<3>());
-        TestIndexes2<BasicHashTable<DynamicArity>>(3);
+        TestIndexes2<BasicHashTable<StaticArity<3>>>(StaticArity<3>(), StaticBinding<false, true, true>());
+        TestIndexes2<BasicHashTable<DynamicArity>>(3, DynamicBinding(false, true, true));
+        TestIndexes2<BasicHashTable<StaticArity<3>>>(StaticArity<3>(), DynamicBinding(false, true, true));
+        TestIndexes2<BasicHashTable<DynamicArity>>(3, StaticBinding<false, true, true>());
+    }
+    
+    void Deltas()
+    {
+        
     }
 
 } tt;

@@ -8,18 +8,17 @@
 namespace Logical
 {
     namespace Internal
-    {
+    {    
         template<typename Alloc>
         class HashIndex
         {
         public:
-            static const int empty = -1;
             
             HashIndex(ShortIndex len) : index(len)
             {
                 items = 0;
                 for(int i=0; i<len; ++i)
-                    index[i] = empty;
+                    index[i] = EmptyCell;
             }
             
             int size() const { return items; }
@@ -29,7 +28,7 @@ namespace Logical
             {
                 int s = index.size();
                 hash = hash % s;
-                while(index[hash] != empty)
+                while(index[hash] != EmptyCell)
                 {
                     hash++;
                     if(hash>=s) hash-=s;
@@ -58,19 +57,15 @@ namespace Logical
     public:
         HashColumns(const Table<Arity, Alloc> & source, Binding binding) :
             source(source), binding(binding), index(128) {}
-        
-        // This is valid until the next call to NextIteration()
-        // Attempts to use t
+
+        // Adding data to the underlying table invalidates this index
+        // Calling NextIteration invalidates this index
         HashIndex GetIndex()
         {
             NextIteration();
             return HashIndex(source.values.data(), index.index.data(), index.index.size());
         }
-    private:
-        const Table<Arity> & source;
-        Binding binding;
-        Internal::HashIndex<Alloc> index;
-        
+
         void NextIteration()
         {
             if(source.size() * 2 > index.capacity())
@@ -86,6 +81,59 @@ namespace Logical
                 index.Add(h, i);
             }
         }
+
+        // Calling NextIteration() invalidates this enumerator
+        template<typename Int>
+        void Find(Enumerator &e, Binding b, Int * query) const
+        {
+            e.i = (Internal::P * Internal::Hash(b, (const Int*)query)) % index.capacity();
+        };
+
+        // Calling NextIteration() invalidates this enumerator
+        template<typename... Ints>
+        void Find(Enumerator &e, Binding b, Ints... query) const
+        {
+            e.i = (Internal::P * Internal::Hash(b, query...)) % index.capacity();
+        };
+        
+        const Int * NextRow(Enumerator &e) const
+        {
+            auto row = index.index[e.i++];
+            if(e.i >= index.capacity()) e.i -= index.capacity();
+            return row==Internal::EmptyCell ? nullptr : source.values.data()+row;
+        }        
+
+        bool Next(Enumerator &e, Binding b, Int * result) const
+        {
+            while(auto row = NextRow(e))
+            {
+                if(Internal::BoundEquals(b, row, (const Int*)result))
+                {
+                    Internal::BindRow(b, row, result);
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        template<typename... Ints>
+        bool Next(Enumerator &e, Binding b, Ints&&... result) const
+        {
+            while(auto row = NextRow(e))
+            {
+                if(Internal::BoundEquals(b, row, result...))
+                {
+                    Internal::BindRow(b, row, result...);
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+    private:
+        const Table<Arity> & source;
+        Binding binding;
+        Internal::HashIndex<Alloc> index;
     };
 
 
@@ -153,7 +201,7 @@ namespace Logical
         bool ProbeWithHash(Int h, const Int * is)
         {
             int p;
-            while( (p=index[h]) != HashIndex::empty)
+            while( (p=index[h]) != Internal::EmptyCell)
             {
                 // Compare the contents
                 if(Internal::row_equals(this->arity, &this->values[p], is))
@@ -169,7 +217,7 @@ namespace Logical
         bool ProbeWithHash(Int h, Ints... is)
         {
             int p;
-            while( (p=index[h]) != HashIndex::empty)
+            while( (p=index[h]) != Internal::EmptyCell)
             {
                 // Compare the contents
                 if(Internal::row_equals(&this->values[p], is...))
@@ -217,4 +265,53 @@ namespace Logical
         }
     };
 
+    template<typename Arity, typename Alloc = std::allocator<Int>>
+    class HashTable : public BasicHashTable<Arity, Alloc>
+    {
+    public:
+        void NextIteration()
+        {
+            deltaStart = deltaEnd;
+            deltaEnd = this->values.size();
+        }
+
+        template<typename Binding>
+        void Find(Enumerator &e, Binding)
+        {
+            e.i = 0;
+            e.j = deltaEnd;
+        }
+
+        template<typename Binding>
+        void FindDelta(Enumerator &e, Binding)
+        {
+            e.i = deltaStart;
+            e.j = deltaEnd;
+        }
+        
+        const Int * NextRow(Enumerator &e)
+        {
+            if(e.i < e.j)
+            {
+                auto row = &this->values[e.i];
+                e.i += this->arity.value;
+                return row;
+            }
+            return nullptr;
+        }
+        
+        template<typename Binding, typename...Ints>
+        bool Next(Enumerator &e, Binding b, Ints&&...values)
+        {
+            if(auto p = NextRow(e))
+            {
+                Internal::BindRow(b, p, values...);
+                return true;
+            }
+            return false;
+        }
+        
+    private:
+        Internal::ShortIndex deltaStart = 0, deltaEnd = 0;
+    };
 }

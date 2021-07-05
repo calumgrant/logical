@@ -168,9 +168,7 @@ namespace Logical
      */
     class HashIndex
     {
-    public:
-        static const Internal::ShortIndex empty = 0xffffffff;
-        
+    public:        
         HashIndex(const Int * data, const Internal::ShortIndex * table, Internal::ShortIndex size) :
             data(data), table(table), size(size)
         {
@@ -188,16 +186,21 @@ namespace Logical
             e.i = (Internal::P * Internal::Hash(b, query...)) % size;
         };
         
+        const Int * NextRow(Enumerator &e) const
+        {
+            auto row = table[e.i++];
+            if(e.i >= size) e.i -= size;
+            return row==Internal::EmptyCell ? nullptr : data+row;
+        }
+        
         template<typename Binding>
         bool Next(Enumerator &e, Binding b, Int * result) const
         {
-            std::uint32_t row;
-            while((row=table[e.i++]) != empty)
+            while(auto row = NextRow(e))
             {
-                if(e.i >= size) e.i -= size;
-                if(Internal::BoundEquals(b, data+row, (const Int*)result))
+                if(Internal::BoundEquals(b, row, (const Int*)result))
                 {
-                    Internal::BindRow(b, data+row, result);
+                    Internal::BindRow(b, row, result);
                     return true;
                 }
             }
@@ -207,13 +210,11 @@ namespace Logical
         template<typename Binding, typename... Ints>
         bool Next(Enumerator &e, Binding b, Ints&&... result) const
         {
-            Internal::ShortIndex row;
-            while((row=table[e.i++]) != empty)
+            while(auto row = NextRow(e))
             {
-                if(e.i >= size) e.i -= size;
-                if(Internal::BoundEquals(b, data+row, result...))
+                if(Internal::BoundEquals(b, row, result...))
                 {
-                    Internal::BindRow(b, data+row, result...);
+                    Internal::BindRow(b, row, result...);
                     return true;
                 }
             }
