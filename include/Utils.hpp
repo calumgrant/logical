@@ -6,12 +6,18 @@
 
 namespace Logical
 {
+    /*
+        Represents the arity of a table, fixed at compile-time.
+     */
     template<int Arity>
     struct StaticArity
     {
         static const int value = Arity;
     };
 
+    /*
+        Represents the arity of a table, defined at run-time.
+     */
     struct DynamicArity
     {
         DynamicArity(int a) : value(a) {}
@@ -41,21 +47,25 @@ namespace Logical
         {
             static const int value = ConvertMask<Bs...>::value<<1;
         };
-
     }
 
+    /*
+        Represents a "binding" - a set of columns - defined at compile-time.
+     */
     template<bool...Binding>
     struct StaticBinding
     {
     };
 
+    /*
+        Represents a "binding" - a set of columns - defined at run-time.
+     */
     struct DynamicBinding
     {
         template<bool...Bs>
         explicit DynamicBinding(StaticBinding<Bs...>) :
             mask(Internal::ConvertMask<Bs...>::value), arity(sizeof...(Bs))
         {
-            
         }
         
         template<typename...Bools>
@@ -69,90 +79,7 @@ namespace Logical
 
 namespace Internal
 {
-    inline bool less(const Int*row, Int v)
-    {
-        return v < *row;
-    }
-
-    inline bool greater(const Int*row, Int v)
-    {
-        return v > *row;
-    }
-
-    template<typename...Ints>
-    bool less(const Int*row, Int v, Ints... vs)
-    {
-        return v < *row || (v == *row && less(row+1, vs...));
-    }
-
-    template<typename...Ints>
-    bool greater(const Int*row, Int v, Ints... vs)
-    {
-        return v > *row || (v == *row && greater(row+1, vs...));
-    }
-
-    
-    // Returns the highest pointer that is <= value
-    template<int Arity, typename ... Ints>
-    const Int * lower_bound(const Int * p, Int n, Ints ... vs)
-    {
-        Int l=0, r=n;
-        while(l<r)
-        {
-            auto m = (l+r)>>1;
-                        
-            if (greater(p + m*Arity, vs...))
-            {
-                l = m+1;
-            }
-            else
-            {
-                r = m;
-            }
-        }
-        return p + l*Arity;
-    }
-    
-    template<int Arity>
-    const Int * lower_bound(const Int * p, Int n)
-    {
-        // Optimization of previous case
-        return p;
-    }
-
     typedef std::uint32_t ShortIndex;
-
-
-    // Returns the smallest pointer that is > value
-    template<int Arity, typename...Ints>
-    const Int * upper_bound(const Int * p, Int n, Ints... vs)
-    {
-        Int l=0, r=n;
-        while(l<r)
-        {
-            auto m = (l+r)>>1;
-
-            if(less(p + m * Arity, vs...))
-            {
-                r = m;
-            }
-            else
-            {
-                l = m+1;
-            }
-        }
-        return p+Arity*r;
-    }
-
-
-
-
-    template<int Arity>
-    const Int * upper_bound(const Int * p, Int size)
-    {
-        // Optimization of previous case
-        return p + Arity * size;
-    }
 
     template<typename Arity, typename Binding>
     ShortIndex UpperBound(Arity a, Binding b, const Int * p, ShortIndex n)
