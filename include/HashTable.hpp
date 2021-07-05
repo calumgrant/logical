@@ -269,6 +269,8 @@ namespace Logical
     class HashTable : public BasicHashTable<Arity, Alloc>
     {
     public:
+        HashTable(Arity a) : BasicHashTable<Arity, Alloc>(a) { }
+
         void NextIteration()
         {
             deltaStart = deltaEnd;
@@ -276,20 +278,20 @@ namespace Logical
         }
 
         template<typename Binding>
-        void Find(Enumerator &e, Binding)
+        void Find(Enumerator &e, Binding) const
         {
             e.i = 0;
             e.j = deltaEnd;
         }
 
         template<typename Binding>
-        void FindDelta(Enumerator &e, Binding)
+        void FindDelta(Enumerator &e, Binding) const
         {
             e.i = deltaStart;
             e.j = deltaEnd;
         }
         
-        const Int * NextRow(Enumerator &e)
+        const Int * NextRow(Enumerator &e) const
         {
             if(e.i < e.j)
             {
@@ -301,7 +303,7 @@ namespace Logical
         }
         
         template<typename Binding, typename...Ints>
-        bool Next(Enumerator &e, Binding b, Ints&&...values)
+        bool Next(Enumerator &e, Binding b, Ints&&...values) const
         {
             if(auto p = NextRow(e))
             {

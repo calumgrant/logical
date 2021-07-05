@@ -642,9 +642,89 @@ public:
         TestIndexes2<BasicHashTable<DynamicArity>>(3, StaticBinding<false, true, true>());
     }
     
+    template<typename Table, typename Arity, typename BindingFB, typename BindingFF, typename BindingBB>
+    void TestDeltas1(Arity a, BindingFB fb, BindingFF ff, BindingBB bb)
+    {
+        Table t(a);
+        auto i = t.MakeIndex(fb);
+        Enumerator e;
+        Int x, y;
+        Int row[2];
+        bool changed;
+        
+        // Add some data
+        t.Add(changed, 1,2);
+        t.Add(changed, 1,3);
+        t.Add(changed, 2,3);
+        CHECK(changed);
+        
+        // The table is "empty" until NextIteration()
+        t.Find(e, ff);
+        CHECK(!t.Next(e,ff,x,y));
+        
+        // The delta is also empty until NextIteration()
+        t.FindDelta(e,ff);
+        CHECK(!t.Next(e,ff,x,y));
+
+        // The index is also empty until NextIteration()
+        x = 1;
+        i.Find(e,fb,x,y);
+        CHECK(!i.Next(e,fb,x,y));
+        
+        t.NextIteration();
+        i.NextIteration();
+
+        // Try to find something
+        t.Find(e, ff);
+        CHECK(t.Next(e,ff,x,y));
+        EQUALS(1, x);
+        EQUALS(2, y);
+        CHECK(t.Next(e,ff,x,y));
+        EQUALS(1,x);
+        EQUALS(3,y);
+        CHECK(t.Next(e,ff,x,y));
+        EQUALS(2,x);
+        EQUALS(3,y);
+        CHECK(!t.Next(e,ff,x,y));
+        
+        t.FindDelta(e,ff);
+        CHECK(t.Next(e,ff,x,y));
+        EQUALS(1, x);
+        EQUALS(2, y);
+        CHECK(t.Next(e,ff,x,y));
+        EQUALS(1,x);
+        EQUALS(3,y);
+        CHECK(t.Next(e,ff,x,y));
+        EQUALS(2,x);
+        EQUALS(3,y);
+        CHECK(!t.Next(e,ff,x,y));
+
+        y = 3;
+        i.Find(e,fb,x,y);
+        CHECK(i.Next(e,fb,x,y));
+        EQUALS(1, x);
+        CHECK(i.Next(e,fb,x,y));
+        EQUALS(2, x);
+        CHECK(!i.Next(e,fb,x,y));
+
+        // Add some more data
+        changed = false;
+        t.Add(changed, 1,0);
+        CHECK(changed);
+        t.NextIteration();
+        i.NextIteration();
+        
+        t.FindDelta(e,ff);
+        CHECK(t.Next(e,ff,x,y));
+        EQUALS(x,1);
+        EQUALS(y,0);
+        CHECK(!t.Next(e,ff,x,y));
+    }
+    
     void Deltas()
     {
-        
+        TestDeltas1<HashTable<StaticArity<2>>>(StaticArity<2>(), StaticBinding<false, true>(), StaticBinding<false, false>(), StaticBinding<true, true>());
+        TestDeltas1<HashTable<DynamicArity>>(2, DynamicBinding(false, true), DynamicBinding(false, false), DynamicBinding(true, true));
     }
 
 } tt;
