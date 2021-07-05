@@ -81,12 +81,6 @@ namespace Internal
 {
     typedef std::uint32_t ShortIndex;
 
-    template<typename Arity, typename Binding>
-    ShortIndex UpperBound(Arity a, Binding b, const Int * p, ShortIndex n)
-    {
-        return n * a.value;
-    }
-
     template<typename Arity>
     bool row_less(Arity a, const Int * x, const Int *y)
     {
@@ -488,6 +482,11 @@ namespace Internal
         return a.value*r;
     }
 
+    template<typename Arity, typename Binding>
+    ShortIndex UpperBound(Arity a, Binding b, const Int * p, ShortIndex n)
+    {
+        return n * a.value;
+    }
 
     template<typename Arity, typename Binding, typename... Ints>
     ShortIndex LowerBound(Arity a, Binding b, const Int *p, ShortIndex n, Ints... vs)
