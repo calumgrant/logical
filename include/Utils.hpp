@@ -219,22 +219,24 @@ namespace Internal
         return true;
     }
 
-    inline bool row_equals(const Int *x) { return true; }
+    template<typename Arity>
+    bool row_equals(Arity a, const Int *x) { return true; }
 
-    template<typename...Ints>
-    bool row_equals(const Int * x, Int y, Ints...ys)
+    template<typename Arity, typename...Ints>
+    bool row_equals(Arity arity, const Int * x, Int y, Ints...ys)
     {
-        return *x == y && row_equals(x+1, ys...);
+        return *x == y && row_equals(arity, x+1, ys...);
     }
 
     const int P = 317;
 
-    inline Int Hash(Int i) { return i; }
+    template<typename Arity>
+    Int Hash(Arity, Int i) { return i; }
 
-    template<typename...Ints>
-    Int Hash(Int i, Ints... is)
+    template<typename Arity, typename...Ints>
+    Int Hash(Arity a, Int i, Ints... is)
     {
-        return i + P * Hash(is...);
+        return i + P * Hash(a, is...);
     }
 
     template<bool...Binding>
@@ -325,12 +327,12 @@ namespace Internal
     };
 
     template<bool...Bound, typename...Ints>
-    Int BoundHash(Ints... is) { return HashHelper<Bound...>::Hash(is...); }
+    Int BoundHashI(Ints... is) { return HashHelper<Bound...>::Hash(is...); }
 
     template<bool...Bound>
-    Int BoundHash(const Int * row) { return HashHelper<Bound...>::Hash(row); }
+    Int BoundHashI(const Int * row) { return HashHelper<Bound...>::Hash(row); }
 
-    inline Int Hash(DynamicBinding b, const Int * row)
+    inline Int BoundHash(DynamicBinding b, const Int * row)
     {
         Int h=0;
         Int mul = 1;
@@ -342,13 +344,13 @@ namespace Internal
     }
 
     template<bool...Bs>
-    Int Hash(StaticBinding<Bs...> b, const Int * row)
+    Int BoundHash(StaticBinding<Bs...> b, const Int * row)
     {
         return HashHelper<Bs...>::Hash(row);
     }
 
     template<bool...Bs, typename...Ints>
-    Int Hash(StaticBinding<Bs...> b, Ints...is)
+    Int BoundHash(StaticBinding<Bs...> b, Ints...is)
     {
         return HashHelper<Bs...>::Hash(is...);
     }
@@ -362,7 +364,7 @@ namespace Internal
     }
 
     template<typename...Ints>
-    Int Hash(DynamicBinding b, Int i, Ints...is)
+    Int BoundHash(DynamicBinding b, Int i, Ints...is)
     {
         return HashWithMask(b.mask, i, is...);
     }
@@ -522,7 +524,8 @@ namespace Internal
         return BoundEquals(b.mask, row, is...);
     }
 
-    inline bool BoundEquals(DynamicBinding b, const Int * row1, const Int * row2)
+    template<typename Int2>
+    bool BoundEquals(DynamicBinding b, const Int * row1, Int2 * row2)
     {
         for(Int m = b.mask; m; m>>=1, row1++, row2++)
         {

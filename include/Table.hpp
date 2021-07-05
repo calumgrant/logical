@@ -3,7 +3,6 @@
 #include "Index.hpp"
 
 #include <vector>
-#include <iostream>
 #include <algorithm>
 
 namespace Logical
@@ -97,7 +96,6 @@ namespace Logical
         template<typename... Ints>
         void Add(Ints... v)
         {
-            // static_assert(sizeof...(v) % Arity::value == 0);
             AddInternal(v...);
         }
         
@@ -116,10 +114,10 @@ namespace Logical
         void AddInternal(Int a) { this->values.push_back(a); }
 
         template<typename... Ints>
-        void AddInternal(Int a, Ints... v)
+        void AddInternal(Int v, Ints... vs)
         {
-            this->values.push_back(a);
-            AddInternal(v...);
+            this->values.push_back(v);
+            AddInternal(vs...);
         }
     };
 }

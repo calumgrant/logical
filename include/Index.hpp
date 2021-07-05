@@ -47,7 +47,7 @@
 namespace Logical
 {
     /*
-        The position in an iteration.
+        Data storing the state when stepping through results.
      */
     struct Enumerator
     {
@@ -75,19 +75,29 @@ namespace Logical
             e.j = size;
             return size>0;
         }
+
+        const Int * NextRow(Enumerator &e) const
+        {
+            if(e.i < e.j)
+            {
+                auto row = data+e.i;
+                e.i += arity.value;
+                return row;
+            }
+            return nullptr;
+        }
         
         template<typename Binding, typename...Ints>
         bool Next(Enumerator &e, Binding b, Ints&&... result) const
         {
-            if(e.i < e.j)
+            if(auto row = NextRow(e))
             {
-                Internal::BindRow(b, data+e.i, result...);
-                e.i += arity.value;
+                Internal::BindRow(b, row, result...);
                 return true;
             }
             return false;
         }
-        
+
         Internal::ShortIndex rows() const { return size; }
         
     private:
@@ -117,14 +127,23 @@ namespace Logical
             e.j = Internal::UpperBound(arity, b, data, size, query...);
         }
 
+        const Int * NextRow(Enumerator &e) const
+        {
+            if(e.i < e.j)
+            {
+                auto row = data+e.i;
+                e.i += arity.value;
+                return row;
+            }
+            return nullptr;
+        }
 
         template<typename Binding, typename...Ints>
         bool Next(Enumerator &e, Binding b, Ints&&... result) const
         {
-            if(e.i < e.j)
+            if(auto row = NextRow(e))
             {
-                Internal::BindRow(b, data+e.i, result...);
-                e.i += arity.value;
+                Internal::BindRow(b, row, result...);
                 return true;
             }
             return false;
@@ -150,16 +169,10 @@ namespace Logical
         {
         }
 
-        template<typename Binding, typename Int>
-        void Find(Enumerator &e, Binding b, Int * query) const
-        {
-            e.i = (Internal::P * Internal::Hash(b, (const Int*)query)) % size;
-        };
-
         template<typename Binding, typename... Ints>
         void Find(Enumerator &e, Binding b, Ints... query) const
         {
-            e.i = (Internal::P * Internal::Hash(b, query...)) % size;
+            e.i = (Internal::P * Internal::BoundHash(b, query...)) % size;
         };
         
         const Int * NextRow(Enumerator &e) const
@@ -170,7 +183,7 @@ namespace Logical
         }
         
         template<typename Binding>
-        bool Next(Enumerator &e, Binding b, Int * result) const
+        bool NextXX(Enumerator &e, Binding b, Int * result) const
         {
             while(auto row = NextRow(e))
             {

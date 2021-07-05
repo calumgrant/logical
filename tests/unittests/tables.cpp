@@ -156,31 +156,31 @@ public:
     
     void TestHash()
     {
-        EQUALS(0, (Internal::BoundHash<false,false>(1,2)));
-        EQUALS(1, (Internal::BoundHash<true, false>(1,2)));
-        EQUALS(2, (Internal::BoundHash<false,true>(1,2)));
-        EQUALS(2*317 + 1, (Internal::BoundHash<true,true>(1,2)));
+        EQUALS(0, (Internal::BoundHashI<false,false>(1,2)));
+        EQUALS(1, (Internal::BoundHashI<true, false>(1,2)));
+        EQUALS(2, (Internal::BoundHashI<false,true>(1,2)));
+        EQUALS(2*317 + 1, (Internal::BoundHashI<true,true>(1,2)));
 
-        EQUALS(0, (Internal::Hash(StaticBinding<false,false>(), 1,2)));
-        EQUALS(1, (Internal::Hash(StaticBinding<true, false>(), 1,2)));
-        EQUALS(2, (Internal::Hash(StaticBinding<false,true>(), 1,2)));
-        EQUALS(2*317 + 1, (Internal::Hash(StaticBinding<true,true>(), 1,2)));
+        EQUALS(0, (Internal::BoundHash(StaticBinding<false,false>(), 1,2)));
+        EQUALS(1, (Internal::BoundHash(StaticBinding<true, false>(), 1,2)));
+        EQUALS(2, (Internal::BoundHash(StaticBinding<false,true>(), 1,2)));
+        EQUALS(2*317 + 1, (Internal::BoundHash(StaticBinding<true,true>(), 1,2)));
 
-        EQUALS(0, Internal::Hash(DynamicBinding(false,false), 1, 2));
-        EQUALS(1, Internal::Hash(DynamicBinding(true,false), 1, 2));
-        EQUALS(2, Internal::Hash(DynamicBinding(false,true), 1, 2));
-        EQUALS(2*317+1, Internal::Hash(DynamicBinding(true,true), 1, 2));
+        EQUALS(0, Internal::BoundHash(DynamicBinding(false,false), 1, 2));
+        EQUALS(1, Internal::BoundHash(DynamicBinding(true,false), 1, 2));
+        EQUALS(2, Internal::BoundHash(DynamicBinding(false,true), 1, 2));
+        EQUALS(2*317+1, Internal::BoundHash(DynamicBinding(true,true), 1, 2));
         
         Int row[] = { 1, 2 };
-        EQUALS(0, (Internal::Hash(StaticBinding<false,false>(), row)));
-        EQUALS(1, (Internal::Hash(StaticBinding<true, false>(), row)));
-        EQUALS(2, (Internal::Hash(StaticBinding<false,true>(), row)));
-        EQUALS(2*317 + 1, (Internal::Hash(StaticBinding<true,true>(), row)));
+        EQUALS(0, (Internal::BoundHash(StaticBinding<false,false>(), row)));
+        EQUALS(1, (Internal::BoundHash(StaticBinding<true, false>(), row)));
+        EQUALS(2, (Internal::BoundHash(StaticBinding<false,true>(), row)));
+        EQUALS(2*317 + 1, (Internal::BoundHash(StaticBinding<true,true>(), row)));
 
-        EQUALS(0, Internal::Hash(DynamicBinding(false,false), row));
-        EQUALS(1, Internal::Hash(DynamicBinding(true,false), row));
-        EQUALS(2, Internal::Hash(DynamicBinding(false,true), row));
-        EQUALS(2*317+1, Internal::Hash(DynamicBinding(true,true), row));
+        EQUALS(0, Internal::BoundHash(DynamicBinding(false,false), row));
+        EQUALS(1, Internal::BoundHash(DynamicBinding(true,false), row));
+        EQUALS(2, Internal::BoundHash(DynamicBinding(false,true), row));
+        EQUALS(2*317+1, Internal::BoundHash(DynamicBinding(true,true), row));
         
         EQUALS(2*317+1, Internal::Hash(DynamicArity(2), row));
         EQUALS(2*317+1, Internal::Hash(StaticArity<2>(), row));
