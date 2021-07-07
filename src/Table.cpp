@@ -1,7 +1,7 @@
 #include "Relation.hpp"
 #include "Database.hpp"
 #include "RelationImpl.hpp"
-
+#include "Helpers.hpp"
 #include "TableImpl.hpp"
 
 #include <iostream>
@@ -388,4 +388,9 @@ void TableImpl2::ReadAllData(Receiver&r)
     i.Find(e);
     while(auto row = i.NextRow(e))
         r.OnRow((Entity*)row);
+}
+
+std::shared_ptr<Table> Table::MakeTable(persist::shared_memory &mem, Arity arity)
+{
+    return allocate_shared<TableImpl2>(mem, mem, arity);
 }

@@ -36,4 +36,6 @@ public:
     virtual void Clear() =0;
     
     virtual void ReadAllData(Receiver&r) =0;
+    
+    static std::shared_ptr<Table> MakeTable(persist::shared_memory &mem, Arity arity);
 };
