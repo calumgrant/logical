@@ -81,7 +81,7 @@ Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches,
     reaches(reaches), bindingPredicate(binding), bindingColumns(cols),
     rules(db)
 {
-    table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
+    table = allocate_shared<TableImpl2>(db.Storage(), db.Storage(), arity);
 #if !NDEBUG
     debugName = db.GetString(name).c_str();
 #endif
@@ -96,7 +96,7 @@ Predicate::Predicate(Database &db, const CompoundName &cn, ::Arity arity, Bindin
     rules(db)
 {
     if(cn.parts.size()>0) name = cn.parts[0];
-    table = allocate_shared<TableImpl>(db.Storage(), db.Storage(), arity);
+    table = allocate_shared<TableImpl2>(db.Storage(), db.Storage(), arity);
 #if !NDEBUG
     debugName = db.GetString(name).c_str();
 #endif

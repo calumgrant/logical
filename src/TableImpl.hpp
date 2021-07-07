@@ -1,5 +1,6 @@
 #pragma once
 #include "Table.hpp"
+#include "../include/HashTable.hpp"
 
 class Depth
 {
@@ -85,7 +86,41 @@ private:
 
     Size deltaStart =0, deltaEnd = 0;
         
-    bool NextIteration() override;
+    void NextIteration() override;
     void FirstIteration() override;
     void ReadAllData(Receiver&r) override;
+};
+
+class TableImpl2 : public Table
+{
+public:
+    TableImpl2(persist::shared_memory &mem, Arity arity);
+    Size Rows() const override;
+
+    void Query(Row row, Columns columns, Receiver&v) override;
+    void QueryDelta(Row row, Columns columns, Receiver&v) override;
+    bool QueryExists(Row row, Columns columns) override;
+    void OnRow(Row row) override;
+    bool Add(const Entity *e) override;
+    void Clear() override;
+    Arity GetArity() const override;
+    void NextIteration() override;
+    void FirstIteration() override;
+    void ReadAllData(Receiver&r) override;
+private:
+    typedef Logical::HashColumns<Logical::DynamicArity, Logical::DynamicBinding, persist::fast_allocator<Logical::Int>> column_index;
+
+    struct Hash
+    {
+        int operator()(Logical::DynamicBinding b) const { return b.mask; }
+        
+        bool operator()(Logical::DynamicBinding a, Logical::DynamicBinding b) const
+        { return a.mask == b.mask; }
+    };
+    
+    Logical::HashTable<Logical::DynamicArity, persist::fast_allocator<Logical::Int>> hashtable;
+    
+    std::unordered_map<Logical::DynamicBinding, column_index, Hash, Hash, persist::fast_allocator<std::pair<const Logical::DynamicBinding, column_index>>> indexes;
+    
+    column_index & GetIndex(Logical::DynamicBinding);
 };

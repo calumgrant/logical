@@ -1,8 +1,6 @@
 #pragma once
 #include "Logical.hpp"
 #include <utility>
-#include <iterator>
-#include <iostream>
 
 namespace Logical
 {
@@ -20,7 +18,7 @@ namespace Logical
      */
     struct DynamicArity
     {
-        DynamicArity(int a) : value(a) {}
+        explicit DynamicArity(int a) : value(a) {}
         int value;
     };
 
@@ -71,10 +69,10 @@ namespace Logical
         template<typename...Bools>
         explicit DynamicBinding(Bools... bs) : mask(Internal::MakeMask(bs...)), arity(sizeof...(bs)) {}
         
-        DynamicBinding(Int m, int a) : mask(m), arity(a) {}
+        explicit DynamicBinding(Int m, DynamicArity a) : mask(m), arity(a) {}
         
         Int mask;
-        int arity;
+        DynamicArity arity;  // ?? Delete
     };
 
 namespace Internal
@@ -111,25 +109,12 @@ namespace Internal
         return *x == y && row_equals(arity, x+1, ys...);
     }
 
-    const int P = 317;
-
-    template<typename Arity>
-    Int Hash(Arity, Int i) { return i; }
-
-    template<typename Arity, typename...Ints>
-    Int Hash(Arity a, Int i, Ints... is)
-    {
-        return i + P * Hash(a, is...);
-    }
-
     template<bool...Binding>
     struct BindingHelper;
 
     template<>
     struct BindingHelper<>
     {
-        static Int Hash() { return 0; }
-        static Int Hash(const Int * row) { return 0; }
         static bool BoundEquals(const Int * row) { return true; }
         static bool BoundEquals(const Int * x, const Int *y) { return true; }
         static bool BoundLess(const Int * row) { return false; }
@@ -149,10 +134,6 @@ namespace Internal
     template<bool...Binding>
     struct BindingHelper<true, Binding...>
     {
-        template<typename...Ints>
-        static Int Hash(Int i, Ints... is) { return i + P * BindingHelper<Binding...>::Hash(is...); }
-        static Int Hash(const Int * row) { return *row + P * BindingHelper<Binding...>::Hash(row+1); }
-        
         template<typename...Ints>
         static bool BoundEquals(const Int * row, Int i, Ints...is) { return i==*row && BindingHelper<Binding...>::BoundEquals(row+1, is...); }
         
@@ -179,10 +160,6 @@ namespace Internal
     struct BindingHelper<false, Binding...>
     {
         template<typename...Ints>
-        static Int Hash(Int i, Ints... is) { return BindingHelper<Binding...>::Hash(is...); }
-        static Int Hash(const Int * row) { return BindingHelper<Binding...>::Hash(row+1); }
-
-        template<typename...Ints>
         static bool BoundEquals(const Int * row, Int i, Ints...is) { return BindingHelper<Binding...>::BoundEquals(row+1, is...); }
 
         static bool BoundEquals(const Int * x, const Int *y) { return BindingHelper<Binding...>::BoundEquals(x+1, y+1); }
@@ -208,63 +185,7 @@ namespace Internal
         
         static const int BindCount = BindingHelper<Binding...>::BindCount;
     };
-
-    template<bool...Bound, typename...Ints>
-    Int BoundHashI(Ints... is) { return BindingHelper<Bound...>::Hash(is...); }
-
-    template<bool...Bound>
-    Int BoundHashI(const Int * row) { return BindingHelper<Bound...>::Hash(row); }
-
-    inline Int BoundHash(DynamicBinding b, const Int * row)
-    {
-        Int h=0;
-        Int mul = 1;
-        for(auto m = b.mask; m; row++, m>>=1)
-        {
-            if(m&1) { h += mul * *row; mul = mul*P; }
-        }
-        return h;
-    }
-
-    template<bool...Bs>
-    Int BoundHash(StaticBinding<Bs...> b, const Int * row)
-    {
-        return BindingHelper<Bs...>::Hash(row);
-    }
-
-    template<bool...Bs, typename...Ints>
-    Int BoundHash(StaticBinding<Bs...> b, Ints...is)
-    {
-        return BindingHelper<Bs...>::Hash(is...);
-    }
-
-    inline Int HashWithMask(Int m) { return 0; }
-
-    template<typename...Ints>
-    Int HashWithMask(Int m, Int i, Ints...is)
-    {
-        return (m&1)? i + P * HashWithMask(m>>1, is...) : HashWithMask(m>>1, is...);
-    }
-
-    template<typename...Ints>
-    Int BoundHash(DynamicBinding b, Int i, Ints...is)
-    {
-        return HashWithMask(b.mask, i, is...);
-    }
-
-    template<typename Arity>
-    Int Hash(Arity arity, const Int *p)
-    {
-        Int h = 0;
-        Int mul = 1;
-        for(int i=0; i<arity.value; ++i, mul*=P)
-            h += mul*p[i];
-        return h;
-    }
-
-    inline Int Hash(DynamicArity) { return 0; }
-
-    inline Int Hash(StaticArity<0>) { return 0; }
+ 
 
     // Compares two rows, but only on the bound columns
     template<bool... Binding, typename...Ints>
@@ -284,7 +205,6 @@ namespace Internal
     {
         return BindingHelper<Binding...>::BoundGreater(row, is...);
     }
-
 
     template<bool... Binding>
     bool BoundLess(StaticBinding<Binding...>, const Int * i, const Int * j)
@@ -455,7 +375,7 @@ namespace Internal
     inline void BindRow(DynamicBinding b, const Int * row, Int * output)
     {
         int a=0;
-        for(auto m=b.mask; a<b.arity; m>>=1, a++, row++, output++)
+        for(auto m=b.mask; a<b.arity.value; m>>=1, a++, row++, output++)
         {
             if(!(m&1)) *output = *row;
         }
@@ -516,12 +436,12 @@ namespace Internal
 
     inline DynamicBinding GetBoundBinding(DynamicArity a)
     {
-        return DynamicBinding(Int(1<<a.value)-1, a.value);
+        return DynamicBinding(Int(1<<a.value)-1, a);
     }
 
     inline DynamicBinding GetUnboundBinding(DynamicArity a)
     {
-        return DynamicBinding(Int(0), a.value);
+        return DynamicBinding(Int(0), a);
     }
 
     template<bool b, typename SB> struct BindingCons;
@@ -573,7 +493,5 @@ namespace Internal
     {
         typedef typename MakeBinding<A>::unbound type;
     };
-
-    static const ShortIndex EmptyCell = -1;
 }
 }

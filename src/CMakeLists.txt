@@ -40,6 +40,8 @@ add_library(logiccore SHARED
     ../include/HashTable.hpp
     ../include/Table.hpp
     ../include/Index.hpp
+    ../include/HashIndex.hpp
+    ../include/HashUtils.hpp
     Table.cpp Table.hpp TableImpl.hpp
     Evaluation.cpp Evaluation.hpp EvaluationImpl.hpp
     Compiler.cpp Compiler.hpp
@@ -55,11 +57,18 @@ target_link_libraries(logical-tests logiccore)
 target_link_libraries(logical logiccore stdlib)
 target_link_libraries(logiccore ${TERMCAP} persist)
 
+add_executable(prime-generator primegenerator.cpp)
+
 # add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:mysql> $<TARGET_FILE_DIR:logical>)
 
 set_target_properties(logiccore PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
+
+    set_target_properties(prime-generator PROPERTIES
+    CXX_STANDARD 17
+    CXX_EXTENSIONS OFF)
+
 
 set_target_properties(logical PROPERTIES
     CXX_STANDARD 17

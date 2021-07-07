@@ -57,7 +57,7 @@ namespace Logical
     class Table
     {
     protected:
-        Table(Arity a) : arity(a) {}
+        Table(Arity a, Alloc alloc = Alloc()) : arity(a), values(alloc) {}
 
     public:
         int get_arity() const { return arity.value; }
@@ -66,6 +66,8 @@ namespace Logical
 
         std::vector<Int, Alloc> values;
         Arity arity;
+        
+        void clear() { values.clear(); }
     };
 
     template<typename Arity>

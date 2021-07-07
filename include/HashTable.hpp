@@ -1,5 +1,6 @@
 #pragma once
 #include "Table.hpp"
+#include "HashIndex.hpp"
 
 /*
  HashTable
@@ -20,27 +21,31 @@ namespace Logical
         class HashIndex
         {
         public:
-            HashIndex(ShortIndex len) : index(len, EmptyCell)
+            HashIndex(ShortIndex len, Alloc alloc=Alloc()) : index(len, EmptyCell, alloc)
             {
             }
             
             int size() const { return items; }
             int capacity() const { return index.size(); }
             
-            void Add(Int hash, int i)
+            void Add(Enumerator &e, int i)
             {
-                int s = index.size();
-                hash = hash % s;
-                while(index[hash] != EmptyCell)
+                ShortIndex s = index.size();
+                while(index[GetIndex(e, s)] != EmptyCell)
                 {
-                    hash++;
-                    if(hash>=s) hash-=s;
+                    NextHash(e);
                 }
-                index[hash] = i;
+                index[GetIndex(e,s)] = i;
+                ++items;
+            }
+            
+            void AddAt(const Enumerator &e, ShortIndex i)
+            {
+                index[GetIndex(e, index.size())] = i;
                 ++items;
             }
 
-            int operator[](int i) const { return index[i%index.size()]; }
+            ShortIndex operator[](const Enumerator &e) const { return index[GetIndex(e, index.size())]; }
             
             void swap(HashIndex & other)
             {
@@ -58,12 +63,15 @@ namespace Logical
         An index over a set of columns.
         There is no need to index the entire table as this is already indexed.
      */
-    template<typename Arity, typename Alloc, typename Binding>
+    template<typename Arity, typename Binding, typename Alloc=std::allocator<Int> >
     class HashColumns
     {
     public:
         HashColumns(const Table<Arity, Alloc> & source, Binding binding) :
-            source(source), binding(binding), index(128) {}
+            source(source), binding(binding), indexSize(0), index(Internal::GetIndexSize(0), source.values.get_allocator())
+        {
+            NextIteration();
+        }
 
         // Adding data to the underlying table invalidates this index
         // Calling NextIteration invalidates this index
@@ -77,15 +85,22 @@ namespace Logical
         {
             if(source.size() * 2 > index.capacity())
             {
-                // Trigger a rehash
-                index = Internal::HashIndex<Alloc>(2 * source.size());
+                Internal::ShortIndex newsize;
+                do
+                {
+                    newsize = Internal::GetIndexSize(++indexSize);
+                }
+                while(newsize < 2 * source.size());
+
+                index = Internal::HashIndex<Alloc>(newsize, source.values.get_allocator());
             }
             
             for(auto row = index.size(); row<source.size(); ++row)
             {
                 auto i = row * source.arity.value;
-                auto h = Internal::P * Internal::BoundHash(binding, &source.values[i]);
-                index.Add(h, i);
+                Enumerator e;
+                Internal::FirstHash(e, Internal::BoundHash(binding, &source.values[i]));
+                index.Add(e, i);
             }
         }
 
@@ -93,14 +108,15 @@ namespace Logical
         template<typename... Ints>
         void Find(Enumerator &e, Binding b, Ints... query) const
         {
-            e.i = (Internal::P * Internal::BoundHash(b, query...)) % index.capacity();
+            Internal::FirstHash(e, Internal::BoundHash(b, query...));
         };
         
         const Int * NextRow(Enumerator &e) const
         {
-            auto row = index.index[e.i++];
-            if(e.i >= index.capacity()) e.i -= index.capacity();
-            return row==Internal::EmptyCell ? nullptr : source.values.data()+row;
+            auto row = index[e];
+            if(row == Internal::EmptyCell) return nullptr;
+            Internal::NextHash(e);
+            return source.values.data()+row;
         }
         
         template<typename... Ints>
@@ -118,9 +134,10 @@ namespace Logical
         }
         
     private:
-        const Table<Arity> & source;
+        const Table<Arity, Alloc> & source;
         Binding binding;
         Internal::HashIndex<Alloc> index;
+        int indexSize = 0;
     };
 
 
@@ -131,7 +148,8 @@ namespace Logical
     class BasicHashTable : public Table<Arity, Alloc>
     {
     public:
-        BasicHashTable(Arity a = Arity()) : Table<Arity>(a), index(256) {}
+        BasicHashTable(Arity a = Arity(), Alloc alloc = Alloc()) :
+            Table<Arity, Alloc>(a, alloc), indexSize(0), index(Internal::GetIndexSize(indexSize), alloc) {}
         
         typedef UnsortedIndex<Arity> ScanIndexType;
         typedef HashIndex ProbeIndexType;
@@ -146,25 +164,32 @@ namespace Logical
         {
             return HashIndex(this->values.data(), index.index.data(), index.capacity());
         }
-        
+
         template<typename...Ints>
         void Add(bool & added, Ints... is)
         {
-            auto h = Internal::Hash(this->arity, is...) * Internal::P;
-
-            if(ProbeWithHash(h, is...)) return;
-            
+            if(Add(is...))
+                added = true;
+        }
+        
+        template<typename...Ints>
+        bool Add(Ints... is)
+        {
             Rehash();
             
+            Enumerator e;
+
+            if(Probe(e, is...))
+                return false;
+            
             auto row = this->values.size();
+            index.AddAt(e, this->values.size());
             AddInternal(is...);
-            index.Add(h, row);
-            added = true;
+            return true;
         }
         
         /*
             Enumerates the contents of the hashtable.
-            Enumerates
          */
         const Int * NextRow(Enumerator &e) const
         {
@@ -190,27 +215,31 @@ namespace Logical
 
         
         template<typename Binding>
-        HashColumns<Arity, Alloc, Binding> MakeIndex(Binding binding) const
+        HashColumns<Arity, Binding, Alloc> MakeIndex(Binding binding) const
         {
-            return HashColumns<Arity, Alloc, Binding>(*this, binding);
+            return HashColumns<Arity, Binding, Alloc>(*this, binding);
         }
         
     private:
 
+        // Returns the cell where the row lives, OR
+        // an empty cell where we can insert the data.
         template<typename...Ints>
-        bool ProbeWithHash(Int h, Ints... is)
+        bool Probe(Enumerator &e, Ints... is)
         {
-            int p;
-            while( (p=index[h]) != Internal::EmptyCell)
+            Internal::FirstHash(e, Internal::Hash(this->arity, is...));
+
+            Internal::ShortIndex p;
+            while( (p=index[e]) != Internal::EmptyCell)
             {
                 // Compare the contents
                 if(Internal::row_equals(this->arity, &this->values[p], is...))
                     return true;
                 
-                h = h+1;
+                Internal::NextHash(e);
             }
             
-            return false;
+            return false; // Not found
         }
         
         void AddInternal(const Int * p)
@@ -231,17 +260,20 @@ namespace Logical
             AddInternal(is...);
         }
         
+        int indexSize;
         Internal::HashIndex<Alloc> index;
 
         void Rehash()
         {
             if(index.capacity() < 2 * index.size())
             {
-                Internal::HashIndex<Alloc> index2(2*index.capacity());
+                Internal::HashIndex<Alloc> index2(Internal::GetIndexSize(++indexSize), this->values.get_allocator());
                 
                 for(Int i=0; i<this->values.size(); i+=this->arity.value)
                 {
-                    index2.Add(Internal::P * Internal::Hash(this->arity, &this->values[i]), i);
+                    Enumerator e;
+                    Internal::FirstHash(e, Internal::Hash(this->arity, &this->values[i]));
+                    index2.Add(e, i);
                 }
                 
                 index.swap(index2);
@@ -257,7 +289,7 @@ namespace Logical
     class HashTable : public BasicHashTable<Arity, Alloc>
     {
     public:
-        HashTable(Arity a) : BasicHashTable<Arity, Alloc>(a) { }
+        HashTable(Arity a, Alloc alloc = Alloc()) : BasicHashTable<Arity, Alloc>(a, alloc) { }
 
         void NextIteration()
         {
@@ -272,6 +304,11 @@ namespace Logical
         template<typename Binding>
         void Find(Enumerator &e, Binding) const
         {
+            Find(e);
+        }
+        
+        void Find(Enumerator &e) const
+        {
             e.i = 0;
             e.j = deltaEnd;
         }
@@ -282,10 +319,15 @@ namespace Logical
         template<typename Binding>
         void FindDelta(Enumerator &e, Binding) const
         {
+            FindDelta(e);
+        }
+        
+        void FindDelta(Enumerator &e) const
+        {
             e.i = deltaStart;
             e.j = deltaEnd;
         }
-                
+
     private:
         Internal::ShortIndex deltaStart = 0, deltaEnd = 0;
     };

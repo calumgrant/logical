@@ -27,7 +27,7 @@ public:
     
     // Sets the
     // Adds all pending data
-    virtual bool NextIteration() =0;
+    virtual void NextIteration() =0;
     
     // This is a bad interface.
     std::shared_ptr<ExecutionUnit> loop;

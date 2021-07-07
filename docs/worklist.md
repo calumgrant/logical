@@ -1,3 +1,10 @@
+Need a new hashing scheme since linear hashing is too pathological.
+- Use a quadratic algorithm.
+  - If H=0 or H=1, then H += size
+  - Use the sequence H -> H^2 -> H^3 ... in order to avoid collisions.
+  - Use a sequence of prime numbers for the table size.
+  - Does it get into a loop? Need to have a sequence of prime numbers for the hash sizes just to be sure.
+
 Current work:
 
 For `horse h has name n`, create a single predicate `horse,name`. Create projections to `,name` and `horse`.
@@ -27,7 +34,7 @@ For externs, allow a variable number of arguments. `module.AddVariadic(extern, "
 - [ ] Finish semi-naive evaluation
 
 ## Tables
-- [ ] Implement different table types. Perhaps using a strategy pattern?
+- [X] Implement different table types. Perhaps using a strategy pattern?
   - Writable table concept
     - `table.Add(Int...)`, `void Add(const Int*)`    
   - Queryable table concept

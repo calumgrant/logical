@@ -69,13 +69,17 @@ namespace Logical
         }
 
         template<typename Binding>
-        bool Find(Enumerator &e, Binding) const
+        void Find(Enumerator &e, Binding) const
+        {
+            Find(e);
+        }
+
+        void Find(Enumerator &e) const
         {
             e.i = 0;
             e.j = size;
-            return size>0;
         }
-
+        
         const Int * NextRow(Enumerator &e) const
         {
             if(e.i < e.j)
@@ -153,66 +157,5 @@ namespace Logical
         Arity arity;
         const Int * data;
         std::uint32_t size;
-    };
-
-    /*
-        A table where the data is stored in a hash table.
-        The table contains indexes into the data, denoting the start of a row.
-        Linear hashing is used so the query just needs to scan forward in the hash table
-        until it reaches an empty cell storing -1.
-     */
-    class HashIndex
-    {
-    public:        
-        HashIndex(const Int * data, const Internal::ShortIndex * table, Internal::ShortIndex size) :
-            data(data), table(table), size(size)
-        {
-        }
-
-        template<typename Binding, typename... Ints>
-        void Find(Enumerator &e, Binding b, Ints... query) const
-        {
-            e.i = (Internal::P * Internal::BoundHash(b, query...)) % size;
-        };
-        
-        const Int * NextRow(Enumerator &e) const
-        {
-            auto row = table[e.i++];
-            if(e.i >= size) e.i -= size;
-            return row==Internal::EmptyCell ? nullptr : data+row;
-        }
-        
-        template<typename Binding>
-        bool NextXX(Enumerator &e, Binding b, Int * result) const
-        {
-            while(auto row = NextRow(e))
-            {
-                if(Internal::BoundEquals(b, row, (const Int*)result))
-                {
-                    Internal::BindRow(b, row, result);
-                    return true;
-                }
-            }
-            return false;
-        }
-        
-        template<typename Binding, typename... Ints>
-        bool Next(Enumerator &e, Binding b, Ints&&... result) const
-        {
-            while(auto row = NextRow(e))
-            {
-                if(Internal::BoundEquals(b, row, result...))
-                {
-                    Internal::BindRow(b, row, result...);
-                    return true;
-                }
-            }
-            return false;
-        }
-        
-    private:
-        const Int * data;
-        const Internal::ShortIndex * table;
-        Internal::ShortIndex size;
     };
 }

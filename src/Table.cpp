@@ -61,10 +61,8 @@ void TableImpl::Clear()
     deltaStart = deltaEnd = 0;
 }
 
-bool TableImpl::NextIteration()
+void TableImpl::NextIteration()
 {
-    bool moreResults = deltaEnd < data.size();
-
     //std::cout << "Next iteration: deltaStart = " << deltaStart << ", deltaEnd = " << deltaEnd << ", size = " << data.size() << std::endl;
 
     for(auto & index : indexes)
@@ -87,8 +85,6 @@ bool TableImpl::NextIteration()
     {
         assert(index.second.size() == deltaEnd/arity);
     }
-
-    return moreResults;
 }
 
 TableImpl::map_type & TableImpl::GetIndex(Columns mask)
@@ -238,4 +234,153 @@ void TableImpl::ReadAllData(Receiver &r)
 {
     for(Size i=0; i<data.size(); i+=arity)
         r.OnRow(data.data()+i);
+}
+
+TableImpl2::TableImpl2(persist::shared_memory & mem, Arity arity) :
+    hashtable(Logical::DynamicArity(arity), mem), indexes({}, 10, Hash(), Hash(), mem)
+{
+}
+
+Size TableImpl2::Rows() const
+{
+    return hashtable.size();
+}
+
+void TableImpl2::Query(Row row, Columns columns, Receiver&v)
+{
+    Logical::DynamicBinding binding((Logical::Int)columns.mask, hashtable.arity);
+
+    if(columns.IsUnbound())
+    {
+        // This is a scan
+        Logical::Enumerator e;
+        hashtable.Find(e, binding);
+        while(auto data = hashtable.NextRow(e))
+            v.OnRow((Row)data);
+        return;
+    }
+    
+    if(columns.IsFullyBound(hashtable.get_arity()))
+    {
+        // This is a probe
+        auto i = hashtable.GetProbeIndex();
+        Logical::Enumerator e;
+
+        i.Find(e, binding, (Logical::Int*)row);
+        if(i.Next(e, binding, (Logical::Int*)row))
+            v.OnRow(row);
+        return;
+    }
+    
+    auto & i = GetIndex(binding);
+
+    Logical::Enumerator e;
+    i.Find(e, binding, (Logical::Int*)row);
+    while(i.Next(e, binding, (Logical::Int*)row))
+        v.OnRow(row);
+}
+
+TableImpl2::column_index & TableImpl2::GetIndex(Logical::DynamicBinding binding)
+{
+    auto i = indexes.find(binding);
+    if(i == indexes.end())
+    {
+        indexes.insert(std::make_pair(binding, hashtable.MakeIndex(binding)));
+    }
+    i = indexes.find(binding);
+    return i->second;
+}
+
+void TableImpl2::QueryDelta(Row row, Columns columns, Receiver&v)
+{
+    Logical::Enumerator e;
+    hashtable.FindDelta(e);
+    Logical::DynamicBinding binding((Logical::Int)columns.mask, hashtable.arity);
+    
+    if(columns.IsUnbound())
+    {
+        while(auto result = hashtable.NextRow(e))
+            v.OnRow((Row)result);
+        return;
+
+    }
+
+    while(auto result = hashtable.NextRow(e))
+    {
+        if(Logical::Internal::BoundEquals(binding, result, (Logical::Int*)row))
+        {
+            Logical::Internal::BindRow(binding, result, (Logical::Int*)row);
+            v.OnRow(row);
+//            v.OnRow((Row)result);
+        }
+    }
+}
+
+bool TableImpl2::QueryExists(Row row, Columns columns)
+{
+    Logical::DynamicBinding binding((Logical::Int)columns.mask, hashtable.arity);
+
+    if(columns.IsUnbound())
+    {
+        // This is a scan
+        Logical::Enumerator e;
+        hashtable.Find(e, binding);
+        return hashtable.NextRow(e);
+    }
+    
+    if(columns.IsFullyBound(hashtable.get_arity()))
+    {
+        // This is a probe
+        auto i = hashtable.GetProbeIndex();
+        Logical::Enumerator e;
+
+        i.Find(e, binding, (Logical::Int*)row);
+        return i.Next(e, binding, (Logical::Int*)row);
+    }
+
+    auto & i = GetIndex(binding);
+
+    Logical::Enumerator e;
+    i.Find(e, binding, (Logical::Int*)row);
+    return i.Next(e, binding, (Logical::Int*)row);
+}
+
+void TableImpl2::OnRow(Row row) { Add(row); }
+
+bool TableImpl2::Add(const Entity *e)
+{
+    return hashtable.Add((const Logical::Int*)e);
+}
+
+void TableImpl2::Clear()
+{
+    hashtable.clear();
+    indexes.clear();
+}
+
+Arity TableImpl2::GetArity() const
+{
+    return hashtable.arity.value;
+}
+
+void TableImpl2::NextIteration()
+{
+    hashtable.NextIteration();
+    for(auto &i : indexes)
+        i.second.NextIteration();
+}
+
+void TableImpl2::FirstIteration()
+{
+    NextIteration();
+}
+
+void TableImpl2::ReadAllData(Receiver&r)
+{
+    Logical::Enumerator e;
+    auto i = hashtable.GetScanIndex();
+    
+    i.Find(e);
+    while(auto row = i.NextRow(e))
+        r.OnRow((Entity*)row);
 }

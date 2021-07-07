@@ -97,7 +97,7 @@ public:
         SortedTable<StaticArity<1>> t2(std::move(t1));
         TestIndex(t2.GetIndex());
 
-        BasicTable<DynamicArity> t3(1);
+        BasicTable<DynamicArity> t3(DynamicArity(1));
         AddTableData(t3);
 
         SortedTable<DynamicArity> t4(std::move(t3));
@@ -132,7 +132,7 @@ public:
         EQUALS(3, v);
         CHECK(!i1.Next(e,b,v));
         
-        BasicTable<DynamicArity> t3(1);
+        BasicTable<DynamicArity> t3(DynamicArity(1));
         EQUALS(0, t3.size());
         
         t3.Add(0);
@@ -217,6 +217,7 @@ public:
         auto f = Internal::GetUnboundBinding(a);
         
         auto i1 = t1.GetScanIndex();
+        auto i2 = t1.GetProbeIndex();
 
         i1.Find(e, f);
         CHECK(i1.Next(e,f,x));
@@ -230,7 +231,6 @@ public:
         CHECK(i1.Next(e,f,&x));
         CHECK(!i1.Next(e,f,&x));
 
-        auto i2 = t1.GetProbeIndex();
         x = 2;
         i2.Find(e, b, x);
         CHECK(i2.Next(e,b,x));
@@ -360,7 +360,7 @@ public:
     void HashTable2()
     {
         TestNaryHash<BasicHashTable<StaticArity<3>>>(StaticArity<3>());
-        TestNaryHash<BasicHashTable<DynamicArity>>(3);
+        TestNaryHash<BasicHashTable<DynamicArity>>(DynamicArity(3));
     }
 
     template<typename Table>
@@ -460,7 +460,7 @@ public:
     void BinaryTableTests()
     {
         BasicTable<StaticArity<2>> t1;
-        BasicTable<DynamicArity> t2(2);
+        BasicTable<DynamicArity> t2(DynamicArity(2));
         
         MakeBinary(t1);
         SortedTable<StaticArity<2>> t3(std::move(t1));
@@ -629,17 +629,17 @@ public:
     void HashTable3()
     {
         TestIndexes<BasicHashTable<StaticArity<3>>>(StaticArity<3>(), StaticBinding<false,true,false>());
-        TestIndexes<BasicHashTable<DynamicArity>>(3, DynamicBinding(false,true,false));
+        TestIndexes<BasicHashTable<DynamicArity>>(DynamicArity(3), DynamicBinding(false,true,false));
         TestIndexes<BasicHashTable<StaticArity<3>>>(StaticArity<3>(), DynamicBinding(false,true,false));
-        TestIndexes<BasicHashTable<DynamicArity>>(3, StaticBinding<false,true,false>());
+        TestIndexes<BasicHashTable<DynamicArity>>(DynamicArity(3), StaticBinding<false,true,false>());
     }
 
     void HashTable4()
     {
         TestIndexes2<BasicHashTable<StaticArity<3>>>(StaticArity<3>(), StaticBinding<false, true, true>());
-        TestIndexes2<BasicHashTable<DynamicArity>>(3, DynamicBinding(false, true, true));
+        TestIndexes2<BasicHashTable<DynamicArity>>(DynamicArity(3), DynamicBinding(false, true, true));
         TestIndexes2<BasicHashTable<StaticArity<3>>>(StaticArity<3>(), DynamicBinding(false, true, true));
-        TestIndexes2<BasicHashTable<DynamicArity>>(3, StaticBinding<false, true, true>());
+        TestIndexes2<BasicHashTable<DynamicArity>>(DynamicArity(3), StaticBinding<false, true, true>());
     }
     
     template<typename Table, typename Arity, typename BindingFB, typename BindingFF, typename BindingBB>
@@ -724,7 +724,7 @@ public:
     void Deltas()
     {
         TestDeltas1<HashTable<StaticArity<2>>>(StaticArity<2>(), StaticBinding<false, true>(), StaticBinding<false, false>(), StaticBinding<true, true>());
-        TestDeltas1<HashTable<DynamicArity>>(2, DynamicBinding(false, true), DynamicBinding(false, false), DynamicBinding(true, true));
+        TestDeltas1<HashTable<DynamicArity>>(DynamicArity(2), DynamicBinding(false, true), DynamicBinding(false, false), DynamicBinding(true, true));
     }
 
 } tt;
