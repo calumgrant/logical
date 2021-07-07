@@ -236,17 +236,20 @@ void TableImpl::ReadAllData(Receiver &r)
         r.OnRow(data.data()+i);
 }
 
-TableImpl2::TableImpl2(persist::shared_memory & mem, Arity arity) :
+template<typename Arity>
+TableImpl2<Arity>::TableImpl2(persist::shared_memory & mem, Arity arity) :
     hashtable(Logical::DynamicArity(arity), mem), indexes({}, 10, Hash(), Hash(), mem)
 {
 }
 
-Size TableImpl2::Rows() const
+template<typename Arity>
+Size TableImpl2<Arity>::Rows() const
 {
     return hashtable.size();
 }
 
-void TableImpl2::Query(Row row, Columns columns, Receiver&v)
+template<typename Arity>
+void TableImpl2<Arity>::Query(Row row, Columns columns, Receiver&v)
 {
     Logical::DynamicBinding binding((Logical::Int)columns.mask, hashtable.arity);
 
@@ -272,6 +275,8 @@ void TableImpl2::Query(Row row, Columns columns, Receiver&v)
         return;
     }
     
+    // TODO: Indexes for particular combinations
+    
     auto & i = GetIndex(binding);
 
     Logical::Enumerator e;
@@ -280,7 +285,8 @@ void TableImpl2::Query(Row row, Columns columns, Receiver&v)
         v.OnRow(row);
 }
 
-TableImpl2::column_index & TableImpl2::GetIndex(Logical::DynamicBinding binding)
+template<typename Arity>
+typename TableImpl2<Arity>::column_index & TableImpl2<Arity>::GetIndex(Logical::DynamicBinding binding)
 {
     auto i = indexes.find(binding);
     if(i == indexes.end())
@@ -291,7 +297,8 @@ TableImpl2::column_index & TableImpl2::GetIndex(Logical::DynamicBinding binding)
     return i->second;
 }
 
-void TableImpl2::QueryDelta(Row row, Columns columns, Receiver&v)
+template<typename Arity>
+void TableImpl2<Arity>::QueryDelta(Row row, Columns columns, Receiver&v)
 {
     Logical::Enumerator e;
     hashtable.FindDelta(e);
@@ -316,7 +323,8 @@ void TableImpl2::QueryDelta(Row row, Columns columns, Receiver&v)
     }
 }
 
-bool TableImpl2::QueryExists(Row row, Columns columns)
+template<typename Arity>
+bool TableImpl2<Arity>::QueryExists(Row row, Columns columns)
 {
     Logical::DynamicBinding binding((Logical::Int)columns.mask, hashtable.arity);
 
@@ -345,9 +353,11 @@ bool TableImpl2::QueryExists(Row row, Columns columns)
     return i.Next(e, binding, (Logical::Int*)row);
 }
 
-void TableImpl2::OnRow(Row row) { Add(row); }
+template<typename Arity>
+void TableImpl2<Arity>::OnRow(Row row) { Add(row); }
 
-bool TableImpl2::Add(const Entity *e)
+template<typename Arity>
+bool TableImpl2<Arity>::Add(const Entity *e)
 {
     auto added = hashtable.Add((const Logical::Int*)e);
     
@@ -357,30 +367,35 @@ bool TableImpl2::Add(const Entity *e)
     return added;
 }
 
-void TableImpl2::Clear()
+template<typename Arity>
+void TableImpl2<Arity>::Clear()
 {
     hashtable.clear();
     indexes.clear();
 }
 
-Arity TableImpl2::GetArity() const
+template<typename Arity>
+::Arity TableImpl2<Arity>::GetArity() const
 {
     return hashtable.arity.value;
 }
 
-void TableImpl2::NextIteration()
+template<typename Arity>
+void TableImpl2<Arity>::NextIteration()
 {
     hashtable.NextIteration();
     for(auto &i : indexes)
         i.second.NextIteration();
 }
 
-void TableImpl2::FirstIteration()
+template<typename Arity>
+void TableImpl2<Arity>::FirstIteration()
 {
     NextIteration();
 }
 
-void TableImpl2::ReadAllData(Receiver&r)
+template<typename Arity>
+void TableImpl2<Arity>::ReadAllData(Receiver&r)
 {
     Logical::Enumerator e;
     auto i = hashtable.GetScanIndex();
@@ -392,5 +407,5 @@ void TableImpl2::ReadAllData(Receiver&r)
 
 std::shared_ptr<Table> Table::MakeTable(persist::shared_memory &mem, Arity arity)
 {
-    return allocate_shared<TableImpl2>(mem, mem, arity);
+    return allocate_shared<TableImpl2<Logical::DynamicArity>>(mem, mem, Logical::DynamicArity(arity));
 }

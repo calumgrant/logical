@@ -91,6 +91,7 @@ private:
     void ReadAllData(Receiver&r) override;
 };
 
+template<typename Arity>
 class TableImpl2 : public Table
 {
 public:
@@ -103,7 +104,7 @@ public:
     void OnRow(Row row) override;
     bool Add(const Entity *e) override;
     void Clear() override;
-    Arity GetArity() const override;
+    ::Arity GetArity() const override;
     void NextIteration() override;
     void FirstIteration() override;
     void ReadAllData(Receiver&r) override;
