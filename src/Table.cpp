@@ -238,7 +238,7 @@ void TableImpl::ReadAllData(Receiver &r)
 
 template<typename Arity>
 TableImpl2<Arity>::TableImpl2(persist::shared_memory & mem, Arity arity) :
-    hashtable(Logical::DynamicArity(arity), mem), indexes({}, 10, Hash(), Hash(), mem)
+    hashtable(arity, mem), indexes({}, 10, Hash(), Hash(), mem)
 {
 }
 
@@ -251,7 +251,7 @@ Size TableImpl2<Arity>::Rows() const
 template<typename Arity>
 void TableImpl2<Arity>::Query(Row row, Columns columns, Receiver&v)
 {
-    Logical::DynamicBinding binding((Logical::Int)columns.mask, hashtable.arity);
+    Logical::DynamicBinding binding((Logical::Int)columns.mask, Logical::DynamicArity(hashtable.arity.value));
 
     if(columns.IsUnbound())
     {
@@ -302,7 +302,7 @@ void TableImpl2<Arity>::QueryDelta(Row row, Columns columns, Receiver&v)
 {
     Logical::Enumerator e;
     hashtable.FindDelta(e);
-    Logical::DynamicBinding binding((Logical::Int)columns.mask, hashtable.arity);
+    Logical::DynamicBinding binding((Logical::Int)columns.mask, Logical::DynamicArity(hashtable.arity.value));
     
     if(columns.IsUnbound())
     {
@@ -326,7 +326,7 @@ void TableImpl2<Arity>::QueryDelta(Row row, Columns columns, Receiver&v)
 template<typename Arity>
 bool TableImpl2<Arity>::QueryExists(Row row, Columns columns)
 {
-    Logical::DynamicBinding binding((Logical::Int)columns.mask, hashtable.arity);
+    Logical::DynamicBinding binding((Logical::Int)columns.mask, Logical::DynamicArity(hashtable.arity.value));
 
     if(columns.IsUnbound())
     {
@@ -407,5 +407,20 @@ void TableImpl2<Arity>::ReadAllData(Receiver&r)
 
 std::shared_ptr<Table> Table::MakeTable(persist::shared_memory &mem, Arity arity)
 {
-    return allocate_shared<TableImpl2<Logical::DynamicArity>>(mem, mem, Logical::DynamicArity(arity));
+    // Old implementation
+    // return allocate_shared<TableImpl>(mem, mem, arity);
+    
+    switch(arity)
+    {
+        case 1:
+            return allocate_shared<TableImpl2<Logical::StaticArity<1>>>(mem, mem, Logical::StaticArity<1>());
+        case 2:
+            return allocate_shared<TableImpl2<Logical::StaticArity<2>>>(mem, mem, Logical::StaticArity<2>());
+        case 3:
+            return allocate_shared<TableImpl2<Logical::StaticArity<3>>>(mem, mem, Logical::StaticArity<3>());
+        case 4:
+            return allocate_shared<TableImpl2<Logical::StaticArity<4>>>(mem, mem, Logical::StaticArity<4>());
+        default:
+            return allocate_shared<TableImpl2<Logical::DynamicArity>>(mem, mem, Logical::DynamicArity(arity));
+    }
 }

@@ -109,7 +109,7 @@ public:
     void FirstIteration() override;
     void ReadAllData(Receiver&r) override;
 private:
-    typedef Logical::HashColumns<Logical::DynamicArity, Logical::DynamicBinding, persist::fast_allocator<Logical::Int>> column_index;
+    typedef Logical::HashColumns<Arity, Logical::DynamicBinding, persist::fast_allocator<Logical::Int>> column_index;
 
     struct Hash
     {
@@ -119,7 +119,7 @@ private:
         { return a.mask == b.mask; }
     };
     
-    Logical::HashTable<Logical::DynamicArity, persist::fast_allocator<Logical::Int>> hashtable;
+    Logical::HashTable<Arity, persist::fast_allocator<Logical::Int>> hashtable;
     
     std::unordered_map<Logical::DynamicBinding, column_index, Hash, Hash, persist::fast_allocator<std::pair<const Logical::DynamicBinding, column_index>>> indexes;
     
