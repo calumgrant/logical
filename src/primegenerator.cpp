@@ -1,4 +1,4 @@
-// Computes a sequence of prime numbers used to for hash table sizes
+// Computes a sequence of prime numbers used for hash table sizes
 // Code is copied verbatim from:
 // https://cp-algorithms.com/algebra/primality_tests.html
 

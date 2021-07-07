@@ -327,6 +327,8 @@ namespace Logical
             e.i = deltaStart;
             e.j = deltaEnd;
         }
+        
+        void clear() { this->values.clear(); deltaStart = deltaEnd = 0; }
 
     private:
         Internal::ShortIndex deltaStart = 0, deltaEnd = 0;

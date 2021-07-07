@@ -349,7 +349,12 @@ void TableImpl2::OnRow(Row row) { Add(row); }
 
 bool TableImpl2::Add(const Entity *e)
 {
-    return hashtable.Add((const Logical::Int*)e);
+    auto added = hashtable.Add((const Logical::Int*)e);
+    
+    if(added && loop)
+        ++loop->numberOfResults;
+    
+    return added;
 }
 
 void TableImpl2::Clear()
