@@ -53,13 +53,9 @@ public:
 
     void NotImplementedError(const SourceLocation&);
     
-    virtual Relation& GetUnaryRelation(RelationId nameId) =0;
-    virtual Relation& GetBinaryRelation(RelationId nameId) =0;
-    virtual Relation& GetRelation(RelationId nameId, Arity arity) =0;
-    virtual Relation& GetRelation(const CompoundName &cn) =0;
-    virtual Relation& GetReachesRelation(RelationId nameId) =0;
+    virtual Relation& GetRelation(const PredicateName &pn) =0;
 
-    virtual void Find(int unaryPredicateId) =0;
+    virtual void Find(const PredicateName &pn) =0;
 
     void Print(const Entity &e, std::ostream &os) const;
     
@@ -108,5 +104,5 @@ public:
     virtual persist::shared_memory & Storage() =0;
     
     virtual void LoadModule(const char*) =0;
-    virtual Relation & GetExtern(RelationId name, const CompoundName & cn) =0;
+    virtual Relation & GetExtern(const PredicateName & cn) =0;
 };

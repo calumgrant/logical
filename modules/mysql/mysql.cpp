@@ -34,7 +34,6 @@ public:
     bool connect(const char * username, const char * dbname)
     {
         return mysql_real_connect(&mysql, nullptr, username, nullptr, dbname, 0, nullptr, 0);
-
     }
     
     const char * error()

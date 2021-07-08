@@ -27,13 +27,12 @@ public:
     
     StringTable strings, atstrings;
     
-    unordered_map_helper<RelationId, std::shared_ptr<Relation>>::map_type unaryRelations, binaryRelations, reachesRelations;
-    unordered_map_helper<std::pair<RelationId, Arity>, std::shared_ptr<Relation>, RelationHash>::map_type relations;
-    unordered_map_helper<CompoundName, std::shared_ptr<Relation>, CompoundName::Hash>::map_type tables;
+    using relmap = unordered_map_helper<PredicateName, std::shared_ptr<Relation>, PredicateName::Hash>::map_type;
     
+    relmap relations, externs;
+
     // Names, indexed on their first column
-    unordered_map_helper<StringId, CompoundName>::multimap_type names;
-    unordered_map_helper<std::pair<RelationId, CompoundName>, std::shared_ptr<Relation>, HashHelper>::map_type externs;
+    unordered_map_helper<StringId, PredicateName>::multimap_type nameParts;
 
     Relation * queryPredicate;
     
@@ -48,37 +47,6 @@ int yylex_init_extra (Database *, yyscan_t* scanner);
 int yylex_destroy (yyscan_t yyscanner );
 void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
-Relation& DatabaseImpl::GetUnaryRelation(int name)
-{
-    auto i = datastore->unaryRelations.find(name);
-    if (i == datastore->unaryRelations.end())
-    {
-        auto p = allocate_shared<Predicate>(datafile, *this, name, 1, false, BindingType::Unbound, 0);
-
-        datastore->unaryRelations.insert(std::make_pair(name, p));
-        return *p;
-    }
-    else
-    {
-        return *i->second;
-    }
-}
-
-Relation& DatabaseImpl::GetBinaryRelation(int name)
-{
-    auto i = datastore->binaryRelations.find(name);
-    if (i==datastore->binaryRelations.end())
-    {
-        std::vector<int> cn(1);
-        cn[0] = name;
-        
-        auto p = GetRelationPtr(cn);
-        datastore->binaryRelations.insert(std::make_pair(name, p));
-        return *p;
-    }
-    else
-        return *i->second;
-}
 
 void Database::UnboundError(const char *name, int line, int column)
 {
@@ -91,10 +59,11 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
     optimizer(optimizer)
 {
     int queryId = GetStringId("query");
-    
+
     if(!datastore->initialized)
     {
-        datastore->queryPredicate = &GetUnaryRelation(queryId);
+        PredicateName query(1, queryId);
+        datastore->queryPredicate = &GetRelation(query);
         datastore->initialized = true;
     }
     
@@ -166,66 +135,51 @@ const string_type &DatabaseImpl::GetAtString(int id) const
     return datastore->atstrings.GetString(id);
 }
 
-Relation& DatabaseImpl::GetRelation(int name, int arity)
+Relation& DatabaseImpl::GetRelation(const PredicateName & name)
 {
-    switch(arity)
-    {
-    case 1: return GetUnaryRelation(name);
-    case 2: return GetBinaryRelation(name);
-    }
-
-    auto index = std::make_pair(name, arity);
-
-    auto i = datastore->relations.find(index);
+    auto i = datastore->relations.find(name);
 
     if (i == datastore->relations.end())
     {
-        std::vector<int> p = { name };
-        CompoundName cn(p);
-        auto r = allocate_shared<Predicate>(datafile, *this, cn, arity, BindingType::Unbound, 0);
-        datastore->relations.insert(std::make_pair(index, r));
+        auto r = allocate_shared<Predicate>(datafile, *this, name, BindingType::Unbound, 0);
+        datastore->relations.insert(std::make_pair(name, r));
+        if(name.reaches)
+            MakeReachesRelation(*r);
+        MakeProjections(*r);
         return *r;
     }
     else
         return *i->second;
 }
 
-Relation& DatabaseImpl::GetReachesRelation(RelationId nameId)
+void DatabaseImpl::MakeReachesRelation(Relation & rel)
 {
-    auto i = datastore->reachesRelations.find(nameId);
-    if(i==datastore->reachesRelations.end())
-    {
-        auto & r = GetBinaryRelation(nameId);
-        auto rel = allocate_shared<Predicate>(datafile, *this, nameId, 2, true, BindingType::Unbound, 0);
-        // Create the rules (TODO)
+    auto underlyingRelationName = rel.name;
+    assert(underlyingRelationName.reaches);
+    underlyingRelationName.reaches = false;
+    auto & r = GetRelation(underlyingRelationName);
 
-        {
-            // Add the rule rel(_0,_1) :- r(_0, _1)
-            std::vector<int> writeArgs = { 0, 1 };
-            auto write = std::make_shared<Writer>(*rel, writeArgs);
-            auto reader = std::make_shared<Join>(r, std::vector<int>{-1,-1}, std::move(writeArgs), write);
-            auto baseRule = std::make_shared<RuleEvaluation>(2, reader);
-            rel->AddRule(baseRule);
-        }
-        
-        {
-            // Add the rule rel(_0, _1) :- rel(_0, _2), r(_2, _1).
-            std::vector<int> writeArgs = { 0, 1 };
-            auto write = std::make_shared<Writer>(*rel, writeArgs);
-            auto join2 = std::make_shared<Join>(r, std::vector<int> {2, -1}, std::vector<int> { -1, 1 }, write);
-            auto join1 = std::make_shared<Join>(*rel, std::vector<int> {-1,-1}, std::vector<int> {0, 2}, join2);
-            auto recursiveRule = std::make_shared<RuleEvaluation>(3, join1);
-            rel->AddRule(recursiveRule);
-        }
-        
-        datastore->reachesRelations.insert(std::make_pair(nameId, rel));
-        return *rel;
+    {
+        // Add the rule rel(_0,_1) :- r(_0, _1)
+        std::vector<int> writeArgs = { 0, 1 };
+        auto write = std::make_shared<Writer>(rel, writeArgs);
+        auto reader = std::make_shared<Join>(r, std::vector<int>{-1,-1}, std::move(writeArgs), write);
+        auto baseRule = std::make_shared<RuleEvaluation>(2, reader);
+        rel.AddRule(baseRule);
     }
-    else
-        return *i->second;
+    
+    {
+        // Add the rule rel(_0, _1) :- rel(_0, _2), r(_2, _1).
+        std::vector<int> writeArgs = { 0, 1 };
+        auto write = std::make_shared<Writer>(rel, writeArgs);
+        auto join2 = std::make_shared<Join>(r, std::vector<int> {2, -1}, std::vector<int> { -1, 1 }, write);
+        auto join1 = std::make_shared<Join>(rel, std::vector<int> {-1,-1}, std::vector<int> {0, 2}, join2);
+        auto recursiveRule = std::make_shared<RuleEvaluation>(3, join1);
+        rel.AddRule(recursiveRule);
+    }
 }
 
-void DatabaseImpl::Find(int unaryPredicateName)
+void DatabaseImpl::Find(const PredicateName & name)
 {
     class Tmp : public Receiver
     {
@@ -243,7 +197,7 @@ void DatabaseImpl::Find(int unaryPredicateName)
     Tmp visitor(*this);
 
     Entity row;
-    GetUnaryRelation(unaryPredicateName).Query(&row, 0, visitor);
+    GetRelation(name).Query(&row, 0, visitor);
 
     std::cout << "Found " << visitor.count << " results\n";
 }
@@ -381,17 +335,8 @@ int Database::ReadFile(const char *filename)
     return 1;
 }
 
-Relation & DatabaseImpl::GetRelation(const CompoundName &cn)
+void DatabaseImpl::MakeProjections(Relation &relation)
 {
-    return *GetRelationPtr(cn);
-}
-
-std::shared_ptr<Relation> DatabaseImpl::GetRelationPtr(const CompoundName &cn)
-{
-    auto t = datastore->tables.find(cn);
-    
-    if(t != datastore->tables.end()) return t->second;
-    
     // Find all tables that contain this one:
     /*
      Algorithm:
@@ -399,37 +344,34 @@ std::shared_ptr<Relation> DatabaseImpl::GetRelationPtr(const CompoundName &cn)
      This finds all possibly-related names.
      */
     
-    std::unordered_set<CompoundName, CompoundName::Hash> subsets, supersets;
+    if(relation.name.arity<=1) return;
+    if(relation.name.attributes.parts.empty()) return;
+    
+    std::unordered_set<PredicateName, PredicateName::Hash> subsets, supersets;
+    
+    auto & cn = relation.name.attributes;
     
     for(auto i : cn.parts)
     {
-        auto m = datastore->names.equal_range(i);
+        auto m = datastore->nameParts.equal_range(i);
         for(auto j=m.first; j!=m.second; ++j)
         {
-            if(cn <= j->second) supersets.insert(j->second);
-            if(j->second <= cn) subsets.insert(j->second);
+            if(cn <= j->second.attributes) supersets.insert(j->second);
+            if(j->second.attributes <= cn) subsets.insert(j->second);
         }
     }
     
-    // Create the appropriate mappings to the subsets
-    std::shared_ptr<Relation> relation;
-    
-    relation = allocate_shared<Predicate>(datafile, *this, cn, cn.parts.size()+1, BindingType::Unbound, 0);
-    
-    datastore->tables[cn] = relation;
-
     for(auto & superset : supersets)
     {
-        CreateProjection(superset, cn);
+        CreateProjection(superset, relation.name);
     }
 
     for(auto & subset : subsets)
     {
-        CreateProjection(cn, subset);
+        CreateProjection(relation.name, subset);
     }
     
-    for(auto i : cn.parts) datastore->names.insert(std::make_pair(i, cn));
-    return relation;
+    for(auto i : cn.parts) datastore->nameParts.insert(std::make_pair(i, relation.name));
 }
 
 std::size_t Database::GlobalCallCount()
@@ -443,7 +385,7 @@ std::size_t Database::GlobalCallCountLimit()
 }
 
 
-void DatabaseImpl::CreateProjection(const CompoundName &from, const CompoundName &to)
+void DatabaseImpl::CreateProjection(const PredicateName &from, const PredicateName &to)
 {
     /*
     std::cout << "Create a projection from ";
@@ -456,27 +398,27 @@ void DatabaseImpl::CreateProjection(const CompoundName &from, const CompoundName
     */
     
     // Map from input positions to output positions.
-    std::vector<int> projection(to.parts.size()+1);
-    std::vector<int> cols(from.parts.size()+1);
+    std::vector<int> projection(to.attributes.parts.size()+1);
+    std::vector<int> cols(from.attributes.parts.size()+1);
     
-    for(int i=0; i<=from.parts.size(); ++i) cols[i] = i;
+    for(int i=0; i<=from.attributes.parts.size(); ++i) cols[i] = i;
     
-    for(int i=0, j=0; j<to.parts.size(); ++j)
+    for(int i=0, j=0; j<to.attributes.parts.size(); ++j)
     {
-        while(from.parts[i] < to.parts[j]) ++i;
+        while(from.attributes.parts[i] < to.attributes.parts[j]) ++i;
         projection[j+1] = i+1;
     }
     
-    auto writer = allocate_shared<Writer>(datafile, *datastore->tables[to], projection);
+    auto writer = allocate_shared<Writer>(datafile, *datastore->relations[to], projection);
     
     std::vector<int> inputs(cols);
     std::fill(inputs.begin(), inputs.end(), -1);
     
-    auto reader = allocate_shared<Join>(datafile, *datastore->tables[from], inputs, cols, writer);
+    auto reader = allocate_shared<Join>(datafile, *datastore->relations[from], inputs, cols, writer);
     
     auto eval = allocate_shared<RuleEvaluation>(datafile, cols.size(), reader);
     
-    datastore->tables[to]->AddRule(eval);
+    datastore->relations[to]->AddRule(eval);
 }
 
 int DatabaseImpl::NumberOfErrors() const
@@ -493,8 +435,9 @@ void Database::WarningEmptyRelation(Relation & relation)
 {
     if(&relation != &GetQueryRelation())
     {
-//    ++errorCount;
-        std::cerr << Colours::Error << "Warning: Querying empty relation '" << GetString(relation.Name()) << "/" << relation.Arity() << "'\n" << Colours::Normal;
+        std::cerr << Colours::Error << "Warning: Querying empty relation '";
+        relation.name.Write(*this, std::cerr);
+        std::cerr << "/" << relation.Arity() << "'\n" << Colours::Normal;
     }
 }
 
@@ -503,19 +446,19 @@ void DatabaseImpl::RunQueries()
     class QueryVisitor : public Receiver
     {
     public:
-        QueryVisitor(DatabaseImpl & db, int arity, const CompoundName & cn) : database(db), arity(arity), cn(cn), sortedRow(arity) {}
+        QueryVisitor(DatabaseImpl & db, int arity, const PredicateName & name) : database(db), arity(arity), name(name), sortedRow(arity) {}
         
         void OnRow(Entity * row) override
         {
             sortedRow[0] = row[0];
             for(int i=1; i<arity; ++i)
-                sortedRow[i] = row[cn.mapFromInputToOutput[i-1]+1];
+                sortedRow[i] = row[name.attributes.mapFromInputToOutput[i-1]+1];
             database.AddResult(sortedRow.data(), arity, false);
         }
         DatabaseImpl & database;
         
         const int arity;
-        const CompoundName & cn;
+        const PredicateName & name;
         std::vector<Entity> sortedRow;
     };
         
@@ -536,7 +479,7 @@ void DatabaseImpl::RunQueries()
 
             // Join with all attributes in the
             database.datastore->queryPredicate->VisitAttributes([&](Relation&r) {
-                QueryVisitor qv(database, r.Arity(), *r.GetCompoundName());
+                QueryVisitor qv(database, r.Arity(), r.name);
                 std::vector<Entity> row(r.Arity());
                 row[0] = data[0];
                 r.Query(&row[0], 1, qv);
@@ -655,13 +598,9 @@ const char * Colours::Detail = "\033[1;30m"; // Light red
 DataStore::DataStore(persist::shared_memory & mem) :
     strings(mem),
     atstrings(mem),
-    unaryRelations({}, std::hash<RelationId>(), std::equal_to<RelationId>(), mem),
-    binaryRelations({}, std::hash<RelationId>(), std::equal_to<RelationId>(), mem),
-    reachesRelations({}, std::hash<RelationId>(), std::equal_to<RelationId>(), mem),
-    relations({}, RelationHash(), std::equal_to<std::pair<RelationId, Arity>>(), mem),
-    tables({}, CompoundName::Hash(), std::equal_to<CompoundName>(), mem),
-    names({}, std::hash<StringId>(), std::equal_to<StringId>(), mem),
-    externs({}, HashHelper(), std::equal_to<std::pair<int,CompoundName>>(), mem)
+    relations({}, PredicateName::Hash(), std::equal_to<PredicateName>(), mem),
+    nameParts({}, std::hash<StringId>(), std::equal_to<StringId>(), mem),
+    externs({}, PredicateName::Hash(), std::equal_to<PredicateName>(), mem)
 {
 }
 
@@ -682,61 +621,17 @@ Entity DatabaseImpl::NewEntity()
 
 void DatabaseImpl::AddRelation(const std::shared_ptr<Relation> & rel)
 {
-    switch(rel->Arity())
-    {
-        case 1:
-            datastore->unaryRelations[rel->Name()] = rel;
-            datastore->relations[std::make_pair(rel->Name(),1)] = rel;
-            break;
-        case 2:
-            datastore->binaryRelations[rel->Name()] = rel;
-            datastore->relations[std::make_pair(rel->Name(),2)] = rel;
-            // Fall through to the next case
-        default:
-            datastore->tables[*rel->GetCompoundName()] = rel;
-            break;
-    }
+    datastore->relations[rel->name] = rel;
 }
 
-Relation &DatabaseImpl::GetExtern(RelationId name, const CompoundName & cn)
+Relation &DatabaseImpl::GetExtern(const PredicateName & pn)
 {
-    auto & rel = datastore->externs[std::make_pair(name, cn)];
+    auto & rel = datastore->externs[pn];
     
     if(!rel)
     {
-        rel = allocate_shared<ExternPredicate>(datafile, *this, name, cn);
-    
-        int arity = 1 + cn.parts.size();
-        
-        switch(arity)
-        {
-            case 1:
-            {
-                auto & r = datastore->unaryRelations[rel->Name()];
-                if(!r)
-                {
-                    r = rel;
-                    datastore->relations[std::make_pair(rel->Name(),1)] = rel;
-                }
-                break;
-            }
-            case 2:
-            {
-                auto &r = datastore->binaryRelations[rel->Name()];
-                if(!r)
-                {
-                    r = rel;
-                    datastore->relations[std::make_pair(rel->Name(),2)] = rel;
-                }
-                // Fall through to the next case
-            }
-            default:
-            {
-                auto &r = datastore->tables[*rel->GetCompoundName()];
-                if(!r) r = rel;
-            }
-                break;
-        }
+        rel = allocate_shared<ExternPredicate>(datafile, *this, pn);
+        AddRelation(rel);
     }
     
     return *rel;

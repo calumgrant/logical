@@ -8,6 +8,7 @@
 #include "Table.hpp"
 
 #include <iostream>
+#include <sstream>
 
 Relation::~Relation()
 {
@@ -76,35 +77,18 @@ bool SpecialPredicate::QueryExists(Row row, Columns columns)
     return receiver.hasResult;
 }
 
-Predicate::Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType binding, Columns cols) : rulesRun(false), name(name), database(db),
+Predicate::Predicate(Database &db, const PredicateName & name, BindingType binding, Columns cols) : rulesRun(false), database(db),
     attributes({}, std::hash<Relation *>(), std::equal_to<Relation *>(), db.Storage()),
-    reaches(reaches), bindingPredicate(binding), bindingColumns(cols),
-    rules(db)
-{
-    table = Table::MakeTable(db.Storage(), arity);
-#if !NDEBUG
-    debugName = db.GetString(name).c_str();
-#endif
-}
-
-Predicate::Predicate(Database &db, const CompoundName &cn, ::Arity arity, BindingType binding, Columns cols) :
-    rulesRun(false), database(db),
-    compoundName(cn),
-    attributes({}, std::hash<Relation *>(), std::equal_to<Relation *>(), db.Storage()),
-    reaches(false),
     bindingPredicate(binding), bindingColumns(cols),
     rules(db)
 {
-    if(cn.parts.size()>0) name = cn.parts[0];
-    table = Table::MakeTable(db.Storage(), arity);
+    this->name = name;
+    table = Table::MakeTable(db.Storage(), name.arity);
 #if !NDEBUG
-    debugName = db.GetString(name).c_str();
+    std::ostringstream ss;
+    name.Write(db, ss);
+    debugName = ss.str();
 #endif
-}
-
-bool Predicate::IsReaches() const
-{
-    return reaches;
 }
 
 BindingType Predicate::GetBinding() const
@@ -146,17 +130,8 @@ bool Predicate::HasRules() const
     return !rules.rules.empty();
 }
 
-SpecialPredicate::SpecialPredicate(Database &db, int name) : Predicate(db, name, 1, false, BindingType::Unbound, 0)
+SpecialPredicate::SpecialPredicate(Database &db, const PredicateName & name) : Predicate(db, name, BindingType::Unbound, 0)
 {
-}
-
-SpecialPredicate::SpecialPredicate(Database &db, const CompoundName & cn) : Predicate(db, cn, 1+cn.parts.size(), BindingType::Unbound, 0)
-{
-}
-
-int Predicate::Name() const
-{
-    return name;
 }
 
 std::size_t Relation::GetCount()
@@ -176,11 +151,6 @@ void Predicate::VisitAttributes(const std::function<void(Relation &)> &visitor) 
         visitor(*r);
 }
 
-const CompoundName *Relation::GetCompoundName() const
-{
-    return nullptr;
-}
-
 void RuleSet::SetRecursiveRules(const std::shared_ptr<Evaluation> &baseCase, const std::shared_ptr<Evaluation> &recursiveCase)
 {
     rules.clear();
@@ -190,7 +160,7 @@ void RuleSet::SetRecursiveRules(const std::shared_ptr<Evaluation> &baseCase, con
     recursiveCase->onRecursivePath = true;
 }
 
-Arity Predicate::Arity() const { return table->GetArity(); }
+Arity Relation::Arity() const { return name.arity; }
 
 Size Predicate::Count() { return table->Rows(); }
 
@@ -218,11 +188,6 @@ void Predicate::Add(const Entity *data)
     table->OnRow(const_cast<Entity *>(data));
 }
 
-const CompoundName *Predicate::GetCompoundName() const
-{
-    return compoundName.parts.empty() ? nullptr : &compoundName;
-}
-
 Database &Predicate::GetDatabase() const
 {
     return database;
@@ -245,7 +210,7 @@ Relation &Predicate::GetBindingRelation(Columns columns)
                 ++arity;
             m >>= 1;
         }
-        i = compoundName.parts.size() > 0 ? std::make_shared<Predicate>(database, compoundName, arity, BindingType::Binding, columns) : std::make_shared<Predicate>(database, name, arity, reaches, BindingType::Binding, columns);
+        i = std::make_shared<Predicate>(database, name, BindingType::Binding, columns);
     }
 
     return *i;
@@ -362,7 +327,7 @@ Relation &Predicate::GetBoundRelation(Columns columns)
 
     if (!i)
     {
-        i = compoundName.parts.size() > 0 ? std::make_shared<Predicate>(database, compoundName, Arity(), BindingType::Bound, columns) : std::make_shared<Predicate>(database, name, Arity(), reaches, BindingType::Bound, columns);
+        i = std::make_shared<Predicate>(database, name, BindingType::Bound, columns);
 
         // TODO: Create the bound version of the rule.
         std::vector<int> boundArguments;
@@ -574,4 +539,58 @@ std::ostream & operator<<(std::ostream & os, const Relation & relation)
 {
     Evaluation::OutputRelation(os, relation.GetDatabase(), relation);
     return os;
+}
+
+PredicateName::PredicateName() {}
+
+PredicateName::PredicateName(int arity, RelationId object) : arity(arity)
+{
+    objects.parts.push_back(object);
+}
+
+void PredicateName::Write(Database & db, std::ostream & os) const
+{
+    if(objects.parts.empty())
+    {
+        if(reaches)
+            os << "reaches:";
+        else
+            os << "has:";
+    }
+    else
+    {
+        for(auto p : objects.parts)
+        {
+            os << db.GetString(p) << ":";
+        }
+    }
+    
+    if(arity!=1 && attributes.parts.empty())
+        os << "/" << arity;
+    
+    for(auto a : attributes.parts)
+    {
+        os << db.GetString(a) << ":";
+    }
+    
+}
+
+int PredicateName::Hash::operator()(const PredicateName& n) const
+{
+    std::size_t h = 0;
+    for(auto n : n.objects.parts)
+        hash_combine(h, n);
+    for(auto n : n.attributes.parts)
+        hash_combine(h, n);
+    hash_combine(h, n.reaches);
+    hash_combine(h, n.arity);
+    return h;
+}
+
+bool PredicateName::operator==(const PredicateName & n2) const
+{
+    return objects==n2.objects &&
+        attributes == n2.attributes &&
+        reaches==n2.reaches &&
+        arity == n2.arity;
 }

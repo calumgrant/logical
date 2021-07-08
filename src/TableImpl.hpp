@@ -2,25 +2,6 @@
 #include "Table.hpp"
 #include "../include/HashTable.hpp"
 
-class Depth
-{
-public:
-    class Increase
-    {
-    public:
-        Increase(int&p) : ptr(p) { ++ptr; }
-        ~Increase() { --ptr; }
-        Increase(const Increase&)=delete;
-    private:
-        int & ptr;
-    };
-    
-    Increase Enter() { return Increase(depth); }
-    bool IsZero() const { return depth==0; }
-private:
-    int depth = 0;
-};
-
 class TableImpl : public Table
 {
 public:
@@ -111,6 +92,10 @@ public:
 private:
     typedef Logical::HashColumns<Arity, Logical::DynamicBinding, persist::fast_allocator<Logical::Int>> column_index;
 
+    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<true, false>, persist::fast_allocator<Logical::Int>> column_index_bf;
+
+    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<false, true>, persist::fast_allocator<Logical::Int>> column_index_fb;
+    
     struct Hash
     {
         int operator()(Logical::DynamicBinding b) const { return b.mask; }

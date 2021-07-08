@@ -63,7 +63,12 @@ void Logical::Module::AddFunction(Logical::Extern ex, int count, const char ** n
     for(int i=1; i<count; ++i)
         parts.push_back(db.GetStringId(name[i]));
     CompoundName cn(parts);
-    auto & exfn = db.GetExtern(nameId, cn);
+    PredicateName pn;
+    // Discard the object for now
+    // pn.objects.parts.push_back(nameId);
+    pn.attributes = cn;
+    pn.arity = count;
+    auto & exfn = db.GetExtern(pn);
     
     Columns columns(0);
     for(int i=0; i<count; ++i)
@@ -106,7 +111,12 @@ void Logical::Module::AddCommand(Extern ex, int count, const char ** name, void 
     for(int i=1; i<count; ++i)
         parts.push_back(db.GetStringId(name[i]));
     CompoundName cn(parts);
-    auto & exfn = db.GetExtern(nameId, cn);
+    PredicateName pn;
+    pn.arity = count;
+    // For now, the name of the object is discarded
+    // pn.objects.parts.push_back(nameId);
+    pn.attributes = std::move(cn);
+    auto & exfn = db.GetExtern(pn);
     
     exfn.AddExtern(ex, data);
 }
@@ -141,14 +151,9 @@ void DatabaseImpl::LoadModule(const char*name)
     fn(module);
 }
 
-ExternPredicate::ExternPredicate(Database & db, int name, const CompoundName &cn) :
-    SpecialPredicate(db, cn)
+ExternPredicate::ExternPredicate(Database & db, const PredicateName &name) :
+    SpecialPredicate(db, name)
 {
-    this->name = name;
-    compoundName = cn;
-#if !NDEBUG
-    debugName = db.GetString(name).c_str();
-#endif
 }
 
 void ExternPredicate::AddExtern(Columns c, Logical::Extern fn, void * data)
@@ -165,18 +170,18 @@ class CallImpl : public Logical::Call
 {
 public:
     ModuleImpl module;
-    CompoundName &cn;
+    const PredicateName &name;
     Row row;
     Receiver & recv;
     void * data;
     
-    CallImpl(Database &db, CompoundName &cn, Row row, Receiver & r, void * data) : module(db), cn(cn), recv(r), row(row), data(data)
+    CallImpl(Database &db, const PredicateName & name, Row row, Receiver & r, void * data) : module(db), name(name), recv(r), row(row), data(data)
     {
     }
     
     Entity &Index(int index)
     {
-        return row[index==0 ? 0 : 1 + cn.mapFromInputToOutput[index-1]];
+        return row[index==0 ? 0 : 1 + name.attributes.mapFromInputToOutput[index-1]];
     }
     
     void call(Logical::Extern fn)
@@ -328,7 +333,7 @@ void ExternPredicate::Query(Row row, Columns columns, Receiver & r)
     
     if(fn != externs.end())
     {
-        CallImpl call(database, compoundName, row, r, fn->second.data);
+        CallImpl call(database, name, row, r, fn->second.data);
         call.call(fn->second.fn);
         return;
     }
@@ -338,13 +343,13 @@ void ExternPredicate::Query(Row row, Columns columns, Receiver & r)
         if(e.first <= columns)
         {
             // Can dispatch here instead.
-            int arity = compoundName.parts.size()+1;
+            int arity = name.arity;
             Entity tmp[arity];
             for(int i=0; i<arity; ++i)
                 if(e.first.IsBound(i))
                     tmp[i] = row[i];
             ChainReceiver rec(r, arity, e.first, columns, tmp, row);
-            CallImpl call(database, compoundName, tmp, rec, e.second.data);
+            CallImpl call(database, name, tmp, rec, e.second.data);
             call.call(e.second.fn);
             return;
         }
@@ -364,7 +369,7 @@ void ExternPredicate::Add(const Entity * row)
     if(writer.fn)
     {
         NullReceiver r;
-        CallImpl call(database, compoundName, (Entity*)row, r, writer.data);
+        CallImpl call(database, name, (Entity*)row, r, writer.data);
         call.call(writer.fn);
     }
     else

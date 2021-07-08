@@ -49,8 +49,7 @@ public:
 class Predicate : public Relation
 {
 public:
-    Predicate(Database &db, const CompoundName &name, ::Arity arity, BindingType bindingPredicate, Columns boundColumns);
-    Predicate(Database &db, RelationId name, ::Arity arity, bool reaches, BindingType bindingPredicate, Columns boundColumns);
+    Predicate(Database &db, const PredicateName &name, BindingType bindingPredicate, Columns boundColumns);
 
     // Evaluates all rules if needed
     void Evaluate();
@@ -59,7 +58,6 @@ public:
     void RunRules() override;
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     void MakeDirty();
-    int Name() const override;
     bool HasRules() const;
     
     void AddAttribute(Relation & attribute) override;
@@ -71,10 +69,7 @@ public:
     void QueryDelta(Row row, Columns columns, Receiver &r) override;
     bool QueryExists(Row row, Columns columns) override;
     void Add(const Entity * data) override;
-    ::Arity Arity() const override;
     Size Count() override;
-    const CompoundName * GetCompoundName() const override;
-    bool IsReaches() const override;
     BindingType GetBinding() const override;
     Columns GetBindingColumns() const override;
     Database & GetDatabase() const override;
@@ -88,7 +83,6 @@ public:
 
 private:
     bool rulesRun = false;
-    const bool reaches;
     const BindingType bindingPredicate;
     const Columns bindingColumns;
 
@@ -96,7 +90,9 @@ private:
     
     std::unordered_set<Relation*, std::hash<Relation*>, std::equal_to<Relation*>, persist::allocator<Relation*>> attributes;
 protected:
+    
 #if !NDEBUG
+    // Useful for viewing in the debugger
     std::string debugName;
 #endif
 
@@ -105,8 +101,6 @@ protected:
     void Reset();
     
     std::shared_ptr<Table> table;
-    RelationId name;
-    CompoundName compoundName;
     bool sealed = false;  // Allow rules to be added.
     std::unordered_map<Columns, std::shared_ptr<Relation>, Columns::Hash, Columns::EqualTo> bindingRelations, boundRelations;
 };
@@ -114,8 +108,7 @@ protected:
 class SpecialPredicate : public Predicate // TODO: Extend Relation
 {
 public:
-    SpecialPredicate(Database &db, RelationId name);
-    SpecialPredicate(Database &db, const CompoundName & name);
+    SpecialPredicate(Database &db, const PredicateName & name);
     void AddRule(const std::shared_ptr<Evaluation> &) override;
     std::size_t Count() override;
     void Query(Entity *row, Columns columns, Receiver&v) override;
@@ -127,7 +120,7 @@ public:
 class ExternPredicate : public SpecialPredicate
 {
 public:
-    ExternPredicate(Database&db, int name, const CompoundName &cn);
+    ExternPredicate(Database&db, const PredicateName &name);
     
     void AddExtern(Columns c, Logical::Extern fn, void * ) override;
     void AddExtern(Logical::Extern ex, void * data) override;

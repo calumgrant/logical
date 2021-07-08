@@ -1,11 +1,14 @@
-Need a new hashing scheme since linear hashing is too pathological.
-- Use a quadratic algorithm.
-  - If H=0 or H=1, then H += size
-  - Use the sequence H -> H^2 -> H^3 ... in order to avoid collisions.
-  - Use a sequence of prime numbers for the table size.
-  - Does it get into a loop? Need to have a sequence of prime numbers for the hash sizes just to be sure.
-
 Current work:
+- Refactoring compound names
+- Qualifying externs using the object
+  `mysql:connection c2 has username root.
+
+Need to create a series of projections.
+
+
+
+
+- Use a proper hash-combine (https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x)
 
 For `horse h has name n`, create a single predicate `horse,name`. Create projections to `,name` and `horse`.
 
@@ -26,9 +29,8 @@ Allow unnamed variables, e.g. `mysql:query "..." has x, y, z.`
 
 For externs, allow a variable number of arguments. `module.AddVariadic(extern, "mysql:query")`
 
-
 # Plan for next week
-- [ ] Finish implementing tables for the external API
+- [X] Finish implementing tables for the external API
 - [ ] Finish external API
 - [ ] Finish SQL connector
 - [ ] Finish semi-naive evaluation
@@ -60,7 +62,7 @@ For externs, allow a variable number of arguments. `module.AddVariadic(extern, "
     - Stores values as `std::int32_t` and has a set of columns (EntityType)
     - All entitytypes can support `Entity(t, v)` which converts an entity from short form to long form.
   - [X] All enumerators consist of a class `Enumerator` containing 2 32-bit ints.
-- [ ] Implement internal tables in terms of these tables
+- [X] Implement internal tables in terms of these tables
   - Finalise table after evaluation -> turn it into a `SortedTable<>`
 
 ## Finish the external API

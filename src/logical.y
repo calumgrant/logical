@@ -176,7 +176,7 @@ query:
 |   tok_find predicate tok_dot
     {
         std::unique_ptr<AST::Predicate> predicate($2);
-        db.Find(predicate->nameId);
+        db.Find(PredicateName(1, predicate->nameId));
     }
 |   tok_find queryclause tok_if clause tok_dot
 |   tok_find variablelist tok_in clause tok_dot

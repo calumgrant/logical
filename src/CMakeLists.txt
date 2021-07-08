@@ -69,7 +69,6 @@ set_target_properties(logiccore PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
 
-
 set_target_properties(logical PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
@@ -78,7 +77,9 @@ set_target_properties(logical-tests PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
 
-target_link_libraries(logiccore ${FLEX_LIBRARIES})   
+target_link_libraries(logiccore ${FLEX_LIBRARIES})
+
+add_dependencies(logical mysql stdlib)
 
 add_test(NAME UnitTests COMMAND logical-tests)
 

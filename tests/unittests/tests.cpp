@@ -118,12 +118,12 @@ int main()
     DatabaseImpl db(opt, nullptr, 1000);
     auto e1 = db.CreateInt(0);
 
-    auto test = db.GetStringId("test");
-    auto & r1 = db.GetUnaryRelation(test);
+    PredicateName test(1, db.GetStringId("test"));
+    auto & r1 = db.GetRelation(test);
     r1.Add(&e1);
     assert(r1.GetCount() == 1);
 
-    auto & r2 = db.GetBinaryRelation(test);
+    auto & r2 = db.GetRelation(test);
     Entity row1[2] = { e1, e1 };
     r2.Add(row1);
     assert(r2.GetCount() == 1);

@@ -739,7 +739,8 @@ void NotInB::OnRow(Entity *row)
 void NotInB::Explain(Database &db, std::ostream &os, int indent) const
 {
     Indent(os, indent);
-    os << "Lookup _" << slot << " is not in " << db.GetString(relation->Name());
+    os << "Lookup _" << slot << " is not in ";
+    relation->name.Write(db, os);
     OutputCallCount(os);
     os << " ->\n";
     next->Explain(db, os, indent + 4);
@@ -907,47 +908,7 @@ void Evaluation::OutputIntroducedVariable(std::ostream &os, int variable)
 void Evaluation::OutputRelation(std::ostream &os, Database &db, const Relation &relation)
 {
     os << Colours::Relation;
-    if (auto cn = relation.GetCompoundName())
-    {
-        os << "has:";
-        for (int i = 0; i < cn->parts.size(); ++i)
-        {
-            if (i > 0)
-                os << ":";
-            os << db.GetString(cn->parts[i]);
-        }
-    }
-    else
-    {
-        if (relation.IsReaches())
-            os << "reaches:";
-        os << db.GetString(relation.Name());
-    }
-
-    switch (relation.GetBinding())
-    {
-    case BindingType::Binding:
-    {
-        auto cols = relation.GetBindingColumns();
-        auto arity = relation.Arity();
-        os << ":";
-        for (int i = cols.mask; i; i>>=1)
-            os << (i&1 ? "b" : "_");
-    }
-    break;
-    case BindingType::Bound:
-    {
-        auto cols = relation.GetBindingColumns();
-        auto arity = relation.Arity();
-        os << ":";
-        for (int i = cols.mask; i; i>>=1)
-            os << (i&1 ? "B" : "_");
-    }
-    break;
-    default: // Suppress warning
-        break;
-    }
-
+    relation.name.Write(db, os);
     os << Colours::Normal;
 }
 

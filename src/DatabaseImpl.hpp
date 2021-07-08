@@ -27,13 +27,9 @@ public:
     const string_type &GetString(StringId id) const override;
     const string_type &GetAtString(StringId id) const override;
     
-    Relation& GetUnaryRelation(int name) override;
-    Relation& GetBinaryRelation(int name) override;
-    Relation& GetRelation(int name, int arity) override;
-    Relation& GetRelation(const CompoundName &cn) override;
-    Relation& GetReachesRelation(RelationId nameId) override;
+    Relation& GetRelation(const PredicateName&) override;
     
-    void Find(int unaryPredicateName) override;
+    void Find(const PredicateName & unaryPredicateName) override;
     void SetVerbosity(int v) override;
     void AddResult(const Entity * row, int arity, bool displayFirstColumn) override;
     int GetVerbosity() const override;
@@ -61,7 +57,7 @@ public:
     void LoadModule(const char*) override;
 
     void AddRelation(const std::shared_ptr<Relation> & rel);
-    Relation & GetExtern(RelationId name, const CompoundName & cn) override;
+    Relation & GetExtern(const PredicateName & pn) override;
 
 private:
     Optimizer & optimizer;
@@ -73,12 +69,11 @@ private:
     int errorCount = 0;
     std::size_t resultCount = 0;
     
-    void CreateProjection(const CompoundName &from, const CompoundName & to);
-    
-    std::shared_ptr<Relation> GetRelationPtr(const CompoundName &cn);
+    void CreateProjection(const PredicateName &from, const PredicateName & to);
 
-    
     // -1 means there is no expected value.
     int expectedResults = -1;
     
+    void MakeReachesRelation(Relation & rel);
+    void MakeProjections(Relation & rel);
 };

@@ -22,6 +22,35 @@ enum class BindingType
     Bound
 };
 
+class PredicateName
+{
+public:
+    PredicateName();
+    PredicateName(int arity, RelationId);
+    CompoundName objects;
+    CompoundName attributes;
+    bool reaches = false;
+    Arity arity ;
+    
+    void Write(Database & db, std::ostream & os) const;
+    
+    struct Hash
+    {
+        template <typename T>
+        static void hash_combine(std::size_t& seed, const T& v)
+        {
+            std::hash<T> hasher;
+            seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        }
+        
+        CompoundName::Hash cnh;
+        
+        int operator()(const PredicateName & n) const;
+    };
+    
+    bool operator==(const PredicateName &n2) const;
+};
+
 class Relation
 {
 public:
@@ -39,17 +68,13 @@ public:
     virtual ~Relation();
     
     virtual void AddRule(const EvaluationPtr & rule) =0;
-    
-    virtual int Name() const =0;
-    
-    virtual const CompoundName * GetCompoundName() const; // Horrid name/interface !!
-    
-    virtual bool IsReaches() const =0;
+            
     virtual BindingType GetBinding() const =0;
     virtual Columns GetBindingColumns() const =0;
     
     virtual void RunRules() =0;
-    virtual int Arity() const =0;
+    
+    int Arity() const;
     
     std::size_t GetCount();
     
@@ -79,6 +104,7 @@ public:
     bool enableSemiNaive = false;
 
     std::shared_ptr<ExecutionUnit> loop;
+    PredicateName name;
     
     virtual Relation& GetBindingRelation(Columns columns) =0;
     virtual Relation& GetBoundRelation(Columns columns) =0;
