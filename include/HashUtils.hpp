@@ -6,15 +6,22 @@ namespace Logical
 
 namespace Internal
 {
-    const ShortIndex P = 317;
+    static const ShortIndex EmptyTupleHash = 0;
+
+    inline ShortIndex Hash0(Int i) { return i ^ (i>>32); }
+
+    inline ShortIndex HashCombine(ShortIndex seed, Int v)
+    {
+        return seed ^ (Hash0(v) + 0x9e3779b9 + (seed<<6) + (seed>>2));
+    }
 
     template<typename Arity>
-    Int Hash(Arity, Int i) { return i; }
+    ShortIndex Hash(Arity) { return EmptyTupleHash; }
 
     template<typename Arity, typename...Ints>
-    Int Hash(Arity a, Int i, Ints... is)
+    ShortIndex Hash(Arity a, Int i, Ints... is)
     {
-        return i + P * Hash(a, is...);
+        return HashCombine(Hash(a, is...), i);
     }
 
     template<bool...Binding>
@@ -23,86 +30,84 @@ namespace Internal
     template<>
     struct HashHelper<>
     {
-        static Int Hash() { return 0; }
-        static Int Hash(const Int * row) { return 0; }
+        static ShortIndex Hash() { return EmptyTupleHash; }
+        static ShortIndex Hash(const Int * row) { return EmptyTupleHash; }
     };
 
     template<bool...Binding>
     struct HashHelper<true, Binding...>
     {
         template<typename...Ints>
-        static Int Hash(Int i, Ints... is) { return i + P * HashHelper<Binding...>::Hash(is...); }
-        static Int Hash(const Int * row) { return *row + P * HashHelper<Binding...>::Hash(row+1); }
+        static ShortIndex Hash(Int i, Ints... is) { return HashCombine(HashHelper<Binding...>::Hash(is...), i); }
+        static ShortIndex Hash(const Int * row) { return HashCombine(HashHelper<Binding...>::Hash(row+1), *row); }
     };
 
     template<bool...Binding>
     struct HashHelper<false, Binding...>
     {
         template<typename...Ints>
-        static Int Hash(Int i, Ints... is) { return HashHelper<Binding...>::Hash(is...); }
-        static Int Hash(const Int * row) { return HashHelper<Binding...>::Hash(row+1); }
+        static ShortIndex Hash(Int i, Ints... is) { return HashHelper<Binding...>::Hash(is...); }
+        static ShortIndex Hash(const Int * row) { return HashHelper<Binding...>::Hash(row+1); }
     };
 
     template<bool...Bound, typename...Ints>
-    Int BoundHashI(Ints... is) { return HashHelper<Bound...>::Hash(is...); }
+    ShortIndex BoundHashI(Ints... is) { return HashHelper<Bound...>::Hash(is...); }
 
     template<bool...Bound>
-    Int BoundHashI(const Int * row) { return HashHelper<Bound...>::Hash(row); }
+    ShortIndex BoundHashI(const Int * row) { return HashHelper<Bound...>::Hash(row); }
 
-    inline Int BoundHash(DynamicBinding b, const Int * row)
+    inline ShortIndex BoundHash(DynamicBinding b, const Int * row)
     {
-        Int h=0;
-        Int mul = 1;
-        for(auto m = b.mask; m; row++, m>>=1)
+        Int h=EmptyTupleHash;
+        for(int i=b.arity.value-1; i>=0; --i)
         {
-            if(m&1) { h += mul * *row; mul = mul*P; }
+            if(b.mask & (1<<i)) { h = HashCombine(h, row[i]); }
         }
         return h;
     }
 
     template<bool...Bs>
-    Int BoundHash(StaticBinding<Bs...> b, const Int * row)
+    ShortIndex BoundHash(StaticBinding<Bs...> b, const Int * row)
     {
         return HashHelper<Bs...>::Hash(row);
     }
 
     template<bool...Bs, typename...Ints>
-    Int BoundHash(StaticBinding<Bs...> b, Ints...is)
+    ShortIndex BoundHash(StaticBinding<Bs...> b, Ints...is)
     {
         return HashHelper<Bs...>::Hash(is...);
     }
 
-    inline Int HashWithMask(Int m) { return 0; }
+    inline ShortIndex HashWithMask(Int m) { return EmptyTupleHash; }
 
     template<typename...Ints>
-    Int HashWithMask(Int m, Int i, Ints...is)
+    ShortIndex HashWithMask(Int m, Int i, Ints...is)
     {
-        return (m&1)? i + P * HashWithMask(m>>1, is...) : HashWithMask(m>>1, is...);
+        return (m&1)? HashCombine(HashWithMask(m>>1, is...), i) : HashWithMask(m>>1, is...);
     }
 
     template<typename...Ints>
-    Int BoundHash(DynamicBinding b, Int i, Ints...is)
+    ShortIndex BoundHash(DynamicBinding b, Int i, Ints...is)
     {
         return HashWithMask(b.mask, i, is...);
     }
 
     template<typename Arity>
-    Int Hash(Arity arity, const Int *p)
+    ShortIndex Hash(Arity arity, const Int *p)
     {
-        Int h = 0;
-        Int mul = 1;
-        for(int i=0; i<arity.value; ++i, mul*=P)
-            h += mul*p[i];
+        Int h = EmptyTupleHash;
+        for(int i=arity.value-1; i>=0; --i)
+            h = HashCombine(h, p[i]);
         return h;
     }
 
-    inline Int Hash(DynamicArity) { return 0; }
+    inline ShortIndex Hash(DynamicArity) { return EmptyTupleHash; }
 
-    inline Int Hash(StaticArity<0>) { return 0; }
+    inline ShortIndex Hash(StaticArity<0>) { return EmptyTupleHash; }
 
     static const ShortIndex EmptyCell = -1;
 
-    inline void FirstHash(Enumerator & e, Int h)
+    inline void FirstHash(Enumerator & e, ShortIndex h)
     {
         e.i = h;
         e.j = 1;

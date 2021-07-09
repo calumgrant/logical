@@ -10,7 +10,7 @@ public:
     TablesTest() : base("Tables")
     {
         AddTest(&TablesTest::SimpleUnaryTableTest);
-        AddTest(&TablesTest::TestHash);
+        // AddTest(&TablesTest::TestHash);
         AddTest(&TablesTest::HashTable1);
         AddTest(&TablesTest::UnaryTableTests);
         AddTest(&TablesTest::BinaryTableTests);
