@@ -93,7 +93,6 @@ X is old if X has age A and A>=80.
 X is young if person X and not X is old.
 
 
-
 // Quantifiers
 
 1 has cash 2.
@@ -150,7 +149,7 @@ delete _.
 delete person P if P has surname "Smith".
 
 // evaluation-step-limit 251.
-expected-results 10.
+expected-results 9.
 expected-errors 0.
 
 // Queries

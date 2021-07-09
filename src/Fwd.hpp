@@ -14,6 +14,7 @@ class Table;
 class DataStore;
 class Optimizer;
 class Columns;
+class PredicateName;
 
 typedef std::shared_ptr<Evaluation> EvaluationPtr;
 typedef Entity * Row;

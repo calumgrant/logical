@@ -230,7 +230,7 @@ void RegisterFunctions(Module & module)
 {
     connection.init();
     
-    module.AddCommand(connectdb, "database", "mysql:user");
+    module.AddCommand(connectdb, "mysql:database", "user");
     
     module.AddCommand(mysql_exec, "mysql:execute");
     module.AddCommand(sync, "mysql:sync");

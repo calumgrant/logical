@@ -71,19 +71,19 @@ void RegisterFunctions(Module & module)
     module.AddCommand(steplimit, "evaluation-step-limit");
 
     module.AddFunction(pi, "pi", Out);
-    module.AddFunction(strlen, "string", In, "strlen", Out);
+    module.AddFunction(strlen, "string", In, "length", Out);
     module.AddFunction(lowercase, "string", In, "lowercase", Out);
     module.AddFunction(uppercase, "string", In, "uppercase", Out);
     module.AddFunction(none, "none", Out);
     
-    module.AddFunction(readcontents, "file", In, "file-contents", Out);
-    module.AddFunction(readlines, "file", In, "file-line", Out, "text", Out);
-    module.AddCommand(writecontents, "file", "file-contents");
-    module.AddCommand(writelines, "file", "file-line", "text");
+    module.AddFunction(readcontents, "file", In, "contents", Out);
+    module.AddFunction(readlines, "file", In, "line", Out, "text", Out);
+    module.AddCommand(writecontents, "file", "contents");
+    module.AddCommand(writelines, "file", "line", "text");
     module.AddCommand(loadmodule, "load-module");
     
-    module.AddFunction(regexmatch, "regex", In, "regex-match", In);
-    module.AddFunction(regexmatchgroup, "regex", In, "regex-match", In, "group", Out, "value", Out);
+    module.AddFunction(regexmatch, "regex", In, "match", In);
+    module.AddFunction(regexmatchgroup, "regex", In, "match", In, "group", Out, "value", Out);
     // module.AddFunction(regexsearch, "regex", In, "regex-search", In, "index", Out, "position", Out);
     //module.AddFunction(regexsearchgroup, "regex", In, "regex-search", In, "index", Out, "position", Out);
     
@@ -93,11 +93,10 @@ void RegisterFunctions(Module & module)
     module.AddFunction(messageoftheday, "std:message-of-the-day", Out);
     
     // Gets the nth random number.
-    module.AddFunction(rand, "index", In, "random", Out);
+    module.AddFunction(rand, "random", In, "value", Out);
     
     // TODO: Make a table
-    module.AddFunction(environment, "key", Out, "environment", Out);
+    module.AddFunction(environment, "environment", Out, "value", Out);
     
     // Directory listing functions
-    
 }

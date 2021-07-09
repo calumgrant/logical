@@ -64,8 +64,7 @@ void Logical::Module::AddFunction(Logical::Extern ex, int count, const char ** n
         parts.push_back(db.GetStringId(name[i]));
     CompoundName cn(parts);
     PredicateName pn;
-    // Discard the object for now
-    // pn.objects.parts.push_back(nameId);
+    pn.objects.parts.push_back(nameId);
     pn.attributes = cn;
     pn.arity = count;
     auto & exfn = db.GetExtern(pn);
@@ -113,8 +112,7 @@ void Logical::Module::AddCommand(Extern ex, int count, const char ** name, void 
     CompoundName cn(parts);
     PredicateName pn;
     pn.arity = count;
-    // For now, the name of the object is discarded
-    // pn.objects.parts.push_back(nameId);
+    pn.objects.parts.push_back(nameId);
     pn.attributes = std::move(cn);
     auto & exfn = db.GetExtern(pn);
     

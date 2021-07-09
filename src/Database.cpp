@@ -34,6 +34,7 @@ public:
     // Names, indexed on their first column
     unordered_map_helper<StringId, PredicateName>::multimap_type nameParts;
 
+    RelationId queryId;
     Relation * queryPredicate;
     
     std::atomic<std::int64_t> entityCounter = 0;
@@ -58,11 +59,11 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
     datastore(datafile.data(), datafile.data()),
     optimizer(optimizer)
 {
-    int queryId = GetStringId("query");
 
     if(!datastore->initialized)
     {
-        PredicateName query(1, queryId);
+        datastore->queryId = GetStringId("query");
+        PredicateName query(1, datastore->queryId);
         datastore->queryPredicate = &GetRelation(query);
         datastore->initialized = true;
     }
@@ -344,20 +345,29 @@ void DatabaseImpl::MakeProjections(Relation &relation)
      This finds all possibly-related names.
      */
     
-    if(relation.name.arity<=1) return;
-    if(relation.name.attributes.parts.empty()) return;
-    
     std::unordered_set<PredicateName, PredicateName::Hash> subsets, supersets;
     
-    auto & cn = relation.name.attributes;
+    // auto & cn = relation.name.attributes;
+    auto & name = relation.name;
     
-    for(auto i : cn.parts)
+    for(auto i : name.attributes.parts)
     {
         auto m = datastore->nameParts.equal_range(i);
         for(auto j=m.first; j!=m.second; ++j)
         {
-            if(cn <= j->second.attributes) supersets.insert(j->second);
-            if(j->second.attributes <= cn) subsets.insert(j->second);
+            if(name <= j->second) supersets.insert(j->second);
+            if(j->second <= name) subsets.insert(j->second);
+        }
+    }
+
+    for(auto i : name.objects.parts)
+    {
+        auto m = datastore->nameParts.equal_range(i);
+        for(auto j=m.first; j!=m.second; ++j)
+        {
+            auto & debug = j->second;
+            if(name <= j->second) supersets.insert(j->second);
+            if(j->second <= name) subsets.insert(j->second);
         }
     }
     
@@ -371,7 +381,8 @@ void DatabaseImpl::MakeProjections(Relation &relation)
         CreateProjection(relation.name, subset);
     }
     
-    for(auto i : cn.parts) datastore->nameParts.insert(std::make_pair(i, relation.name));
+    for(auto i : name.attributes.parts) datastore->nameParts.insert(std::make_pair(i, relation.name));
+    for(auto i : name.objects.parts) datastore->nameParts.insert(std::make_pair(i, relation.name));
 }
 
 std::size_t Database::GlobalCallCount()
@@ -389,13 +400,11 @@ void DatabaseImpl::CreateProjection(const PredicateName &from, const PredicateNa
 {
     /*
     std::cout << "Create a projection from ";
-    for(auto a : from.parts)
-        std::cout << GetString(a) << "-" << a << " ";
-    std::cout << "to ";
-    for(auto a : to.parts)
-        std::cout << GetString(a) << "-" << a << " ";
+    from.Write(*this, std::cout);
+    std::cout << " to ";
+    to.Write(*this, std::cout);
     std::cout << std::endl;
-    */
+     */
     
     // Map from input positions to output positions.
     std::vector<int> projection(to.attributes.parts.size()+1);
@@ -478,13 +487,20 @@ void DatabaseImpl::RunQueries()
             //Entity queryName = data[0];
 
             // Join with all attributes in the
-            database.datastore->queryPredicate->VisitAttributes([&](Relation&r) {
-                QueryVisitor qv(database, r.Arity(), r.name);
-                std::vector<Entity> row(r.Arity());
-                row[0] = data[0];
-                r.Query(&row[0], 1, qv);
-            });
             
+            auto r = database.datastore->nameParts.equal_range(database.datastore->queryId);
+            auto & qn = database.datastore->queryPredicate->name;
+            for(auto i=r.first; i!=r.second; ++i)
+            {
+                if (qn < i->second)
+                {
+                    auto &r = *database.datastore->relations[i->second];
+                    QueryVisitor qv(database, r.Arity(), r.name);
+                    std::vector<Entity> row(r.Arity());
+                    row[0] = data[0];
+                    r.Query(&row[0], 1, qv);
+                }
+            }
         }
     } visitor(*this);
     

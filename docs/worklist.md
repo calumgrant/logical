@@ -1,12 +1,19 @@
 Current work:
-- Refactoring compound names
 - Qualifying externs using the object
   `mysql:connection c2 has username root.
 
+- Use (hash_combine) in HashUtils.hpp
+- Move contents of HashUtils etc into .cpp files.
+
+
+
+
+
+Idea: Inline predicates. Make the projections inline. Have some rules as being marked "inline" and can be partially bound. This could avoid storing intermediate results.
+
+For now, create projections between versions.
+
 Need to create a series of projections.
-
-
-
 
 - Use a proper hash-combine (https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x)
 
@@ -28,6 +35,113 @@ When querying an extern, we query the predicate
 Allow unnamed variables, e.g. `mysql:query "..." has x, y, z.`
 
 For externs, allow a variable number of arguments. `module.AddVariadic(extern, "mysql:query")`
+
+# Implementing a bytecode machine (LLVM-lite)
+
+Metadata:
+- Predicate name (Int id)
+- Dependencies predicates (list) (Int id)
+- Number of stack variables
+- Number of tables
+
+Enumerators use one stack variable (putting both `i` and `j` into one 64-bit int).
+Predicates are identified by a string (e.g. `string:length`)
+There can be up to 256 tables and variables
+There can be up to 256 jump positions
+Can we use native types for arithmetic etc if we know them?
+
+Instructions to support:
+- `create table arity`
+- `query table enumerator registers...` start a query
+- `read branch table enumerator registers...` read from a table
+- `return table` stop evaluation of predicate
+- `beq v1 v2 branch` branch if equal
+- `bneq`, `blt` etc
+- `bnone v` branch if v is none
+- `load v c` Load a constant into a variable
+- `copy v1 v2` Copy a value from one variable to another
+- `inc v` Increment a value
+- `write table arity variables...` Write a table
+- `yield arity variables...` Yield a result from the predicate ??
+- `goto branch` Jump to target location
+- `add`, `sub` etc (arithmetic instructions)
+
+E.g. iterate over a table
+
+  query table, enumerator, arity, variable...
+  read table, enumerator, arity, variable..., branch
+  write table, arity, variable...
+
+Encode externals as:
+
+External API example
+  i.find(e, binding, in(x), out(), z )
+
+```
+item:
+  locals L0, L1, L2, ....
+  table T1, 3
+  ld L0, 1
+  ld L1, 10
+  cp L0, L2
+loop:
+  bgt L2, L1 end:
+  ld L3, @1
+  ld L6, 
+  write T1, l3, l5, l7
+  sub L7, L2, L6
+  goto loop:
+end:
+  return T1
+
+error:
+  depends t1, item:
+  locals l0, l1, l2, e1
+  table result, 1
+  ld l0, true
+  ld l2, @1
+  query t1, e1, l2
+  read end: t1, te
+  ld l1, "item"
+  write result, l1
+end:
+  return result
+```
+
+What about enumerators for computed predicates?
+
+
+
+
+```
+class CodeGen
+{
+  // Creates a new label
+  L CreateLabel();
+
+  // Label current instruction as a jump target
+  void Label(L);
+
+  void Goto(L);
+  T CreateTable(arity);
+  V CreateVariable();
+
+  void Copy(V, V);
+  void Load(V, int);
+  void Load(V, string);
+
+  void Add(V, V, V);
+  void Blt(B, V, V);
+
+  void Query(T, E, V...);
+  void Read(L, T, E, V...);
+
+  void Return(T);
+
+  void NewPredicate(PredicateName);
+  T Dependency(PredicateName);
+};
+```
 
 # Plan for next week
 - [X] Finish implementing tables for the external API
@@ -67,7 +181,7 @@ For externs, allow a variable number of arguments. `module.AddVariadic(extern, "
 
 ## Finish the external API
 - [ ] Fix naming scheme, e.g. `mysql:database db has username foo`. `mysql:Test:person id has name name`
-- [ ] Refactor `CompoundName`
+- [X] Refactor `CompoundName`
 - [ ] Variadic externs
 - [ ] External API supports queries
   - `ExternalSortedTable<> call.GetResults(index)`

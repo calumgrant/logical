@@ -4,14 +4,14 @@ find "fred" has strlen _.
 name "Fred".
 name "Constantine".
 
-short n if name n and n has strlen l and l<5.
+short n if name n and string n has length l and l<5.
 long n if name n and not short n.
 
 find short name _.
 find long _.
 
-error "strlen1" if not "" has strlen 0.
-error "strlen2" if not "abc" has strlen 3.
-error "strlen3" if 1 has strlen.
+error "strlen1" if not string "" has length 0.
+error "strlen2" if not string "abc" has length 3.
+error "strlen3" if string 1 has length _.
 error "strlen4" if not short "Fred".
 error "strlen5" if not long "Constantine".

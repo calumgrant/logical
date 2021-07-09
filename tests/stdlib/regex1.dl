@@ -2,7 +2,7 @@
 expected-results 5.
 
 query "Regex1" has result "passed" if
-    "a+b+c+" has regex-match "aaabbc".
+    regex "a+b+c+" has match "aaabbc".
 
 query "Regex 2" has group n, text t if
-    "(a+)(b+)(c+)" has regex-match "aaabbc", group n, value t.
+    regex "(a+)(b+)(c+)" has match "aaabbc", group n, value t.

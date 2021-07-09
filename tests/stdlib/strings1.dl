@@ -1,4 +1,4 @@
 
-print L if "abc" has strlen L.
-error "Length" if not "abc" has strlen 3.
-error "Length 2" if not "" has strlen 0.
+print L if string "abc" has length L.
+error "Length" if not string "abc" has length 3.
+error "Length 2" if not string "" has length 0.

@@ -1,6 +1,6 @@
 load-module mysql.
 
-"logical" has mysql:user "root".
+mysql:database "logical" has user "root".
 
 mysql:execute "DROP TABLE IF EXISTS Test1".
 mysql:execute "CREATE TABLE Test1 ( id int, name varchar(40) )".

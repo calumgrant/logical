@@ -279,9 +279,8 @@ namespace AST
         void Add(BinaryPredicate * predicate, Entity * entityOpt);
         
         std::vector<Attribute> attributes;
-        void Assert(Database &db, const ::Entity &e) const;
         void Visit(Visitor&) const override;
-        std::shared_ptr<Evaluation> Compile(Database & db, Compilation &c, int slot, bool alreadyBound, Clause *next, HasType has);
+        std::shared_ptr<Evaluation> Compile(Database & db, Compilation &c, int slot, bool alreadyBound, Clause *next, HasType has, const PredicateName & name, Relation & relation);
 
         CompoundName GetCompoundName() const;
     };
@@ -314,6 +313,8 @@ namespace AST
         std::shared_ptr<Table> newEntityTable;
         
         void AssertEntity(Database &db, ::Entity e) const;
+        
+        PredicateName GetPredicateName() const;
     };
 
     class EntityIs : public EntityClause

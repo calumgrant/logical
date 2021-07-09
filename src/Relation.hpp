@@ -36,19 +36,15 @@ public:
     
     struct Hash
     {
-        template <typename T>
-        static void hash_combine(std::size_t& seed, const T& v)
-        {
-            std::hash<T> hasher;
-            seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        }
-        
         CompoundName::Hash cnh;
         
         int operator()(const PredicateName & n) const;
     };
     
     bool operator==(const PredicateName &n2) const;
+    bool operator!=(const PredicateName &n2) const;
+    bool operator <=(const PredicateName & n2) const;
+    bool operator <(const PredicateName & n2) const;
 };
 
 class Relation
@@ -77,10 +73,6 @@ public:
     int Arity() const;
     
     std::size_t GetCount();
-    
-    virtual void AddAttribute(Relation & attribute) =0;
-
-    virtual void VisitAttributes(const std::function<void(Relation&)> &) const =0;
     
     virtual void VisitRules(const std::function<void(Evaluation&)> &) =0;
     virtual void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) =0;

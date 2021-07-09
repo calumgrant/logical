@@ -1,5 +1,5 @@
-"test.txt" has file-contents "def".
-"test.txt" has file-contents "abc".
+file "test.txt" has contents "def".
+file "test.txt" has contents "abc".
 
-error "File contents" if not "test.txt" has file-contents "abc".
-error "File contents" if "test.txt" has file-contents "def".
+error "File contents" if not file "test.txt" has contents "abc".
+error "File contents" if file "test.txt" has contents "def".

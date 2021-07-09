@@ -78,7 +78,6 @@ bool SpecialPredicate::QueryExists(Row row, Columns columns)
 }
 
 Predicate::Predicate(Database &db, const PredicateName & name, BindingType binding, Columns cols) : rulesRun(false), database(db),
-    attributes({}, std::hash<Relation *>(), std::equal_to<Relation *>(), db.Storage()),
     bindingPredicate(binding), bindingColumns(cols),
     rules(db)
 {
@@ -138,17 +137,6 @@ std::size_t Relation::GetCount()
 {
     RunRules();
     return Count();
-}
-
-void Predicate::AddAttribute(Relation &attribute)
-{
-    attributes.insert(&attribute);
-}
-
-void Predicate::VisitAttributes(const std::function<void(Relation &)> &visitor) const
-{
-    for (auto &r : attributes)
-        visitor(*r);
 }
 
 void RuleSet::SetRecursiveRules(const std::shared_ptr<Evaluation> &baseCase, const std::shared_ptr<Evaluation> &recursiveCase)
@@ -575,6 +563,13 @@ void PredicateName::Write(Database & db, std::ostream & os) const
     
 }
 
+template <typename T>
+static void hash_combine(std::size_t& seed, const T& v)
+{
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+}
+
 int PredicateName::Hash::operator()(const PredicateName& n) const
 {
     std::size_t h = 0;
@@ -593,4 +588,19 @@ bool PredicateName::operator==(const PredicateName & n2) const
         attributes == n2.attributes &&
         reaches==n2.reaches &&
         arity == n2.arity;
+}
+
+bool PredicateName::operator!=(const PredicateName & n2) const
+{
+    return !(*this == n2);
+}
+
+bool PredicateName::operator<=(const PredicateName & n2) const
+{
+    return reaches == n2.reaches && arity <= n2.arity && objects <= n2.objects && attributes <= n2.attributes;
+}
+
+bool PredicateName::operator<(const PredicateName & n2) const
+{
+    return *this <= n2 && *this != n2;
 }

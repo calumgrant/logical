@@ -1,8 +1,2 @@
 
-print x if "test.txt" has contents x.
-
-print x if x = "Hello world!".
-
-"test2.txt" has contents "This is\nsome text\n".
-
-find "test.txt" has line l, text t.
+x has reachable y if number x has successor y.

@@ -58,9 +58,7 @@ void AST::EntityClause::AssertFacts(Database &db) const
     if(!entity)
     {
         auto e = db.NewEntity();
-        PredicateName name(1, predicates->list[0]->nameId);
-        db.GetRelation(name).Add(&e);
-        attributes->Assert(db, e);
+        AssertEntity(db, e);
         return;
     }
     
@@ -90,13 +88,58 @@ void AST::EntityClause::AssertFacts(Database &db) const
 
 void AST::EntityClause::AssertEntity(Database &db, ::Entity e) const
 {
-    if(predicates)
-        predicates->Assert(db, e);  // Bug: These should be on the right hand side?
-    if(isPredicates)
-        isPredicates->Assert(db, e);
+    PredicateName name = GetPredicateName();
+    auto & relation = db.GetRelation(name);
+    
+    std::vector<::Entity> entities(name.arity);
+    entities[0] = e;
     
     if(attributes)
-        attributes->Assert(db, e);
+    {
+        int index = 0;
+        for(auto & attribute : attributes->attributes)
+        {
+            if(attribute.entityOpt)
+            {
+                ::Entity e;
+                if(auto v = attribute.entityOpt->IsValue())
+                {
+                    e = v->GetValue();
+                }
+                else if(auto v2 = attribute.entityOpt->IsVariable())
+                {
+                    if(auto v3 = v2->IsNamedVariable())
+                    {
+                         e = ::Entity(EntityType::String, v3->nameId);
+                    }
+                    else
+                    {
+                        attribute.entityOpt->UnboundError(db);
+                        return;
+                    }
+                }
+                else
+                {
+                    attribute.entityOpt->UnboundError(db);
+                    return;
+                }
+
+                entities[name.attributes.mapFromInputToOutput[index]+1] = e;
+            }
+            // TODO: Else report error
+                         
+            ++index;
+        }
+        
+        if(attributes->attributes.size() > name.attributes.parts.size())
+        {
+            // TODO: A better error
+            std::cout << "Duplicate attribute is invalid\n";
+            db.ReportUserError();
+        }
+    }
+
+    relation.Add(&entities[0]);
 }
 
 
@@ -149,62 +192,6 @@ AST::AttributeList::AttributeList(BinaryPredicate * predicate, Entity * entityOp
 AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateList * unaryPredicatesOpt, Entity * entity, AttributeList * attributes, HasType has) :
     EntityClause(entity, unaryPredicatesOpt, nullptr, attributes, IsType::is, has)
 {
-}
-
-void AST::AttributeList::Assert(Database &db, const ::Entity &e) const
-{
-    PredicateName name;
-    name.attributes = GetCompoundName();
-    name.arity = name.attributes.parts.size()+1;
-
-    auto & relation = db.GetRelation(name);
-    
-    std::vector<::Entity> entities(attributes.size()+1);
-    entities[0] = e;
-    
-    int index = 0;
-    for(auto & attribute : attributes)
-    {
-        if(attribute.entityOpt)
-        {
-            ::Entity e;
-            if(auto v = attribute.entityOpt->IsValue())
-            {
-                e = v->GetValue();
-            }
-            else if(auto v2 = attribute.entityOpt->IsVariable())
-            {
-                if(auto v3 = v2->IsNamedVariable())
-                {
-                     e = ::Entity(EntityType::String, v3->nameId);
-                }
-                else
-                {
-                    attribute.entityOpt->UnboundError(db);
-                    return;
-                }
-            }
-            else
-            {
-                attribute.entityOpt->UnboundError(db);
-                return;
-            }
-
-            entities[name.attributes.mapFromInputToOutput[index]+1] = e;
-        }
-        // TODO: Else report error
-                     
-        ++index;
-    }
-    
-    if(attributes.size() > name.attributes.parts.size())
-    {
-        // TODO: A better error
-        std::cout << "Duplicate attribute is invalid\n";
-        db.ReportUserError();
-    }
-
-    relation.Add(&entities[0]);
 }
 
 AST::EntityList::EntityList(Entity *e)

@@ -60,8 +60,6 @@ public:
     void MakeDirty();
     bool HasRules() const;
     
-    void AddAttribute(Relation & attribute) override;
-    void VisitAttributes(const std::function<void(Relation&)> &) const override;
     void VisitRules(const std::function<void(Evaluation&)> &) override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
     
@@ -87,8 +85,6 @@ private:
     const Columns bindingColumns;
 
     RuleSet rules;
-    
-    std::unordered_set<Relation*, std::hash<Relation*>, std::equal_to<Relation*>, persist::allocator<Relation*>> attributes;
 protected:
     
 #if !NDEBUG

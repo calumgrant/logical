@@ -57,58 +57,6 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compila
     return std::make_shared<NoneEvaluation>();
 }
 
-std::shared_ptr<Evaluation> AST::AttributeList::Compile(Database & db, Compilation &c, int slot, bool lhsBound, AST::Clause * next, HasType has)
-{
-    for(auto &a : attributes)
-    {
-        if(a.entityOpt)
-        {
-            a.slot = a.entityOpt->BindVariables(db, c, a.bound);
-        }
-        else
-        {
-            a.slot = c.AddUnnamedVariable();
-            a.bound = false;
-        }
-    }
-
-    auto eval = next->Compile(db, c);
-        
-    PredicateName name;
-    name.attributes = GetCompoundName();
-    name.reaches = has == HasType::reaches;
-    name.arity = name.attributes.parts.size() + 1;
-    auto & compoundRelation = db.GetRelation(name);
-    
-    std::vector<int> inputs(name.arity), outputs(name.arity);
-    if(lhsBound)
-        inputs[0] = slot, outputs[0] = -1;
-    else
-        inputs[0] = -1, outputs[0] = slot;
-    
-    for(int i=0; i<name.attributes.parts.size(); ++i)
-    {
-        auto m = 1 + name.attributes.mapFromInputToOutput[i];
-        // TODO: If the variable is not used, then the output should be -1.
-        if(attributes[i].bound)
-            inputs[m] =  attributes[i].slot,
-            outputs[m] = -1;
-        else
-            inputs[m] = -1,
-            outputs[m] = attributes[i].slot;
-    }
-    
-    eval = std::make_shared<Join>(compoundRelation, std::move(inputs), std::move(outputs), eval);
-    
-    for(auto &a : attributes)
-    {
-        if(a.entityOpt)
-            eval = a.entityOpt->Compile(db, c, eval);
-    }
-
-    return eval;
-}
-
 std::shared_ptr<Evaluation> AST::NotImplementedClause::Compile(Database &db, Compilation &c)
 {
     return std::make_shared<NoneEvaluation>();
@@ -121,30 +69,69 @@ std::shared_ptr<Evaluation> AST::And::Compile(Database &db, Compilation &c)
 
 std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation &compilation)
 {
-    bool bound = false;
-    int slot = entity->BindVariables(db, compilation, bound);
+    bool lhsBound = false;
+    int slot = entity->BindVariables(db, compilation, lhsBound);
     
-    if(!bound && is == IsType::isnot)
+    if(!lhsBound && is == IsType::isnot)
     {
         // Handle the case `<unbound> is not foo`
         entity->UnboundError(db);
         return std::make_shared<NoneEvaluation>();
     }
     
-    assert(next);
-    std::shared_ptr<Evaluation> eval;
-
+    PredicateName name = GetPredicateName();
+    
+    auto & relation = db.GetRelation(name);
+    
     if(attributes)
     {
-        bool entityBound2;
-        entityBound2 = bound || predicates;
-    
-        // Compile the attributes using the information provided
-        eval = attributes->Compile(db, compilation, slot, entityBound2, next, has);
+        for(auto &a : attributes->attributes)
+        {
+            if(a.entityOpt)
+            {
+                a.slot = a.entityOpt->BindVariables(db, compilation, a.bound);
+            }
+            else
+            {
+                a.slot = compilation.AddUnnamedVariable();
+                a.bound = false;
+            }
+        }
     }
+        
+    assert(next);
+    auto eval = next->Compile(db, compilation);
+
+    std::vector<int> inputs(name.arity), outputs(name.arity);
+    if(lhsBound)
+        inputs[0] = slot, outputs[0] = -1;
     else
+        inputs[0] = -1, outputs[0] = slot;
+    
+    if(attributes)
     {
-        eval = next->Compile(db, compilation);
+        for(int i=0; i<name.attributes.parts.size(); ++i)
+        {
+            auto m = 1 + name.attributes.mapFromInputToOutput[i];
+            // TODO: If the variable is not used, then the output should be -1.
+            if(attributes->attributes[i].bound)
+                inputs[m] =  attributes->attributes[i].slot,
+                outputs[m] = -1;
+            else
+                inputs[m] = -1,
+                outputs[m] = attributes->attributes[i].slot;
+        }
+    }
+        
+    eval = std::make_shared<Join>(relation, std::move(inputs), std::move(outputs), eval);
+    
+    if(attributes)
+    {
+        for(auto &a : attributes->attributes)
+        {
+            if(a.entityOpt)
+                eval = a.entityOpt->Compile(db, compilation, eval);
+        }
     }
     
     /*
@@ -156,21 +143,9 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
         
      */
 
-    if(predicates)
+    if(predicates && !attributes)
     {
-        if(is == IsType::is)
-        {
-            for(int i = predicates->list.size()-1; i>=0; --i)
-            {
-                PredicateName name(1, predicates->list[i]->nameId);
-                auto & relation = db.GetRelation(name);
-                if(i>0 || bound)
-                    eval = std::make_shared<Join>(relation, std::vector<int> {slot}, std::vector<int>{-1}, eval);
-                else
-                    eval = std::make_shared<Join>(relation, std::vector<int> {-1}, std::vector<int>{slot}, eval);
-            }
-        }
-        else
+        if(is == IsType::isnot)
         {
             // isnot
             if(predicates->list.size() == 1)
@@ -325,30 +300,15 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Comp
 
 std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Compilation &c, int slot)
 {
-    std::shared_ptr<Evaluation> result;
-    if(predicates)
-    {
-        for(auto & i : predicates->list)
-        {
-            PredicateName name(1, i->nameId);
-            std::shared_ptr<Evaluation> e = std::make_shared<Writer>(db.GetRelation(name), std::vector<int> {slot} );
-            if(result)
-                result = std::make_shared<OrEvaluation>(result, e);
-            else
-                result = e;
-        }
-    }
+    PredicateName name = GetPredicateName();
     
+    auto & relation = db.GetRelation(name);
+    
+    std::vector<int> slots(name.arity);
+    slots[0] = slot;
+
     if(attributes)
-    {        
-        PredicateName name;
-        name.attributes = attributes->GetCompoundName();
-        name.arity = name.attributes.parts.size()+1;
-        
-        auto & relation = db.GetRelation(name);
-        
-        std::vector<int> slots(name.arity);
-        slots[0] = slot;
+    {
         for(int i=0; i<name.attributes.parts.size(); ++i)
         {
             bool bound;
@@ -364,15 +324,13 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
                 return std::make_shared<NoneEvaluation>();
             }
         }
-        
-        std::shared_ptr<Evaluation> e = std::make_shared<Writer>(relation, slots);
+    }
 
-        if(result)
-            result = std::make_shared<OrEvaluation>(result, e);
-        else
-            result = e;
-
-        
+    // The last thing we do is to write the result
+    std::shared_ptr<Evaluation> result = std::make_shared<Writer>(relation, slots);
+    
+    if(attributes)
+    {
         if(!entity)
         {
             result = std::make_shared<CreateNew>(db, slot, result);
@@ -387,11 +345,37 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
         {
             result = a.entityOpt->Compile(db, c, result);
         }
-
     }
 
     if(!result) result = std::make_shared<NoneEvaluation>();
     return result;
+}
+
+PredicateName AST::EntityClause::GetPredicateName() const
+{
+    PredicateName name;
+    
+    if(predicates)
+    {
+        std::vector<int> parts;
+        for(auto & i : predicates->list)
+            parts.push_back(i->nameId);
+        
+        name.objects = parts;  // Ensure it's sorted
+    }
+    
+    if(attributes)
+    {
+        name.attributes = attributes->GetCompoundName();
+        name.arity = name.attributes.parts.size()+1;
+        if(has == HasType::reaches)
+            name.reaches = true;
+    }
+    else
+    {
+        name.arity = 1;
+    }
+    return std::move(name);
 }
 
 std::shared_ptr<Evaluation> AST::EntityClause::CompileLhs(Database &db, Compilation &c)
@@ -465,32 +449,7 @@ void AST::Not::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
 
 void AST::EntityClause::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
 {
-    if(predicates)
-    {
-        for(auto &i : predicates->list)
-        {
-            PredicateName name(1, i->nameId);
-            db.GetRelation(name).AddRule(rule);
-        }
-    }
-    
-    if(attributes)
-    {
-        PredicateName name;
-        name.attributes = attributes->GetCompoundName();
-        name.arity = name.attributes.parts.size()+1;
-        
-        auto & relation = db.GetRelation(name);
-        relation.AddRule(rule);
-        if(predicates)
-        {
-            for(auto &i : predicates->list)
-            {
-                PredicateName pname(1, i->nameId);
-                db.GetRelation(pname).AddAttribute(relation);
-            }
-        }
-    }
+    db.GetRelation(GetPredicateName()).AddRule(rule);
 }
 
 std::shared_ptr<Evaluation> AST::Comparator::Compile(Database &db, Compilation & compilation)
