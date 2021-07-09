@@ -17,6 +17,7 @@ namespace AST
     class Variable;
     class Value;
     class NamedVariable;
+    class PragmaList;
 
     class Visitor
     {
@@ -54,6 +55,9 @@ namespace AST
 
         // ?? const
         void Find(Database &db);
+        
+        void SetPragma(PragmaList * pragmas);
+        std::unique_ptr<PragmaList> pragmas;
     };
 
     class NotImplementedClause : public Clause
@@ -371,6 +375,9 @@ namespace AST
         void Compile(Database &db);
         void Visit(Visitor&) const override;
         std::unique_ptr<Clause> lhs, rhs;
+        
+        void SetPragma(PragmaList * pragmas);
+        std::unique_ptr<PragmaList> pragmas;
     };
 
     class BinaryArithmeticEntity : public ArithmeticEntity
@@ -464,4 +471,14 @@ namespace AST
     };
 
     Clause * MakeAll(Clause * ifPart, Clause * thenPart);
+
+    class PragmaList : public Node
+    {
+    public:
+        PragmaList(StringId p);
+        void Add(StringId p);
+        void Visit(Visitor&) const override;
+    private:
+        std::vector<StringId> parts;
+    };
 }

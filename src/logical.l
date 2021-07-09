@@ -59,6 +59,8 @@ true    return tok_true;
 \*      return tok_times;
 \/      return tok_div;
 %       return tok_mod;
+\[       return tok_open_square;
+]       return tok_close_square;
 
 _       return tok_underscore;
 {IDENTIFIER}|{IDENTIFIER}?(:{IDENTIFIER})+ { yylval->ival = yyextra->GetStringId(yytext); return tok_identifier; }

@@ -149,6 +149,8 @@ delete _.
 delete person P if P has surname "Smith".
 
 // evaluation-step-limit 251.
+
+[noopt, extern]
 expected-results 9.
 expected-errors 0.
 

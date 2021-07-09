@@ -609,3 +609,27 @@ CompoundName AST::AttributeList::GetCompoundName() const
 AST::NewEntity::NewEntity(UnaryPredicate * predicate, AttributeList * attributes) : EntityClause(nullptr, new UnaryPredicateList(predicate), nullptr, attributes)
 {
 }
+
+AST::PragmaList::PragmaList(StringId p)
+{
+    Add (p);
+}
+
+void AST::PragmaList::Add(StringId p)
+{
+    parts.push_back(p);
+}
+
+void AST::PragmaList::Visit(Visitor&) const
+{
+}
+
+void AST::Rule::SetPragma(PragmaList * p)
+{
+    pragmas = std::unique_ptr<PragmaList>(p);
+}
+
+void AST::Clause::SetPragma(PragmaList * p)
+{
+    pragmas = std::unique_ptr<PragmaList>(p);
+}

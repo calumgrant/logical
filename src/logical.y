@@ -30,6 +30,7 @@
     char *sval;
     float fval;
     AST::Rule * rule;
+    AST::PragmaList* pragmas;
 }
 
 %type<clause> clause queryclause querybaseclause andclause orclause notclause allclause datalog_predicate baseclause datalog_clause datalog_base_clause datalog_and_clause datalog_unary_clause
@@ -46,6 +47,7 @@
 %type<rule> datalog_rule rule
 %type<is> is_a
 %type<has> has_a reaches
+%type<pragmas> pragma pragma_list pragmaopt
 
 %{
 #include <Database.hpp>
@@ -68,6 +70,7 @@ typedef void * yyscan_t;
 %token tok_if tok_and tok_has tok_or tok_not tok_a tok_an tok_no tok_is tok_dot tok_then tok_find tok_sum tok_in tok_all
 %token tok_open tok_close tok_comma tok_colondash tok_semicolon tok_equals tok_notequals tok_questiondash tok_lt tok_gt tok_lteq tok_gteq
 %token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count tok_reaches tok_new
+%token tok_open_square tok_close_square
 
 %%
 
@@ -92,14 +95,16 @@ statement:
 ;
 
 datalog:
-    datalog_predicate tok_dot
+    pragmaopt datalog_predicate tok_dot
     {
-        std::unique_ptr<AST::Clause> clause($1);
+        std::unique_ptr<AST::Clause> clause($2);
+        clause->SetPragma($1);
         clause->AssertFacts(db);
     }
-|   datalog_rule tok_dot
+|   pragmaopt datalog_rule tok_dot
     {
-        std::unique_ptr<AST::Rule> rule($1);
+        std::unique_ptr<AST::Rule> rule($2);
+        rule->SetPragma($1);
         rule->Compile(db);
     }
 |   tok_questiondash datalog_predicate tok_dot
@@ -221,21 +226,24 @@ variablelist:
 ;
 
 fact: 
-    clause tok_dot 
+    pragmaopt clause tok_dot 
     {
-        std::unique_ptr<AST::Clause> clause($1);
+        std::unique_ptr<AST::Clause> clause($2);
+        clause->SetPragma($1);
         clause->AssertFacts(db);
     }
 ;
 
 rule:
-    tok_if clause tok_then clause tok_dot
+    pragmaopt tok_if clause tok_then clause tok_dot
     {
-        $$ = new AST::Rule($4,$2);
+        $$ = new AST::Rule($5,$3);
+        $$->SetPragma($1);
     }
-|   clause tok_if clause tok_dot
+|   pragmaopt clause tok_if clause tok_dot
     {
-        $$ = new AST::Rule($1,$3);
+        $$ = new AST::Rule($2,$4);
+        $$->SetPragma($1);
     }
 ;
 
@@ -423,6 +431,15 @@ value:
 |   tok_float   { $$ = new AST::Value(Entity(EntityType::Float, $1)); }
 |   tok_true    { $$ = new AST::Value(Entity(EntityType::Boolean, 1)); }
 |   tok_false   { $$ = new AST::Value(Entity(EntityType::Boolean, 0)); }
+;
+
+pragmaopt: { $$ = nullptr; } | pragma;
+
+pragma: tok_open_square pragma_list tok_close_square { $$=$2; }
+
+pragma_list:
+    tok_identifier { $$ = new AST::PragmaList($1); }
+|   pragma_list tok_comma tok_identifier { $$ = $1; $$->Add($3); }
 ;
 
 %%

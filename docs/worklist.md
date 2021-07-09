@@ -1,37 +1,13 @@
 
 
 
-
-
-
 Idea: Inline predicates. Make the projections inline. Have some rules as being marked "inline" and can be partially bound. This could avoid storing intermediate results.
-
-For now, create projections between versions.
-
-Need to create a series of projections.
-
-- Use a proper hash-combine (https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x)
-
-For `horse h has name n`, create a single predicate `horse,name`. Create projections to `,name` and `horse`.
-
-For `large horse h has name n`, create a single predicate `horse&large,name` with projections to `large`, `horse` and `_,name`.
-
-For `large horse h` create predicate `horse&large` (sorted alphabetically), with projections to `large` and `horse`.
-
-Use the string pool to represent compound names? Should be more efficient and generally simpler. Sort the attributes alphabetically. Represent the permutation as an integer: 2*3*4*5* ... 
-  first position x%5; x/=5
-  second position = x%4; x/=4.
-  64 bits = 16 positions. [4 bits each].
-
-For externs, the "object" is always required, e.g. `std:string x has length y`. The name of this is `std:string,length`.
-
-When querying an extern, we query the predicate 
 
 Allow unnamed variables, e.g. `mysql:query "..." has x, y, z.`
 
 For externs, allow a variable number of arguments. `module.AddVariadic(extern, "mysql:query")`
 
-# Implementing a bytecode machine (LLVM-lite)
+# Implementing a bytecode machine (LLVM-lite) -- future
 
 Metadata:
 - Predicate name (Int id)
@@ -105,9 +81,6 @@ end:
 
 What about enumerators for computed predicates?
 
-
-
-
 ```
 class CodeGen
 {
@@ -175,7 +148,7 @@ class CodeGen
   - Finalise table after evaluation -> turn it into a `SortedTable<>`
 
 ## Finish the external API
-- [ ] Fix naming scheme, e.g. `mysql:database db has username foo`. `mysql:Test:person id has name name`
+- [X] Fix naming scheme, e.g. `mysql:database db has username foo`. `mysql:Test:person id has name name`
 - [X] Refactor `CompoundName`
 - [ ] Variadic externs
 - [ ] External API supports queries
