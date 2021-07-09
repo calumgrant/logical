@@ -1,9 +1,4 @@
-Current work:
-- Qualifying externs using the object
-  `mysql:connection c2 has username root.
 
-- Use (hash_combine) in HashUtils.hpp
-- Move contents of HashUtils etc into .cpp files.
 
 
 
