@@ -1,5 +1,6 @@
-
-
+Today: Variadic predicates
+- Tests for externs
+- 
 
 Idea: Inline predicates. Make the projections inline. Have some rules as being marked "inline" and can be partially bound. This could avoid storing intermediate results.
 
