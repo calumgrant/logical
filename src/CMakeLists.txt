@@ -80,7 +80,7 @@ set_target_properties(logical-tests PROPERTIES
 
 target_link_libraries(logiccore ${FLEX_LIBRARIES})
 
-add_dependencies(logical mysql stdlib externs)
+add_dependencies(logical mysql stdlib externs-test)
 
 add_test(NAME UnitTests COMMAND logical-tests)
 
