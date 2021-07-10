@@ -11,13 +11,16 @@ namespace Logical
 
     typedef std::int64_t Int;
 
+    enum Mode { In, Bound=In, Out, Unbound=Out };
+
     // The Call object is passed to every extern, used primarily to
     // read/write the arguments to the call, and to signal the return of results.
     class Call
     {
     public:
         // Yield a result from a call, using the values previously set using Set.
-        // This can be called no times (failure/no result), one times or many times (multiple results).
+        // This can be called no times (failure/no result), one time (single result),
+        // or many times (multiple results).
         void YieldResult();
 
         bool Get(int index, Int & value);
@@ -42,14 +45,15 @@ namespace Logical
         // Gets the data previously passed to RegisterFunction().
         // This is an opaque payload.
         void * GetData();
+        
+        int ArgCount() const;
+        Mode GetMode(int index) const;
 
     protected:
         Call();
         Call(const Call&) = delete;
         Call & operator=(const Call&) = delete;
     };
-
-    enum Mode { In, Bound=In, Out, Unbound=Out };
 
     // The type of all external functions.
     typedef void (*Extern)(Call&);

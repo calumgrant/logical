@@ -382,6 +382,12 @@ Logical::Module & Logical::Call::GetModule()
     return call.module;
 }
 
+int Logical::Call::ArgCount() const
+{
+    auto & call = (CallImpl&)*this;
+    return call.name.arity;
+}
+
 void Logical::Module::ReportError(const char * str)
 {
     auto & db = ((ModuleImpl*)this)->database;

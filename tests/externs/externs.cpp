@@ -13,7 +13,7 @@ static void helloworld(Call & call)
 
 static void countargs(Call & call)
 {
-    call.Set(0, 1ll);
+    call.Set(0, (Int)call.ArgCount());
     call.YieldResult();
 }
 
