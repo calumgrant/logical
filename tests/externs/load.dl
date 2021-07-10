@@ -1,3 +1,3 @@
-load-module externs.
+load-module externs-test.
 
 error "Hello world" if not test:helloworld "Hello, world!".
