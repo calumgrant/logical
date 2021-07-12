@@ -105,4 +105,5 @@ public:
     
     virtual void LoadModule(const char*) =0;
     virtual Relation & GetExtern(const PredicateName & cn) =0;
+    virtual void Addvarargs(RelationId name, Logical::Extern fn, void * data) =0;
 };

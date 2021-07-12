@@ -542,15 +542,17 @@ void PredicateName::Write(Database & db, std::ostream & os) const
     if(objects.parts.empty())
     {
         if(reaches)
-            os << "reaches:";
+            os << "reaches";
         else
-            os << "has:";
+            os << "has";
     }
     else
     {
+        bool first = true;
         for(auto p : objects.parts)
         {
-            os << db.GetString(p) << ":";
+            if(first) first=false; else os << ";";
+            os << db.GetString(p);
         }
     }
     
@@ -559,7 +561,7 @@ void PredicateName::Write(Database & db, std::ostream & os) const
     
     for(auto a : attributes.parts)
     {
-        os << db.GetString(a) << ":";
+        os << "," << db.GetString(a);
     }
     
 }

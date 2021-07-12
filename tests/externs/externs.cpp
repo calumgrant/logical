@@ -2,6 +2,7 @@
 
 #include "Logical.hpp"
 #include <cassert>
+#include <sstream>
 
 using namespace Logical;
 
@@ -17,9 +18,55 @@ static void countargs(Call & call)
     call.YieldResult();
 }
 
+static void listargs(Call & call)
+{
+    int args = call.ArgCount();
+    for(int i=0; i<args; ++i)
+    {
+        if(call.GetMode(i) == Out)
+        {
+            call.Set(i, call.ArgName(i));
+        }
+        else
+        {
+            const char * arg;
+            call.Get(i, arg);
+            if(strcmp(arg, call.ArgName(i))!=0)
+                return;
+        }
+    }
+    call.YieldResult();
+}
+
+static void concat(Call & call)
+{
+    std::ostringstream ss;
+    int args = call.ArgCount();
+    for(int i=1; i<args; ++i)
+    {
+        if(i>1) ss << " ";
+        ss << call.ArgName(i) << "=";
+        
+        if(call.GetMode(i) == In)
+        {
+            const char * v;
+            if(call.Get(i, v))
+                ss << v;
+            else ss << "?";
+        }
+        else
+            ss << "_";
+    }
+    call.Set(0, ss.str().c_str());
+    call.YieldResult();
+}
+
+
 void RegisterFunctions(Module & module)
 {
     module.AddFunction(helloworld, "test:helloworld", Out);
-
     module.AddFunction(countargs, "test:countargs", Out);
+    module.AddFunction(listargs, "test:listargs", Out, "arg1", Out);
+    module.AddFunction(listargs, "test:listargs", Varargs);
+    module.AddFunction(concat, "test:concat", Varargs);
 }

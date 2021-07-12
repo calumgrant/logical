@@ -11,7 +11,7 @@ namespace Logical
 
     typedef std::int64_t Int;
 
-    enum Mode { In, Bound=In, Out, Unbound=Out };
+    enum Mode { In, Bound=In, Out, Unbound=Out, Varargs };
 
     // The Call object is passed to every extern, used primarily to
     // read/write the arguments to the call, and to signal the return of results.
@@ -48,6 +48,7 @@ namespace Logical
         
         int ArgCount() const;
         Mode GetMode(int index) const;
+        const char * ArgName(int index) const;
 
     protected:
         Call();

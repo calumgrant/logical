@@ -67,14 +67,21 @@ void Logical::Module::AddFunction(Logical::Extern ex, int count, const char ** n
     pn.objects.parts.push_back(nameId);
     pn.attributes = cn;
     pn.arity = count;
-    auto & exfn = db.GetExtern(pn);
     
     Columns columns(0);
     for(int i=0; i<count; ++i)
         if(direction[i]==Logical::In)
             columns.Bind(i);
     
-    exfn.AddExtern(columns, ex, data);
+    if(direction[count-1] == Varargs)
+    {
+        db.Addvarargs(nameId, ex, data);
+    }
+    else
+    {
+        auto & exfn = db.GetExtern(pn);
+        exfn.AddExtern(columns, ex, data);
+    }
 }
 
 void Logical::Module::AddCommand(Extern ex, const char*name)
@@ -169,17 +176,26 @@ class CallImpl : public Logical::Call
 public:
     ModuleImpl module;
     const PredicateName &name;
+    Columns columns;
+    Columns setColumns;
     Row row;
     Receiver & recv;
     void * data;
     
-    CallImpl(Database &db, const PredicateName & name, Row row, Receiver & r, void * data) : module(db), name(name), recv(r), row(row), data(data)
+    CallImpl(Database &db, const PredicateName & name, Columns columns, Row row, Receiver & r, void * data) : module(db), name(name), columns(columns), setColumns(columns), recv(r), row(row), data(data)
     {
+    }
+    
+    int IndexMap(int index) const
+    {
+        if(index<0 || index > name.attributes.mapFromInputToOutput.size())
+            throw std::logic_error("Invalid argument position");
+        return index==0 ? 0 : 1 + name.attributes.mapFromInputToOutput[index-1];
     }
     
     Entity &Index(int index)
     {
-        return row[index==0 ? 0 : 1 + name.attributes.mapFromInputToOutput[index-1]];
+        return row[IndexMap(index)];
     }
     
     void call(Logical::Extern fn)
@@ -202,6 +218,9 @@ public:
 void Logical::Call::YieldResult()
 {
     auto & call = (CallImpl&)*this;
+
+    if(!call.setColumns.IsFullyBound(call.name.arity))
+        call.module.ReportError("Cannot call YieldResult until all columns are set");
     call.recv.OnRow(call.row);
 }
 
@@ -276,6 +295,15 @@ bool Logical::Call::Get(int index, bool & value)
 void Logical::Call::Set(int index, const char * value)
 {
     auto & call = (CallImpl&)*this;
+    
+    if(index>=call.name.arity)
+    {
+        call.module.ReportError("Invalid argument");
+        return;
+    }
+    
+    call.setColumns.Bind(index);
+    
     auto & e = call.Index(index);
     e = Entity(EntityType::String, call.module.database.GetStringId(value));
 }
@@ -284,12 +312,14 @@ void Logical::Call::Set(int index, double value)
 {
     auto & call = (CallImpl&)*this;
     call.Index(index) = value;
+    call.setColumns.Bind(index);
 }
 
 void Logical::Call::Set(int index, Logical::Int value)
 {
     auto & call = (CallImpl&)*this;
     call.Index(index) = Entity(EntityType::Integer, (std::int64_t)value);
+    call.setColumns.Bind(index);
 }
 
 
@@ -327,11 +357,18 @@ public:
 
 void ExternPredicate::Query(Row row, Columns columns, Receiver & r)
 {
+    if(varargs.fn)
+    {
+        CallImpl call(database, name, columns, row, r, varargs.data);
+        call.call(varargs.fn);
+        return;
+    }
+    
     auto fn = externs.find(columns);
     
     if(fn != externs.end())
     {
-        CallImpl call(database, name, row, r, fn->second.data);
+        CallImpl call(database, name, columns, row, r, fn->second.data);
         call.call(fn->second.fn);
         return;
     }
@@ -347,7 +384,7 @@ void ExternPredicate::Query(Row row, Columns columns, Receiver & r)
                 if(e.first.IsBound(i))
                     tmp[i] = row[i];
             ChainReceiver rec(r, arity, e.first, columns, tmp, row);
-            CallImpl call(database, name, tmp, rec, e.second.data);
+            CallImpl call(database, name, e.first, tmp, rec, e.second.data);
             call.call(e.second.fn);
             return;
         }
@@ -367,7 +404,8 @@ void ExternPredicate::Add(const Entity * row)
     if(writer.fn)
     {
         NullReceiver r;
-        CallImpl call(database, name, (Entity*)row, r, writer.data);
+        Columns allSet((1<<name.arity)-1);
+        CallImpl call(database, name, allSet, (Entity*)row, r, writer.data);
         call.call(writer.fn);
     }
     else
@@ -386,6 +424,20 @@ int Logical::Call::ArgCount() const
 {
     auto & call = (CallImpl&)*this;
     return call.name.arity;
+}
+
+const char * Logical::Call::ArgName(int i) const
+{
+    auto & call = (CallImpl&)*this;
+    if(i>=call.name.arity)
+    {
+        call.module.ReportError("Invalid argument");
+        return "<error>";
+    }
+    
+    assert(call.name.objects.parts.size()==1);
+    int id = i==0 ? call.name.objects.parts[0] : call.name.attributes.parts[i-1];
+    return call.module.database.GetString(id).c_str();
 }
 
 void Logical::Module::ReportError(const char * str)
@@ -410,4 +462,16 @@ void Logical::Module::LoadModule(const char * name)
 {
     auto & db = ((ModuleImpl*)this)->database;
     db.LoadModule(name);
+}
+
+Logical::Mode Logical::Call::GetMode(int index) const
+{
+    auto & call = (CallImpl&)*this;
+    return call.columns.IsBound(index) ? In : Out;
+}
+
+void ExternPredicate::AddVarargs(Logical::Extern fn, void * data)
+{
+    varargs.fn = fn;
+    varargs.data = data;
 }

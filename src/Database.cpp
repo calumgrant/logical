@@ -20,6 +20,12 @@ struct HashHelper
     }
 };
 
+struct VariadicExtern
+{
+    Logical::Extern fn;
+    void * data;
+};
+
 class DataStore
 {
 public:
@@ -33,6 +39,8 @@ public:
 
     // Names, indexed on their first column
     unordered_map_helper<StringId, PredicateName>::multimap_type nameParts;
+    
+    unordered_map_helper<StringId, VariadicExtern>::map_type variadicExterns;
 
     RelationId queryId;
     Relation * queryPredicate;
@@ -142,6 +150,18 @@ Relation& DatabaseImpl::GetRelation(const PredicateName & name)
 
     if (i == datastore->relations.end())
     {
+        if(name.objects.parts.size() == 1)
+        {
+            auto j = datastore->variadicExterns.find(name.objects.parts[0]);
+            if(j != datastore->variadicExterns.end())
+            {
+                auto r = allocate_shared<ExternPredicate>(datafile, *this, name);
+                r->AddVarargs(j->second.fn, j->second.data);
+                datastore->relations.insert(std::make_pair(name, r));
+                return *r;
+            }
+        }
+        
         auto r = allocate_shared<Predicate>(datafile, *this, name, BindingType::Unbound, 0);
         datastore->relations.insert(std::make_pair(name, r));
         if(name.reaches)
@@ -616,7 +636,8 @@ DataStore::DataStore(persist::shared_memory & mem) :
     atstrings(mem),
     relations({}, PredicateName::Hash(), std::equal_to<PredicateName>(), mem),
     nameParts({}, std::hash<StringId>(), std::equal_to<StringId>(), mem),
-    externs({}, PredicateName::Hash(), std::equal_to<PredicateName>(), mem)
+    externs({}, PredicateName::Hash(), std::equal_to<PredicateName>(), mem),
+    variadicExterns({}, std::hash<StringId>(), std::equal_to<StringId>(), mem)
 {
 }
 
@@ -651,4 +672,9 @@ Relation &DatabaseImpl::GetExtern(const PredicateName & pn)
     }
     
     return *rel;
+}
+
+void DatabaseImpl::Addvarargs(RelationId name, Logical::Extern fn, void * data)
+{
+    datastore->variadicExterns[name] = VariadicExtern { fn, data };
 }
