@@ -36,4 +36,13 @@ public:
     std::uint64_t mask;
     
     Columns operator|(Columns c) const { return mask | c.mask; }
+    
+    // Count the number of bits in `mask`
+    int BindCount() const
+    {
+        int c=0;
+        for(auto m = mask; m; m>>=1)
+            if(m&1) ++c;
+        return c;
+    }
 };

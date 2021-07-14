@@ -162,7 +162,7 @@ Relation& DatabaseImpl::GetRelation(const PredicateName & name)
             }
         }
         
-        auto r = allocate_shared<Predicate>(datafile, *this, name, BindingType::Unbound, 0);
+        auto r = allocate_shared<Predicate>(datafile, *this, name);
         datastore->relations.insert(std::make_pair(name, r));
         if(name.reaches)
             MakeReachesRelation(*r);

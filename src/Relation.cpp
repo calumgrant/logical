@@ -77,8 +77,7 @@ bool SpecialPredicate::QueryExists(Row row, Columns columns)
     return receiver.hasResult;
 }
 
-Predicate::Predicate(Database &db, const PredicateName & name, BindingType binding, Columns cols) : rulesRun(false), database(db),
-    bindingPredicate(binding), bindingColumns(cols),
+Predicate::Predicate(Database &db, const PredicateName & name) : rulesRun(false), database(db),
     rules(db)
 {
     this->name = name;
@@ -88,16 +87,6 @@ Predicate::Predicate(Database &db, const PredicateName & name, BindingType bindi
     name.Write(db, ss);
     debugName = ss.str();
 #endif
-}
-
-BindingType Predicate::GetBinding() const
-{
-    return bindingPredicate;
-}
-
-Columns Predicate::GetBindingColumns() const
-{
-    return bindingColumns;
 }
 
 void Predicate::AddRule(const std::shared_ptr<Evaluation> &rule)
@@ -130,7 +119,7 @@ bool Predicate::HasRules() const
     return !rules.rules.empty();
 }
 
-SpecialPredicate::SpecialPredicate(Database &db, const PredicateName & name) : Predicate(db, name, BindingType::Unbound, 0)
+SpecialPredicate::SpecialPredicate(Database &db, const PredicateName & name) : Predicate(db, name)
 {
 }
 
@@ -180,29 +169,6 @@ void Predicate::Add(const Entity *data)
 Database &Predicate::GetDatabase() const
 {
     return database;
-}
-
-Relation &Predicate::GetBindingRelation(Columns columns)
-{
-    assert(bindingPredicate == BindingType::Unbound);
-
-    auto &i = bindingRelations[columns];
-
-    if (!i)
-    {
-        // The "arity" is the number of bits set in columns.
-        int arity = 0;
-        auto m = columns.mask;
-        while (m)
-        {
-            if (m & 1)
-                ++arity;
-            m >>= 1;
-        }
-        i = std::make_shared<Predicate>(database, name, BindingType::Binding, columns);
-    }
-
-    return *i;
 }
 
 class WriteAnalysis
@@ -308,25 +274,22 @@ std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> &rul
     return clone;
 }
 
-Relation &Predicate::GetBoundRelation(Columns columns)
+Relation &Predicate::GetSemiNaivePredicate(Columns columns)
 {
-    assert(bindingPredicate == BindingType::Unbound);
-    auto &i = boundRelations[columns];
+    auto &i = semiNaivePredicates[columns];
     sealed = true;
 
     if (!i)
     {
-        i = std::make_shared<Predicate>(database, name, BindingType::Bound, columns);
+        i = std::make_shared<SemiNaivePredicate>(*this, columns, table);
 
-        // TODO: Create the bound version of the rule.
-        std::vector<int> boundArguments;
+        // std::vector<int> boundArguments;
 
-        auto &binding = GetBindingRelation(columns);
         for (auto &r : rules.rules)
         {
-            auto b = MakeBoundRule(r, *this, *i, columns, binding);
+            // auto b = MakeBoundRule(r, *this, *i, columns, binding);
             //binding.AddRule(b);
-            i->AddRule(b);
+            i->AddRule(r);
         }
 
         // Copy the data across already
@@ -467,10 +430,9 @@ void RuleSet::Add(const EvaluationPtr &rule)
     rules.push_back(rule);
 }
 
-void Predicate::VisitRules(const std::function<void(Evaluation &)> &fn)
+void Relation::VisitRules(const std::function<void(Evaluation &)> &fn)
 {
-    for (auto &rule : rules.rules)
-        fn(*rule);
+    VisitRules([&](EvaluationPtr & rule) { fn(*rule); });
 }
 
 void Predicate::VisitRules(const std::function<void(EvaluationPtr &)> &fn)
@@ -530,9 +492,9 @@ std::ostream & operator<<(std::ostream & os, const Relation & relation)
     return os;
 }
 
-PredicateName::PredicateName() {}
+PredicateName::PredicateName() : boundColumns(0) {}
 
-PredicateName::PredicateName(int arity, RelationId object) : arity(arity)
+PredicateName::PredicateName(int arity, RelationId object) : arity(arity), boundColumns(0)
 {
     objects.parts.push_back(object);
 }
@@ -607,3 +569,98 @@ bool PredicateName::operator<(const PredicateName & n2) const
 {
     return *this <= n2 && *this != n2;
 }
+
+SemiNaivePredicate::SemiNaivePredicate(Relation & base, Columns c, const std::shared_ptr<Table> & table) :
+    rules(base.GetDatabase()), underlyingPredicate(base), table(table)
+{
+    name = underlyingPredicate.name;
+    name.boundColumns = c;
+    
+    query = allocate_shared<SemiNaiveQuery>(base.GetDatabase().Storage(), underlyingPredicate, c);
+}
+
+void SemiNaivePredicate::Query(Row row, Columns c, Receiver &r)
+{
+}
+
+void SemiNaivePredicate::QueryDelta(Row row, Columns c, Receiver &r)
+{
+}
+
+bool SemiNaivePredicate::QueryExists(Row row, Columns c)
+{
+}
+
+void SemiNaivePredicate::AddRule(const EvaluationPtr & rule)
+{
+}
+
+void SemiNaivePredicate::RunRules()
+{
+}
+
+void SemiNaivePredicate::VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &fn)
+{
+    rules.VisitRules(fn);
+}
+
+void SemiNaivePredicate::Add(const Entity * data)
+{
+}
+
+Size SemiNaivePredicate::Count()
+{
+}
+
+Database & SemiNaivePredicate::GetDatabase() const
+{
+}
+
+Relation& SemiNaivePredicate::GetSemiNaivePredicate(Columns columns)
+{
+}
+
+bool SemiNaivePredicate::IsSpecial() const
+{
+    return false;
+}
+
+void SemiNaivePredicate::FirstIteration()
+{
+}
+
+void SemiNaivePredicate::NextIteration()
+{
+}
+
+void SemiNaivePredicate::AddExtern(Columns cols, Logical::Extern ex, void * data)
+{
+}
+
+void SemiNaivePredicate::AddExtern(Logical::Extern ex, void * data)
+{
+}
+
+SemiNaiveQuery::SemiNaiveQuery(Relation & base, Columns c)
+{
+    name = base.name;
+    name.boundColumns = c;
+    
+    name.arity = c.BindCount();
+}
+
+void SemiNaiveQuery::Query(Row row, Columns c, Receiver &r) {}
+void SemiNaiveQuery::QueryDelta(Row row, Columns c, Receiver &r) {}
+bool SemiNaiveQuery::QueryExists(Row row, Columns c) {}
+void SemiNaiveQuery::AddRule(const EvaluationPtr & rule) {}
+void SemiNaiveQuery::RunRules() {}
+void SemiNaiveQuery::VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) {}
+void SemiNaiveQuery::Add(const Entity * data) {}
+Size SemiNaiveQuery::Count() {}
+Database & SemiNaiveQuery::GetDatabase() const {}
+Relation& SemiNaiveQuery::GetSemiNaivePredicate(Columns columns) {}
+bool SemiNaiveQuery::IsSpecial() const {}
+void SemiNaiveQuery::FirstIteration() {}
+void SemiNaiveQuery::NextIteration() {}
+void SemiNaiveQuery::AddExtern(Columns cols, Logical::Extern ex, void * data) {}
+void SemiNaiveQuery::AddExtern(Logical::Extern ex, void * data) {}

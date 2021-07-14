@@ -1,12 +1,116 @@
-Today: Variadic predicates
-- Tests for externs
-- 
+
+
+# Partial evaluation (PE)
+
+Partial evaluation is the ability to run predicates without evaluating the entire predicate. This can save significant time and space. It is also known as "semi-naive evaluation".
+
+1. A rule makes a query to a predicate. The bound columns indicate whether this combination should be evaluated partially or fully.
+2. If the bound columns indicate PE, then the bound arguments are added to a "guard".
+  a. If the bound arguments are new, then the predicate is evaluated first (step 3), then the results are returned as normal after PE.
+  b. If the bound arguments have been found already, then the results are returned from the existing predicate results as if the predicate had been fully evaluated already.
+3. The first step in the rule is to iterate over the "guard" to find all arguments it needs to evaluate. This works like regular "delta" evaluation, so only new results are evaluated. The tail of the rule is rewritten to take into consideration the fact that the given arguments are bound by the first step.
+4. The execution unit is iterated until there are no more results (reaches a fixed point).
+5. The results of the predicate are returned from the computed results set as if the predicate had been fully evaluated.
+
+- [ ] report of predicate performance (by number of steps).
+
+# External compilation of arbitrary calls
+
+We know how to enumerate a table, but what about a call in general?
+
+```
+class MyCall : public Call
+{
+    void First()
+    {
+        // Reset all counters
+    }
+
+    bool Next(Int & v1, Int &v2)
+    {
+        // Produce one more result
+    }
+};
+
+class MyCounter : public Call
+{
+  Int a, b;
+
+  void First(Int a, Int b)
+  {
+    this->a = a;
+    this->b = b;
+  }
+
+  bool Next(Int & result)
+  {
+    if(a<=b)
+    {
+      result = a++;
+      return true;
+    }
+    return false;
+  }
+};
+
+class PredicateCall : public Call
+{
+  Index i;
+  Enumerator e;
+
+  void First()
+  {
+  }
+
+  template<typename...Ints>
+  bool Next(Ints&&... x)
+  {
+    return i.Next(e, arity, x...);
+  }
+};
+
+class ComputedPredicate : public Call
+{
+  void First()
+}
+```
+
+## Semi-naive and mutual recursion
+
+
+
+The new rows become part of the "delta" and each time a query is made to a PE predicate, the rules needs to be iterated. If the rules make further queries, then are added to the next iteration. We create a pseudo-relation that effectively becomes the "guard"
+
+There needs to be a special predicate 
+
+
+On an execution unit??
+What about mutual recursion??
+
+Relation::Query
+->RunRules()
+
+Next:
+- CSV support.
+
+```
+csv:filename name has row x, column y, text x.
+
+csv:filename name has row r, surname _, forename _. 
+```
+
+- Semi-naive.
+
 
 Idea: Inline predicates. Make the projections inline. Have some rules as being marked "inline" and can be partially bound. This could avoid storing intermediate results.
 
 Allow unnamed variables, e.g. `mysql:query "..." has x, y, z.`
 
-For externs, allow a variable number of arguments. `module.AddVariadic(extern, "mysql:query")`
+Enumerating arbitrary predicates
+- As if they were inline
+- How can we use an enumerator???
+
+
 
 # Implementing a bytecode machine (LLVM-lite) -- future
 
@@ -114,7 +218,7 @@ class CodeGen
 
 # Plan for next week
 - [X] Finish implementing tables for the external API
-- [ ] Finish external API
+- [X] Finish external API
 - [ ] Finish SQL connector
 - [ ] Finish semi-naive evaluation
 
@@ -151,7 +255,7 @@ class CodeGen
 ## Finish the external API
 - [X] Fix naming scheme, e.g. `mysql:database db has username foo`. `mysql:Test:person id has name name`
 - [X] Refactor `CompoundName`
-- [ ] Variadic externs
+- [X] Variadic externs
 - [ ] External API supports queries
   - `ExternalSortedTable<> call.GetResults(index)`
   - `call.SetResults(...)`

@@ -3,6 +3,7 @@
 #include "Fwd.hpp"
 #include "Entity.hpp"
 #include "CompoundName.hpp"
+#include "Columns.hpp"
 
 // A receiver "receives" rows (tuples) and is used in an evaluation pipeline
 // or to receive the results of a query.
@@ -30,7 +31,8 @@ public:
     CompoundName objects;
     CompoundName attributes;
     bool reaches = false;
-    Arity arity ;
+    Arity arity;
+    Columns boundColumns;
     
     void Write(Database & db, std::ostream & os) const;
     
@@ -65,8 +67,8 @@ public:
     
     virtual void AddRule(const EvaluationPtr & rule) =0;
             
-    virtual BindingType GetBinding() const =0;
-    virtual Columns GetBindingColumns() const =0;
+    // virtual BindingType GetBinding() const =0;
+    // virtual Columns GetBindingColumns() const =0;
     
     virtual void RunRules() =0;
     
@@ -74,8 +76,8 @@ public:
     
     std::size_t GetCount();
     
-    virtual void VisitRules(const std::function<void(Evaluation&)> &) =0;
-    virtual void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) =0;
+    void VisitRules(const std::function<void(Evaluation&)> &);
+    virtual void VisitRules(const std::function<void(EvaluationPtr&)> &) =0;
     
     void VisitSteps(const std::function<void(EvaluationPtr&)> &);
     
@@ -93,13 +95,11 @@ public:
     Relation * backEdge = nullptr;
     bool inRecursiveLoop = false;
     bool visiting = false;
-    bool enableSemiNaive = false;
 
     std::shared_ptr<ExecutionUnit> loop;
     PredicateName name;
     
-    virtual Relation& GetBindingRelation(Columns columns) =0;
-    virtual Relation& GetBoundRelation(Columns columns) =0;
+    virtual Relation& GetSemiNaivePredicate(Columns columns) =0;
     
     virtual bool IsSpecial() const =0;
     

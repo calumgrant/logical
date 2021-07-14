@@ -7,52 +7,6 @@
 
 #include <iostream>
 
-
-// Delete me - failed experiment
-class BindingAnalysis : public Optimization
-{
-public:
-    BindingAnalysis() : Optimization("semi-naive", "Implements semi-naive binding", 1)
-    {
-    }
-    
-    void Analyse(Relation & rel) const override
-    {
-        rel.VisitRules([&](EvaluationPtr & rule) {
-            if(rule->runBindingAnalysis) return;
-            rule->runBindingAnalysis = true;
-
-            Evaluation::VisitSteps(rule, [&](EvaluationPtr&eval) {
-                eval->VisitReads([&](Relation *& relation, Columns mask, const int * inputs) {
-                    if(!mask.IsUnbound() && relation->GetBinding() == BindingType::Unbound)
-                    {
-                        // std::cout << "Semi-naive opportunity: " << mask << "\n";
-
-                        if(!relation->IsSpecial())
-                        {
-                            auto & guard = relation->GetBindingRelation(mask);
-                            auto & bound = relation->GetBoundRelation(mask);
-                            
-                            std::vector<int> writes;
-                            for(int i=0; i<relation->Arity(); ++i)
-                                if(inputs[i] != -1) writes.push_back(inputs[i]);
-                            
-                            auto write = std::make_shared<Writer>(guard, writes);
-                            eval = std::make_shared<OrEvaluation>(write, eval);
-                            Analyse(*relation);  // Analyse unbound relation as well
-                            relation = &bound;
-                            
-                            guard.AddRule(rule);
-                        }
-                    }
-                    Analyse(*relation);
-                });
-            });
-        });
-    }
-};
-
-
 class Recursion : public Optimization
 {
 public:
@@ -684,9 +638,9 @@ public:
     class Collector
     {
     public:
-        void Analyse(Relation & rel)
+        void Analyse(ExecutionUnit & exec)
         {
-            rel.VisitRules([&](EvaluationPtr&ptr) { Analyse(ptr); });
+            exec.rules.VisitRules([&](EvaluationPtr&ptr) { Analyse(ptr); });
         }
         
         int recursiveRules=0;
@@ -728,12 +682,17 @@ public:
             }
         }
     };
-    
-    void Analyse(Relation & relation) const override
+
+    void Analyse(ExecutionUnit & exec) const override
     {
         Collector c;
-        c.Analyse(relation);
-        relation.enableSemiNaive = c.makeSemiNaive();
+        c.Analyse(exec);
+        if(c.makeSemiNaive())
+        {
+            std::cout << "Make semi-naive\n";
+        }
+        
+        // exec.enableSemiNaive = c.makeSemiNaive();
     }
 };
 

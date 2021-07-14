@@ -49,7 +49,7 @@ public:
 class Predicate : public Relation
 {
 public:
-    Predicate(Database &db, const PredicateName &name, BindingType bindingPredicate, Columns boundColumns);
+    Predicate(Database &db, const PredicateName &name);
 
     // Evaluates all rules if needed
     void Evaluate();
@@ -60,7 +60,6 @@ public:
     void MakeDirty();
     bool HasRules() const;
     
-    void VisitRules(const std::function<void(Evaluation&)> &) override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
     
     void Query(Row row, Columns columns, Receiver &r) override;
@@ -68,11 +67,8 @@ public:
     bool QueryExists(Row row, Columns columns) override;
     void Add(const Entity * data) override;
     Size Count() override;
-    BindingType GetBinding() const override;
-    Columns GetBindingColumns() const override;
     Database & GetDatabase() const override;
-    Relation& GetBindingRelation(Columns columns) override;
-    Relation& GetBoundRelation(Columns columns) override;
+    Relation& GetSemiNaivePredicate(Columns columns) override;
     bool IsSpecial() const override;
     void FirstIteration() override;
     void NextIteration() override;
@@ -81,8 +77,6 @@ public:
 
 private:
     bool rulesRun = false;
-    const BindingType bindingPredicate;
-    const Columns bindingColumns;
 
     RuleSet rules;
 protected:
@@ -98,7 +92,60 @@ protected:
     
     std::shared_ptr<Table> table;
     bool sealed = false;  // Allow rules to be added.
-    std::unordered_map<Columns, std::shared_ptr<Relation>, Columns::Hash, Columns::EqualTo> bindingRelations, boundRelations;
+    std::unordered_map<Columns, std::shared_ptr<Relation>, Columns::Hash, Columns::EqualTo> semiNaivePredicates;
+};
+
+class SemiNaiveQuery : public Relation
+{
+public:
+    SemiNaiveQuery(Relation & predicate, Columns boundColumns);
+
+    void Query(Row row, Columns c, Receiver &r) override;
+    void QueryDelta(Row row, Columns c, Receiver &r) override;
+    bool QueryExists(Row row, Columns c) override;
+    void AddRule(const EvaluationPtr & rule) override;
+    void RunRules() override;
+    void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
+    void Add(const Entity * data) override;
+    Size Count() override;
+    Database & GetDatabase() const override;
+    Relation& GetSemiNaivePredicate(Columns columns) override;
+    bool IsSpecial() const override;
+    void FirstIteration() override;
+    void NextIteration() override;
+    void AddExtern(Columns cols, Logical::Extern ex, void * data) override;
+    void AddExtern(Logical::Extern ex, void * data) override;
+
+private:
+    std::shared_ptr<Table> query;  // Bound values that are queried
+};
+
+class SemiNaivePredicate : public Relation
+{
+public:
+    SemiNaivePredicate(Relation & predicate, Columns c, const std::shared_ptr<Table> & table);
+    
+    void Query(Row row, Columns c, Receiver &r) override;
+    void QueryDelta(Row row, Columns c, Receiver &r) override;
+    bool QueryExists(Row row, Columns c) override;
+    void AddRule(const EvaluationPtr & rule) override;
+    void RunRules() override;
+    void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
+    void Add(const Entity * data) override;
+    Size Count() override;
+    Database & GetDatabase() const override;
+    Relation& GetSemiNaivePredicate(Columns columns) override;
+    bool IsSpecial() const override;
+    void FirstIteration() override;
+    void NextIteration() override;
+    void AddExtern(Columns cols, Logical::Extern ex, void * data) override;
+    void AddExtern(Logical::Extern ex, void * data) override;
+
+private:
+    Relation& underlyingPredicate;
+    RuleSet rules;
+    std::shared_ptr<SemiNaiveQuery> query;
+    std::shared_ptr<Table> table;  // Where the results are stored (shared with the underlying predicate
 };
 
 class SpecialPredicate : public Predicate // TODO: Extend Relation
