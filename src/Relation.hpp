@@ -61,7 +61,7 @@ public:
     virtual bool QueryExists(Row query, Columns columns) =0;
 
     // Insert a row into this table.
-    virtual void Add(const Entity * row) =0;
+    virtual bool Add(const Entity * row) =0;
 
     virtual ~Relation();
     
@@ -95,6 +95,8 @@ public:
     Relation * backEdge = nullptr;
     bool inRecursiveLoop = false;
     bool visiting = false;
+    bool analysedSemiNaive = false;
+    bool enableSemiNaive = false;
 
     std::shared_ptr<ExecutionUnit> loop;
     PredicateName name;
@@ -107,6 +109,9 @@ public:
     virtual void NextIteration() =0;
     virtual void AddExtern(Columns cols, Logical::Extern ex, void * data) =0;
     virtual void AddExtern(Logical::Extern ex, void * data) =0;
+    virtual Relation & GetSemiNaive(Columns c);
+    
+    void LogRow(std::ostream & os, const Entity * row) const;
     
 protected:
     // Returns the number of rows.

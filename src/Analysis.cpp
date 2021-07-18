@@ -685,14 +685,32 @@ public:
 
     void Analyse(ExecutionUnit & exec) const override
     {
-        Collector c;
-        c.Analyse(exec);
-        if(c.makeSemiNaive())
-        {
-            std::cout << "Make semi-naive\n";
-        }
-        
-        // exec.enableSemiNaive = c.makeSemiNaive();
+        // Check all calls to semi-naive predicates
+        exec.rules.VisitRules([&](EvaluationPtr & rule) {
+            Evaluation::VisitSteps(rule, [&](EvaluationPtr &step) {
+                step->VisitReads([&](Relation* & rel, Columns c, const int * cols) {
+                    if(!rel->analysedSemiNaive)
+                    {
+                        //rel->analysedSemiNaive = true;
+                        Collector c;
+                        c.Analyse(*rel->loop);
+                        
+                        for(auto & r : rel->loop->relations)
+                        {
+                            r->analysedSemiNaive = true;
+                        }
+
+                        if(c.makeSemiNaive())
+                            rel->enableSemiNaive = true;
+                    }
+                    
+                    if(rel->enableSemiNaive)
+                    {
+                        rel = &rel->GetSemiNaive(c);
+                    }
+                });
+            });
+        });
     }
 };
 

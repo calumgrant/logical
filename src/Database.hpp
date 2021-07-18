@@ -70,6 +70,7 @@ public:
     virtual void SetVerbosity(int value) =0;
     bool Explain() const;
     virtual int GetVerbosity() const =0;
+    bool LogRows() const;
 
     virtual void ReportUserError() =0;
     bool UserErrorReported() const;

@@ -150,7 +150,7 @@ void Predicate::Query(Row row, Columns columns, Receiver &r)
 
 void Predicate::QueryDelta(Entity *row, Columns columns, Receiver &r)
 {
-    RunRules();
+    //RunRules();
     table->QueryDelta(row, columns, r);
 }
 
@@ -160,10 +160,15 @@ bool Predicate::QueryExists(Row row, Columns columns)
     return table->QueryExists(row, columns);
 }
 
-void Predicate::Add(const Entity *data)
+bool Predicate::Add(const Entity *data)
 {
-    table->loop = loop; // Hack :-(
-    table->OnRow(const_cast<Entity *>(data));
+    if(table->Add(const_cast<Entity *>(data)))
+    {
+        if(loop)
+            ++loop->numberOfResults;
+        return true;
+    }
+    return false;
 }
 
 Database &Predicate::GetDatabase() const
@@ -523,7 +528,14 @@ void PredicateName::Write(Database & db, std::ostream & os) const
     
     for(auto a : attributes.parts)
     {
-        os << "," << db.GetString(a);
+        os << ":" << db.GetString(a);
+    }
+    
+    if(!boundColumns.IsUnbound())
+    {
+        os << "/";
+        for(int i=0; i<arity; ++i)
+            os << (boundColumns.IsBound(i) ? "b" : "f");
     }
     
 }
@@ -573,30 +585,168 @@ bool PredicateName::operator<(const PredicateName & n2) const
 SemiNaivePredicate::SemiNaivePredicate(Relation & base, Columns c, const std::shared_ptr<Table> & table) :
     rules(base.GetDatabase()), underlyingPredicate(base), table(table)
 {
+    auto & db = base.GetDatabase();
     name = underlyingPredicate.name;
     name.boundColumns = c;
+    query = allocate_shared<SemiNaiveQuery>(db.Storage(), underlyingPredicate, c);
     
-    query = allocate_shared<SemiNaiveQuery>(base.GetDatabase().Storage(), underlyingPredicate, c);
 }
 
-void SemiNaivePredicate::Query(Row row, Columns c, Receiver &r)
+void SemiNaivePredicate::CopyRules()
 {
+    auto & db = underlyingPredicate.GetDatabase();
+    loop = allocate_shared<ExecutionUnit>(db.Storage(), db);
+    loop->AddRelation(*this);
+    loop->AddRelation(*query);
+    // loop->AddRelation(underlyingPredicate);
+    
+    for(auto & r : underlyingPredicate.loop->rules.rules)
+    {
+        loop->rules.Add(MakeBoundRule(r));
+    }
+    
+    analysedSemiNaive = true;  // Don't re-analyse
+    AnalysePredicate(db, *this);
+}
+
+template<typename Fn>
+void VisitRules(EvaluationPtr & ptr, Fn fn)
+{
+    if(auto p = std::dynamic_pointer_cast<RuleEvaluation>(ptr))
+    {
+        fn(ptr);
+    }
+    else if(auto p = dynamic_cast<OrEvaluation*>(&*ptr))
+    {
+        p->VisitNext([&](EvaluationPtr & n, bool) { VisitRules(n, fn); });
+    }
+}
+
+
+EvaluationPtr SemiNaivePredicate::MakeBoundRule(const EvaluationPtr & r)
+{
+    auto c = r->Clone();
+
+    std::vector<int> inputs(query->name.arity), outputs(query->name.arity);
+
+    Evaluation::VisitSteps(c, [&](EvaluationPtr & e)
+    {
+        e->VisitReads([&](Relation *& rel, Columns, const int*)
+        {
+            if(rel == &underlyingPredicate)
+            {
+                //rel = this;
+            }
+        });
+        e->VisitWrites([&](Relation *&rel, int, const int*cols) {
+            if(rel == &underlyingPredicate)
+            {
+                rel = this;
+                
+                for(int i=0; i<query->name.arity; ++i)
+                    outputs[i] = cols[i];
+            }
+        });
+    });
+
+    for(int i=0; i<query->name.arity; ++i)
+        inputs[i] = -1;
+    
+    ::VisitRules(c, [&](EvaluationPtr & rule) {
+            rule->VisitNext([&](EvaluationPtr & next, bool) {
+            for(auto &o : outputs)
+                next->BindVariable(next, o);
+            next = std::make_shared<Join>(*query, inputs, outputs, next);
+            next->useDelta = true;
+            next->readDelta = true;
+        });
+    });
+    
+    return c;
+}
+
+void SemiNaivePredicate::Query(Row row, Columns columns, Receiver &r)
+{
+    if(columns != name.boundColumns)
+    {
+        std::cerr << "Warning: Incorrectly bound columns\n";
+        underlyingPredicate.GetSemiNaive(columns).Query(row, columns, r);
+        return;
+    }
+    
+    assert(columns == name.boundColumns);
+    RunRules(row);
+    table->Query(row, columns, r);
+}
+
+bool SemiNaivePredicate::AddQuery(Row row)
+{
+    auto bc = name.boundColumns.BindCount();
+    Entity boundRow[bc];
+    int c=0;
+    for(int i=0; i<name.arity; ++i)
+        if(name.boundColumns.IsBound(i))
+            boundRow[c++] = row[i];
+    if(query->Add(boundRow))
+    {
+        query->LogRow(std::cout, row);
+        ++loop->numberOfResults;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void SemiNaivePredicate::RunRules(Row row)
+{
+    if(AddQuery(row))
+    {
+        auto count1 = loop->numberOfResults;
+        auto count2 = count1;
+        do
+        {
+            count1 = loop->numberOfResults;
+            query->NextIteration();
+            do
+            {
+                count2 = loop->numberOfResults;
+                table->NextIteration();
+                for(auto & rule : loop->rules.rules)
+                {
+                    rule->Evaluate(nullptr);
+                }
+            } while(loop->numberOfResults != count2);
+        } while(loop->numberOfResults != count1);
+
+        if(underlyingPredicate.GetDatabase().Explain())
+            loop->Explain();
+    }
 }
 
 void SemiNaivePredicate::QueryDelta(Row row, Columns c, Receiver &r)
 {
+    AddQuery(row);
+    // RunRules(row);  // Not clear if this is correct
+    table->QueryDelta(row, c, r);
 }
 
-bool SemiNaivePredicate::QueryExists(Row row, Columns c)
+bool SemiNaivePredicate::QueryExists(Row row, Columns columns)
 {
+    assert(columns == name.boundColumns);
+    RunRules(row);
+    return table->QueryExists(row, columns);
 }
 
 void SemiNaivePredicate::AddRule(const EvaluationPtr & rule)
 {
+    assert(0);
 }
 
 void SemiNaivePredicate::RunRules()
 {
+    assert(0);
 }
 
 void SemiNaivePredicate::VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &fn)
@@ -604,20 +754,43 @@ void SemiNaivePredicate::VisitRules(const std::function<void(std::shared_ptr<Eva
     rules.VisitRules(fn);
 }
 
-void SemiNaivePredicate::Add(const Entity * data)
+void Relation::LogRow(std::ostream & os, const Entity * row) const
 {
+    auto & db = GetDatabase();
+    
+    if(!db.LogRows()) return;
+
+    os << "Wrote ";
+    name.Write(db, os);
+    os << "(";
+    for(int i=0; i<name.arity; ++i)
+    {
+        if(i>0) os << ",";
+        db.PrintQuoted(row[i], os);
+    }
+    os << ")";
+    os << std::endl;
+}
+
+bool SemiNaivePredicate::Add(const Entity * data)
+{
+    if(table->Add(data))
+    {
+        LogRow(std::cout, data);
+        ++loop->numberOfResults;
+        return true;
+    }
+    return false;
 }
 
 Size SemiNaivePredicate::Count()
 {
+    return table->Rows();
 }
 
 Database & SemiNaivePredicate::GetDatabase() const
 {
-}
-
-Relation& SemiNaivePredicate::GetSemiNaivePredicate(Columns columns)
-{
+    return underlyingPredicate.GetDatabase();
 }
 
 bool SemiNaivePredicate::IsSpecial() const
@@ -627,40 +800,77 @@ bool SemiNaivePredicate::IsSpecial() const
 
 void SemiNaivePredicate::FirstIteration()
 {
+    table->FirstIteration();
+    query->FirstIteration();
 }
 
 void SemiNaivePredicate::NextIteration()
 {
+    table->NextIteration();
+    query->NextIteration();
 }
 
 void SemiNaivePredicate::AddExtern(Columns cols, Logical::Extern ex, void * data)
 {
+    assert(0);
 }
 
 void SemiNaivePredicate::AddExtern(Logical::Extern ex, void * data)
 {
+    assert(0);
 }
 
-SemiNaiveQuery::SemiNaiveQuery(Relation & base, Columns c)
+SemiNaiveQuery::SemiNaiveQuery(Relation & base, Columns c) : underlyingPredicate(base)
 {
     name = base.name;
     name.boundColumns = c;
-    
     name.arity = c.BindCount();
+    table = Table::MakeTable(base.GetDatabase().Storage(), name.arity);
+    analysedSemiNaive = true;  // Don't re-analyse
 }
 
-void SemiNaiveQuery::Query(Row row, Columns c, Receiver &r) {}
-void SemiNaiveQuery::QueryDelta(Row row, Columns c, Receiver &r) {}
-bool SemiNaiveQuery::QueryExists(Row row, Columns c) {}
-void SemiNaiveQuery::AddRule(const EvaluationPtr & rule) {}
+void SemiNaiveQuery::Query(Row row, Columns c, Receiver &r) { table->Query(row, c, r); }
+void SemiNaiveQuery::QueryDelta(Row row, Columns c, Receiver &r) { table->QueryDelta(row, c, r); }
+bool SemiNaiveQuery::QueryExists(Row row, Columns c) { return table->QueryExists(row, c); }
+void SemiNaiveQuery::AddRule(const EvaluationPtr & rule) { assert(0); }
 void SemiNaiveQuery::RunRules() {}
 void SemiNaiveQuery::VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) {}
-void SemiNaiveQuery::Add(const Entity * data) {}
-Size SemiNaiveQuery::Count() {}
-Database & SemiNaiveQuery::GetDatabase() const {}
-Relation& SemiNaiveQuery::GetSemiNaivePredicate(Columns columns) {}
-bool SemiNaiveQuery::IsSpecial() const {}
-void SemiNaiveQuery::FirstIteration() {}
-void SemiNaiveQuery::NextIteration() {}
+
+bool SemiNaiveQuery::Add(const Entity * data)
+{
+    return table->Add(data);
+}
+
+Size SemiNaiveQuery::Count() { return table->Rows(); }
+Database & SemiNaiveQuery::GetDatabase() const { return underlyingPredicate.GetDatabase(); }
+Relation& SemiNaiveQuery::GetSemiNaivePredicate(Columns columns) { return underlyingPredicate.GetSemiNaive(columns); }
+bool SemiNaiveQuery::IsSpecial() const { return false; }
+void SemiNaiveQuery::FirstIteration() { table->FirstIteration(); }
+void SemiNaiveQuery::NextIteration() { table->NextIteration(); }
 void SemiNaiveQuery::AddExtern(Columns cols, Logical::Extern ex, void * data) {}
 void SemiNaiveQuery::AddExtern(Logical::Extern ex, void * data) {}
+
+Relation & Relation::GetSemiNaive(Columns c)
+{
+    // There are no semi-naive specialisations for this, so just return the original predicate.
+    return *this;
+}
+
+Relation & Predicate::GetSemiNaive(Columns c)
+{
+    if(c.IsUnbound()) return *this;
+
+    auto & i = semiNaivePredicates[c];
+    if(!i)
+    {
+        auto p = allocate_shared<SemiNaivePredicate>(database.Storage(), *this, c, table);
+        i = p;
+        p->CopyRules();
+    }
+    return *i;
+}
+
+Relation & SemiNaivePredicate::GetSemiNaivePredicate(Columns c)
+{
+    return underlyingPredicate.GetSemiNaivePredicate(c);
+}

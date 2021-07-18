@@ -28,6 +28,10 @@ public:
         return (mask & other.mask) == mask;
     }
     
+    bool operator==(Columns other) const { return mask == other.mask; }
+
+    bool operator!=(Columns other) const { return mask != other.mask; }
+
     Columns operator-(Columns other) const
     {
         return mask - other.mask;

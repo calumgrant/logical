@@ -65,7 +65,7 @@ public:
     void Query(Row row, Columns columns, Receiver &r) override;
     void QueryDelta(Row row, Columns columns, Receiver &r) override;
     bool QueryExists(Row row, Columns columns) override;
-    void Add(const Entity * data) override;
+    bool Add(const Entity * data) override;
     Size Count() override;
     Database & GetDatabase() const override;
     Relation& GetSemiNaivePredicate(Columns columns) override;
@@ -74,7 +74,7 @@ public:
     void NextIteration() override;
     void AddExtern(Columns cols, Logical::Extern ex, void * data) override;
     void AddExtern(Logical::Extern ex, void * data) override;
-
+    Relation & GetSemiNaive(Columns c) override;
 private:
     bool rulesRun = false;
 
@@ -106,7 +106,7 @@ public:
     void AddRule(const EvaluationPtr & rule) override;
     void RunRules() override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
-    void Add(const Entity * data) override;
+    bool Add(const Entity * data) override;
     Size Count() override;
     Database & GetDatabase() const override;
     Relation& GetSemiNaivePredicate(Columns columns) override;
@@ -117,7 +117,8 @@ public:
     void AddExtern(Logical::Extern ex, void * data) override;
 
 private:
-    std::shared_ptr<Table> query;  // Bound values that are queried
+    Relation & underlyingPredicate;
+    std::shared_ptr<Table> table;  // Bound values that are queried
 };
 
 class SemiNaivePredicate : public Relation
@@ -131,7 +132,7 @@ public:
     void AddRule(const EvaluationPtr & rule) override;
     void RunRules() override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
-    void Add(const Entity * data) override;
+    bool Add(const Entity * data) override;
     Size Count() override;
     Database & GetDatabase() const override;
     Relation& GetSemiNaivePredicate(Columns columns) override;
@@ -140,12 +141,18 @@ public:
     void NextIteration() override;
     void AddExtern(Columns cols, Logical::Extern ex, void * data) override;
     void AddExtern(Logical::Extern ex, void * data) override;
+    
+    void CopyRules();
 
 private:
     Relation& underlyingPredicate;
     RuleSet rules;
     std::shared_ptr<SemiNaiveQuery> query;
     std::shared_ptr<Table> table;  // Where the results are stored (shared with the underlying predicate
+    
+    bool AddQuery(Row query);
+    void RunRules(Row query);
+    EvaluationPtr MakeBoundRule(const EvaluationPtr & rule);
 };
 
 class SpecialPredicate : public Predicate // TODO: Extend Relation
@@ -168,7 +175,7 @@ public:
     void AddExtern(Columns c, Logical::Extern fn, void * ) override;
     void AddExtern(Logical::Extern ex, void * data) override;
     void Query(Entity *row, Columns columns, Receiver&v) override;
-    void Add(const Entity * row) override;
+    bool Add(const Entity * row) override;
     void AddVarargs(Logical::Extern ex, void * data);
 private:
     struct ExternFn

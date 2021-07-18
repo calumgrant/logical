@@ -135,6 +135,7 @@ add_test(NAME Recursion2 COMMAND logical ../tests/programs/recursion2.dl)
 add_test(NAME Recursion3 COMMAND logical ../tests/programs/recursion3.dl)
 add_test(NAME Recursion3a COMMAND logical -O0 ../tests/programs/recursion3.dl)
 add_test(NAME Recursion4 COMMAND logical ../tests/programs/recursion4.dl)
+add_test(NAME Recursion5 COMMAND logical ../tests/programs/recursion5.dl)
 add_test(NAME Recursion6 COMMAND logical ../tests/programs/recursion6.dl)
 add_test(NAME Recursion7 COMMAND logical ../tests/programs/recursion7.dl)
 

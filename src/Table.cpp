@@ -46,10 +46,6 @@ bool TableImpl::Add(const Entity *row)
         data.resize(s);
         return false;
     }
-    else if(loop)
-    {
-        ++loop->numberOfResults;
-    }
     return true;
 }
 
@@ -359,12 +355,7 @@ void TableImpl2<Arity>::OnRow(Row row) { Add(row); }
 template<typename Arity>
 bool TableImpl2<Arity>::Add(const Entity *e)
 {
-    auto added = hashtable.Add((const Logical::Int*)e);
-    
-    if(added && loop)
-        ++loop->numberOfResults;
-    
-    return added;
+    return hashtable.Add((const Logical::Int*)e);    
 }
 
 template<typename Arity>

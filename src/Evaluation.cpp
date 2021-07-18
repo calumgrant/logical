@@ -887,12 +887,14 @@ void Join::OnRow(Entity *locals)
             data[i] = locals[inputs[i]];
         }
 
+    auto tmp = useDelta;
     if (useDelta)
         relation->QueryDelta(&data[0], mask, visitor);
     else if(hasOutput)
         relation->Query(&data[0], mask, visitor);
     else if(relation->QueryExists(&data[0], mask))
         next->Evaluate(locals);
+    assert(tmp == useDelta);
 }
 
 void Evaluation::OutputVariable(std::ostream &os, int variable)

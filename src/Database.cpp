@@ -678,3 +678,8 @@ void DatabaseImpl::Addvarargs(RelationId name, Logical::Extern fn, void * data)
 {
     datastore->variadicExterns[name] = VariadicExtern { fn, data };
 }
+
+bool Database::LogRows() const
+{
+    return GetVerbosity()>=5;
+}

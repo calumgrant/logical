@@ -1,4 +1,53 @@
+I think that the problem is that has:reachable/bf has failed with the self-join and the delta.
 
+Worked example:
+We have a relation `succ` that creates a linear graph 1->2->3-> ... -> 100. The transitive closure of this is a graph of size 5050, which is the graph 1->2, 1->3, ... 1->100, 2->3, ... 2->100, ... 99->100. By using semi-naive evaluation, we do not need to compute the entire transitive closure.
+
+We evaluate this as:
+
+```
+has:reachable(X,Y) :- has:reachable(X,Z), has:successor(Z,Y).
+has:reachable(X,Y) :- has:successor(X,Y).
+
+?- has:reachable(95,X).
+```
+
+To compute `has:reachable(95,X)`, we add `95` to the guard predicate, asserting `has:reachable/b(95)`.
+
+```
+Evaluated has:reachable/b, has:reachable/bf ->
+    Evaluate with 3 variables (called 3 times) ->
+        Scan ∆has:reachable/b (_) -> (_0) (called 3 times) ->
+            Join has:successor (_0,_) -> (_,_1) (called 2 times) ->
+                Write (_0,_1) into has:reachable/bf (called 2 times)
+            Join has:reachable/bf (_0,_) -> (_,_2) (called 2 times) ->
+                Join has:successor (_2,_) -> (_,_1) (called 2 times) ->
+                    Write (_0,_1) into has:reachable/bf (called 2 times)
+```
+
+This iterates over `∆has:reachable/b`, assigning `_0 = 95`.  `Join has:successor (_0,_) -> (_,_1)` looks up `has:successor` and assigns `_1 = 96` and writes this to `has:reachable/bf`.
+
+The next branch evaluates `has:reachable/bf (_0,_)` which turns out to be empty because `has:reachable/bf` belongs to the next iteration. BAM! there's the error.
+
+Next iteration: We advance has:reachable but not the delta.
+
+- External interface to allow inserting data (like an extractor).
+  For example a JavaScript? parser.
+
+- Check partial evaluation with both columns bound.
+
+- Set up github CI and code spaces.
+
+```
+js:parse "foo.js".
+
+auto t = module.GetTable("js:function");
+module.Assert(t, 123, 456, "f");
+$$ = module.CreateNew();
+module.Assert(node, expr_node, $$, $1, $2, $3);
+module.Assert(token, $2);
+module.Assert(locations, $$, ...);
+```
 
 # Partial evaluation (PE)
 

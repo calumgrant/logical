@@ -399,7 +399,7 @@ public:
     void OnRow(Row row) { }
 };
 
-void ExternPredicate::Add(const Entity * row)
+bool ExternPredicate::Add(const Entity * row)
 {
     if(writer.fn)
     {
@@ -407,10 +407,12 @@ void ExternPredicate::Add(const Entity * row)
         Columns allSet((1<<name.arity)-1);
         CallImpl call(database, name, allSet, (Entity*)row, r, writer.data);
         call.call(writer.fn);
+        return true;
     }
     else
     {
         database.Error("This extern does not support writes");
+        return false;
     }
 }
 

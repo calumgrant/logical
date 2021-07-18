@@ -1,5 +1,5 @@
 expected-results 6.
-evaluation-step-limit 10941.
+//evaluation-step-limit 10941.
 
 x is a number if 0<=x<=100.
 

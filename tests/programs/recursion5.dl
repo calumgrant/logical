@@ -6,5 +6,5 @@ fish X if fish X and not fish X.
 
 find fish.
 
-evaluation-step-limit 7.
+evaluation-step-limit 9.
 expected-results 1.
