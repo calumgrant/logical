@@ -247,11 +247,25 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     }
 
     auto & relation = db.GetRelation(name);
+    
+    std::vector<::Entity> row;
+    row.reserve(entitiesOpt->entities.size());
 
-    // TODO: Add the data 
-    std::cout << "TODO: Assert Datalog predicate ";
-    name.Write(db, std::cout);
-    std::cout << ".\n";
+    for(auto & v : entitiesOpt->entities)
+    {
+        auto w = v->IsValue();
+        if(w)
+        {
+            row.push_back(w->GetValue());
+        }
+        else
+        {
+            v->UnboundError(db);
+            return; // Skip this row.
+        }
+    }
+
+    db.GetRelation(name).Add(row.data());
 }
 
 AST::NotImplementedEntity::NotImplementedEntity(AST::Node *n1, AST::Node *n2)

@@ -365,6 +365,8 @@ void DatabaseImpl::MakeProjections(Relation &relation)
      This finds all possibly-related names.
      */
     
+    if(relation.name.IsDatalog()) return;
+    
     std::unordered_set<PredicateName, PredicateName::Hash> subsets, supersets;
     
     // auto & cn = relation.name.attributes;

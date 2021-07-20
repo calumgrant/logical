@@ -874,3 +874,8 @@ Relation & SemiNaivePredicate::GetSemiNaivePredicate(Columns c)
 {
     return underlyingPredicate.GetSemiNaivePredicate(c);
 }
+
+bool PredicateName::IsDatalog() const
+{
+    return arity != attributes.parts.size()+1;
+}

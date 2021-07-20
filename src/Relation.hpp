@@ -47,6 +47,8 @@ public:
     bool operator!=(const PredicateName &n2) const;
     bool operator <=(const PredicateName & n2) const;
     bool operator <(const PredicateName & n2) const;
+    
+    bool IsDatalog() const;
 };
 
 class Relation
