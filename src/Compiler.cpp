@@ -71,15 +71,15 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compila
     }
     
     auto result = next->Compile(db, c);
-    
+        
+    auto & relation = db.GetRelation(name);
+    result = std::make_shared<Join>(relation, inputs, outputs, result);
+
     if(entitiesOpt)
     {
         for(auto & i : entitiesOpt->entities)
             result = i->Compile(db, c, result);
     }
-    
-    auto & relation = db.GetRelation(name);
-    result = std::make_shared<Join>(relation, inputs, outputs, result);
     return result;
 }
 

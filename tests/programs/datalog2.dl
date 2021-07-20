@@ -1,0 +1,12 @@
+
+foo(12).
+foo(13).
+
+?- foo(12).
+
+foo(1,2).
+foo("hello",2).
+
+?- foo(X, 2).
+
+expected-results 3.
