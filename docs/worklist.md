@@ -1,65 +1,49 @@
-I think that the problem is that has:reachable/bf has failed with the self-join and the delta.
+Datalog syntax.
+1. Naming predicates
+2. Other syntaxes, such as count, sum, not.
 
-Worked example:
-We have a relation `succ` that creates a linear graph 1->2->3-> ... -> 100. The transitive closure of this is a graph of size 5050, which is the graph 1->2, 1->3, ... 1->100, 2->3, ... 2->100, ... 99->100. By using semi-naive evaluation, we do not need to compute the entire transitive closure.
+- Think about whether "iteration" should be done implicitly at the point of iterating? Would not work with mutual recursion.
 
-We evaluate this as:
+# Ideas to work on next:
 
-```
-has:reachable(X,Y) :- has:reachable(X,Z), has:successor(Z,Y).
-has:reachable(X,Y) :- has:successor(X,Y).
+1. Big code tidy
+  - Split up files
+  - Tests working on Actions
+  - Work on code spaces
+2. Datalog syntax
+2. Release tasks
+  - Documentation
+  - Test on Linux
+  - Test on Windows
+  - Squash history
+  - Command line options and help text.
+  - Enable specific optimizations
+3. External API
+  - Reference predicates
+    - Write to them (assert)
+    - Bulk write
+    - Query them
+4. Modules
+  - CSV files
+  - MySQL 
+5. Schedule execution
+  - Each execution unit has prerequisites
+6. Better error messages
+  - Expected number of errors
+  - Better inserts
+  - Locations on all nodes.
+  - Performance diagnostics (list expensive predicates)
 
-?- has:reachable(95,X).
-```
+# Future plans
 
-To compute `has:reachable(95,X)`, we add `95` to the guard predicate, asserting `has:reachable/b(95)`.
-
-```
-Evaluated has:reachable/b, has:reachable/bf ->
-    Evaluate with 3 variables (called 3 times) ->
-        Scan ∆has:reachable/b (_) -> (_0) (called 3 times) ->
-            Join has:successor (_0,_) -> (_,_1) (called 2 times) ->
-                Write (_0,_1) into has:reachable/bf (called 2 times)
-            Join has:reachable/bf (_0,_) -> (_,_2) (called 2 times) ->
-                Join has:successor (_2,_) -> (_,_1) (called 2 times) ->
-                    Write (_0,_1) into has:reachable/bf (called 2 times)
-```
-
-This iterates over `∆has:reachable/b`, assigning `_0 = 95`.  `Join has:successor (_0,_) -> (_,_1)` looks up `has:successor` and assigns `_1 = 96` and writes this to `has:reachable/bf`.
-
-The next branch evaluates `has:reachable/bf (_0,_)` which turns out to be empty because `has:reachable/bf` belongs to the next iteration. BAM! there's the error.
-
-Next iteration: We advance has:reachable but not the delta.
-
-- External interface to allow inserting data (like an extractor).
-  For example a JavaScript? parser.
+1. Compilation to C
+2. Parallelism
+3. ANTLR parsers
+4. Optimizations
 
 - Check partial evaluation with both columns bound.
-
-- Set up github CI and code spaces.
-
-```
-js:parse "foo.js".
-
-auto t = module.GetTable("js:function");
-module.Assert(t, 123, 456, "f");
-$$ = module.CreateNew();
-module.Assert(node, expr_node, $$, $1, $2, $3);
-module.Assert(token, $2);
-module.Assert(locations, $$, ...);
-```
-
-# Partial evaluation (PE)
-
-Partial evaluation is the ability to run predicates without evaluating the entire predicate. This can save significant time and space. It is also known as "semi-naive evaluation".
-
-1. A rule makes a query to a predicate. The bound columns indicate whether this combination should be evaluated partially or fully.
-2. If the bound columns indicate PE, then the bound arguments are added to a "guard".
-  a. If the bound arguments are new, then the predicate is evaluated first (step 3), then the results are returned as normal after PE.
-  b. If the bound arguments have been found already, then the results are returned from the existing predicate results as if the predicate had been fully evaluated already.
-3. The first step in the rule is to iterate over the "guard" to find all arguments it needs to evaluate. This works like regular "delta" evaluation, so only new results are evaluated. The tail of the rule is rewritten to take into consideration the fact that the given arguments are bound by the first step.
-4. The execution unit is iterated until there are no more results (reaches a fixed point).
-5. The results of the predicate are returned from the computed results set as if the predicate had been fully evaluated.
+- Check that the evaluation 
+- Tidy up help text when Logical started.
 
 - [ ] report of predicate performance (by number of steps).
 
@@ -118,29 +102,13 @@ class PredicateCall : public Call
   }
 };
 
-class ComputedPredicate : public Call
+class ComputedPredicateCall : public Call
 {
-  void First()
-}
+  void Init(Row data);
+  void Query();
+  bool Next();
+};
 ```
-
-## Semi-naive and mutual recursion
-
-
-
-The new rows become part of the "delta" and each time a query is made to a PE predicate, the rules needs to be iterated. If the rules make further queries, then are added to the next iteration. We create a pseudo-relation that effectively becomes the "guard"
-
-There needs to be a special predicate 
-
-
-On an execution unit??
-What about mutual recursion??
-
-Relation::Query
-->RunRules()
-
-Next:
-- CSV support.
 
 ```
 csv:filename name has row x, column y, text x.
@@ -148,18 +116,13 @@ csv:filename name has row x, column y, text x.
 csv:filename name has row r, surname _, forename _. 
 ```
 
-- Semi-naive.
-
-
 Idea: Inline predicates. Make the projections inline. Have some rules as being marked "inline" and can be partially bound. This could avoid storing intermediate results.
 
-Allow unnamed variables, e.g. `mysql:query "..." has x, y, z.`
+Allow unnamed attributes, e.g. `mysql:query "..." has x, y, z.`
 
 Enumerating arbitrary predicates
 - As if they were inline
 - How can we use an enumerator???
-
-
 
 # Implementing a bytecode machine (LLVM-lite) -- future
 
@@ -272,34 +235,11 @@ class CodeGen
 - [ ] Finish semi-naive evaluation
 
 ## Tables
-- [X] Implement different table types. Perhaps using a strategy pattern?
-  - Writable table concept
-    - `table.Add(Int...)`, `void Add(const Int*)`    
-  - Queryable table concept
-    - `bool table.Find(Enumerator, BoundColumns, const Int*)`, `bool table.Find(Enumerator, BoundColumns, Int...)`
-    - `bool table.Next(Enumerator, BoundColumns, Int*)`, `bool table.Next(Enumerator, BoundColumns, Int...)`)
-    - Query types: Scan, Probe, Join (which columns)
-    - `bool CanFind(BoundColumns)`
-  - Delta concept
-    - `void table.Add(bool&, Int...)`, `void table.Add(bool&, const Int*)`
-    - `table.NextIteration()` - applies to all tables in the delta
-    - `enumerator table.FindDelta(Enumerator, BoundColumns, const Int*)`, `enumerator table.FindDelta(BoundColumns, Int...)`
-  - Table implementations:
-    - `BasicTable<Arity>` (Writable) - just accumulates values
-    - `SortedTable<Arity>` (Querable) - sorted and deduplicated
-    - `CompactSortedTable<Arity>` (Queryable) - sorted, deduplicated and stored in 32-bit form
-    - `BasicHashTable<Arity>` (Writable, Queryable, Delta) - queries limited to delta/fully bound
-    - `QueryableHashTable<Arity, Indexes...>` (Writable, Queryable, Delta)
-    - `UnsortedIndex<Arity>` (Queryable) - supports scan
-    - `SortedIndex<Arity>` (Queryable) - supports join 
-    - `HashIndex<BoundColumns>` (Queryable) - supports scan, join
-    - `CompactTableIndex<Arity>` - stored in 32-bit form. Has a pointer to an array of `EntityType`.
   - Compact tables
     - Stores values as `std::int32_t` and has a set of columns (EntityType)
     - All entitytypes can support `Entity(t, v)` which converts an entity from short form to long form.
   - [X] All enumerators consist of a class `Enumerator` containing 2 32-bit ints.
-- [X] Implement internal tables in terms of these tables
-  - Finalise table after evaluation -> turn it into a `SortedTable<>`
+- Finalise table after evaluation -> turn it into a `SortedTable<>`
 
 ## Finish the external API
 - [X] Fix naming scheme, e.g. `mysql:database db has username foo`. `mysql:Test:person id has name name`
@@ -318,13 +258,6 @@ class CodeGen
 - [ ] Queries on bound columns, e.g. `mysql:Test:Person 123 has surname X`
 - [ ] What about projections??
 - [ ] Connection pool
-
-## Finish semi-naive evaluation
-- [ ] Mark some predicates as semi-naive
-- [ ] Callee implicitly implements semi-naive
-  - [ ] Table of already-bound columns
-  - [ ] Bound evaluation rules
-
 
 # General ideas
 
@@ -349,54 +282,6 @@ class CodeGen
 - Optimization: Can "push" all results to the first tuple. Can auto-inline any predicate that is never queried. We can "push" all results to other predicates without storing them.
 
 ```
-void MyTc(Call & call)
-{
-  TableData p;
-  FifoData f;
-  JoinData j1, j2;
-  Int a,b,c;
-
-  InitTable(call, p);
-  InitFifo<2>(f);
-
-  // Base case
-  InitJoin<2>(j1, p);
-l1:
-  if(!Next<2>(j1, a, b)) goto l3;
-  Write(f, a, b);
-  goto l1;
-
-  // Recursive case
-l3:
-  InitJoin(j1, f);  // ??
-l4:
-  if(!Next<2>(f, a, b)) goto l6;
-  InitJoin<2>(j2, p, b);
-l5:
-  if(!Next<2>(j2, c)) goto l4;
-  Write(f, a, c);
-  goto l5;
-
-  // End
-l6:
-}
-
-auto table1 = MakeHashTable<3>();
-auto table3 = MakeUnique
-auto table2 = call.GetTable(predicate);
-
-// Right at the end:
-// Compresses the table
-// Grabs ownership.
-call.AttachResults(table);
-
-auto iterator = table.FindAll();
-
-auto enumerator = table.Find(Ints... bound);
-
-iterator.Current()
-iterator.Next();
-
 struct Task
 {
   std::atomic<Task *> next;
@@ -404,8 +289,6 @@ struct Task
 };
 ```
 
-- Semi-naive
-- Write proper predicate names into the `debugName`
 - Split recursive predicates up into two loops (base case and recursive).
 
 - Optimization: Drop deduplication guard on things that are already deduplicated.
@@ -417,14 +300,9 @@ struct Task
 - Externs
   - Check binding errors at compile time?
   - Think about whether we want to change the `Table` not the predicate?
-- Refactor predicate name/compoundname as it's horrid and ugly.
-  `class PredicateName` ??
 - All errors to have locations
 - Locations to have filenames
 - Test projecting external predicates.
-- Think about how qualified names are supposed to with with attributes?
-  xml:node node has child c, index i. In this case we want a single predicate
-    `xml:node:child:index.`
 - Private symbols in modules?
 
 ## Running as a server
@@ -512,53 +390,12 @@ becomes (* = write, _ = read)
 
 - Avoid virtual functions for efficiency, for example in `Database` and `Relation`.
 
-- Implement a variable checker analyser
-  - No undefined reads.
-  - No duplicate writes.
-  - No dead writes.
-
 - What about AddBBB ?? Implement as:
   c = a+b, c=d, 
 - Check negate FB (Same as negateBF)
 
 - new objects to define a variable, and use `and` to assert further facts, for example
   `new expression p has ...,p has parent e.`
-
-# Proper bytecode
-
-The C compilation gives a clue into how to compile as bytecode.
-
-Bytecode readily translated into C.
-
-Instruction-set:
-- Function: number of tables, number of joins, number of locals.
-- Init: Start a join or a scan
-- Next: Find next result
-- Copy: Copy a result
-- Write: Write data to result predicate/table.
-
-# Database interface
-
-```
-// Opens the "mysql" module
-load-module "mysql".
-
-// Opens a connection to the database
-// Creates predicates
-mysql:connection @connection1 has hostname "localhost", database "db1", username "admin", password "whoops".
-
-mysql:connection @connection1 has cached-table "person".
-mysql:connection @connection1 has writable-table person.
-
-// Read from a table
-person X has name Y if mysql:names has id X, surname Y.
-
-// Write to a table
-new mysql:results has id 123, location l1, 
-
-// Close the connection
-mysql:close @connection1.
-```
 
 # Parallelism
 
@@ -808,15 +645,6 @@ if optimization-level is 0 then step-limit is 1000.
 ```
 
 - Optimization: Don't evaluate a rule twice if it's not recursive. (e.g. when attached to multiple predicates.)
-
-# Strings
-List of predicates:
-  - `has:length`
-  - `has:substring:from:to`
-  - `has:lowercase`, `has:uppercase`
-  - `has:regex-match`
-  - `has:char:at`
-
 - Report error when defining a builtin predicate.
 
 # Persist
@@ -854,13 +682,6 @@ List of predicates:
 - Use square brackets for special annotations, such as: `[in]`, `[out]`
 - Syntax highlighter
 
-- Optimization: Avoid redundant writes.
-
-- Bug `number X has square Y if number X and Y = X*X.` is not really recursive.
-
-- Problem is rules attached to multiple predicates. How does the analysis work there???
-
-- Unit tests for tables.
 - Help option: `-h`
 - `logical:option "no-joinreorder"`.
 - Have a better find syntax.

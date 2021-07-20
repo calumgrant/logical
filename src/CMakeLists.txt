@@ -139,6 +139,10 @@ add_test(NAME Recursion5 COMMAND logical ../tests/programs/recursion5.dl)
 add_test(NAME Recursion6 COMMAND logical ../tests/programs/recursion6.dl)
 add_test(NAME Recursion7 COMMAND logical ../tests/programs/recursion7.dl)
 
+add_test(NAME Closure1 COMMAND logical ../tests/performance/closure1.dl)
+add_test(NAME Closure2 COMMAND logical ../tests/performance/closure2.dl)
+add_test(NAME Closure3 COMMAND logical ../tests/performance/closure3.dl)
+
 add_test(NAME Projection1 COMMAND logical ../tests/programs/projection1.dl)
 add_test(NAME Projection2 COMMAND logical ../tests/programs/projection2.dl)
 add_test(NAME Projection3 COMMAND logical ../tests/programs/projection3.dl)
