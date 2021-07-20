@@ -54,7 +54,33 @@ void AST::Rule::Compile(Database &db)
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compilation &c)
 {
-    return std::make_shared<NoneEvaluation>();
+    auto name = GetPredicateName();
+    std::vector<bool> boundVars(name.arity);
+    std::vector<int> inputs(name.arity), outputs(name.arity);
+    
+    if(entitiesOpt)
+    {
+        for(int i=0; i<name.arity; ++i)
+        {
+            bool bound = false;
+            auto var = entitiesOpt->entities[i]->BindVariables(db, c, bound);
+            boundVars[i] = bound;
+            if(bound) { inputs[i] = var, outputs[i] = -1; }
+            else { inputs[i] = -1, outputs[i] = var; }
+        }
+    }
+    
+    auto result = next->Compile(db, c);
+    
+    if(entitiesOpt)
+    {
+        for(auto & i : entitiesOpt->entities)
+            result = i->Compile(db, c, result);
+    }
+    
+    auto & relation = db.GetRelation(name);
+    result = std::make_shared<Join>(relation, inputs, outputs, result);
+    return result;
 }
 
 std::shared_ptr<Evaluation> AST::NotImplementedClause::Compile(Database &db, Compilation &c)
@@ -113,7 +139,6 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
         for(int i=0; i<name.attributes.parts.size(); ++i)
         {
             auto m = 1 + name.attributes.mapFromInputToOutput[i];
-            // TODO: If the variable is not used, then the output should be -1.
             if(attributes->attributes[i].bound)
                 inputs[m] =  attributes->attributes[i].slot,
                 outputs[m] = -1;

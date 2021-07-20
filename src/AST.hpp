@@ -364,6 +364,8 @@ namespace AST
 
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
+    private:
+        PredicateName GetPredicateName() const;
         std::unique_ptr<Predicate> predicate;
         std::unique_ptr<EntityList> entitiesOpt;
     };

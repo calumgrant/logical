@@ -1,8 +1,9 @@
 Datalog syntax.
+0. Asserting
+1. Querying/finding
 1. Naming predicates
 2. Other syntaxes, such as count, sum, not.
-
-- Think about whether "iteration" should be done implicitly at the point of iterating? Would not work with mutual recursion.
+3. Linking Datalog and Logical predicates
 
 # Ideas to work on next:
 

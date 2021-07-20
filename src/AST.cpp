@@ -209,14 +209,23 @@ AST::DatalogPredicate::DatalogPredicate(Predicate * predicate, EntityList * enti
 {
 }
 
-void AST::DatalogPredicate::AssertFacts(Database &db) const
+PredicateName AST::DatalogPredicate::GetPredicateName() const
 {
     PredicateName name;
     name.objects.parts.push_back(predicate->nameId);
     name.arity = entitiesOpt ? entitiesOpt->entities.size() : 0;
+    return name;
+}
 
+void AST::DatalogPredicate::AssertFacts(Database &db) const
+{
+    auto name = GetPredicateName();
+    
     switch(name.arity)
     {
+    case 0:
+        std::cout << "TODO: Nonary predicates\n";
+        return;
     case 1:
         {
             auto v = entitiesOpt->entities[0]->IsValue();

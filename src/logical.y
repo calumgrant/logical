@@ -108,6 +108,10 @@ datalog:
         rule->Compile(db);
     }
 |   tok_questiondash datalog_predicate tok_dot
+    {
+        std::unique_ptr<AST::Clause> query($2);
+        query->Find(db);
+    }
 |   tok_questiondash datalog_rule tok_dot
 ;
 
