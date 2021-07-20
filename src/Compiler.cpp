@@ -320,6 +320,32 @@ std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compil
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Compilation &c)
 {
+    if(entitiesOpt)
+    {
+        std::vector<int> row(entitiesOpt->entities.size());
+
+        for(int i=0; i<entitiesOpt->entities.size(); ++i)
+        {
+            bool bound;
+            row[i] = entitiesOpt->entities[i]->BindVariables(db, c, bound);
+            if(!bound)
+            {
+                entitiesOpt->entities[i]->UnboundError(db);
+            }
+        }
+        
+        auto & relation = db.GetRelation(GetPredicateName());
+        EvaluationPtr result = std::make_shared<Writer>(relation, row);
+        
+        for(auto & i : entitiesOpt->entities)
+            result = i->Compile(db, c, result);
+        
+        return result;
+    }
+    else
+    {
+        std::cout << "TODO: nonary predicates\n";
+    }
     return std::make_shared<NoneEvaluation>();
 }
 
@@ -457,7 +483,9 @@ std::shared_ptr<Evaluation> AST::Not::CompileLhs(Database &db, Compilation &c)
 
 void AST::DatalogPredicate::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
 {
-    // TODO
+    // TODO: Cache the predicatename
+    auto & relation = db.GetRelation(GetPredicateName());
+    relation.AddRule(rule);
 }
 
 void AST::NotImplementedClause::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)

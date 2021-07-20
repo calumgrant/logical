@@ -163,3 +163,4 @@ add_test(NAME Reaches1 COMMAND logical ../tests/programs/reaches1.dl)
 
 add_test(NAME Datalog1 COMMAND logical ../tests/programs/datalog1.dl)
 add_test(NAME Datalog2 COMMAND logical ../tests/programs/datalog2.dl)
+add_test(NAME Datalog3 COMMAND logical ../tests/programs/datalog3.dl)

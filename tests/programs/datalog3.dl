@@ -1,0 +1,7 @@
+
+foo(1).
+foo("123").
+bar(x) :- foo(x).
+
+expected-results 2.
+?- bar(_).
