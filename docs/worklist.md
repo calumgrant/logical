@@ -5,6 +5,9 @@ Datalog syntax.
 2. Other syntaxes, such as count, sum, not.
 3. Linking Datalog and Logical predicates
 
+- nonary predicates.
+
+
 # Ideas to work on next:
 
 1. Big code tidy

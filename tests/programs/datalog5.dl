@@ -1,0 +1,9 @@
+
+f(x) :- 1=x.
+g(x) :- x=1.
+h(x) :- 1<=x<=10, x!=5, not x>7.
+
+expected-results 8.
+?- f(x).
+?- g(x).
+?- h(x).

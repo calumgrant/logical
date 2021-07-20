@@ -140,7 +140,16 @@ datalog_rule:
 
 datalog_base_clause:
     datalog_predicate
-|   entity comparator entity { $$ = new AST::NotImplementedClause($1, $3); }
+|   entity_expression comparator entity_expression 
+    {
+        $$ = new AST::Comparator($1, $2, $3);
+    }
+|   entity_expression comparator entity_expression comparator entity_expression
+    {
+        // Technically this is too broad but anyway
+        // This would allow 1>=X>=2 which we don't really want.
+        $$ = new AST::Range($1, $2, $3, $4, $5);
+    }
 |   tok_open datalog_clause tok_close { $$ = $2; }
 ;
 

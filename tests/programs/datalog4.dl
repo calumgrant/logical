@@ -1,0 +1,14 @@
+foo(1).
+bar(x) :- foo(x).
+baz(x) :- foo(x), bar(x).
+bat(x) :- bar(x), bar(x), foo(x).
+
+True(true).
+False(false).
+
+p(x) :- True(x); False(x).
+
+expected-results 4.
+?- baz(_).
+?- bat(_).
+?- p(_).
