@@ -338,6 +338,8 @@ std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compil
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Compilation &c)
 {
+    auto & relation = db.GetRelation(GetPredicateName());
+
     if(entitiesOpt)
     {
         std::vector<int> row(entitiesOpt->entities.size());
@@ -352,7 +354,6 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Comp
             }
         }
         
-        auto & relation = db.GetRelation(GetPredicateName());
         EvaluationPtr result = std::make_shared<Writer>(relation, row);
         
         for(auto & i : entitiesOpt->entities)
@@ -362,7 +363,7 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Comp
     }
     else
     {
-        std::cout << "TODO: nonary predicates\n";
+        return std::make_shared<Writer>(relation, std::vector<int>());
     }
     return std::make_shared<NoneEvaluation>();
 }

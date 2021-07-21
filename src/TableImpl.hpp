@@ -110,3 +110,23 @@ private:
     
     column_index & GetIndex(Logical::DynamicBinding);
 };
+
+class NonaryTable : public Table
+{
+public:
+    NonaryTable();
+    Size Rows() const override;
+    void Query(Row row, Columns columns, Receiver&v) override;
+    void QueryDelta(Row row, Columns columns, Receiver&v) override;
+    bool QueryExists(Row row, Columns columns) override;
+    void OnRow(Row row) override;
+    bool Add(const Entity *e) override;
+    void Clear() override;
+    ::Arity GetArity() const override;
+    void NextIteration() override;
+    void FirstIteration() override;
+    void ReadAllData(Receiver&r) override;
+private:
+    bool contents=false;
+    bool delta=false;
+};

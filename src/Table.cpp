@@ -396,6 +396,69 @@ void TableImpl2<Arity>::ReadAllData(Receiver&r)
         r.OnRow((Entity*)row);
 }
 
+NonaryTable::NonaryTable() : contents(), delta()
+{
+}
+
+Size NonaryTable::Rows() const
+{
+    return contents;
+}
+
+
+void NonaryTable::Query(Row row, Columns columns, Receiver&v)
+{
+    if(contents) v.OnRow(row);
+}
+
+void NonaryTable::QueryDelta(Row row, Columns columns, Receiver&v)
+{
+    if(contents && !delta) v.OnRow(row);
+}
+
+bool NonaryTable::QueryExists(Row row, Columns columns)
+{
+    return contents;
+}
+
+void NonaryTable::OnRow(Row row)
+{
+    contents = true;
+}
+
+bool NonaryTable::Add(const Entity *e)
+{
+    bool added = !contents;
+    contents = true;
+    return added;
+}
+
+void NonaryTable::Clear()
+{
+    contents = false;
+    delta = false;
+}
+
+::Arity NonaryTable::GetArity() const
+{
+    return 0;
+}
+
+void NonaryTable::NextIteration()
+{
+    delta = contents;
+}
+
+void NonaryTable::FirstIteration()
+{
+    delta = false;
+}
+
+void NonaryTable::ReadAllData(Receiver&r)
+{
+    if(contents) r.OnRow(nullptr);
+}
+
 std::shared_ptr<Table> Table::MakeTable(persist::shared_memory &mem, Arity arity)
 {
     // Old implementation
@@ -403,6 +466,8 @@ std::shared_ptr<Table> Table::MakeTable(persist::shared_memory &mem, Arity arity
     
     switch(arity)
     {
+        case 0:
+            return allocate_shared<NonaryTable>(mem);
         case 1:
             return allocate_shared<TableImpl2<Logical::StaticArity<1>>>(mem, mem, Logical::StaticArity<1>());
         case 2:

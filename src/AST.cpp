@@ -224,7 +224,7 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     switch(name.arity)
     {
     case 0:
-        std::cout << "TODO: Nonary predicates\n";
+        db.GetRelation(name).Add(nullptr);
         return;
     case 1:
         {

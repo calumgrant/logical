@@ -1,0 +1,11 @@
+
+f().
+g() :- f().
+
+expected-results(2).
+
+?- f().
+?- g().
+
+error("Nonary 1") :- not f().
+error("Nonary 2") :- not g().

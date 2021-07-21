@@ -802,7 +802,13 @@ void Reader::Explain(Database &db, std::ostream &os, int indent) const
 
 Writer::Writer(Relation &relation, const std::vector<int> &slots) : WriterEvaluation(relation), slots(slots)
 {
-    assert(slots.size() > 0);
+    if(slots.size()==0)
+    {
+        // It's valid to write a nonary predicate.
+        contiguous = true;
+        return;
+    }
+    
     slot = slots[0];
     contiguous = true;
     for (int i = 1; i < slots.size(); ++i)
