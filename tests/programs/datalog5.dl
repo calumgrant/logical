@@ -7,3 +7,5 @@ expected-results 8.
 ?- f(x).
 ?- g(x).
 ?- h(x).
+
+error("Comparison") :- h(5).

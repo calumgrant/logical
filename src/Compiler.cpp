@@ -69,8 +69,26 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compila
             else { inputs[i] = -1, outputs[i] = var; }
         }
     }
-    
+
     auto result = next->Compile(db, c);
+    
+    if(entitiesOpt)
+    {
+        for(int i=0; i<name.arity; ++i)
+        {
+            for(int j=0; j<i; ++j)
+            {
+                if(outputs[j] == inputs[i])
+                {
+                    outputs[i] = c.AddUnnamedVariable();
+                    inputs[i] = -1;
+                    result = std::make_shared<EqualsBB>(outputs[j], outputs[i], result);
+                    break;
+                }
+            }
+        }
+    }
+
         
     auto & relation = db.GetRelation(name);
     result = std::make_shared<Join>(relation, inputs, outputs, result);
