@@ -1,5 +1,19 @@
 // Test names
 
-expected-results 1.
+expected-results 7.
+
 ?- length("abc", _).
 ?- string:length("abc", _).
+?- regex:match(".", "a").
+?- regex:match:group:value("a(.)c", "abc", 0, "abc").
+?- regex:match:group:value("a(.)c", "abc", 1, "b").
+?- regex:match:value:group("a(.)c", "abc", "b", 1).
+
+result:message:id("Query 1", "This looks bad", 1).
+result:id:message("Query 1", 2, "This also looks bad").
+
+?- result:message:id(_,_,_).
+
+error("Reorder 1") :- not result:id(_, 1).
+error("Reorder 2") :- not result:message:id(_, _, 2).
+error("Reorder 3") :- not result:id:message(_, 1, _).

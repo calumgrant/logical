@@ -318,15 +318,16 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
 
     auto & relation = db.GetRelation(name);
     
-    std::vector<::Entity> row;
-    row.reserve(entitiesOpt->entities.size());
+    std::vector<::Entity> row(entitiesOpt->entities.size());
 
-    for(auto & v : entitiesOpt->entities)
+    for(int i=0; i<entitiesOpt->entities.size(); ++i)
     {
+        auto & v = entitiesOpt->entities[i];
         auto w = v->IsValue();
         if(w)
         {
-            row.push_back(w->GetValue());
+            auto j = name.MapArgument(i);
+            row[j]= w->GetValue();
         }
         else
         {

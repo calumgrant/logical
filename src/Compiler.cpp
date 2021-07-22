@@ -65,8 +65,9 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compila
             bool bound = false;
             auto var = entitiesOpt->entities[i]->BindVariables(db, c, bound);
             boundVars[i] = bound;
-            if(bound) { inputs[i] = var, outputs[i] = -1; }
-            else { inputs[i] = -1, outputs[i] = var; }
+            auto j = name.MapArgument(i);
+            if(bound) { inputs[j] = var, outputs[j] = -1; }
+            else { inputs[j] = -1, outputs[j] = var; }
         }
     }
 
@@ -621,7 +622,9 @@ public:
     void Explain(Database &db, std::ostream &os, int indent) const override
     {
         Indent(os, indent);
-        os << "Print row\n";
+        os << "Print row";
+        OutputCallCount(os);
+        os << "\n";
     }
     
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override

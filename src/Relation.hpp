@@ -49,6 +49,10 @@ public:
     bool operator <(const PredicateName & n2) const;
     
     bool IsDatalog() const;
+    
+    // Maps a positional argument to a relation argument
+    // In case they become reordered.
+    int MapArgument(int arg) const;
 };
 
 class Relation

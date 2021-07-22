@@ -879,3 +879,8 @@ bool PredicateName::IsDatalog() const
 {
     return arity != attributes.parts.size()+1;
 }
+
+int PredicateName::MapArgument(int arg) const
+{
+    return arg==0 || IsDatalog() ? arg : 1+attributes.mapFromInputToOutput[arg-1];
+}
