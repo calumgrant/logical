@@ -1,11 +1,7 @@
 Datalog syntax.
-0. Asserting
-1. Querying/finding
 1. Naming predicates
-2. Other syntaxes, such as count, sum, not.
+2. Other syntaxes, such as count, sum
 3. Linking Datalog and Logical predicates
-
-- nonary predicates.
 
 
 # Ideas to work on next:

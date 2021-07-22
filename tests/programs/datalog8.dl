@@ -1,0 +1,5 @@
+// Test names
+
+expected-results 1.
+?- length("abc", _).
+?- string:length("abc", _).

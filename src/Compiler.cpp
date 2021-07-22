@@ -54,7 +54,7 @@ void AST::Rule::Compile(Database &db)
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compilation &c)
 {
-    auto name = GetPredicateName();
+    auto name = GetPredicateName(db);
     std::vector<bool> boundVars(name.arity);
     std::vector<int> inputs(name.arity), outputs(name.arity);
     
@@ -78,7 +78,7 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compila
         {
             for(int j=0; j<i; ++j)
             {
-                if(outputs[j] == inputs[i])
+                if(outputs[j] == inputs[i] && inputs[i] != -1)
                 {
                     outputs[i] = c.AddUnnamedVariable();
                     inputs[i] = -1;
@@ -338,7 +338,7 @@ std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compil
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Compilation &c)
 {
-    auto & relation = db.GetRelation(GetPredicateName());
+    auto & relation = db.GetRelation(GetPredicateName(db));
 
     if(entitiesOpt)
     {
@@ -503,7 +503,7 @@ std::shared_ptr<Evaluation> AST::Not::CompileLhs(Database &db, Compilation &c)
 void AST::DatalogPredicate::AddRule(Database &db, const std::shared_ptr<Evaluation> & rule)
 {
     // TODO: Cache the predicatename
-    auto & relation = db.GetRelation(GetPredicateName());
+    auto & relation = db.GetRelation(GetPredicateName(db));
     relation.AddRule(rule);
 }
 

@@ -209,17 +209,78 @@ AST::DatalogPredicate::DatalogPredicate(Predicate * predicate, EntityList * enti
 {
 }
 
-PredicateName AST::DatalogPredicate::GetPredicateName() const
+PredicateName AST::DatalogPredicate::GetPredicateName(Database & db) const
 {
+    // Unpack a name from a Datalog name to a Logical name
+    // For example: string:length(_,_) becomes string _ has length _.
+    
     PredicateName name;
-    name.objects.parts.push_back(predicate->nameId);
+    
     name.arity = entitiesOpt ? entitiesOpt->entities.size() : 0;
+    
+    if(entitiesOpt)
+    {
+        auto str = db.GetString(predicate->nameId);
+        
+        int colons = 0;
+        for(auto s : str)
+        {
+            if(s==':') ++colons;
+        }
+                
+        if(colons>0 && colons+1 >= name.arity)
+        {
+            // We need to unpack this name
+            int firstColon = colons + 2 - name.arity;
+            int c=0;
+            std::string latest;
+            std::vector<int> attributes;
+            
+            for(int i=0; i<str.size(); ++i)
+            {
+                if(str[i]==':')
+                {
+                    ++c;
+                    if(c == firstColon)
+                    {
+                        name.objects.parts.push_back(db.GetStringId(latest.c_str()));
+                        latest="";
+                    }
+                    else if(c>firstColon)
+                    {
+                        attributes.push_back(db.GetStringId(latest.c_str()));
+                        latest="";
+                    }
+                    else
+                    {
+                        latest += str[i];
+                    }
+                }
+                else
+                {
+                    latest += str[i];
+                }
+            }
+
+            attributes.push_back(db.GetStringId(latest.c_str()));
+            
+            name.attributes = CompoundName(attributes);
+        }
+        else
+        {
+            name.objects.parts.push_back(predicate->nameId);
+        }
+    }
+    else
+    {
+        name.objects.parts.push_back(predicate->nameId);
+    }
     return name;
 }
 
 void AST::DatalogPredicate::AssertFacts(Database &db) const
 {
-    auto name = GetPredicateName();
+    auto name = GetPredicateName(db);
     
     switch(name.arity)
     {
