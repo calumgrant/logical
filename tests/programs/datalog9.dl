@@ -1,2 +1,18 @@
 // Tests quantifiers
 
+foo(1).
+foo(2).
+
+expected-results 4.
+
+?- y = 10.
+?- y = count x in (foo x).
+?- y = count(x, foo(x)).
+?- y = sum(x, foo(x)).
+
+money(@1, 10).
+money(@2, 10).
+
+error("Count") :- count(x, money(x,_))!=2.
+error("Sum 1") :- sum(x, money(_,x)) != 10.
+error("Sum 2") :- sum(x, y, money(x,y)) != 20.

@@ -107,7 +107,7 @@ datalog:
         rule->SetPragma($1);
         rule->Compile(db);
     }
-|   tok_questiondash datalog_predicate tok_dot
+|   tok_questiondash datalog_clause tok_dot
     {
         std::unique_ptr<AST::Clause> query($2);
         query->Find(db);
@@ -430,6 +430,9 @@ sumentity:
         $$ = new AST::Sum(nullptr, $2, $5);
     }
 |   tok_count entity_expression tok_in tok_open clause tok_close { $$ = new AST::Count($2, $5); }
+|   tok_count tok_open entity_expression tok_comma datalog_clause tok_close { $$ = new AST::Count($3, $5); }
+|   tok_sum tok_open variable tok_comma datalog_clause tok_close { $$ = new AST::Sum(nullptr, $3, $5); }
+|   tok_sum tok_open variable tok_comma variable tok_comma datalog_clause tok_close { $$ = new AST::Sum($3, $5, $7); }
 ;
 
 entity_expression: sumentity;
