@@ -1,0 +1,7 @@
+load-module externs-test.
+
+test:setdata 1.
+test:setdata(2).
+
+error "Externs 1" if not test:getdata 1 or not test:getdata 2.
+error("Externs 2") :- not(test:getdata(1)); not(test:getdata(2)).

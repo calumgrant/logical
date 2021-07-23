@@ -105,7 +105,10 @@ public:
     bool enableSemiNaive = false;
 
     std::shared_ptr<ExecutionUnit> loop;
+    std::shared_ptr<Logical::Call> externalCall;
     PredicateName name;
+    
+    Logical::Call & GetExternalCall();
     
     virtual Relation& GetSemiNaivePredicate(Columns columns) =0;
     

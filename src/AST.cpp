@@ -228,7 +228,7 @@ PredicateName AST::DatalogPredicate::GetPredicateName(Database & db) const
             if(s==':') ++colons;
         }
                 
-        if(colons>0 && colons+1 >= name.arity)
+        if(colons>0 && name.arity>1 && colons+1 >= name.arity)
         {
             // We need to unpack this name
             int firstColon = colons + 2 - name.arity;

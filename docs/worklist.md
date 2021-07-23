@@ -1,8 +1,6 @@
-Datalog syntax.
-1. Naming predicates
-2. Other syntaxes, such as count, sum
-3. Linking Datalog and Logical predicates
-
+Next: Externs that set data.
+- `read-csv-file "foo.csv".
+- Bug with datalog accessing external predicates.
 
 # Ideas to work on next:
 
@@ -10,7 +8,6 @@ Datalog syntax.
   - Split up files
   - Tests working on Actions
   - Work on code spaces
-2. Datalog syntax
 2. Release tasks
   - Documentation
   - Test on Linux

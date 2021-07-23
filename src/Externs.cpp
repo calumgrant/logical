@@ -101,6 +101,22 @@ void Logical::Module::AddCommand(Extern ex, const char*name1, const char * name2
     AddCommand(ex, 3, names, nullptr);
 }
 
+PredicateName GetPredicate(Database & db, int count, const char **name)
+{
+    auto nameId = db.GetStringId(name[0]);
+    std::vector<int> parts;
+    parts.reserve(count-1);
+    for(int i=1; i<count; ++i)
+        parts.push_back(db.GetStringId(name[i]));
+    CompoundName cn(parts);
+    
+    PredicateName pn;
+    pn.arity = count;
+    pn.objects.parts.push_back(nameId);
+    pn.attributes = std::move(cn);
+
+    return pn;
+}
 
 void Logical::Module::AddCommand(Extern ex, int count, const char ** name, void * data)
 {
@@ -111,16 +127,8 @@ void Logical::Module::AddCommand(Extern ex, int count, const char ** name, void 
         return;
     }
     
-    auto nameId = db.GetStringId(name[0]);
-    std::vector<int> parts;
-    parts.reserve(count-1);
-    for(int i=1; i<count; ++i)
-        parts.push_back(db.GetStringId(name[i]));
-    CompoundName cn(parts);
-    PredicateName pn;
-    pn.arity = count;
-    pn.objects.parts.push_back(nameId);
-    pn.attributes = std::move(cn);
+    PredicateName pn = ::GetPredicate(db, count, name);
+    
     auto & exfn = db.GetExtern(pn);
     
     exfn.AddExtern(ex, data);
@@ -476,4 +484,47 @@ void ExternPredicate::AddVarargs(Logical::Extern fn, void * data)
 {
     varargs.fn = fn;
     varargs.data = data;
+}
+
+Logical::Call & Logical::Module::GetPredicate(const char * name)
+{
+    return GetPredicate(1, &name);
+}
+
+Logical::Call & Logical::Module::GetPredicate(int arity, const char **name)
+{
+    auto & db = ((ModuleImpl*)this)->database;
+    
+    PredicateName pn = ::GetPredicate(db, arity, name);
+    auto & relation = db.GetRelation(pn);
+    return relation.GetExternalCall();
+}
+
+class ReceiverCallImpl : public CallImpl, public Receiver
+{
+public:
+    ReceiverCallImpl(Relation & rel) :
+        CallImpl(rel.GetDatabase(), rel.name, 0, nullptr, *this, nullptr),
+        relation(rel), rowData(name.arity)
+    {
+        row = rowData.data();
+    }
+    
+    Relation & relation;
+    std::vector<Entity> rowData;
+    
+    void OnRow(Row row) override
+    {
+        relation.Add(row);
+    }
+};
+
+Logical::Call & Relation::GetExternalCall()
+{
+    if(!externalCall)
+    {
+        externalCall = std::make_shared<ReceiverCallImpl>(*this);
+    }
+        
+    return *externalCall;
 }

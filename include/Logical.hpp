@@ -98,6 +98,9 @@ namespace Logical
         void SetExpectedResults(Int expected);
         void SetEvaluationStepLimit(Int limit);
         
+        Call & GetPredicate(const char *);
+        Call & GetPredicate(int params, const char **);
+
     protected:
         Module();
         Module(const Module&) = delete;

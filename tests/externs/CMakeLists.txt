@@ -18,3 +18,4 @@ add_custom_command(TARGET externs-test POST_BUILD COMMAND ${CMAKE_COMMAND} -E co
 add_test(NAME LoadExterns COMMAND logical ../../tests/externs/load.dl)
 add_test(NAME CountArgs COMMAND logical ../../tests/externs/count.dl)
 add_test(NAME ListArgs COMMAND logical ../../tests/externs/listargs.dl)
+add_test(NAME SetData COMMAND logical ../../tests/externs/setdata.dl)

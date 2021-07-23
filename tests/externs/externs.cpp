@@ -61,6 +61,17 @@ static void concat(Call & call)
     call.YieldResult();
 }
 
+static void setdata(Call & call)
+{
+    Call & getdata = call.GetModule().GetPredicate("test:getdata");
+
+    Int data;
+    if(call.Get(0, data))
+    {
+        getdata.Set(0, data);
+        getdata.YieldResult();
+    }
+}
 
 void RegisterFunctions(Module & module)
 {
@@ -69,4 +80,5 @@ void RegisterFunctions(Module & module)
     module.AddFunction(listargs, "test:listargs", Out, "arg1", Out);
     module.AddFunction(listargs, "test:listargs", Varargs);
     module.AddFunction(concat, "test:concat", Varargs);
+    module.AddCommand(setdata, "test:setdata");
 }
