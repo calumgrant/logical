@@ -217,6 +217,7 @@ public:
                         case ',':
                             tok_start = tok_end = current;
                             ++current;
+                            emptyEnd = true;
                             return true;
                         case ' ':
                         case '\t':
@@ -237,6 +238,7 @@ public:
                     {
                         case ',':
                             ++current;
+                            emptyEnd = true;
                             return true;
                         case '\\':
                             state = CsvParserState::BackslashOutsideQuote;

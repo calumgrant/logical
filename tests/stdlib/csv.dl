@@ -8,7 +8,8 @@ testcase "test6.csv" has contents "\n".
 testcase "test7.csv" has contents "\"abc\",x,\"\"".
 testcase "test8.csv" has contents "\"abc,def\"".
 
-check "test1.csv" has row 1, col 1, text 1.
+check "test1.csv" has row 1, col 1, text "1".
+check "test8.csv" has row 1, col 1, text "abc,def".
 
 if
     testcase F has contents C
@@ -20,10 +21,11 @@ if
 then
     csv:read F.
 
-error "Test failed" if
-    check F has row R, col C, text T and
-    not csv:file F has row R, col C, text T.
-
 ?- csv:file:row:col:text(_,_,_,_).
 
 find csv:file _ has row _, col _, text _.
+
+error Message if
+    check F has row R, col C, text T and
+    not csv:file F has row R, col C, text T and
+    Message = "Test failed: " + F + "[" + T + "]".
