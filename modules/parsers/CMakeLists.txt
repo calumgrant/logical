@@ -15,7 +15,7 @@ set_target_properties(parsers PROPERTIES
 
 target_link_libraries(parsers logiccore)
 
-add_test(NAME LoadModule COMMAND logical ../../tests/parsers/loadmodule.dl)
+add_test(NAME LoadModule COMMAND logical ../../../tests/parsers/loadmodule.dl)
 #add_test(NAME Connect COMMAND logical ../../tests/mysql/connection1.dl)
 #add_test(NAME Execute COMMAND logical ../../tests/mysql/execute1.dl)
 #add_test(NAME Sync COMMAND logical ../../tests/mysql/sync1.dl)

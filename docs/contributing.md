@@ -19,8 +19,8 @@ Prerequisites:
 - CMake
 
 ```
-brew install flex bison boost
-cmake ../src -DBISON_EXECUTABLE=/opt/homebrew/opt/bison/bin/bison -DFLEX_INCLUDE_DIR=/opt/homebrew/opt/flex/include -DFL_LIBRARY=/opt/homebrew/opt/flex/lib/libfl.a
+brew install flex bison boost antlr antlr4-cpp-runtime mysql
+cmake .. -DBISON_EXECUTABLE=/opt/homebrew/opt/bison/bin/bison -DFLEX_INCLUDE_DIR=/opt/homebrew/opt/flex/include -DFL_LIBRARY=/opt/homebrew/opt/flex/lib/libfl.a -DMYSQL_INCLUDE_DIR=/opt/homebrew/opt/mysql/include
 make
 make test
 ```
