@@ -14,6 +14,7 @@ add_subdirectory(../external/persist/src persist)
 add_subdirectory(../modules/stdlib stdlib)
 add_subdirectory(../modules/mysql mysql)
 add_subdirectory(../tests/externs externs)
+add_subdirectory(../modules/parsers parsers)
 
 BISON_TARGET(MyParser logical.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/tokens.tab.h)
 FLEX_TARGET(MyScanner logical.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
@@ -60,8 +61,6 @@ target_link_libraries(logiccore ${TERMCAP} persist)
 
 add_executable(prime-generator primegenerator.cpp)
 
-# add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:mysql> $<TARGET_FILE_DIR:logical>)
-
 set_target_properties(logiccore PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
@@ -80,7 +79,7 @@ set_target_properties(logical-tests PROPERTIES
 
 target_link_libraries(logiccore ${FLEX_LIBRARIES})
 
-add_dependencies(logical mysql stdlib externs-test)
+add_dependencies(logical mysql stdlib externs-test parsers)
 
 add_test(NAME UnitTests COMMAND logical-tests)
 

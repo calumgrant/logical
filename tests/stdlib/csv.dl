@@ -21,8 +21,8 @@ if
 then
     csv:read F.
 
+expected-results 40.
 ?- csv:file:row:col:text(_,_,_,_).
-
 find csv:file _ has row _, col _, text _.
 
 error Message if

@@ -1,5 +1,5 @@
+Next: antlr parsing
 Next: Externs that set data.
-- `read-csv-file "foo.csv".
 
 Bug: csv:read is evaluated twice in this:
 ```
