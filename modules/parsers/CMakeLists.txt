@@ -4,16 +4,16 @@ enable_testing()
 
 add_library(parsers SHARED parsers.cpp)
 
-#find_library(MYSQLLIB mysqllib NAMES "mysqlclient" "mysqlclient_r")
-# find_path( MYSQL_INCLUDE_DIR NAMES "mysql.h" HINTS "/opt/homebrew/include")
+find_library(ANTLR4_LIB NAMES "libantlr4-runtime.a" HINTS "/opt/homebrew/lib")
+find_path( ANTLR_INCLUDE_DIR NAMES "antlr4-runtime.h" HINTS "/opt/homebrew/include/antlr4-runtime")
 
-include_directories(../../include)
+include_directories(../../include ${ANTLR_INCLUDE_DIR})
 
 set_target_properties(parsers PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
 
-target_link_libraries(parsers logiccore)
+target_link_libraries(parsers logiccore ${ANTLR4_LIB})
 
 add_test(NAME LoadModule COMMAND logical ../../../tests/parsers/loadmodule.dl)
 #add_test(NAME Connect COMMAND logical ../../tests/mysql/connection1.dl)
