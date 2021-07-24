@@ -101,9 +101,9 @@ public:
             
             
             auto data = new MySqlTable(table, names.size());
-            module.AddCommand(addrow, names.size(), nameArray, data);
+            //module.AddCommand(addrow, nameArray, data);
             
-            module.AddFunction(querytable, names.size(), nameArray, mode.data(), data);
+            //module.AddFunction(querytable, nameArray, mode, data);
         }
     }
 } connection;
@@ -230,12 +230,12 @@ void RegisterFunctions(Module & module)
 {
     connection.init();
     
-    module.AddCommand(connectdb, "mysql:database", "user");
+    module.AddCommand(connectdb, {"mysql:database", "user"});
     
-    module.AddCommand(mysql_exec, "mysql:execute");
-    module.AddCommand(sync, "mysql:sync");
-    module.AddCommand(sync, "mysql");
-    module.AddFunction(error, "mysql:error", Out);
+    module.AddCommand(mysql_exec, {"mysql:execute"});
+    module.AddCommand(sync, {"mysql:sync"});
+    module.AddCommand(sync, {"mysql"});
+    module.AddFunction(error, {"mysql:error"}, {Out});
     
-    module.AddFunction(table1, "mysql:table", Out);
+    module.AddFunction(table1, {"mysql:table"}, {Out});
 }

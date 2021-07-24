@@ -1,6 +1,13 @@
 Next: Externs that set data.
 - `read-csv-file "foo.csv".
-- Bug with datalog accessing external predicates.
+
+Bug: csv:read is evaluated twice in this:
+```
+if
+    testcase F has contents C
+then
+    file F has contents C and csv:read F.
+```
 
 # Ideas to work on next:
 

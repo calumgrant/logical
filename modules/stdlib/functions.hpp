@@ -21,3 +21,5 @@ void messages(Call & call);
 void messageoftheday(Call & call);
 void rand(Call & call);
 void srand(Call & call);
+
+void readcsv(Call & call);

@@ -21,61 +21,55 @@ public:
 
 inline Logical::Module::Module() {}
 
-void Logical::Module::AddFunction(Logical::Extern ex, const char * name, Mode direction)
+static PredicateName GetPredicate(Database & db, const std::initializer_list<const char*> & name)
 {
-    AddFunction(ex, 1, &name, &direction, nullptr);
+    auto i = name.begin();
+    auto nameId = db.GetStringId(*i);
+    std::vector<int> parts;
+    parts.reserve(name.size()-1);
+    for(++i; i!=name.end(); ++i)
+        parts.push_back(db.GetStringId(*i));
+    CompoundName cn(parts);
+    
+    PredicateName pn;
+    pn.arity = name.size();
+    pn.objects.parts.push_back(nameId);
+    pn.attributes = std::move(cn);
+
+    return pn;
 }
 
-void Logical::Module::AddFunction(Logical::Extern ex, const char * name1, Mode direction1, const char * name2, Mode direction2)
-{
-    const char *names[] = { name1, name2 };
-    Mode dirs[] = { direction1, direction2 };
-    AddFunction(ex, 2, names, dirs, nullptr);
-}
-
-void Logical::Module::AddFunction(Logical::Extern ex, const char * name1, Mode direction1, const char * name2, Mode direction2, const char * name3, Mode direction3)
-{
-    const char *names[] = { name1, name2, name3 };
-    Mode dirs[] = { direction1, direction2, direction3 };
-    AddFunction(ex, 3, names, dirs, nullptr);
-}
-
-void Logical::Module::AddFunction(Logical::Extern ex, const char * name1, Mode direction1, const char * name2, Mode direction2, const char * name3, Mode direction3, const char * name4, Mode direction4)
-{
-    const char *names[] = { name1, name2, name3, name4 };
-    Mode dirs[] = { direction1, direction2, direction3, direction4 };
-    AddFunction(ex, 4, names, dirs, nullptr);
-}
-
-
-void Logical::Module::AddFunction(Logical::Extern ex, int count, const char ** name, const Mode *direction, void * data)
+void Logical::Module::AddFunction(Logical::Extern ex, const std::initializer_list<const char*> & name, const std::initializer_list<Mode> & direction, void * data)
 {
     auto & db = ((ModuleImpl*)this)->database;
-    if(count<1)
+    if(name.size()<1)
     {
         db.Error("Invalid number of parameters for extern");
         return;
     }
-    
-    auto nameId = db.GetStringId(name[0]);
-    std::vector<int> parts;
-    parts.reserve(count-1);
-    for(int i=1; i<count; ++i)
-        parts.push_back(db.GetStringId(name[i]));
-    CompoundName cn(parts);
-    PredicateName pn;
-    pn.objects.parts.push_back(nameId);
-    pn.attributes = cn;
-    pn.arity = count;
-    
-    Columns columns(0);
-    for(int i=0; i<count; ++i)
-        if(direction[i]==Logical::In)
-            columns.Bind(i);
-    
-    if(direction[count-1] == Varargs)
+
+    if(name.size()!= direction.size())
     {
-        db.Addvarargs(nameId, ex, data);
+        db.Error("Invalid name/mode count extern");
+        return;
+    }
+    
+    auto pn = ::GetPredicate(db, name);
+        
+    Columns columns(0);
+    int i=0;
+    bool varargs = false;
+    for(auto m : direction)
+    {
+        if(m==Logical::In)
+            columns.Bind(i);
+        i++;
+        varargs = m==Varargs;
+    }
+    
+    if(varargs)
+    {
+        db.Addvarargs(pn.objects.parts[0], ex, data);
     }
     else
     {
@@ -84,50 +78,12 @@ void Logical::Module::AddFunction(Logical::Extern ex, int count, const char ** n
     }
 }
 
-void Logical::Module::AddCommand(Extern ex, const char*name)
-{
-    AddCommand(ex, 1, &name, nullptr);
-}
 
-void Logical::Module::AddCommand(Extern ex, const char*name1, const char * name2)
-{
-    const char * names[] = { name1, name2 };
-    AddCommand(ex, 2, names, nullptr);
-}
-
-void Logical::Module::AddCommand(Extern ex, const char*name1, const char * name2, const char * name3)
-{
-    const char * names[] = { name1, name2, name3 };
-    AddCommand(ex, 3, names, nullptr);
-}
-
-PredicateName GetPredicate(Database & db, int count, const char **name)
-{
-    auto nameId = db.GetStringId(name[0]);
-    std::vector<int> parts;
-    parts.reserve(count-1);
-    for(int i=1; i<count; ++i)
-        parts.push_back(db.GetStringId(name[i]));
-    CompoundName cn(parts);
-    
-    PredicateName pn;
-    pn.arity = count;
-    pn.objects.parts.push_back(nameId);
-    pn.attributes = std::move(cn);
-
-    return pn;
-}
-
-void Logical::Module::AddCommand(Extern ex, int count, const char ** name, void * data)
+void Logical::Module::AddCommand(Extern ex, const std::initializer_list<const char*> & name, void * data)
 {
     auto & db = ((ModuleImpl*)this)->database;
-    if(count<1)
-    {
-        db.Error("Invalid number of parameters for extern");
-        return;
-    }
     
-    PredicateName pn = ::GetPredicate(db, count, name);
+    PredicateName pn = ::GetPredicate(db, name);
     
     auto & exfn = db.GetExtern(pn);
     
@@ -486,16 +442,11 @@ void ExternPredicate::AddVarargs(Logical::Extern fn, void * data)
     varargs.data = data;
 }
 
-Logical::Call & Logical::Module::GetPredicate(const char * name)
-{
-    return GetPredicate(1, &name);
-}
-
-Logical::Call & Logical::Module::GetPredicate(int arity, const char **name)
+Logical::Call & Logical::Module::GetPredicate(const std::initializer_list<const char*> & name)
 {
     auto & db = ((ModuleImpl*)this)->database;
     
-    PredicateName pn = ::GetPredicate(db, arity, name);
+    PredicateName pn = ::GetPredicate(db, name);
     auto & relation = db.GetRelation(pn);
     return relation.GetExternalCall();
 }

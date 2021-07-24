@@ -4,6 +4,7 @@
  */
 
 #include <cstdint>
+#include <initializer_list>
 
 namespace Logical
 {
@@ -67,29 +68,19 @@ namespace Logical
         // Commands are externs where all parameters are in/bound
         // and they are used in the `then` part of a rule to change the state.
         // They are predicates with side-effects.
-        void AddCommand(Extern, const char*);
-        void AddCommand(Extern, const char*, const char*);
-        void AddCommand(Extern, const char*, const char*, const char*);
-        void AddCommand(Extern, int params, const char**names, void * data);
+        void AddCommand(Extern, const std::initializer_list<const char*> & name, void * data=nullptr);
         
         // Functions are regular externs that compute or check something.
         // They do not generally have side-effects, although they could cache data internally.
-        void AddFunction(Extern, const char *, Mode);
-        void AddFunction(Extern, const char *, Mode, const char *, Mode);
-        void AddFunction(Extern, const char *, Mode, const char *, Mode, const char *, Mode);
-        void AddFunction(Extern, const char *, Mode, const char *, Mode, const char *, Mode, const char *, Mode);
-        void AddFunction(Extern, int params, const char **, const Mode*, void * data);
+        void AddFunction(Extern, const std::initializer_list<const char*> & params, const std::initializer_list<Mode> & modes, void * data=nullptr);
 
         // Tables are externs where all parameters are out/unbound
         // and the results are cached. This is useful for reading datafiles for example.
-        void AddTable(Extern, const char*);
-        void AddTable(Extern, const char*, const char*);
-        void AddTable(Extern, const char*, const char*, const char*);
-        void AddTable(Extern, int params, const char**names, void * data);
+        void AddTable(Extern, const std::initializer_list<const char*> & name, void * data=nullptr);
         
         // Reads all data from a given predicate and passes it into Extern.
         void Read(Extern, const char*);
-        void Read(Extern, int params, const char**names, void * data);
+        void Read(Extern, int params, const std::initializer_list<const char*> & name, void * data);
 
         void LoadModule(const char*);
         void ReportError(const char*);
@@ -97,10 +88,8 @@ namespace Logical
         
         void SetExpectedResults(Int expected);
         void SetEvaluationStepLimit(Int limit);
+        Call & GetPredicate(const std::initializer_list<const char*> &);
         
-        Call & GetPredicate(const char *);
-        Call & GetPredicate(int params, const char **);
-
     protected:
         Module();
         Module(const Module&) = delete;

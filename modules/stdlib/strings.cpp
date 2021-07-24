@@ -182,4 +182,89 @@ void messageoftheday(Call & call)
     // int n =
 }
 
+template<char Comma, typename It>
+bool parse_csv(It &a, It end, It & tok_start, It & tok_end)
+{
+    bool quoted = false;
+    tok_start = a;
+    // Eat leading whitespace
+    for(; a!=end; ++a)
+    {
+        switch(*a)
+        {
+            case ' ':
+            case '\t':
+                break;
+            case Comma:
+                tok_start = tok_end = a;
+                a++;
+                return true;
+            case '\"':
+                quoted = true;
+                ++a;
+                // Fall through to next case
+                // if(a==end) return false;   // Parse error
+            default:
+                tok_start = a;
 
+                // Start reading the main body
+                for(; a!=end; ++a)
+                {
+                    switch(*a)
+                    {
+                        case Comma:
+                            if(!quoted)
+                            {
+                                tok_end = a;
+                                ++a;
+                                return true;
+                            }
+                            break;
+                        case '\\':
+                            ++a;
+                            break;
+                        case '\"':
+                            quoted = false;
+                            // TODO: Consume next comma and return
+                            break;
+                    }
+                }
+                tok_end = a;
+                return true; // End of input
+        }
+    }
+    
+    tok_end = a;
+    return false;
+}
+
+void readcsv(Call & call)
+{
+    const char * filename;
+    if(call.Get(0, filename))
+    {
+        Call & contents = call.GetModule().GetPredicate({"csv:file", "row", "col", "text"});
+        contents.Set(0, filename);
+        std::ifstream file(filename);
+        std::string line;
+        Int row=1;
+        while(std::getline(file, line))
+        {
+            contents.Set(1, row++);
+            std::string::iterator current=line.begin(), tok_start, tok_end;
+            bool again;
+            Int col=1;
+
+            do
+            {
+                again = parse_csv<','>(current, line.end(), tok_start, tok_end);
+                std::cout << "Found CSV data: [" << std::string(tok_start, tok_end) << "]\n";
+                contents.Set(2, col++);
+                if(tok_end != line.end()) *tok_end = 0;
+                contents.Set(3, &*tok_start);
+                contents.YieldResult();
+            }
+            while(again);
+        }
+    }
+}
