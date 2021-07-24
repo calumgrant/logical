@@ -1,10 +1,14 @@
 
 testcase "test1.csv" has contents "1, 2, 3".
-testcase "test2.csv" has contents "12,13,14\n15,16,17\n".
+testcase "test2.csv" has contents "12, 13 ,14 \n15,16,17\n".
 testcase "test3.csv" has contents "ab,, ,a,".
 testcase "test4.csv" has contents ",".
 testcase "test5.csv" has contents "".
 testcase "test6.csv" has contents "\n".
+testcase "test7.csv" has contents "\"abc\",x,\"\"".
+testcase "test8.csv" has contents "\"abc,def\"".
+
+check "test1.csv" has row 1, col 1, text 1.
 
 if
     testcase F has contents C
@@ -15,6 +19,10 @@ if
     testcase F
 then
     csv:read F.
+
+error "Test failed" if
+    check F has row R, col C, text T and
+    not csv:file F has row R, col C, text T.
 
 ?- csv:file:row:col:text(_,_,_,_).
 

@@ -182,61 +182,120 @@ void messageoftheday(Call & call)
     // int n =
 }
 
-template<char Comma, typename It>
-bool parse_csv(It &a, It end, It & tok_start, It & tok_end)
+template<typename It>
+class CsvParser
 {
-    bool quoted = false;
-    tok_start = a;
-    // Eat leading whitespace
-    for(; a!=end; ++a)
+public:
+    int column = 0;
+    CsvParser(It start, It end) : current(start), end(end) {}
+    It current, end;
+    It tok_start, tok_end;
+    bool emptyEnd = false;
+    
+    enum class CsvParserState
     {
-        switch(*a)
-        {
-            case ' ':
-            case '\t':
-                break;
-            case Comma:
-                tok_start = tok_end = a;
-                a++;
-                return true;
-            case '\"':
-                quoted = true;
-                ++a;
-                // Fall through to next case
-                // if(a==end) return false;   // Parse error
-            default:
-                tok_start = a;
+        Begin,
+        InContent,
+        InQuote,
+        AfterQuote,
+        BackslashInQuote,
+        BackslashOutsideQuote
+    };
 
-                // Start reading the main body
-                for(; a!=end; ++a)
-                {
-                    switch(*a)
+    bool Next()
+    {
+        ++column;
+        auto state = CsvParserState::Begin;
+        
+        for(; current!=end; ++current)
+        {
+            switch(state)
+            {
+                case CsvParserState::Begin:
+                    switch(*current)
                     {
-                        case Comma:
-                            if(!quoted)
-                            {
-                                tok_end = a;
-                                ++a;
-                                return true;
-                            }
-                            break;
-                        case '\\':
-                            ++a;
+                        case ',':
+                            tok_start = tok_end = current;
+                            ++current;
+                            return true;
+                        case ' ':
+                        case '\t':
                             break;
                         case '\"':
-                            quoted = false;
-                            // TODO: Consume next comma and return
+                            tok_end = tok_start = current+1;
+                            state = CsvParserState::InQuote;
+                            break;
+                        default:
+                            tok_start = current;
+                            tok_end = tok_start+1;
+                            state = CsvParserState::InContent;
                             break;
                     }
-                }
-                tok_end = a;
-                return true; // End of input
+                    break;
+                case CsvParserState::InContent:
+                    switch(*current)
+                    {
+                        case ',':
+                            ++current;
+                            return true;
+                        case '\\':
+                            state = CsvParserState::BackslashOutsideQuote;
+                            break;
+                        case ' ':
+                        case '\t':
+                            break;
+                        default:
+                            tok_end = current+1;
+                            break;
+                    }
+                    break;
+                case CsvParserState::InQuote:
+                    switch(*current)
+                    {
+                        case '\\':
+                            state = CsvParserState::BackslashOutsideQuote;
+                            break;
+                        case '\"':
+                            tok_end = current;
+                            state = CsvParserState::AfterQuote;
+                            break;
+                    }
+                    break;
+                case CsvParserState::AfterQuote:
+                    switch(*current)
+                    {
+                        case ',':
+                            ++current;
+                            return true;
+                    }
+                    break;
+                case CsvParserState::BackslashInQuote:
+                    state = CsvParserState::InQuote;
+                    break;
+                case CsvParserState::BackslashOutsideQuote:
+                    state = CsvParserState::InContent;
+                    break;
+            }
+        }
+        
+        // End handling todo
+        switch(state)
+        {
+            case CsvParserState::AfterQuote:
+            case CsvParserState::InContent:
+                emptyEnd = false;
+                return true;
+                
+            case CsvParserState::Begin:
+                if(!emptyEnd) return false;
+                emptyEnd = false;
+                tok_start = tok_end = current;
+                return true;
+            default:
+                return false;
         }
     }
-    
-    tok_end = a;
-    return false;
-}
+};
 
 void readcsv(Call & call)
 {
@@ -251,20 +310,16 @@ void readcsv(Call & call)
         while(std::getline(file, line))
         {
             contents.Set(1, row++);
-            std::string::iterator current=line.begin(), tok_start, tok_end;
-            bool again;
-            Int col=1;
+            CsvParser<std::string::iterator> parser(line.begin(), line.end());
 
-            do
+            while(parser.Next())
             {
-                again = parse_csv<','>(current, line.end(), tok_start, tok_end);
-                std::cout << "Found CSV data: [" << std::string(tok_start, tok_end) << "]\n";
-                contents.Set(2, col++);
-                if(tok_end != line.end()) *tok_end = 0;
-                contents.Set(3, &*tok_start);
+                contents.Set(2, (Int)parser.column);
+                auto debug = parser.tok_end - parser.tok_start;
+                if(parser.tok_end != line.end()) *parser.tok_end = 0;
+                contents.Set(3, &*parser.tok_start);
                 contents.YieldResult();
             }
-            while(again);
         }
     }
 }
