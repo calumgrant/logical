@@ -9,6 +9,9 @@ then
     file F has contents C and csv:read F.
 ```
 
+- Calls are not multithreaded
+- Parallelism in externs. Use evaluation graph.
+
 # Ideas to work on next:
 
 1. Big code tidy

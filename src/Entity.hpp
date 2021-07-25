@@ -1,5 +1,6 @@
 #pragma once
 #include "Fwd.hpp"
+#include "Logical.hpp"
 
 enum class EntityType : std::uint16_t
 {
@@ -36,9 +37,12 @@ public:
     Entity(EntityType t, std::int64_t i) : integral { t, i } { }
     Entity(EntityType t, std::int32_t i) : integral { t, i } { }
     Entity(EntityType t, double d) : d(d) { }
+    Entity(Logical::Entity e) : i64(e.value) { }
 
     operator double() const { return d; }
     operator std::int64_t() const { return integral.value; }
+    
+    operator Logical::Entity() const { return Logical::Entity { i64 }; }
     
     void assign(std::int64_t value)
     {

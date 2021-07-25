@@ -269,7 +269,7 @@ void Logical::Call::Set(int index, const char * value)
     call.setColumns.Bind(index);
     
     auto & e = call.Index(index);
-    e = Entity(EntityType::String, call.module.database.GetStringId(value));
+    e = ::Entity(EntityType::String, call.module.database.GetStringId(value));
 }
 
 void Logical::Call::Set(int index, double value)
@@ -282,7 +282,7 @@ void Logical::Call::Set(int index, double value)
 void Logical::Call::Set(int index, Logical::Int value)
 {
     auto & call = (CallImpl&)*this;
-    call.Index(index) = Entity(EntityType::Integer, (std::int64_t)value);
+    call.Index(index) = ::Entity(EntityType::Integer, (std::int64_t)value);
     call.setColumns.Bind(index);
 }
 
@@ -472,10 +472,24 @@ public:
 
 Logical::Call & Relation::GetExternalCall()
 {
+    // !! Beware: this isn't threadsafe/reentrant
     if(!externalCall)
     {
         externalCall = std::make_shared<ReceiverCallImpl>(*this);
     }
         
     return *externalCall;
+}
+
+Logical::Entity Logical::Module::NewObject()
+{
+    auto & db = ((ModuleImpl*)this)->database;
+    return db.NewEntity();
+}
+
+void Logical::Call::Set(int index, Entity e)
+{
+    auto & call = (CallImpl&)*this;
+    call.setColumns.Bind(index);
+    call.Index(index) = e;
 }

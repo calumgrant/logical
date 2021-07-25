@@ -12,6 +12,11 @@ namespace Logical
 
     typedef std::int64_t Int;
 
+    struct Entity
+    {
+        std::uint64_t value;
+    };
+
     enum Mode { In, Bound=In, Out, Unbound=Out, Varargs };
 
     // The Call object is passed to every extern, used primarily to
@@ -23,6 +28,9 @@ namespace Logical
         // This can be called no times (failure/no result), one time (single result),
         // or many times (multiple results).
         void YieldResult();
+
+        void Get(int index, Entity & value);
+        void Set(int index, Entity value);
 
         bool Get(int index, Int & value);
         void Set(int index, Int value);
@@ -89,6 +97,9 @@ namespace Logical
         void SetExpectedResults(Int expected);
         void SetEvaluationStepLimit(Int limit);
         Call & GetPredicate(const std::initializer_list<const char*> &);
+
+        Entity NewObject();
+        Entity GetString(const char * string);
         
     protected:
         Module();

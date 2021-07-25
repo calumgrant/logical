@@ -11,22 +11,38 @@ public:
         ruleNames(parser.getRuleNames()),
         tokenNames(parser.getTokenNames()),
         javafile_filename(module.GetPredicate({"java:file","filename"})),
-        javaparsesuccess(module.GetPredicate({"java:parsesuccess"})),
-        javaparsefailure(module.GetPredicate({"java:parsefailure"})),
+        javafile_errormessage(module.GetPredicate({"java:file", "errormessage"})),
         javatoken_text(module.GetPredicate({"java:token","text"})),
         javanode_type_parent_index_location(module.GetPredicate({"java:node","type","parent","index","location"})),
         location_filename_startrow_startcol_endrow_endcol(module.GetPredicate({"location","filename","startrow","startcol","endrow","endcol"}))
     {
-        if(!stream)
-        {
-            module.ReportError("Failed to open file");
-            return;
-        }
+        auto file = module.NewObject();
+        javafile_filename.Set(0, file);
+        javafile_filename.Set(1, filename);
+        javafile_filename.YieldResult();
 
-        auto root = parser.compilationUnit();
-        
-        if(root)
-            walk_tree(root);
+        if(stream)
+        {
+            auto root = parser.compilationUnit();
+            if(root)
+            {
+                walk_tree(root);
+                return;
+            }
+            else
+            {
+                // TODO: Log more diagnosrtics
+                javafile_errormessage.Set(0, file);
+                javafile_errormessage.Set(1, "Parse error");
+                javafile_errormessage.YieldResult();
+            }
+        }
+        else
+        {
+            javafile_errormessage.Set(0, file);
+            javafile_errormessage.Set(1, "Failed to open file");
+            javafile_errormessage.YieldResult();
+        }
     }
 
     void visit_node(antlr4::tree::TerminalNode * r)
@@ -35,7 +51,7 @@ public:
         auto sym = r->getSymbol();
         auto type = sym->getType();
         auto name = tokenNames[type];
-        std::cout << "Got token " << name << std::endl;
+        //std::cout << "Got token " << name << std::endl;
     }
 
     void walk_tree(antlr4::ParserRuleContext * r)
@@ -47,7 +63,7 @@ public:
         auto index = r->getRuleIndex();
         auto rule = ruleNames[index];
         
-        std::cout << "Got rule " << rule << std::endl;
+        //std::cout << "Got rule " << rule << std::endl;
         for(auto p : r->children)
         {
             if(auto q = dynamic_cast<antlr4::ParserRuleContext *>(p))
@@ -70,8 +86,7 @@ public:
     std::vector<std::string> tokenNames;
     
     Logical::Call & javafile_filename;
-    Logical::Call & javaparsesuccess;
-    Logical::Call & javaparsefailure;
+    Logical::Call & javafile_errormessage;
     Logical::Call & javatoken_text;
     Logical::Call & javanode_type_parent_index_location;
     Logical::Call & location_filename_startrow_startcol_endrow_endcol;
