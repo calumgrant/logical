@@ -11,6 +11,14 @@ then
 
 - Calls are not multithreaded
 - Parallelism in externs. Use evaluation graph.
+- Warn on empty predicates with no rules. (Or error?)
+
+Bug:
+```
+java:statement s if java:node s has type "statement".
+find java:statement s has location l.
+```
+The problem here is that the predicate `java:statement:location` is empty as it can't project from `java:node:location`
 
 # Ideas to work on next:
 

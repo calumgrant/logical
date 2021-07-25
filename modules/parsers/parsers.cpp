@@ -7,6 +7,8 @@ class JavaParser
 {
 public:
     JavaParser(Logical::Module & module, const char * filename) :
+        module(module),
+        filename(filename),
         stream(filename), input(stream), lexer(&input), tokens(&lexer), parser(&tokens),
         ruleNames(parser.getRuleNames()),
         tokenNames(parser.getTokenNames()),
@@ -26,7 +28,7 @@ public:
             auto root = parser.compilationUnit();
             if(root)
             {
-                walk_tree(root);
+                walk_tree(file, 0, root);
                 return;
             }
             else
@@ -45,38 +47,84 @@ public:
         }
     }
 
-    void visit_node(antlr4::tree::TerminalNode * r)
+    void visit_node(Logical::Entity parent, int childIndex, antlr4::tree::TerminalNode * r)
     {
         auto text = r->getText();
         auto sym = r->getSymbol();
         auto type = sym->getType();
         auto name = tokenNames[type];
         //std::cout << "Got token " << name << std::endl;
+        auto line = sym->getLine();
+        auto col = sym->getCharPositionInLine();
+        auto len = sym->getStopIndex()-sym->getStartIndex();
+        
+        auto node = module.NewObject();
+        location_filename_startrow_startcol_endrow_endcol.Set(0, node);
+        location_filename_startrow_startcol_endrow_endcol.Set(1, filename);
+        location_filename_startrow_startcol_endrow_endcol.Set(2, (Logical::Int)line);
+        location_filename_startrow_startcol_endrow_endcol.Set(3, (Logical::Int)col);
+        location_filename_startrow_startcol_endrow_endcol.Set(4, (Logical::Int)line);
+        location_filename_startrow_startcol_endrow_endcol.Set(5, (Logical::Int)(col+text.size()));
+        location_filename_startrow_startcol_endrow_endcol.YieldResult();
+        
+        javanode_type_parent_index_location.Set(0, node);
+        javanode_type_parent_index_location.Set(1, name.c_str());
+        javanode_type_parent_index_location.Set(2, parent);
+        javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
+        javanode_type_parent_index_location.Set(4, node);
+        javanode_type_parent_index_location.YieldResult();
+        
+        javatoken_text.Set(0, node);
+        javatoken_text.Set(1, r->getText().c_str());
+        javatoken_text.YieldResult();
     }
 
-    void walk_tree(antlr4::ParserRuleContext * r)
+    void walk_tree(Logical::Entity parent, int childIndex, antlr4::ParserRuleContext * r)
     {
         auto context = parser.getRuleContext();
         auto src = r->getSourceInterval();
         auto info = r->toInfoString(&parser);
         auto text = r->getText();
-        auto index = r->getRuleIndex();
-        auto rule = ruleNames[index];
+        auto ruleIndex = r->getRuleIndex();
+        auto rule = ruleNames[ruleIndex];
+        auto start = r->getStart();
+        auto stop = r->getStop();
+        
+        auto node = module.NewObject();
+        
+        location_filename_startrow_startcol_endrow_endcol.Set(0, node);
+        location_filename_startrow_startcol_endrow_endcol.Set(1, filename);
+        location_filename_startrow_startcol_endrow_endcol.Set(2, (Logical::Int)start->getLine());
+        location_filename_startrow_startcol_endrow_endcol.Set(3, (Logical::Int)start->getCharPositionInLine());
+        location_filename_startrow_startcol_endrow_endcol.Set(4, (Logical::Int)stop->getLine());
+        location_filename_startrow_startcol_endrow_endcol.Set(5, (Logical::Int)stop->getCharPositionInLine());
+        location_filename_startrow_startcol_endrow_endcol.YieldResult();
+        
+        javanode_type_parent_index_location.Set(0, node);
+        javanode_type_parent_index_location.Set(1, rule.c_str());
+        javanode_type_parent_index_location.Set(2, parent);
+        javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
+        javanode_type_parent_index_location.Set(4, node);
+        javanode_type_parent_index_location.YieldResult();
         
         //std::cout << "Got rule " << rule << std::endl;
+        int i=0;
         for(auto p : r->children)
         {
             if(auto q = dynamic_cast<antlr4::ParserRuleContext *>(p))
-                walk_tree((antlr4::ParserRuleContext *)p);
+                walk_tree(node, i, (antlr4::ParserRuleContext *)p);
             else if(auto q = dynamic_cast<antlr4::tree::TerminalNode*>(p))
             {
-                visit_node(q);
+                visit_node(node, i, q);
             }
             else
                 std::cout << "Unknown node type\n";
+            ++i;
         }
     }
     
+    Logical::Module & module;
+    const char * filename;
     std::ifstream stream;
     antlr4::ANTLRInputStream input;
     java::JavaLexer lexer;

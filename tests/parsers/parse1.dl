@@ -4,3 +4,25 @@ java:parse "../../tests/parsers/AllInOne8.java".
 
 error e if java:file _ has errormessage e.
 error "Failed to register file" if not java:file _.
+
+java:node n has children c if n is a java:node and c = count child in (java:node child has parent n).
+
+nodetype t has Count c if 
+    java:node _ has type t and 
+    c = count m in (java:node m has type t).
+
+expected-results 115.
+find nodetype _ has Count _.
+
+java:statement s if java:node s has type "statement".
+
+error "Statements" if not count s in (java:statement s)=19.
+
+// find java:statement s and java:node s has location l and l has filename f.
+
+//find java:node N has type t, index i, parent p.
+
+//find java:node n has children c.
+
+//find java:token T has text _.
+//find location N has filename f, startrow r0, startcol c0, endrow r1, endcol c1.
