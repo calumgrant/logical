@@ -40,7 +40,9 @@ In the build directory, run
 make test
 ```
 
+or run `ctest`.
+
 # Adding tests
 
-New tests are added by adding a `.dl` file to the `tests` directory, and adding an entry for the test in `src/CMakeLists.txt`.
+New tests are added by adding a `.dl` file to the relevant `tests` directory, and adding an entry for the test in `CMakeLists.txt`.
 

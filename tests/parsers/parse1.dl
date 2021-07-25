@@ -1,0 +1,3 @@
+load-module parsers.
+
+java:parse "../../tests/parsers/AllInOne8.java".

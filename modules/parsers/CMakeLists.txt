@@ -23,9 +23,9 @@ find_package(ANTLR REQUIRED)
 
 # Call macro to add lexer and grammar to your build dependencies.
 antlr_target(JavaLexer JavaLexer.g4 LEXER
-             PACKAGE antlrcpptest)
+             PACKAGE java)
 antlr_target(JavaParser JavaParser.g4 PARSER
-             PACKAGE antlrcpptest
+             PACKAGE java
              DEPENDS_ANTLR JavaLexer
              COMPILE_FLAGS -lib ${ANTLR_JavaLexer_OUTPUT_DIR})
 
@@ -50,6 +50,7 @@ set_target_properties(parsers PROPERTIES
 target_link_libraries(parsers logiccore antlr4_static)
 
 add_test(NAME LoadModule COMMAND logical ../../../tests/parsers/loadmodule.dl)
+add_test(NAME Parse1 COMMAND logical parse1.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
 #add_test(NAME Connect COMMAND logical ../../tests/mysql/connection1.dl)
 #add_test(NAME Execute COMMAND logical ../../tests/mysql/execute1.dl)
 #add_test(NAME Sync COMMAND logical ../../tests/mysql/sync1.dl)

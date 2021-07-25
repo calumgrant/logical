@@ -13,7 +13,7 @@ add_subdirectory(modules/parsers)
 
 add_test(NAME UnitTests COMMAND logical-tests)
 
-add_test(NAME Syntax COMMAND logical ../tests/programs/syntax.dl)
+add_test(NAME Syntax COMMAND logical ${CMAKE_CURRENT_SOURCE_DIR}/tests/programs/syntax.dl)
 add_test(NAME Sourcecode COMMAND logical ../tests/programs/sourcecode.dl)
 add_test(NAME tutorial COMMAND logical ../samples/tutorial.dl)
 
