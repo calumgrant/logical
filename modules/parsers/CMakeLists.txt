@@ -51,6 +51,7 @@ target_link_libraries(parsers logiccore antlr4_static)
 
 add_test(NAME LoadModule COMMAND logical ../../../tests/parsers/loadmodule.dl)
 add_test(NAME Parse1 COMMAND logical parse1.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
+add_test(NAME Parse2 COMMAND logical parse2.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
 #add_test(NAME Connect COMMAND logical ../../tests/mysql/connection1.dl)
 #add_test(NAME Execute COMMAND logical ../../tests/mysql/execute1.dl)
 #add_test(NAME Sync COMMAND logical ../../tests/mysql/sync1.dl)

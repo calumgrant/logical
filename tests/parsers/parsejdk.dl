@@ -1,0 +1,5 @@
+load-module parsers.
+
+java:parse-directory "/Users/calum/projects/jdk".
+
+find java:file _ has filename _.

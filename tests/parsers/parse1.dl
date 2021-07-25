@@ -1,6 +1,6 @@
 load-module parsers.
 
-java:parse "../../tests/parsers/AllInOne8.java".
+java:parse "AllInOne8.java".
 
 error e if java:file _ has errormessage e.
 error "Failed to register file" if not java:file _.

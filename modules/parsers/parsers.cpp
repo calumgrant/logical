@@ -3,6 +3,8 @@
 #include "JavaLexer.h"
 #include "JavaParser.h"
 
+#include <filesystem>
+
 class JavaParser
 {
 public:
@@ -146,7 +148,6 @@ static void parsejavafile(Logical::Call & call)
     if(call.Get(0, filename))
     {
         JavaParser p(call.GetModule(), filename);
-
     }
     else
     {
@@ -154,7 +155,38 @@ static void parsejavafile(Logical::Call & call)
     }
 }
 
+void WalkDirectory(Logical::Module & module, const char * path)
+{
+    std::filesystem::path p(path);
+    if(std::filesystem::is_directory(path))
+    {
+        for(auto it = std::filesystem::recursive_directory_iterator(p); it != std::filesystem::recursive_directory_iterator(); ++it)
+        {
+            auto p = it->path();
+            if(it->is_regular_file() && p.extension() == ".java")
+            {
+                JavaParser(module, p.c_str());
+            }
+        }
+    }
+}
+
+static void parsejavadirectory(Logical::Call & call)
+{
+    const char * pathname;
+    if(call.Get(0, pathname))
+    {
+        WalkDirectory(call.GetModule(), pathname);
+    }
+    else
+    {
+        call.GetModule().ReportError("Supplied argument to java:parse is not a string");
+    }
+
+}
+
 void RegisterFunctions(Logical::Module & module)
 {
     module.AddCommand(parsejavafile, {"java:parse"});
+    module.AddCommand(parsejavadirectory, {"java:parse-directory"});
 }
