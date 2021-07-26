@@ -50,7 +50,7 @@ public:
     
     Relation &GetQueryRelation() const override;
     
-    persist::shared_memory & Storage() override;
+    AllocatorData & Storage() override;
     
     Entity NewEntity() override;
 
@@ -64,6 +64,7 @@ private:
     Optimizer & optimizer;
     
     persist::map_file datafile;
+    MemoryCounter memoryCounter;
     persist::map_data<DataStore> datastore;
     
     int verbosity = 1;

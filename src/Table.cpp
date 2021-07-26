@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-TableImpl::TableImpl(persist::shared_memory & mem, Arity arity) :
+TableImpl::TableImpl(AllocatorData & mem, Arity arity) :
     arity(arity),
     mem(mem),
     data(mem),
@@ -233,7 +233,7 @@ void TableImpl::ReadAllData(Receiver &r)
 }
 
 template<typename Arity>
-TableImpl2<Arity>::TableImpl2(persist::shared_memory & mem, Arity arity) :
+TableImpl2<Arity>::TableImpl2(AllocatorData & mem, Arity arity) :
     hashtable(arity, mem), indexes({}, 10, Hash(), Hash(), mem)
 {
 }
@@ -459,7 +459,7 @@ void NonaryTable::ReadAllData(Receiver&r)
     if(contents) r.OnRow(nullptr);
 }
 
-std::shared_ptr<Table> Table::MakeTable(persist::shared_memory &mem, Arity arity)
+std::shared_ptr<Table> Table::MakeTable(AllocatorData &mem, Arity arity)
 {
     // Old implementation
     // return allocate_shared<TableImpl>(mem, mem, arity);

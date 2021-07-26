@@ -28,14 +28,10 @@ typedef int VariableId;
 typedef std::size_t Size;
 typedef std::size_t RowIndex;
 
-namespace persist
-{
-    class shared_memory;
-}
-
 namespace Logical
 {
-class Call;
-class Module;
-typedef void(*Extern)(Call&);
+    class Call;
+    class Module;
+    typedef void(*Extern)(Call&);
 }
+

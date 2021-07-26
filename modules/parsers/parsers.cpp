@@ -66,7 +66,10 @@ public:
         auto line = sym->getLine();
         auto col = sym->getCharPositionInLine();
         auto len = sym->getStopIndex()-sym->getStartIndex();
+
+        // Set this to 0 to benchmark just the parsing performance
 #define ENABLE_STORE 1
+        
 #if ENABLE_STORE
         auto node = module.NewObject();
         location_filename_startrow_startcol_endrow_endcol.Set(0, node);
@@ -198,12 +201,12 @@ void WalkDirectory(Logical::Module & module, const char * path)
     std::cout << "]\n[";
     for(auto & j : javafiles)
     {
-        ++count;
-        std::cout << j << std::endl;
+        //std::cout << j << std::endl;
         if(count%step == 0)
         {
             std::cout << ">" << std::flush;
         }
+        ++count;
         try
         {
             JavaParser(module, j.c_str());

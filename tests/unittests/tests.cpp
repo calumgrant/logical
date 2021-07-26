@@ -97,14 +97,21 @@ public:
 
     void Test()
     {
+#if MMAP_ALLOCATOR
         persist::map_file file { nullptr, 0, 0, 0, 16384, 16384, persist::temp_heap };
-        StringTable st(file.data());
+        
+        auto & storage = file.data();
+        StringTable st(storage);
+#else
+        MemoryCounter storage(16384);
+        StringTable st(storage);
+#endif
 
-        int x = st.GetId(string_type("hello", file.data()));
-        EQUALS(x, st.GetId(string_type("hello", file.data())));
-        int y = st.GetId(string_type("hello2", file.data()));
+        int x = st.GetId(string_type("hello", storage));
+        EQUALS(x, st.GetId(string_type("hello", storage)));
+        int y = st.GetId(string_type("hello2", storage));
         CHECK(x!=y);
-        EQUALS(y, st.GetId(string_type("hello2", file.data())));
+        EQUALS(y, st.GetId(string_type("hello2", storage)));
         EQUALS("hello", st.GetString(0));
         EQUALS("hello2", st.GetString(1));
     }

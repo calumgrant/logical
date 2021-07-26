@@ -1,11 +1,19 @@
 
 Fundamental problems to solve:
+- Make the memory allocator configurable
+
 1. Performance of parsing the JDK
 
 Description of the problem:
-- 
+- Performance is horrible once the page file starts to swap. However this seems to happen much too quickly.
+- There's a lot of writing to disk that's not really needed.
+- Writing seems to happen on every dirty page, without a delay.
 
-Ideas: Don'
+Ideas:
+- Reduce the amount of stored data (narrow columns etc)
+- Store results in a batch, then update the results
+- Store in normal memory to see if there's a difference
+
 
 
 Bug: csv:read is evaluated twice in this:

@@ -53,7 +53,22 @@ namespace Logical
                 std::swap(items, other.items);
             }
             
-            std::vector<ShortIndex> index;
+            std::vector<ShortIndex, typename std::allocator_traits<Alloc>::template rebind_alloc<ShortIndex>> index;
+
+            HashIndex & operator=(HashIndex&&src)
+            {
+                swap(src);
+                return *this;
+            }
+            
+            HashIndex(HashIndex && src) : index(std::move(src.index)), items(std::move(src.items))
+            {
+            }
+
+            HashIndex(const HashIndex & src) : index(src.index), items(src.items)
+            {
+            }
+
         private:
             ShortIndex items = 0;
         };
@@ -212,7 +227,6 @@ namespace Logical
             }
             return false;
         }
-
         
         template<typename Binding>
         HashColumns<Arity, Binding, Alloc> MakeIndex(Binding binding) const

@@ -101,9 +101,9 @@ public:
     virtual Optimizer & GetOptimizer() const =0;
 
     virtual Relation & GetQueryRelation() const = 0;
-    
-    virtual persist::shared_memory & Storage() =0;
-    
+
+    virtual AllocatorData & Storage() =0;
+
     virtual void LoadModule(const char*) =0;
     virtual Relation & GetExtern(const PredicateName & cn) =0;
     virtual void Addvarargs(RelationId name, Logical::Extern fn, void * data) =0;

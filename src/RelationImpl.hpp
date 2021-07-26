@@ -10,7 +10,7 @@ class RuleSet
 {
 public:
     RuleSet(Database &db);
-    std::vector< std::shared_ptr<Evaluation>, persist::allocator<std::shared_ptr<Evaluation>> > rules;
+    std::vector< std::shared_ptr<Evaluation>, PERSIST_ALLOCATOR<std::shared_ptr<Evaluation>> > rules;
     // std::unordered_set<EvaluationPtr> rules;
     
     void Add(const EvaluationPtr &ptr);

@@ -29,7 +29,7 @@ struct VariadicExtern
 class DataStore
 {
 public:
-    DataStore(persist::shared_memory & memory);
+    DataStore(persist::shared_memory & memory, AllocatorData & alloc);
     
     StringTable strings, atstrings;
     
@@ -64,8 +64,9 @@ void Database::UnboundError(const char *name, int line, int column)
 
 DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB) :
     datafile(name, 2, 2, 1, 16384, limitMB * 1000000ll, name ? 0 : persist::temp_heap),
-    datastore(datafile.data(), datafile.data()),
-    optimizer(optimizer)
+    datastore(datafile.data(), datafile.data(), Storage()),
+    optimizer(optimizer),
+    memoryCounter(limitMB * 1000000ll)
 {
 
     if(!datastore->initialized)
@@ -155,14 +156,14 @@ Relation& DatabaseImpl::GetRelation(const PredicateName & name)
             auto j = datastore->variadicExterns.find(name.objects.parts[0]);
             if(j != datastore->variadicExterns.end())
             {
-                auto r = allocate_shared<ExternPredicate>(datafile, *this, name);
+                auto r = allocate_shared<ExternPredicate>(Storage(), *this, name);
                 r->AddVarargs(j->second.fn, j->second.data);
                 datastore->relations.insert(std::make_pair(name, r));
                 return *r;
             }
         }
         
-        auto r = allocate_shared<Predicate>(datafile, *this, name);
+        auto r = allocate_shared<Predicate>(Storage(), *this, name);
         datastore->relations.insert(std::make_pair(name, r));
         if(name.reaches)
             MakeReachesRelation(*r);
@@ -309,12 +310,12 @@ int DatabaseImpl::GetAtStringId(const string_type &str)
 
 int DatabaseImpl::GetStringId(const char *str)
 {
-    return datastore->strings.GetId(string_type(str, datafile.data()));
+    return datastore->strings.GetId(string_type(str, Storage()));
 }
 
 int DatabaseImpl::GetAtStringId(const char *str)
 {
-    return datastore->atstrings.GetId(string_type(str, datafile.data()));
+    return datastore->atstrings.GetId(string_type(str, Storage()));
 }
 
 
@@ -440,14 +441,14 @@ void DatabaseImpl::CreateProjection(const PredicateName &from, const PredicateNa
         projection[j+1] = i+1;
     }
     
-    auto writer = allocate_shared<Writer>(datafile, *datastore->relations[to], projection);
+    auto writer = allocate_shared<Writer>(Storage(), *datastore->relations[to], projection);
     
     std::vector<int> inputs(cols);
     std::fill(inputs.begin(), inputs.end(), -1);
     
-    auto reader = allocate_shared<Join>(datafile, *datastore->relations[from], inputs, cols, writer);
+    auto reader = allocate_shared<Join>(Storage(), *datastore->relations[from], inputs, cols, writer);
     
-    auto eval = allocate_shared<RuleEvaluation>(datafile, cols.size(), reader);
+    auto eval = allocate_shared<RuleEvaluation>(Storage(), cols.size(), reader);
     
     datastore->relations[to]->AddRule(eval);
 }
@@ -633,19 +634,23 @@ const char * Colours::Relation = "\033[0;33m"; // Brown orange
 const char * Colours::Error = "\033[1;31m"; // Light red
 const char * Colours::Detail = "\033[1;30m"; // Light red
 
-DataStore::DataStore(persist::shared_memory & mem) :
-    strings(mem),
-    atstrings(mem),
-    relations({}, PredicateName::Hash(), std::equal_to<PredicateName>(), mem),
-    nameParts({}, std::hash<StringId>(), std::equal_to<StringId>(), mem),
-    externs({}, PredicateName::Hash(), std::equal_to<PredicateName>(), mem),
-    variadicExterns({}, std::hash<StringId>(), std::equal_to<StringId>(), mem)
+DataStore::DataStore(persist::shared_memory & mem, AllocatorData & alloc) :
+    strings(alloc),
+    atstrings(alloc),
+    relations({}, PredicateName::Hash(), std::equal_to<PredicateName>(), alloc),
+    nameParts({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc),
+    externs({}, PredicateName::Hash(), std::equal_to<PredicateName>(), alloc),
+    variadicExterns({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc)
 {
 }
 
-persist::shared_memory &DatabaseImpl::Storage()
+AllocatorData &DatabaseImpl::Storage()
 {
+#if MMAP_ALLOCATOR
     return datafile.data();
+#else
+    return memoryCounter;
+#endif
 }
 
 Optimizer & DatabaseImpl::GetOptimizer() const
@@ -669,7 +674,7 @@ Relation &DatabaseImpl::GetExtern(const PredicateName & pn)
     
     if(!rel)
     {
-        rel = allocate_shared<ExternPredicate>(datafile, *this, pn);
+        rel = allocate_shared<ExternPredicate>(Storage(), *this, pn);
         AddRelation(rel);
     }
     

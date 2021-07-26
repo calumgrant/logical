@@ -5,7 +5,7 @@
 class TableImpl : public Table
 {
 public:
-    TableImpl(persist::shared_memory &mem, Arity arity);
+    TableImpl(AllocatorData &mem, Arity arity);
     
     Size Rows() const override;
     void Query(Row row, Columns columns, Receiver&v) override;
@@ -16,7 +16,7 @@ public:
     void Clear() override;
     Arity GetArity() const override;
 private:
-    typedef std::vector<Entity, persist::fast_allocator<Entity>> vector;
+    typedef std::vector<Entity, PERSIST_ALLOCATOR<Entity>> vector;
 
     class Comparer
     {
@@ -52,17 +52,17 @@ private:
         const vector & base;
     };
     
-    persist::shared_memory & mem;
+    AllocatorData & mem;
     
     const Arity arity;
     vector data;
-    typedef std::unordered_set<std::size_t, Comparer, Comparer, persist::fast_allocator<std::size_t>> index_type;
+    typedef std::unordered_set<std::size_t, Comparer, Comparer, PERSIST_ALLOCATOR<std::size_t>> index_type;
     index_type hash;
     
     // Map from mask to index.
-    typedef std::unordered_multiset<std::size_t, Comparer, Comparer, persist::fast_allocator<std::size_t>> map_type;
+    typedef std::unordered_multiset<std::size_t, Comparer, Comparer, PERSIST_ALLOCATOR<std::size_t>> map_type;
     std::unordered_map<Columns, map_type, Columns::Hash, Columns::EqualTo,
-        persist::fast_allocator<std::pair<const Columns, map_type>>> indexes;
+        PERSIST_ALLOCATOR<std::pair<const Columns, map_type>>> indexes;
     map_type & GetIndex(Columns mask);
 
     Size deltaStart =0, deltaEnd = 0;
@@ -76,7 +76,7 @@ template<typename Arity>
 class TableImpl2 : public Table
 {
 public:
-    TableImpl2(persist::shared_memory &mem, Arity arity);
+    TableImpl2(AllocatorData &mem, Arity arity);
     Size Rows() const override;
 
     void Query(Row row, Columns columns, Receiver&v) override;
@@ -90,11 +90,11 @@ public:
     void FirstIteration() override;
     void ReadAllData(Receiver&r) override;
 private:
-    typedef Logical::HashColumns<Arity, Logical::DynamicBinding, persist::fast_allocator<Logical::Int>> column_index;
+    typedef Logical::HashColumns<Arity, Logical::DynamicBinding, PERSIST_ALLOCATOR<Logical::Int>> column_index;
 
-    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<true, false>, persist::fast_allocator<Logical::Int>> column_index_bf;
+    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<true, false>, PERSIST_ALLOCATOR<Logical::Int>> column_index_bf;
 
-    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<false, true>, persist::fast_allocator<Logical::Int>> column_index_fb;
+    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<false, true>, PERSIST_ALLOCATOR<Logical::Int>> column_index_fb;
     
     struct Hash
     {
@@ -104,9 +104,9 @@ private:
         { return a.mask == b.mask; }
     };
     
-    Logical::HashTable<Arity, persist::fast_allocator<Logical::Int>> hashtable;
+    Logical::HashTable<Arity, PERSIST_ALLOCATOR<Logical::Int>> hashtable;
     
-    std::unordered_map<Logical::DynamicBinding, column_index, Hash, Hash, persist::fast_allocator<std::pair<const Logical::DynamicBinding, column_index>>> indexes;
+    std::unordered_map<Logical::DynamicBinding, column_index, Hash, Hash, PERSIST_ALLOCATOR<std::pair<const Logical::DynamicBinding, column_index>>> indexes;
     
     column_index & GetIndex(Logical::DynamicBinding);
 };
