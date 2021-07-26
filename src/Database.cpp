@@ -690,3 +690,14 @@ bool Database::LogRows() const
 {
     return GetVerbosity()>=5;
 }
+
+persist::shared_memory & DatabaseImpl::SharedMemory()
+{
+    return datafile.data();
+}
+
+void DatabaseImpl::SetMemoryLimit(std::size_t size)
+{
+    datafile.data().limit(size);
+    memoryCounter.limit(size);
+}

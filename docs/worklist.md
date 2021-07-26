@@ -1,19 +1,22 @@
+- Option to compress data once it's been processed.
+  - `Predicate.Finalize();`
+  - Use a compressed table if possible.
+    - Check the column data.
+  - Finalize should happen implicitly on first read.
+  - Write out the table to persist storage once finalised
 
-Fundamental problems to solve:
-- Make the memory allocator configurable
+- Big bug in Call::Get(string) - resulting string seems to be able to move.
 
-1. Performance of parsing the JDK
+```
+struct CompressInfo
+{
+  enum Type: a type; or None or Any
+  enum Representation { Float32, Int8, Int16, Int32, Int64};
 
-Description of the problem:
-- Performance is horrible once the page file starts to swap. However this seems to happen much too quickly.
-- There's a lot of writing to disk that's not really needed.
-- Writing seems to happen on every dirty page, without a delay.
-
-Ideas:
-- Reduce the amount of stored data (narrow columns etc)
-- Store results in a batch, then update the results
-- Store in normal memory to see if there's a difference
-
+  void Add(entity e);
+  Entity generate(void * data);
+};
+```
 
 
 Bug: csv:read is evaluated twice in this:

@@ -5,10 +5,39 @@
 
 #include <filesystem>
 
+struct JavaPredicates
+{
+    JavaPredicates(Logical::Module & module) :
+    javafile_filename(module.GetPredicate({"java:file","filename"})),
+    javafile_errormessage(module.GetPredicate({"java:file", "errormessage"})),
+    javatoken_text(module.GetPredicate({"java:token","text"})),
+    javanode_type_parent_index_location(module.GetPredicate({"java:node","type","parent","index","location"})),
+    location_filename_startrow_startcol_endrow_endcol(module.GetPredicate({"location","filename","startrow","startcol","endrow","endcol"}))
+
+    {
+    }
+    
+    void Finalize()
+    {
+        javafile_filename.Finalize();
+        javafile_errormessage.Finalize();
+        javatoken_text.Finalize();
+        javanode_type_parent_index_location.Finalize();
+        javanode_type_parent_index_location.Finalize();
+        location_filename_startrow_startcol_endrow_endcol.Finalize();
+    }
+
+    Logical::Call & javafile_filename;
+    Logical::Call & javafile_errormessage;
+    Logical::Call & javatoken_text;
+    Logical::Call & javanode_type_parent_index_location;
+    Logical::Call & location_filename_startrow_startcol_endrow_endcol;
+};
+
 class JavaParser
 {
 public:
-    JavaParser(Logical::Module & module, const char * filename) :
+    JavaParser(Logical::Module & module, const char * filename, JavaPredicates & predicates) :
         module(module),
         filename(filename),
         stream(filename),
@@ -18,16 +47,12 @@ public:
         parser(&tokens),
         ruleNames(parser.getRuleNames()),
         tokenNames(parser.getTokenNames()),
-        javafile_filename(module.GetPredicate({"java:file","filename"})),
-        javafile_errormessage(module.GetPredicate({"java:file", "errormessage"})),
-        javatoken_text(module.GetPredicate({"java:token","text"})),
-        javanode_type_parent_index_location(module.GetPredicate({"java:node","type","parent","index","location"})),
-        location_filename_startrow_startcol_endrow_endcol(module.GetPredicate({"location","filename","startrow","startcol","endrow","endcol"}))
+        predicates(predicates)
     {
         auto file = module.NewObject();
-        javafile_filename.Set(0, file);
-        javafile_filename.Set(1, filename);
-        javafile_filename.YieldResult();
+        predicates.javafile_filename.Set(0, file);
+        predicates.javafile_filename.Set(1, filename);
+        predicates.javafile_filename.YieldResult();
 
         lexer.removeErrorListeners();
         parser.removeErrorListeners();
@@ -43,16 +68,16 @@ public:
             else
             {
                 // TODO: Log more diagnosrtics
-                javafile_errormessage.Set(0, file);
-                javafile_errormessage.Set(1, "Parse error");
-                javafile_errormessage.YieldResult();
+                predicates.javafile_errormessage.Set(0, file);
+                predicates.javafile_errormessage.Set(1, "Parse error");
+                predicates.javafile_errormessage.YieldResult();
             }
         }
         else
         {
-            javafile_errormessage.Set(0, file);
-            javafile_errormessage.Set(1, "Failed to open file");
-            javafile_errormessage.YieldResult();
+            predicates.javafile_errormessage.Set(0, file);
+            predicates.javafile_errormessage.Set(1, "Failed to open file");
+            predicates.javafile_errormessage.YieldResult();
         }
     }
 
@@ -72,24 +97,24 @@ public:
         
 #if ENABLE_STORE
         auto node = module.NewObject();
-        location_filename_startrow_startcol_endrow_endcol.Set(0, node);
-        location_filename_startrow_startcol_endrow_endcol.Set(1, filename);
-        location_filename_startrow_startcol_endrow_endcol.Set(2, (Logical::Int)line);
-        location_filename_startrow_startcol_endrow_endcol.Set(3, (Logical::Int)col);
-        location_filename_startrow_startcol_endrow_endcol.Set(4, (Logical::Int)line);
-        location_filename_startrow_startcol_endrow_endcol.Set(5, (Logical::Int)(col+text.size()));
-        location_filename_startrow_startcol_endrow_endcol.YieldResult();
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(0, node);
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(1, filename);
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(2, (Logical::Int)line);
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(3, (Logical::Int)col);
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(4, (Logical::Int)line);
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(5, (Logical::Int)(col+text.size()));
+        predicates.location_filename_startrow_startcol_endrow_endcol.YieldResult();
         
-        javanode_type_parent_index_location.Set(0, node);
-        javanode_type_parent_index_location.Set(1, name.c_str());
-        javanode_type_parent_index_location.Set(2, parent);
-        javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
-        javanode_type_parent_index_location.Set(4, node);
-        javanode_type_parent_index_location.YieldResult();
+        predicates.javanode_type_parent_index_location.Set(0, node);
+        predicates.javanode_type_parent_index_location.Set(1, name.c_str());
+        predicates.javanode_type_parent_index_location.Set(2, parent);
+        predicates.javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
+        predicates.javanode_type_parent_index_location.Set(4, node);
+        predicates.javanode_type_parent_index_location.YieldResult();
         
-        javatoken_text.Set(0, node);
-        javatoken_text.Set(1, r->getText().c_str());
-        javatoken_text.YieldResult();
+        predicates.javatoken_text.Set(0, node);
+        predicates.javatoken_text.Set(1, r->getText().c_str());
+        predicates.javatoken_text.YieldResult();
 #endif
     }
 
@@ -108,20 +133,20 @@ public:
         
         auto node = module.NewObject();
         
-        location_filename_startrow_startcol_endrow_endcol.Set(0, node);
-        location_filename_startrow_startcol_endrow_endcol.Set(1, filename);
-        location_filename_startrow_startcol_endrow_endcol.Set(2, (Logical::Int)start->getLine());
-        location_filename_startrow_startcol_endrow_endcol.Set(3, (Logical::Int)start->getCharPositionInLine());
-        location_filename_startrow_startcol_endrow_endcol.Set(4, (Logical::Int)stop->getLine());
-        location_filename_startrow_startcol_endrow_endcol.Set(5, (Logical::Int)stop->getCharPositionInLine());
-        location_filename_startrow_startcol_endrow_endcol.YieldResult();
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(0, node);
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(1, filename);
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(2, (Logical::Int)start->getLine());
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(3, (Logical::Int)start->getCharPositionInLine());
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(4, (Logical::Int)stop->getLine());
+        predicates.location_filename_startrow_startcol_endrow_endcol.Set(5, (Logical::Int)stop->getCharPositionInLine());
+        predicates.location_filename_startrow_startcol_endrow_endcol.YieldResult();
         
-        javanode_type_parent_index_location.Set(0, node);
-        javanode_type_parent_index_location.Set(1, rule.c_str());
-        javanode_type_parent_index_location.Set(2, parent);
-        javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
-        javanode_type_parent_index_location.Set(4, node);
-        javanode_type_parent_index_location.YieldResult();
+        predicates.javanode_type_parent_index_location.Set(0, node);
+        predicates.javanode_type_parent_index_location.Set(1, rule.c_str());
+        predicates.javanode_type_parent_index_location.Set(2, parent);
+        predicates.javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
+        predicates.javanode_type_parent_index_location.Set(4, node);
+        predicates.javanode_type_parent_index_location.YieldResult();
 #else
         Logical::Entity node;
 #endif
@@ -152,19 +177,17 @@ public:
     std::vector<std::string> ruleNames;
     std::vector<std::string> tokenNames;
     
-    Logical::Call & javafile_filename;
-    Logical::Call & javafile_errormessage;
-    Logical::Call & javatoken_text;
-    Logical::Call & javanode_type_parent_index_location;
-    Logical::Call & location_filename_startrow_startcol_endrow_endcol;
+    JavaPredicates & predicates;
 };
 
 static void parsejavafile(Logical::Call & call)
 {
+    JavaPredicates predicates(call.GetModule());
+    
     const char * filename;
     if(call.Get(0, filename))
     {
-        JavaParser p(call.GetModule(), filename);
+        JavaParser p(call.GetModule(), filename, predicates);
     }
     else
     {
@@ -172,11 +195,13 @@ static void parsejavafile(Logical::Call & call)
     }
 }
 
-void WalkDirectory(Logical::Module & module, const char * path)
+void WalkDirectory(Logical::Module & module, std::string path)
 {
     std::filesystem::path p(path);
     std::vector<std::filesystem::path> javafiles;
     std::size_t size=0;
+    
+    JavaPredicates predicates(module);
     
     if(std::filesystem::is_directory(path))
     {
@@ -199,6 +224,7 @@ void WalkDirectory(Logical::Module & module, const char * path)
     for(int i=0; i<javafiles.size(); i+=step)
         std::cout << "-";
     std::cout << "]\n[";
+    
     for(auto & j : javafiles)
     {
         //std::cout << j << std::endl;
@@ -209,7 +235,7 @@ void WalkDirectory(Logical::Module & module, const char * path)
         ++count;
         try
         {
-            JavaParser(module, j.c_str());
+            JavaParser(module, j.c_str(), predicates);
         }
         catch(std::bad_alloc&)
         {
@@ -226,6 +252,7 @@ void WalkDirectory(Logical::Module & module, const char * path)
         }
     }
     std::cout << "]\n";
+    predicates.Finalize();
 }
 
 static void parsejavadirectory(Logical::Call & call)

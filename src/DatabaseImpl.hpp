@@ -51,6 +51,7 @@ public:
     Relation &GetQueryRelation() const override;
     
     AllocatorData & Storage() override;
+    persist::shared_memory & SharedMemory() override;
     
     Entity NewEntity() override;
 
@@ -59,6 +60,7 @@ public:
     void AddRelation(const std::shared_ptr<Relation> & rel);
     Relation & GetExtern(const PredicateName & pn) override;
     void Addvarargs(RelationId name, Logical::Extern fn, void * data) override;
+    void SetMemoryLimit(std::size_t) override;
 
 private:
     Optimizer & optimizer;

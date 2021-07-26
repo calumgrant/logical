@@ -421,7 +421,7 @@ void Logical::Module::SetExpectedResults(Int expected)
 void Logical::Module::SetMemoryLimitMB(Int expected)
 {
     auto & db = ((ModuleImpl*)this)->database;
-    db.Storage().limit(expected * 1024 * 1024);
+    db.SetMemoryLimit(expected * 1024 * 1024);
 }
 
 void Logical::Module::SetEvaluationStepLimit(Int limit)
@@ -499,3 +499,19 @@ void Logical::Call::Set(int index, Entity e)
     call.setColumns.Bind(index);
     call.Index(index) = e;
 }
+
+void Logical::Call::Finalize()
+{
+    auto rel = dynamic_cast<ReceiverCallImpl*>(this);
+    if(rel)
+    {
+        rel->relation.Finalize();
+    }
+    else
+    {
+        auto & call = (CallImpl&)*this;
+        call.module.database.Error("Invalid call type to Finalize()");
+    }
+}
+
+Logical::Call::~Call() { }

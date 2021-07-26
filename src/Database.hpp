@@ -103,8 +103,10 @@ public:
     virtual Relation & GetQueryRelation() const = 0;
 
     virtual AllocatorData & Storage() =0;
+    virtual persist::shared_memory & SharedMemory() =0;
 
     virtual void LoadModule(const char*) =0;
     virtual Relation & GetExtern(const PredicateName & cn) =0;
     virtual void Addvarargs(RelationId name, Logical::Extern fn, void * data) =0;
+    virtual void SetMemoryLimit(std::size_t) =0;
 };

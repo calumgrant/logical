@@ -35,4 +35,6 @@ public:
     virtual void ReadAllData(Receiver&r) =0;
     
     static std::shared_ptr<Table> MakeTable(AllocatorData &mem, Arity arity);
+    
+    virtual void Finalize(Database & db, std::shared_ptr<Table> & table);
 };

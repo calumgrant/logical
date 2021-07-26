@@ -23,6 +23,7 @@ enum class BindingType
     Bound
 };
 
+// TODO: Move this to another file
 class PredicateName
 {
 public:
@@ -121,6 +122,7 @@ public:
     virtual Relation & GetSemiNaive(Columns c);
     
     void LogRow(std::ostream & os, const Entity * row) const;
+    virtual void Finalize() =0;
     
 protected:
     // Returns the number of rows.

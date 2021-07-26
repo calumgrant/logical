@@ -58,9 +58,12 @@ namespace Logical
         int ArgCount() const;
         Mode GetMode(int index) const;
         const char * ArgName(int index) const;
+        
+        void Finalize();
 
     protected:
         Call();
+        virtual ~Call();
         Call(const Call&) = delete;
         Call & operator=(const Call&) = delete;
     };

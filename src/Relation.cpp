@@ -884,3 +884,16 @@ int PredicateName::MapArgument(int arg) const
 {
     return arg==0 || IsDatalog() ? arg : 1+attributes.mapFromInputToOutput[arg-1];
 }
+
+void Predicate::Finalize()
+{
+    table->Finalize(database, table);
+}
+
+void SemiNaiveQuery::Finalize()
+{
+}
+
+void SemiNaivePredicate::Finalize()
+{
+}

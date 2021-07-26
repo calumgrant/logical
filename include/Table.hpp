@@ -59,6 +59,9 @@ namespace Logical
     protected:
         Table(Arity a, Alloc alloc = Alloc()) : arity(a), values(alloc) {}
 
+        template<typename Alloc2>
+        Table(const Table<Arity, Alloc2> & src, Alloc alloc = Alloc()) : arity(src.arity), values(src.values.begin(), src.values.end(), alloc) {}
+
     public:
         int get_arity() const { return arity.value; }
         
@@ -68,6 +71,13 @@ namespace Logical
         Arity arity;
         
         void clear() { values.clear(); }
+    };
+
+    template<typename Arity, typename Alloc = std::allocator<Int>>
+    class CompressedTable
+    {
+        std::vector<int, Alloc> columnTypes;
+        std::vector<std::uint32_t, Alloc> data;
     };
 
     template<typename Arity>

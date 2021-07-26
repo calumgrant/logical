@@ -35,3 +35,7 @@ namespace Logical
     typedef void(*Extern)(Call&);
 }
 
+namespace persist
+{
+    class shared_memory;
+}

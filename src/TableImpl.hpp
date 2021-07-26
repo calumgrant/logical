@@ -72,11 +72,15 @@ private:
     void ReadAllData(Receiver&r) override;
 };
 
-template<typename Arity>
+template<typename Arity, typename Alloc=PERSIST_ALLOCATOR<Logical::Int>>
 class TableImpl2 : public Table
 {
 public:
-    TableImpl2(AllocatorData &mem, Arity arity);
+    TableImpl2(Alloc mem, Arity arity);
+    
+    template<typename Alloc2>
+    TableImpl2(Alloc mem, const TableImpl2<Arity,Alloc2> &src);
+    
     Size Rows() const override;
 
     void Query(Row row, Columns columns, Receiver&v) override;
@@ -89,12 +93,13 @@ public:
     void NextIteration() override;
     void FirstIteration() override;
     void ReadAllData(Receiver&r) override;
-private:
-    typedef Logical::HashColumns<Arity, Logical::DynamicBinding, PERSIST_ALLOCATOR<Logical::Int>> column_index;
+    void Finalize(Database & db, std::shared_ptr<Table> & table) override;
 
-    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<true, false>, PERSIST_ALLOCATOR<Logical::Int>> column_index_bf;
+    typedef Logical::HashColumns<Arity, Logical::DynamicBinding, Alloc> column_index;
 
-    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<false, true>, PERSIST_ALLOCATOR<Logical::Int>> column_index_fb;
+    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<true, false>, Alloc> column_index_bf;
+
+    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<false, true>, Alloc> column_index_fb;
     
     struct Hash
     {
@@ -104,9 +109,11 @@ private:
         { return a.mask == b.mask; }
     };
     
-    Logical::HashTable<Arity, PERSIST_ALLOCATOR<Logical::Int>> hashtable;
+    Logical::HashTable<Arity, Alloc> hashtable;
     
-    std::unordered_map<Logical::DynamicBinding, column_index, Hash, Hash, PERSIST_ALLOCATOR<std::pair<const Logical::DynamicBinding, column_index>>> indexes;
+    using pair_alloc = typename std::allocator_traits<Alloc>::template rebind_alloc<std::pair<const Logical::DynamicBinding, column_index>>;
+    
+    std::unordered_map<Logical::DynamicBinding, column_index, Hash, Hash, pair_alloc> indexes;
     
     column_index & GetIndex(Logical::DynamicBinding);
 };

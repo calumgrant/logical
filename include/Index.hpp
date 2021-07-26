@@ -158,4 +158,52 @@ namespace Logical
         const Int * data;
         std::uint32_t size;
     };
+
+    template<typename Arity>
+    class CompressedIndex
+    {
+        typedef std::uint32_t data_type;
+        
+        CompressedIndex(Arity arity, const data_type * data, const data_type * types, std::uint32_t size) :
+            arity(arity), data(data), types(types), size(size)
+        {
+        }
+
+        template<typename Binding, typename...Ints>
+        void Find(Enumerator &e, Binding b, Ints... query) const
+        {
+            e.i = Internal::LowerBound(arity, b, data, size, types, query...);
+            e.j = Internal::UpperBound(arity, b, data, size, types, query...);
+        }
+        
+        const Int * NextRow(Enumerator &e) const
+        {
+            if(e.i < e.j)
+            {
+                auto row = data+e.i;
+                e.i += arity.value;
+                return row;
+            }
+            return nullptr;
+        }
+
+        template<typename Binding, typename...Ints>
+        bool Next(Enumerator &e, Binding b, Ints&&... result) const
+        {
+            if(auto row = NextRow(e))
+            {
+                Internal::BindRow(b, row, types, result...);
+                return true;
+            }
+            return false;
+        }
+
+        Internal::ShortIndex rows() const { return size; }
+        
+    private:
+        Arity arity;
+        const data_type * data;
+        const data_type * types;
+        std::uint32_t size;
+    };
 }

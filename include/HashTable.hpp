@@ -24,6 +24,12 @@ namespace Logical
             HashIndex(ShortIndex len, Alloc alloc=Alloc()) : index(len, EmptyCell, alloc)
             {
             }
+
+            template<typename Alloc2>
+            HashIndex(const HashIndex<Alloc2> & src, Alloc alloc=Alloc()) : index(src.index.begin(), src.index.end(), alloc)
+            {
+            }
+
             
             int size() const { return items; }
             int capacity() const { return index.size(); }
@@ -166,6 +172,10 @@ namespace Logical
         BasicHashTable(Arity a = Arity(), Alloc alloc = Alloc()) :
             Table<Arity, Alloc>(a, alloc), indexSize(0), index(Internal::GetIndexSize(indexSize), alloc) {}
         
+        template<typename Alloc2>
+        BasicHashTable(const BasicHashTable<Arity, Alloc2> & src, Alloc alloc = Alloc()) :
+            Table<Arity, Alloc>(src, alloc), indexSize(src.indexSize), index(src.index, alloc) {}
+        
         typedef UnsortedIndex<Arity> ScanIndexType;
         typedef HashIndex ProbeIndexType;
         
@@ -233,7 +243,10 @@ namespace Logical
         {
             return HashColumns<Arity, Binding, Alloc>(*this, binding);
         }
-        
+
+        int indexSize;
+        Internal::HashIndex<Alloc> index;
+
     private:
 
         // Returns the cell where the row lives, OR
@@ -274,9 +287,6 @@ namespace Logical
             AddInternal(is...);
         }
         
-        int indexSize;
-        Internal::HashIndex<Alloc> index;
-
         void Rehash()
         {
             if(index.capacity() < 2 * index.size())
@@ -304,6 +314,11 @@ namespace Logical
     {
     public:
         HashTable(Arity a, Alloc alloc = Alloc()) : BasicHashTable<Arity, Alloc>(a, alloc) { }
+        
+        template<typename Alloc2>
+        HashTable(const HashTable<Arity, Alloc2> & src, Alloc alloc = Alloc()) : BasicHashTable<Arity, Alloc>(src, alloc)
+        {
+        }
 
         void NextIteration()
         {

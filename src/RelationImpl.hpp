@@ -75,6 +75,7 @@ public:
     void AddExtern(Columns cols, Logical::Extern ex, void * data) override;
     void AddExtern(Logical::Extern ex, void * data) override;
     Relation & GetSemiNaive(Columns c) override;
+    void Finalize() override;
 private:
     bool rulesRun = false;
 
@@ -115,6 +116,7 @@ public:
     void NextIteration() override;
     void AddExtern(Columns cols, Logical::Extern ex, void * data) override;
     void AddExtern(Logical::Extern ex, void * data) override;
+    void Finalize() override;
 
 private:
     Relation & underlyingPredicate;
@@ -141,7 +143,8 @@ public:
     void NextIteration() override;
     void AddExtern(Columns cols, Logical::Extern ex, void * data) override;
     void AddExtern(Logical::Extern ex, void * data) override;
-    
+    void Finalize() override;
+
     void CopyRules();
 
 private:
