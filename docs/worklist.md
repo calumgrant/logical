@@ -1,5 +1,12 @@
-Next: antlr parsing
-Next: Externs that set data.
+
+Fundamental problems to solve:
+1. Performance of parsing the JDK
+
+Description of the problem:
+- 
+
+Ideas: Don'
+
 
 Bug: csv:read is evaluated twice in this:
 ```

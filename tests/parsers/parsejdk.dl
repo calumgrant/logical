@@ -1,5 +1,11 @@
 load-module parsers.
+memory-limit-mb 10000.
 
-java:parse-directory "/Users/calum/projects/jdk".
+// Limit to the src directory for now.
+java:parse-directory "/Users/calum/projects/jdk/src".
 
-find java:file _ has filename _.
+files n if n = count f in (java:file f).
+
+// error "Missing results" if results n and n < 46583.
+
+query "Number of files" has files n if files n.

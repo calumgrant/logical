@@ -96,6 +96,7 @@ namespace Logical
         
         void SetExpectedResults(Int expected);
         void SetEvaluationStepLimit(Int limit);
+        void SetMemoryLimitMB(Int limit);
         Call & GetPredicate(const std::initializer_list<const char*> &);
 
         Entity NewObject();

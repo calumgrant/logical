@@ -35,6 +35,7 @@ int main(int argc, char**argv)
     int optimizationLevel = 1;
     const char * storageFile = nullptr;
     OptimizerImpl optimizer;
+    int limitMB = 1000;
     
     for(int i=1; i<argc; ++i)
     {
@@ -68,6 +69,10 @@ int main(int argc, char**argv)
                 case 'd':
                     storageFile = argv[i]+2;
                     break;
+                case 'm':
+                    limitMB = atoi(argv[i]+2);
+                    // TODO: Check limits here
+                    break;
                 default:
                     std::cerr << "Unknown option: " << argv[i] << std::endl;
                     return (int)ErrorCode::InvalidArgs;
@@ -78,7 +83,7 @@ int main(int argc, char**argv)
     
     try
     {
-        DatabaseImpl db(optimizer, storageFile, 1000);
+        DatabaseImpl db(optimizer, storageFile, limitMB);
         db.SetVerbosity(verbosity);
         optimizer.SetLevel(optimizationLevel);
         db.SetAnsiColours(supportsTerminal);

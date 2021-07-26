@@ -63,12 +63,26 @@ static void loadmodule(Call &call)
     }
 }
 
+static void memorylimitmb(Call & call)
+{
+    Int value;
+    if(call.Get(0, value))
+    {
+        call.GetModule().SetMemoryLimitMB(value);
+    }
+    else
+    {
+        call.GetModule().ReportError("Memory limit is not an int");
+    }
+}
+
 void RegisterFunctions(Module & module)
 {
     module.AddCommand(print, {"print"});
     module.AddCommand(error, {"error"});
     module.AddCommand(expectedresults, {"expected-results"});
     module.AddCommand(steplimit, {"evaluation-step-limit"});
+    module.AddCommand(memorylimitmb, {"memory-limit-mb"});
 
     module.AddFunction(pi, {"pi"}, {Out});
     module.AddFunction(strlen, {"string", "length"}, {In, Out});

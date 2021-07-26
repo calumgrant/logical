@@ -11,7 +11,11 @@ public:
     JavaParser(Logical::Module & module, const char * filename) :
         module(module),
         filename(filename),
-        stream(filename), input(stream), lexer(&input), tokens(&lexer), parser(&tokens),
+        stream(filename),
+        input(stream),
+        lexer(&input),
+        tokens(&lexer),
+        parser(&tokens),
         ruleNames(parser.getRuleNames()),
         tokenNames(parser.getTokenNames()),
         javafile_filename(module.GetPredicate({"java:file","filename"})),
@@ -24,6 +28,9 @@ public:
         javafile_filename.Set(0, file);
         javafile_filename.Set(1, filename);
         javafile_filename.YieldResult();
+
+        lexer.removeErrorListeners();
+        parser.removeErrorListeners();
 
         if(stream)
         {
@@ -59,7 +66,8 @@ public:
         auto line = sym->getLine();
         auto col = sym->getCharPositionInLine();
         auto len = sym->getStopIndex()-sym->getStartIndex();
-        
+#define ENABLE_STORE 1
+#if ENABLE_STORE
         auto node = module.NewObject();
         location_filename_startrow_startcol_endrow_endcol.Set(0, node);
         location_filename_startrow_startcol_endrow_endcol.Set(1, filename);
@@ -79,18 +87,21 @@ public:
         javatoken_text.Set(0, node);
         javatoken_text.Set(1, r->getText().c_str());
         javatoken_text.YieldResult();
+#endif
     }
 
     void walk_tree(Logical::Entity parent, int childIndex, antlr4::ParserRuleContext * r)
     {
         auto context = parser.getRuleContext();
         auto src = r->getSourceInterval();
-        auto info = r->toInfoString(&parser);
-        auto text = r->getText();
+        // auto info = r->toInfoString(&parser);
+        // auto text = r->getText();
         auto ruleIndex = r->getRuleIndex();
         auto rule = ruleNames[ruleIndex];
         auto start = r->getStart();
         auto stop = r->getStop();
+
+#if ENABLE_STORE
         
         auto node = module.NewObject();
         
@@ -108,6 +119,9 @@ public:
         javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
         javanode_type_parent_index_location.Set(4, node);
         javanode_type_parent_index_location.YieldResult();
+#else
+        Logical::Entity node;
+#endif
         
         //std::cout << "Got rule " << rule << std::endl;
         int i=0;
@@ -158,6 +172,9 @@ static void parsejavafile(Logical::Call & call)
 void WalkDirectory(Logical::Module & module, const char * path)
 {
     std::filesystem::path p(path);
+    std::vector<std::filesystem::path> javafiles;
+    std::size_t size=0;
+    
     if(std::filesystem::is_directory(path))
     {
         for(auto it = std::filesystem::recursive_directory_iterator(p); it != std::filesystem::recursive_directory_iterator(); ++it)
@@ -165,10 +182,47 @@ void WalkDirectory(Logical::Module & module, const char * path)
             auto p = it->path();
             if(it->is_regular_file() && p.extension() == ".java")
             {
-                JavaParser(module, p.c_str());
+                javafiles.push_back(p);
+                size += it->file_size();
             }
         }
     }
+    
+    std::cout << "Found " << javafiles.size() << " Java files in " << path << ", " << size << " bytes total\n";
+
+    int count=0;
+    const int step = 100;
+    std::cout << "[";
+    for(int i=0; i<javafiles.size(); i+=step)
+        std::cout << "-";
+    std::cout << "]\n[";
+    for(auto & j : javafiles)
+    {
+        ++count;
+        std::cout << j << std::endl;
+        if(count%step == 0)
+        {
+            std::cout << ">" << std::flush;
+        }
+        try
+        {
+            JavaParser(module, j.c_str());
+        }
+        catch(std::bad_alloc&)
+        {
+            module.ReportError("Memory limit exceeded");
+            throw;
+        }
+        catch(std::exception &ex)
+        {
+            module.ReportError(ex.what());
+        }
+        catch(...)
+        {
+            module.ReportError("Uncaught exception when parsing");
+        }
+    }
+    std::cout << "]\n";
 }
 
 static void parsejavadirectory(Logical::Call & call)
