@@ -114,6 +114,7 @@ int main(int argc, char**argv)
         {
             std::cout << "Results found    = " << db.NumberOfResults() << std::endl;
             std::cout << "Evaluation steps = " << Database::GlobalCallCount() << std::endl;
+            std::cout << "Disk used        = " << db.SharedMemory().size() << " bytes\n";
             std::cout << "Memory used      = " << db.Storage().size() << " bytes\n";
             std::cout << "Evaluation time  = " << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() << " µs\n";
             
