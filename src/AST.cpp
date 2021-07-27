@@ -79,7 +79,13 @@ void AST::EntityClause::AssertFacts(Database &db) const
         }
         else
         {
-            entity->UnboundError(db);
+            // Create an empty relation in the database.
+            // This is used to prevent "undefined relation" errors by indicating that this
+            // is a legitimate relation.
+            PredicateName name = GetPredicateName();
+            auto & relation = db.GetRelation(name);
+            relation.allowEmpty = true;
+
         }
     }
     else
@@ -287,6 +293,7 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     case 0:
         db.GetRelation(name).Add(nullptr);
         return;
+            /*
     case 1:
         {
             auto v = entitiesOpt->entities[0]->IsValue();
@@ -314,6 +321,7 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
 
             return;
         }
+             */
     }
 
     auto & relation = db.GetRelation(name);
@@ -331,7 +339,7 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
         }
         else
         {
-            v->UnboundError(db);
+            relation.allowEmpty = true;
             return; // Skip this row.
         }
     }

@@ -77,6 +77,10 @@ then
     potentiallyDangerousFunction f has
     message "Call to " + name + " is potentailly dangerous".
 
+potentiallyDangerousFunction _ has message _, location _.
+Function _.
+FunctionCall _.
+
 if
     potentiallyDangerousFunction f has message M, location L
 then

@@ -8,6 +8,9 @@ error "Var args 2" if test:listargs "test:listargs" has arg1 "", arg2 "".
 error "Var args 3" if test:concat x has arg1 "abc", arg2 "def" and not x="arg1=abc arg2=def".
 error "Var args 4" if test:concat x has arg2 "def", arg1 "abc" and not x="arg1=abc arg2=def".
 
-error "Var args 5" if test:concat x has y "y" and x "x" and not x = "y=y x=x".
-error "Var args 6" if test:concat x has x "x" and y "y" and not x = "y=y x=x".
+find test:concat x has y "y", x "x".
+find test:concat x has x "x", y "y".
+
+error "Var args 5" if test:concat x has y "y", x "x" and not x = "y=y x=x".
+error "Var args 6" if test:concat x has x "x", y "y" and not x = "y=y x=x".
 

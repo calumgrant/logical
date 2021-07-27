@@ -2,6 +2,8 @@
 
 expected-results 7.
 
+length(_,_).
+
 ?- length("abc", _).
 ?- string:length("abc", _).
 ?- regex:match(".", "a").

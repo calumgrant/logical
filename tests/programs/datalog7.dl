@@ -3,6 +3,9 @@ f().
 g() :- f().
 i() :- h().
 
+none() :- 0=1.
+h() :- none().
+
 expected-results(2).
 
 ?- f().

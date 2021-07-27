@@ -1,9 +1,12 @@
-- Option to compress data once it's been processed.
-  - `Predicate.Finalize();`
-  - Use a compressed table if possible.
-    - Check the column data.
-  - Finalize should happen implicitly on first read.
-  - Write out the table to persist storage once finalised
+- Fix unit tests after warnings on empty predicates
+
+`strlen1.dl`: Need to set up correct projections.
+1. Desugar queries into their parts. For example, 
+2. `short;name` projects to `short` and `name`
+3. `foo bar x has baz y` desugars to `foo x and bar x and x has baz y`
+4. `x has uppercase y, lowercase z` desugars to `x has uppercase y and x has lowercase z`
+
+- Make is easier to define empty relations, e.g. `g _.`
 
 - Big bug in Call::Get(string) - resulting string seems to be able to move.
 
@@ -17,7 +20,7 @@ struct CompressInfo
   Entity generate(void * data);
 };
 ```
-
+- Fix execution in vscode
 
 Bug: csv:read is evaluated twice in this:
 ```

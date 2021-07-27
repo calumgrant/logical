@@ -106,6 +106,11 @@ void Predicate::AddRule(const std::shared_ptr<Evaluation> &rule)
 
 void Predicate::RunRules()
 {
+    if(!sealed && table->Rows()==0 && rules.rules.empty() && !allowEmpty)
+    {
+        database.WarningEmptyRelation(*this);
+    }
+
     sealed = true;  // No more rules please.
     
     AnalysePredicate(database, *this);

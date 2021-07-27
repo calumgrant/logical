@@ -74,6 +74,7 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
         datastore->queryId = GetStringId("query");
         PredicateName query(1, datastore->queryId);
         datastore->queryPredicate = &GetRelation(query);
+        datastore->queryPredicate->allowEmpty = true;
         datastore->initialized = true;
     }
     
@@ -467,9 +468,10 @@ void Database::WarningEmptyRelation(Relation & relation)
 {
     if(&relation != &GetQueryRelation())
     {
-        std::cerr << Colours::Error << "Warning: Querying empty relation '";
+        std::cerr << Colours::Error << "Error: Querying undefined relation '";
         relation.name.Write(*this, std::cerr);
         std::cerr << "/" << relation.Arity() << "'\n" << Colours::Normal;
+        ReportUserError();
     }
 }
 

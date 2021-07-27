@@ -482,8 +482,9 @@ Logical::Call & Relation::GetExternalCall()
     if(!externalCall)
     {
         externalCall = std::make_shared<ReceiverCallImpl>(*this);
+        allowEmpty = true;
     }
-        
+
     return *externalCall;
 }
 

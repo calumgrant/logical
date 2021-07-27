@@ -104,6 +104,7 @@ public:
     bool visiting = false;
     bool analysedSemiNaive = false;
     bool enableSemiNaive = false;
+    bool allowEmpty = false;
 
     std::shared_ptr<ExecutionUnit> loop;
     std::shared_ptr<Logical::Call> externalCall;

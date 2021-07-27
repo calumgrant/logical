@@ -1,6 +1,8 @@
 
-find _ has environment _.
+find environment _ has value _.
 
-user X if "USER" has environment X.
+user X if environment "USER" has value X.
+
+error "User not found" if not user _.
 
 find user.

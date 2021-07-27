@@ -5,7 +5,7 @@ person @2.
 @3 has chromosome @xx.
 
 X is female if
-    person X has chromosome @xx.
+    person X and X has chromosome @xx.
 
 error "Need to check the left hand side rules" if
     person @3 or female @3.

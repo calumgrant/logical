@@ -5,7 +5,8 @@ name "Constantine".
 short n if name n and string n has length l and l<5.
 long n if name n and not short n.
 
-find short name _.
+expected-results 2.
+find short _.
 find long _.
 
 error "strlen1" if not string "" has length 0.
