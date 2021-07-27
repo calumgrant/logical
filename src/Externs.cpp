@@ -401,6 +401,7 @@ const char * Logical::Call::ArgName(int i) const
         return "<error>";
     }
     
+    i = call.name.MapArgument(i);
     assert(call.name.objects.parts.size()==1);
     int id = i==0 ? call.name.objects.parts[0] : call.name.attributes.parts[i-1];
     return call.module.database.GetString(id).c_str();
@@ -439,6 +440,7 @@ void Logical::Module::LoadModule(const char * name)
 Logical::Mode Logical::Call::GetMode(int index) const
 {
     auto & call = (CallImpl&)*this;
+    index = call.name.MapArgument(index);
     return call.columns.IsBound(index) ? In : Out;
 }
 
