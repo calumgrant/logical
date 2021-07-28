@@ -365,13 +365,19 @@ namespace Logical
 
     namespace Internal
     {
-    
+        static const int LoadFactor = 2;
+        static const int InitialSize = 128;
+
         template<typename Alloc = std::allocator<Int>>
         class OpenHashIndex
         {
         public:
-            OpenHashIndex(ShortIndex size, Alloc a) : table(size<512 ? 512 : size, EmptyCell, a), nodes(a) {}
-            
+            OpenHashIndex(ShortIndex size, Alloc a) : table(size<InitialSize ? InitialSize : size, EmptyCell, a), nodes(a) {}
+
+            template<typename Alloc2>
+            OpenHashIndex(const OpenHashIndex<Alloc2> & src, Alloc a) :
+                table(src.table.begin(), src.table.end(), a), nodes(src.nodes.begin(), src.nodes.end(), a) {}
+
             void Add(ShortIndex tuple, ShortIndex hash)
             {
                 auto cell = hash % table.size();
@@ -423,6 +429,13 @@ namespace Logical
         
         void NextIteration()
         {
+            if(index.table.size() < Internal::LoadFactor * source.size())
+            {
+                // Create an empty index and repopulate it
+                Internal::OpenHashIndex<Alloc> index2(source.size(), index.table.get_allocator());
+                index.swap(index2);
+            }
+            
             while(index.size() < source.size())
             {
                 int row = index.size() * source.arity.value;
@@ -478,10 +491,19 @@ namespace Logical
     class OpenHashTable : public Table<Arity, Alloc>
     {
     public:
-        OpenHashTable(Arity a, Alloc alloc = Alloc()) : Table<Arity, Alloc>(a, alloc), index(512, alloc) { }
+        OpenHashTable(Arity a, Alloc alloc = Alloc()) : Table<Arity, Alloc>(a, alloc), index(Internal::InitialSize, alloc) { }
+
+        template<typename Alloc2>
+        OpenHashTable(const OpenHashTable<Arity, Alloc2> & src, Alloc alloc) : Table<Arity, Alloc>(src, alloc), index(src.index, alloc) {}
         
         template<typename... Values>
         void Add(bool & added, Values... values)
+        {
+            if(Add(values...)) added = true;
+        }
+        
+        template<typename... Values>
+        bool Add(Values... values)
         {
             auto h = Internal::Hash(this->arity, values...) % index.table.size();
             
@@ -490,13 +512,21 @@ namespace Logical
             for(; i!=Internal::EmptyCell; i = index.nodes[i].next)
             {
                 if(Internal::row_equals(this->arity, &this->values[index.nodes[i].tuple], values...))
-                    return;
+                    return false;
             }
             
             // Maybe rehash (todo)
-            if(index.size() > 2 * this->size())
+            if(index.nodes.size() > Internal::LoadFactor * index.table.size())
             {
-                assert(0);
+                Internal::OpenHashIndex<Alloc> index2(index.nodes.size(), index.nodes.get_allocator());
+
+                for(Internal::ShortIndex s=0; s<this->values.size(); s+=this->arity.value)
+                {
+                    auto h2 = Internal::Hash(this->arity, &this->values[s]) % index2.table.size();
+                    index2.Add(s, h2);
+                }
+                index.swap(index2);
+                h = Internal::Hash(this->arity, values...) % index.table.size();
             }
             
             auto s = this->values.size();
@@ -504,7 +534,7 @@ namespace Logical
             
             index.Add(s, h);
         
-            added = true;
+            return true;
         }
 
         typedef UnsortedIndex<Arity> ScanIndexType;
@@ -551,7 +581,9 @@ namespace Logical
             }
             return false;
         }
-
+        
+        Internal::OpenHashIndex<Alloc> index;
+        
     private:
         
         void AddInternal(const Int *e)
@@ -569,8 +601,6 @@ namespace Logical
             this->values.push_back(value);
             AddInternal(values...);
         }
-        
-        Internal::OpenHashIndex<Alloc> index;
     };
 
     /*
@@ -584,7 +614,7 @@ namespace Logical
         DeltaHashTable(Arity a, Alloc alloc = Alloc()) : OpenHashTable<Arity, Alloc>(a, alloc) { }
         
         template<typename Alloc2>
-        DeltaHashTable(const HashTable<Arity, Alloc2> & src, Alloc alloc = Alloc()) : OpenHashTable<Arity, Alloc>(src, alloc)
+        DeltaHashTable(const DeltaHashTable<Arity, Alloc2> & src, Alloc alloc = Alloc()) : OpenHashTable<Arity, Alloc>(src, alloc)
         {
         }
 

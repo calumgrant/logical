@@ -95,11 +95,7 @@ public:
     void ReadAllData(Receiver&r) override;
     void Finalize(Database & db, std::shared_ptr<Table> & table) override;
 
-    typedef Logical::HashColumns<Arity, Logical::DynamicBinding, Alloc> column_index;
-
-    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<true, false>, Alloc> column_index_bf;
-
-    typedef Logical::HashColumns<Logical::StaticArity<2>, Logical::StaticBinding<false, true>, Alloc> column_index_fb;
+    typedef Logical::OpenHashColumns<Arity, Logical::DynamicBinding, Alloc> column_index;
     
     struct Hash
     {
@@ -109,7 +105,7 @@ public:
         { return a.mask == b.mask; }
     };
     
-    Logical::HashTable<Arity, Alloc> hashtable;
+    Logical::DeltaHashTable<Arity, Alloc> hashtable;
     
     using pair_alloc = typename std::allocator_traits<Alloc>::template rebind_alloc<std::pair<const Logical::DynamicBinding, column_index>>;
     
