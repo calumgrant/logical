@@ -716,9 +716,9 @@ public:
         y = 3;
         i.Find(e,fb,x,y);
         CHECK(i.Next(e,fb,x,y));
-        EQUALS(1, x);
+        CHECK(x==1 || x==2);
         CHECK(i.Next(e,fb,x,y));
-        EQUALS(2, x);
+        CHECK(x==1 || x==2);
         CHECK(!i.Next(e,fb,x,y));
 
         // Add some more data
@@ -739,6 +739,10 @@ public:
     {
         TestDeltas1<HashTable<StaticArity<2>>>(StaticArity<2>(), StaticBinding<false, true>(), StaticBinding<false, false>(), StaticBinding<true, true>());
         TestDeltas1<HashTable<DynamicArity>>(DynamicArity(2), DynamicBinding(false, true), DynamicBinding(false, false), DynamicBinding(true, true));
+
+        TestDeltas1<DeltaHashTable<StaticArity<2>>>(StaticArity<2>(), StaticBinding<false, true>(), StaticBinding<false, false>(), StaticBinding<true, true>());
+        TestDeltas1<DeltaHashTable<DynamicArity>>(DynamicArity(2), DynamicBinding(false, true), DynamicBinding(false, false), DynamicBinding(true, true));
+
     }
 
 } tt;

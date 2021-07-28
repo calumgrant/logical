@@ -437,6 +437,37 @@ namespace Logical
             return OpenHashIndex(source.values.data(), index.table.data(), index.nodes.data(), index.table.size());
         }
         
+        // Calling NextIteration() invalidates this enumerator
+        template<typename... Ints>
+        void Find(Enumerator &e, Binding b, Ints... query) const
+        {
+            auto h = Internal::BoundHash(b, query...) % index.table.size();
+            e.i = index.table[h];
+        };
+        
+        const Int * NextRow(Enumerator &e) const
+        {
+            if(e.i == Internal::EmptyCell) return nullptr;
+            const auto & node = index.nodes[e.i];
+            auto result = source.values.data() + node.tuple;
+            e.i = node.next;
+            return result;
+        }
+        
+        template<typename... Ints>
+        bool Next(Enumerator &e, Binding b, Ints&&... result) const
+        {
+            while(auto row = NextRow(e))
+            {
+                if(Internal::BoundEquals(b, row, result...))
+                {
+                    Internal::BindRow(b, row, result...);
+                    return true;
+                }
+            }
+            return false;
+        }
+
     private:
         const Table<Arity, Alloc> & source;
         Binding binding;
@@ -495,6 +526,31 @@ namespace Logical
         {
             return OpenHashColumns<Arity, Binding, Alloc>(*this, b);
         }
+        
+        /*
+            Enumerates the contents of the hashtable.
+         */
+        const Int * NextRow(Enumerator &e) const
+        {
+            if(e.i < e.j)
+            {
+                auto row = &this->values[e.i];
+                e.i += this->arity.value;
+                return row;
+            }
+            return nullptr;
+        }
+        
+        template<typename Binding, typename...Ints>
+        bool Next(Enumerator &e, Binding b, Ints&&...values) const
+        {
+            if(auto p = NextRow(e))
+            {
+                Internal::BindRow(b, p, values...);
+                return true;
+            }
+            return false;
+        }
 
     private:
         
@@ -516,6 +572,65 @@ namespace Logical
         
         Internal::OpenHashIndex<Alloc> index;
     };
+
+    /*
+        A hash table that supports "deltas" and iterations.
+        Call NextIteration() to move to the next iteration.
+     */
+    template<typename Arity, typename Alloc = std::allocator<Int>>
+    class DeltaHashTable : public OpenHashTable<Arity, Alloc>
+    {
+    public:
+        DeltaHashTable(Arity a, Alloc alloc = Alloc()) : OpenHashTable<Arity, Alloc>(a, alloc) { }
+        
+        template<typename Alloc2>
+        DeltaHashTable(const HashTable<Arity, Alloc2> & src, Alloc alloc = Alloc()) : OpenHashTable<Arity, Alloc>(src, alloc)
+        {
+        }
+
+        void NextIteration()
+        {
+            deltaStart = deltaEnd;
+            deltaEnd = this->values.size();
+        }
+
+        /*
+            Queries the whole table up to and including the previous iterations.
+            Items added by the current iteration are not returned.
+         */
+        template<typename Binding>
+        void Find(Enumerator &e, Binding) const
+        {
+            Find(e);
+        }
+        
+        void Find(Enumerator &e) const
+        {
+            e.i = 0;
+            e.j = deltaEnd;
+        }
+
+        /*
+            Queries items only in the delta.
+         */
+        template<typename Binding>
+        void FindDelta(Enumerator &e, Binding) const
+        {
+            FindDelta(e);
+        }
+        
+        void FindDelta(Enumerator &e) const
+        {
+            e.i = deltaStart;
+            e.j = deltaEnd;
+        }
+        
+        void clear() { this->values.clear(); deltaStart = deltaEnd = 0; }
+
+    private:
+        Internal::ShortIndex deltaStart = 0, deltaEnd = 0;
+    };
+
 
     namespace Experimental
     {
