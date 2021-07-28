@@ -34,7 +34,7 @@ namespace Logical
             int size() const { return items; }
             int capacity() const { return index.size(); }
             
-            void Add(Enumerator &e, int i)
+            void Add(Enumerator &e, ShortIndex i)
             {
                 ShortIndex s = index.size();
                 while(index[GetIndex(e, s)] != EmptyCell)
@@ -362,4 +362,208 @@ namespace Logical
     private:
         Internal::ShortIndex deltaStart = 0, deltaEnd = 0;
     };
+
+    namespace Internal
+    {
+    
+        template<typename Alloc = std::allocator<Int>>
+        class OpenHashIndex
+        {
+        public:
+            OpenHashIndex(ShortIndex size, Alloc a) : table(size<512 ? 512 : size, EmptyCell, a), nodes(a) {}
+            
+            void Add(ShortIndex tuple, ShortIndex hash)
+            {
+                auto cell = hash % table.size();
+                auto node = nodes.size();
+                nodes.push_back( HashNode { tuple, table[cell] });
+                table[cell] = node;
+            }
+            
+            void First(ShortIndex & p, ShortIndex hash)
+            {
+                p = table[hash % table.size()];
+            }
+            
+            ShortIndex Next(ShortIndex & p)
+            {
+                if(p == EmptyCell) return EmptyCell;
+                auto result = nodes[p].tuple;
+                p = nodes[p].next;
+                return result;
+            }
+            
+            // The number of items stored in the table.
+            ShortIndex size() const { return nodes.size(); }
+            
+            void swap(OpenHashIndex & other)
+            {
+                table.swap(other.table);
+                nodes.swap(other.nodes);
+            }
+            
+            std::vector<ShortIndex, typename std::allocator_traits<Alloc>::template rebind_alloc<ShortIndex>> table;
+            std::vector<HashNode, typename std::allocator_traits<Alloc>::template rebind_alloc<HashNode>> nodes;
+        };
+    }
+
+    /*
+        An index over a set of columns.
+        There is no need to index the entire table as this is already indexed.
+     */
+    template<typename Arity, typename Binding, typename Alloc=std::allocator<Int> >
+    class OpenHashColumns
+    {
+    public:
+        OpenHashColumns(const Table<Arity, Alloc> & source, Binding binding) :
+            source(source), binding(binding), index(source.values.size(), source.values.get_allocator())
+        {
+            NextIteration();
+        }
+        
+        void NextIteration()
+        {
+            while(index.size() < source.size())
+            {
+                int row = index.size() * source.arity.value;
+                auto h = Internal::BoundHash(binding, &source.values[row]);
+                index.Add(row, h);
+            }
+        }
+        
+        OpenHashIndex GetIndex()
+        {
+            NextIteration();
+            return OpenHashIndex(source.values.data(), index.table.data(), index.nodes.data(), index.table.size());
+        }
+        
+    private:
+        const Table<Arity, Alloc> & source;
+        Binding binding;
+        Internal::OpenHashIndex<Alloc> index;
+    };
+
+    template<typename Arity, typename Alloc = std::allocator<Int>>
+    class OpenHashTable : public Table<Arity, Alloc>
+    {
+    public:
+        OpenHashTable(Arity a, Alloc alloc = Alloc()) : Table<Arity, Alloc>(a, alloc), index(512, alloc) { }
+        
+        template<typename... Values>
+        void Add(bool & added, Values... values)
+        {
+            auto h = Internal::Hash(this->arity, values...) % index.table.size();
+            
+            Internal::ShortIndex i = index.table[h];
+            
+            for(; i!=Internal::EmptyCell; i = index.nodes[i].next)
+            {
+                if(Internal::row_equals(this->arity, &this->values[index.nodes[i].tuple], values...))
+                    return;
+            }
+            
+            // Maybe rehash (todo)
+            if(index.size() > 2 * this->size())
+            {
+                assert(0);
+            }
+            
+            auto s = this->values.size();
+            AddInternal(values...);
+            
+            index.Add(s, h);
+        
+            added = true;
+        }
+
+        typedef UnsortedIndex<Arity> ScanIndexType;
+        typedef OpenHashIndex ProbeIndexType;
+        
+        // Note that calling Add() invalidates this index.
+        ScanIndexType GetScanIndex() const
+        {
+            return ScanIndexType(this->arity, this->values.data(), this->values.size()/this->arity.value);
+        }
+        
+        ProbeIndexType GetProbeIndex() const
+        {
+            return ProbeIndexType(this->values.data(), index.table.data(), index.nodes.data(), index.table.size());
+        }
+        
+        template<typename Binding>
+        OpenHashColumns<Arity, Binding, Alloc> MakeIndex(Binding b)
+        {
+            return OpenHashColumns<Arity, Binding, Alloc>(*this, b);
+        }
+
+    private:
+        
+        void AddInternal(const Int *e)
+        {
+            for(int i=0; i<this->arity.value; ++i)
+                AddInternal(e[i]);
+        }
+
+        void AddInternal()
+        {}
+        
+        template<typename...Values>
+        void AddInternal(Int value, Values...values)
+        {
+            this->values.push_back(value);
+            AddInternal(values...);
+        }
+        
+        Internal::OpenHashIndex<Alloc> index;
+    };
+
+    namespace Experimental
+    {
+        inline Int MakeTuple(Internal::ShortIndex head, Internal::ShortIndex tail)
+        {
+            return (Int(head)<<32) | tail;
+        }
+    
+        inline Internal::ShortIndex Head(Int i) { return i>>32; }
+        inline Internal::ShortIndex Tail(Int i) { return (Internal::ShortIndex)i; }
+
+
+        template<typename Alloc>
+        class TupleStore
+        {
+        public:
+            TupleStore(Alloc a) : values(a) {}
+            
+            //
+            // value is opaque - it stores either an entity (in a 1-tuple), or
+            // a pair of indexes - head and a tail, constructing a tuple.
+            Internal::ShortIndex Find(Int value)
+            {
+                // Look up existing value or create a new one.
+                Internal::ShortIndex result;
+                auto hash = value ^ (value>>32);
+                
+                index.Find(result);
+                if(result == Internal::EmptyCell)
+                {
+                    result = values.size();
+                    values.push_back(value);
+                    index.Add(result);
+                }
+                return result;
+            }
+            
+            Int GetValue(Internal::ShortIndex i) const { return values[i]; }
+            Int GetColumn(Internal::ShortIndex i, int column) const
+            {
+                for(; column>0; column--)
+                    i = Tail(values[i]);
+                return values[i];
+            }
+            
+        private:
+            std::vector<Int, Alloc> values;
+            Internal::HashIndex<Alloc> index;
+        };
+    }
 }

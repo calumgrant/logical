@@ -216,10 +216,11 @@ void WalkDirectory(Logical::Module & module, std::string path)
         }
     }
     
-    std::cout << "Found " << javafiles.size() << " Java files in " << path << ", " << size << " bytes total\n";
+    std::cout << "Parsing " << javafiles.size() << " files in " << path << ", " << size << " bytes total\n";
 
     int count=0;
-    const int step = 100;
+    int step = javafiles.size()/100;
+    if(step<1) step=1;
     std::cout << "[";
     for(int i=0; i<javafiles.size(); i+=step)
         std::cout << "-";

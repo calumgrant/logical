@@ -1,14 +1,79 @@
-- Fix unit tests after warnings on empty predicates
+# Improving memory efficiency
+
+1. Use 32-bits for each cell
+  - Top bit 0 = integer, 1 = value-id.
+  - The for external values, store them in a global table.
+2. Use tuple-numbering.
+3. Use value-numbering.
+4. Use structured tuples?
+5. Use compressed values for small integers
+6. Store type information on the side
+7. Require that all tables have consistent column-types.  
+
+8. Fix hash table implementation.
+9. Make hash table implementation configurable.
+
+- Big inefficiency in hash tables when creating long chains - insertion becomes quadratic - on both the stl unordered_map and using my own implementation.
+- Solution is to roll my own hashtable again.
+- What's the solution to the multi-index with iteration??
+- Use global value numbering for entities?
+- Use global value numbering for rows?
+- How does this work with the disk cache?
+
+Option 1:
+- Avoid hashtables and use sorted tables
+- Use open linked-lists.
+- Use boost::unordered_map?
+- Try to use linear probing anyway?
+  Have a special indicator that points to the end of the list??
+
+1. Look up H(0) to tell you the length of the chain. Then compute n = pow(length)
+2. Use an open hashing scheme, whereby you just keep a singly-linked list in each cell.
+3. Use an open hashing scheme, whereby one cell is the index of the next thingy in the chain.
+
+
+
+Compressed entity data:
+Type: int, objectid, float, string, atstring, bool (3 bits).
+GVN tuple?
+Value: 29 bits: 500 million.
+- Have a tuple-id for each tuple.
+- Store rows as pairs: headid, tailid
+- When joining, ensure that the joined columns are first.
+- Problem is this is slow to query?
+- Cannot easily discard rows for temporary tables.
+
+. If it's -1, then the cell is empty and we can put it there. If it's >=0, the result is in the table, but need to check the hash. If it's <-1, then it points to the end of the chain.
+
+positive, it's a row. I
+
+ which points to the "length" of the chain which gives the end of the 
+ 
+
+
+
+
+- Strange bugs in node types - memory corruption again???
+- Nasty false recursion in `parsejdk.dl`
+- Compression innovation: Store all tuples in a single table for deduplication!
+  - With a 32-bit index, this would give total capacity of 8*4 = 32 GB of data. Probably enough, particularly if deduplicated.
+  - This becomes a "tuple-ID".
+  - Each "predicate" consists of its index, storing tuple-IDs into the table.
+  - There is a master index for each arity
+
+There are 32M rows, each 48 bytes. This totals 1536MB. This isn't too much but it adds up.
 
 `strlen1.dl`: Need to set up correct projections.
 1. Desugar queries into their parts. For example, 
 2. `short;name` projects to `short` and `name`
 3. `foo bar x has baz y` desugars to `foo x and bar x and x has baz y`
-4. `x has uppercase y, lowercase z` desugars to `x has uppercase y and x has lowercase z`
-
-- Make is easier to define empty relations, e.g. `g _.`
+4. `x has uppercase y, lowercase z` desugars to `x has uppercase y and x has lowercase z`  -- NO!
 
 - Big bug in Call::Get(string) - resulting string seems to be able to move.
+
+- Add more languages to the parser
+  - JavaScript for example
+- Better progress bar.  
 
 ```
 struct CompressInfo
@@ -32,7 +97,6 @@ then
 
 - Calls are not multithreaded
 - Parallelism in externs. Use evaluation graph.
-- Warn on empty predicates with no rules. (Or error?)
 
 Bug:
 ```

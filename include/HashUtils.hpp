@@ -17,6 +17,15 @@ namespace Internal
     }
 
     template<typename Arity>
+    ShortIndex Hash(Arity arity, const Int *p)
+    {
+        Int h = EmptyTupleHash;
+        for(int i=arity.value-1; i>=0; --i)
+            h = HashCombine(h, p[i]);
+        return h;
+    }
+
+    template<typename Arity>
     ShortIndex Hash(Arity) { return EmptyTupleHash; }
 
     template<typename Arity, typename...Ints>
@@ -93,15 +102,6 @@ namespace Internal
         return HashWithMask(b.mask, i, is...);
     }
 
-    template<typename Arity>
-    ShortIndex Hash(Arity arity, const Int *p)
-    {
-        Int h = EmptyTupleHash;
-        for(int i=arity.value-1; i>=0; --i)
-            h = HashCombine(h, p[i]);
-        return h;
-    }
-
     inline void FirstHash(Enumerator & e, ShortIndex h)
     {
         e.i = h;
@@ -119,5 +119,10 @@ namespace Internal
     }
 
     ShortIndex GetIndexSize(int index);
+
+    struct HashNode
+    {
+        Internal::ShortIndex tuple, next;
+    };
 }
 }

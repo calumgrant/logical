@@ -269,6 +269,9 @@ public:
         TestUnaryHashTable<BasicHashTable<StaticArity<1>>>(StaticArity<1>());
         TestUnaryHashTable<BasicHashTable<DynamicArity>>(DynamicArity(1));
 
+        TestUnaryHashTable<OpenHashTable<StaticArity<1>>>(StaticArity<1>());
+        TestUnaryHashTable<OpenHashTable<DynamicArity>>(DynamicArity(1));
+
         // Unary hash table tests
         
         BasicHashTable<StaticArity<1>> t1;
@@ -359,6 +362,9 @@ public:
     
     void HashTable2()
     {
+        TestNaryHash<OpenHashTable<StaticArity<3>>>(StaticArity<3>());
+        TestNaryHash<OpenHashTable<DynamicArity>>(DynamicArity(3));
+
         TestNaryHash<BasicHashTable<StaticArity<3>>>(StaticArity<3>());
         TestNaryHash<BasicHashTable<DynamicArity>>(DynamicArity(3));
     }
@@ -537,7 +543,6 @@ public:
                 while(i2.Next(e, fbf, x, y, z))
                 {
                     std::cout << "(" << x << "," << y << "," << z << ")\n";
-                    ++count;
                 }
             }
             EQUALS(100, count);
@@ -583,8 +588,6 @@ public:
             if(count != 100)
                 EQUALS(100, count);
         }
-
-        
     }
     
     template<typename Table, typename Arity, typename Binding>
@@ -632,6 +635,11 @@ public:
         TestIndexes<BasicHashTable<DynamicArity>>(DynamicArity(3), DynamicBinding(false,true,false));
         TestIndexes<BasicHashTable<StaticArity<3>>>(StaticArity<3>(), DynamicBinding(false,true,false));
         TestIndexes<BasicHashTable<DynamicArity>>(DynamicArity(3), StaticBinding<false,true,false>());
+
+        TestIndexes<OpenHashTable<StaticArity<3>>>(StaticArity<3>(), StaticBinding<false,true,false>());
+        TestIndexes<OpenHashTable<DynamicArity>>(DynamicArity(3), DynamicBinding(false,true,false));
+        TestIndexes<OpenHashTable<StaticArity<3>>>(StaticArity<3>(), DynamicBinding(false,true,false));
+        TestIndexes<OpenHashTable<DynamicArity>>(DynamicArity(3), StaticBinding<false,true,false>());
     }
 
     void HashTable4()
@@ -640,6 +648,12 @@ public:
         TestIndexes2<BasicHashTable<DynamicArity>>(DynamicArity(3), DynamicBinding(false, true, true));
         TestIndexes2<BasicHashTable<StaticArity<3>>>(StaticArity<3>(), DynamicBinding(false, true, true));
         TestIndexes2<BasicHashTable<DynamicArity>>(DynamicArity(3), StaticBinding<false, true, true>());
+
+        TestIndexes2<OpenHashTable<StaticArity<3>>>(StaticArity<3>(), StaticBinding<false, true, true>());
+        TestIndexes2<OpenHashTable<DynamicArity>>(DynamicArity(3), DynamicBinding(false, true, true));
+        TestIndexes2<OpenHashTable<StaticArity<3>>>(StaticArity<3>(), DynamicBinding(false, true, true));
+        TestIndexes2<OpenHashTable<DynamicArity>>(DynamicArity(3), StaticBinding<false, true, true>());
+
     }
     
     template<typename Table, typename Arity, typename BindingFB, typename BindingFF, typename BindingBB>
