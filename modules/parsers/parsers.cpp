@@ -86,7 +86,7 @@ public:
         auto text = r->getText();
         auto sym = r->getSymbol();
         auto type = sym->getType();
-        auto name = type<tokenNames.size() ? tokenNames.at(type) : "";
+        auto name = type<tokenNames.size() ? tokenNames.at(type).c_str() : "";
         
         //std::cout << "Got token " << name << std::endl;
         auto line = sym->getLine();
@@ -107,7 +107,7 @@ public:
         predicates.location_filename_startrow_startcol_endrow_endcol.YieldResult();
         
         predicates.javanode_type_parent_index_location.Set(0, node);
-        predicates.javanode_type_parent_index_location.Set(1, name.c_str());
+        predicates.javanode_type_parent_index_location.Set(1, name);
         predicates.javanode_type_parent_index_location.Set(2, parent);
         predicates.javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
         predicates.javanode_type_parent_index_location.Set(4, node);
@@ -126,7 +126,7 @@ public:
         // auto info = r->toInfoString(&parser);
         // auto text = r->getText();
         auto ruleIndex = r->getRuleIndex();
-        auto rule = ruleNames.at(ruleIndex);
+        auto rule = ruleNames.at(ruleIndex).c_str();
         auto start = r->getStart();
         auto stop = r->getStop();
 
@@ -143,7 +143,7 @@ public:
         predicates.location_filename_startrow_startcol_endrow_endcol.YieldResult();
         
         predicates.javanode_type_parent_index_location.Set(0, node);
-        predicates.javanode_type_parent_index_location.Set(1, rule.c_str());
+        predicates.javanode_type_parent_index_location.Set(1, rule);
         predicates.javanode_type_parent_index_location.Set(2, parent);
         predicates.javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
         predicates.javanode_type_parent_index_location.Set(4, node);
