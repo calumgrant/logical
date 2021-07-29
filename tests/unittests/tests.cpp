@@ -107,13 +107,13 @@ public:
         StringTable st(storage);
 #endif
 
-        int x = st.GetId(string_type("hello", storage));
-        EQUALS(x, st.GetId(string_type("hello", storage)));
-        int y = st.GetId(string_type("hello2", storage));
+        int x = st.GetId("hello");
+        EQUALS(x, st.GetId("hello"));
+        int y = st.GetId("hello2");
         CHECK(x!=y);
-        EQUALS(y, st.GetId(string_type("hello2", storage)));
-        EQUALS("hello", st.GetString(0));
-        EQUALS("hello2", st.GetString(1));
+        EQUALS(y, st.GetId("hello2"));
+        EQUALS(std::string("hello"), st.GetString(0));
+        EQUALS(std::string("hello2"), st.GetString(1));
     }
     
 } stt;

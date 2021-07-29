@@ -11,8 +11,9 @@ namespace Logical
     class Module;
 
     typedef std::int64_t Int;
+    typedef std::uint32_t Index;
 
-    struct Entity
+    struct Entity  // !! Rename to Value
     {
         std::uint64_t value;
     };

@@ -1,3 +1,14 @@
+Next steps:
+- Instability in the parser - what's going on?
+- Strange token types - also a bug perhaps?
+- Total lines of code metrics as a test.
+- Rename `ShortIndex` to `Index` and `Int` to `Value`.
+
+
+
+
+- Module system: `import` statement
+
 # Improving memory efficiency
 
 1. Use 32-bits for each cell

@@ -22,10 +22,8 @@ public:
     
     StringId GetStringId(const char *s) override;
     StringId GetAtStringId(const char *s) override;
-    StringId GetStringId(const string_type&s) override;
-    StringId GetAtStringId(const string_type&s) override;
-    const string_type &GetString(StringId id) const override;
-    const string_type &GetAtString(StringId id) const override;
+    const char* GetString(StringId id) const override;
+    const char* GetAtString(StringId id) const override;
     
     Relation& GetRelation(const PredicateName&) override;
     

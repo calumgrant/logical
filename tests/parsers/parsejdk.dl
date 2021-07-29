@@ -17,7 +17,6 @@ nodetype t has Count c if
     t is a nodetype2 and 
     c = count m in (java:node m has type t).
 
-expected-results 115.
 find nodetype _ has Count _.
 
 query "Number of files" has files n if files n.

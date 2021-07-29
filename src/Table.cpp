@@ -509,7 +509,7 @@ void Table::Finalize(Database & db, std::shared_ptr<Table> & table)
 template<typename Arity, typename Alloc>
 void TableImpl2<Arity, Alloc>::Finalize(Database & db, std::shared_ptr<Table> & table)
 {
-    return;
+    // return;
     // Move the data to disk-memory.
     table =
         allocate_shared<TableImpl2<Arity, persist::allocator<Logical::Int>>>(db.Storage(), db.SharedMemory(), *this);

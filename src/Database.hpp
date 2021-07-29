@@ -25,23 +25,20 @@ public:
     void WriteBinary(const char * filename);
 
     // Create entities
-    Entity CreateString(const string_type&s) { return Entity { EntityType::String, GetStringId(s) }; }
     Entity CreateString(const char *s) { return Entity { EntityType::String, GetStringId(s) }; }
     Entity CreateInt(int i) const { return Entity { EntityType::Integer, i}; }
     Entity CreateFloat(float f) const { return Entity { EntityType::Float, f}; }
-    Entity CreateAt(const string_type &s) { return Entity { EntityType::AtString, GetAtStringId(s) }; }
+    Entity CreateAt(const char * s) { return Entity { EntityType::AtString, GetAtStringId(s) }; }
     Entity Create(bool b) const { return Entity { EntityType::Boolean, b}; }
     virtual Entity NewEntity() =0;
     
     Entity AddStrings(StringId id1, StringId id2);
     
-    virtual StringId GetStringId(const string_type&s) =0;
-    virtual StringId GetAtStringId(const string_type&s) =0;
     virtual StringId GetStringId(const char*s) =0;
     virtual StringId GetAtStringId(const char*s) =0;
     int GetStringLiteral(const char * literal);
-    virtual const string_type &GetString(StringId id) const =0;
-    virtual const string_type &GetAtString(StringId id) const =0;
+    virtual const char * GetString(StringId id) const =0;
+    virtual const char * GetAtString(StringId id) const =0;
 
     void Add(const std::string & table, const Entity &entityId);
     void Add(const std::string & table, const Entity &entityId1, const Entity &entity);

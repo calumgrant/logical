@@ -200,7 +200,7 @@ bool Logical::Call::Get(int index, const char * & value)
     auto e = call.Index(index);
     if(e.IsString())
     {
-        value = call.module.database.GetString((std::int64_t)e).c_str();
+        value = call.module.database.GetString((std::int64_t)e);
         return true;
     }
     return false;
@@ -212,7 +212,7 @@ bool Logical::Call::GetAtString(int index, const char * & value)
     auto e = call.Index(index);
     if(e.IsAtString())
     {
-        value = call.module.database.GetAtString((std::int64_t)e).c_str();
+        value = call.module.database.GetAtString((std::int64_t)e);
         return true;
     }
     return false;
@@ -404,7 +404,7 @@ const char * Logical::Call::ArgName(int i) const
     i = call.name.MapArgument(i);
     assert(call.name.objects.parts.size()==1);
     int id = i==0 ? call.name.objects.parts[0] : call.name.attributes.parts[i-1];
-    return call.module.database.GetString(id).c_str();
+    return call.module.database.GetString(id);
 }
 
 void Logical::Module::ReportError(const char * str)

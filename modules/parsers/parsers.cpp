@@ -252,8 +252,8 @@ void WalkDirectory(Logical::Module & module, std::string path)
             module.ReportError("Uncaught exception when parsing");
         }
     }
-    std::cout << "]\n";
     predicates.Finalize();
+    std::cout << "]\n";
 }
 
 static void parsejavadirectory(Logical::Call & call)

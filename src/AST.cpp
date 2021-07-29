@@ -229,9 +229,9 @@ PredicateName AST::DatalogPredicate::GetPredicateName(Database & db) const
         auto str = db.GetString(predicate->nameId);
         
         int colons = 0;
-        for(auto s : str)
+        for(auto s = str; *s; ++s)
         {
-            if(s==':') ++colons;
+            if(*s==':') ++colons;
         }
                 
         if(colons>0 && name.arity>1 && colons+1 >= name.arity)
@@ -242,9 +242,9 @@ PredicateName AST::DatalogPredicate::GetPredicateName(Database & db) const
             std::string latest;
             std::vector<int> attributes;
             
-            for(int i=0; i<str.size(); ++i)
+            for(auto i=str; *i; ++i)
             {
-                if(str[i]==':')
+                if(*i==':')
                 {
                     ++c;
                     if(c == firstColon)
@@ -259,12 +259,12 @@ PredicateName AST::DatalogPredicate::GetPredicateName(Database & db) const
                     }
                     else
                     {
-                        latest += str[i];
+                        latest += *i;
                     }
                 }
                 else
                 {
-                    latest += str[i];
+                    latest += *i;
                 }
             }
 
@@ -650,7 +650,7 @@ AST::Aggregate::Aggregate(Entity *e, Entity * v, Clause *c) : entity(e), value(v
 
 void AST::NamedVariable::UnboundError(Database &db) const
 {
-    db.UnboundError(db.GetString(nameId).c_str(), line, column);
+    db.UnboundError(db.GetString(nameId), line, column);
 }
 
 void AST::UnnamedVariable::UnboundError(Database &db) const

@@ -136,12 +136,12 @@ void Database::PrintQuoted(const Entity &e, std::ostream &os) const
     os << Colours::Normal;
 }
 
-const string_type &DatabaseImpl::GetString(int id) const
+const char * DatabaseImpl::GetString(int id) const
 {
     return datastore->strings.GetString(id);
 }
 
-const string_type &DatabaseImpl::GetAtString(int id) const
+const char * DatabaseImpl::GetAtString(int id) const
 {
     return datastore->atstrings.GetString(id);
 }
@@ -296,27 +296,17 @@ void DatabaseImpl::ReportUserError()
 
 Entity Database::AddStrings(int id1, int id2)
 {
-    return CreateString(GetString(id1) + GetString(id2));
-}
-
-int DatabaseImpl::GetStringId(const string_type &str)
-{
-    return datastore->strings.GetId(str);
-}
-
-int DatabaseImpl::GetAtStringId(const string_type &str)
-{
-    return datastore->atstrings.GetId(str);
+    return CreateString((std::string(GetString(id1)) + GetString(id2)).c_str());
 }
 
 int DatabaseImpl::GetStringId(const char *str)
 {
-    return datastore->strings.GetId(string_type(str, Storage()));
+    return datastore->strings.GetId(str);
 }
 
 int DatabaseImpl::GetAtStringId(const char *str)
 {
-    return datastore->atstrings.GetId(string_type(str, Storage()));
+    return datastore->atstrings.GetId(str);
 }
 
 
