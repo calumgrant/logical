@@ -86,7 +86,8 @@ public:
         auto text = r->getText();
         auto sym = r->getSymbol();
         auto type = sym->getType();
-        auto name = tokenNames[type];
+        auto name = type<tokenNames.size() ? tokenNames.at(type) : "";
+        
         //std::cout << "Got token " << name << std::endl;
         auto line = sym->getLine();
         auto col = sym->getCharPositionInLine();
@@ -125,7 +126,7 @@ public:
         // auto info = r->toInfoString(&parser);
         // auto text = r->getText();
         auto ruleIndex = r->getRuleIndex();
-        auto rule = ruleNames[ruleIndex];
+        auto rule = ruleNames.at(ruleIndex);
         auto start = r->getStart();
         auto stop = r->getStop();
 
