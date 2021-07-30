@@ -8,7 +8,7 @@ class Database
 {
 public:
     // File operations
-    int ReadFile(const char * filename);
+    virtual int ReadFile(const char * filename) =0;
     void ReadBinary(const char * filename);
     void WriteBinary(const char * filename);
 

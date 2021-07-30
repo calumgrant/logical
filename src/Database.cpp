@@ -42,6 +42,10 @@ public:
     
     unordered_map_helper<StringId, VariadicExtern>::map_type variadicExterns;
 
+    // List of imports so we don't import anything twice
+    unordered_set_helper<StringId>::set_type imports;
+
+    
     RelationId queryId;
     Relation * queryPredicate;
     
@@ -310,8 +314,15 @@ int DatabaseImpl::GetAtStringId(const char *str)
 }
 
 
-int Database::ReadFile(const char *filename)
+int DatabaseImpl::ReadFile(const char *filename)
 {
+    int filenameId = GetStringId(filename);
+
+    if(datastore->imports.find(filenameId) != datastore->imports.end())
+        return 0; // Loaded already, so just ignore
+
+    datastore->imports.insert(filenameId);
+    
     FILE * f = fopen(filename, "r");
 
     if(f)
@@ -635,7 +646,8 @@ DataStore::DataStore(persist::shared_memory & mem, AllocatorData & alloc) :
     relations({}, PredicateName::Hash(), std::equal_to<PredicateName>(), alloc),
     nameParts({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc),
     externs({}, PredicateName::Hash(), std::equal_to<PredicateName>(), alloc),
-    variadicExterns({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc)
+    variadicExterns({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc),
+    imports({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc)
 {
 }
 

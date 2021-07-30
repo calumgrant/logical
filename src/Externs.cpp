@@ -546,11 +546,15 @@ void Logical::Call::Import(const char * name)
 
     std::string filename = name;
     filename += ".dl";
+
+    // auto absFile = std::filesystem::absolute(filename);
     
     if(0 == call.module.database.ReadFile(filename.c_str()))
         return;
 
     std::filesystem::path callingFile = call.module.database.GetString(call.recv.location.filenameId);
+    // callingFile = std::filesystem::absolute(callingFile);
+
     callingFile.remove_filename();
     std::filesystem::path p = name;
     p+=".dl";

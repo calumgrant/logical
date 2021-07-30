@@ -1,1 +1,6 @@
+
+// Recursive imports are ok - they are just ignored.
 import modules3.
+import modules1.
+
+imported-value 2.

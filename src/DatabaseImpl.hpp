@@ -19,7 +19,9 @@ class DatabaseImpl : public Database
 public:
     DatabaseImpl(Optimizer & optimizer, const char * datafile, int limitMB);
     ~DatabaseImpl();
-    
+
+    int ReadFile(const char * filename) override;
+
     StringId GetStringId(const char *s) override;
     StringId GetAtStringId(const char *s) override;
     const char* GetString(StringId id) const override;
