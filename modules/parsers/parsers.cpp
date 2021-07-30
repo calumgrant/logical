@@ -2,6 +2,8 @@
 #include "antlr4-runtime.h"
 #include "JavaLexer.h"
 #include "JavaParser.h"
+#include "JavaScriptLexer.h"
+#include "JavaScriptParser.h"
 
 #include <filesystem>
 
