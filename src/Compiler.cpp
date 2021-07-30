@@ -355,7 +355,7 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Comp
             }
         }
         
-        EvaluationPtr result = std::make_shared<Writer>(relation, row);
+        EvaluationPtr result = std::make_shared<Writer>(relation, row, location);
         
         for(auto & i : entitiesOpt->entities)
             result = i->Compile(db, c, result);
@@ -364,7 +364,7 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::CompileLhs(Database &db, Comp
     }
     else
     {
-        return std::make_shared<Writer>(relation, std::vector<int>());
+        return std::make_shared<Writer>(relation, std::vector<int>(), location);
     }
     return std::make_shared<NoneEvaluation>();
 }
@@ -398,7 +398,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::WritePredicates(Database &db, Com
     }
 
     // The last thing we do is to write the result
-    std::shared_ptr<Evaluation> result = std::make_shared<Writer>(relation, slots);
+    std::shared_ptr<Evaluation> result = std::make_shared<Writer>(relation, slots, location);
     
     if(attributes)
     {

@@ -10,7 +10,7 @@
 %define api.pure full
 %param { yyscan_t scanner }
 
-%parse-param { Database &db };
+%parse-param { const ParseData &data };
 
 %union
 {
@@ -59,12 +59,12 @@
 typedef void * yyscan_t;
 
   int yylex(YYSTYPE* yylvalp, YYLTYPE* yyllocp, yyscan_t scanner);
-  void yyerror(YYLTYPE* yyllocp, yyscan_t unused, Database &db, const char* message)
+  void yyerror(YYLTYPE* yyllocp, yyscan_t unused, ParseData data, const char* message)
   {
     std::cerr << message << " at line " << yyllocp->first_line << ":" << yyllocp->first_column << std::endl;
   }
     
-#define LOCATION(L1,L2) SourceLocation{0, L1.first_line, L1.first_column}
+#define LOCATION(L1,L2) SourceLocation{data.filenameId, L1.first_line, L1.first_column}
 
 %}
 
@@ -90,7 +90,7 @@ statement:
 |   rule
     {
         std::unique_ptr<AST::Rule> rule($1);
-        rule->Compile(db);
+        rule->Compile(data.db);
     }
 |   datalog
 |   query
@@ -101,18 +101,18 @@ datalog:
     {
         std::unique_ptr<AST::Clause> clause($2);
         clause->SetPragma($1);
-        clause->AssertFacts(db);
+        clause->AssertFacts(data.db);
     }
 |   pragmaopt datalog_rule tok_dot
     {
         std::unique_ptr<AST::Rule> rule($2);
         rule->SetPragma($1);
-        rule->Compile(db);
+        rule->Compile(data.db);
     }
 |   tok_questiondash datalog_clause tok_dot
     {
         std::unique_ptr<AST::Clause> query($2);
-        query->Find(db);
+        query->Find(data.db);
     }
 |   tok_questiondash datalog_rule tok_dot
 ;
@@ -191,12 +191,12 @@ query:
     tok_find queryclause tok_dot
     {
         std::unique_ptr<AST::Clause> query($2);
-        query->Find(db);
+        query->Find(data.db);
     }
 |   tok_find predicate tok_dot
     {
         std::unique_ptr<AST::Predicate> predicate($2);
-        db.Find(PredicateName(1, predicate->nameId));
+        data.db.Find(PredicateName(1, predicate->nameId));
     }
 |   tok_find queryclause tok_if clause tok_dot
 |   tok_find variablelist tok_in clause tok_dot
@@ -245,7 +245,7 @@ fact:
     {
         std::unique_ptr<AST::Clause> clause($2);
         clause->SetPragma($1);
-        clause->AssertFacts(db);
+        clause->AssertFacts(data.db);
     }
 ;
 
@@ -424,8 +424,8 @@ sumentity:
     {
         // A contextual keyword, where tok_identifier should be "over".
         $$ = new AST::Sum(LOCATION(@1, @7), $4, $2, $7);
-        if ($3 != db.GetStringId("over"))
-            yyerror(&yylloc, scanner, db, "Expecting 'over'");
+        if ($3 != data.db.GetStringId("over"))
+            yyerror(&yylloc, scanner, data, "Expecting 'over'");
     }
 |   tok_sum variable tok_in tok_open clause tok_close
     {

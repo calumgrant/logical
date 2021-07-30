@@ -16,6 +16,7 @@ class Optimizer;
 class Columns;
 class PredicateName;
 struct SourceLocation;
+struct ParseData;
 
 typedef std::shared_ptr<Evaluation> EvaluationPtr;
 typedef Entity * Row;

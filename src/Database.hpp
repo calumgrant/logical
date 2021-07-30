@@ -98,6 +98,6 @@ public:
 
 struct ParseData
 {
-    int file;
-    Database * db;
+    int filenameId;
+    Database & db;
 };

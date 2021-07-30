@@ -908,3 +908,8 @@ void SemiNaiveQuery::Finalize()
 void SemiNaivePredicate::Finalize()
 {
 }
+
+bool Relation::Add(const SourceLocation & loc, const Entity * row)
+{
+    return Add(row);
+}

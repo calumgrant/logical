@@ -179,6 +179,7 @@ public:
     void AddExtern(Columns c, Logical::Extern fn, void * ) override;
     void AddExtern(Logical::Extern ex, void * data) override;
     void Query(Entity *row, Columns columns, Receiver&v) override;
+    bool Add(const SourceLocation & location, const Entity * row) override;
     bool Add(const Entity * row) override;
     void AddVarargs(Logical::Extern ex, void * data);
 private:

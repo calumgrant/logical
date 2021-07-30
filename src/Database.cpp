@@ -52,7 +52,7 @@ public:
 
 void yyrestart (FILE *input_file ,yyscan_t yyscanner );
 int yylex_init (yyscan_t* scanner);
-int yylex_init_extra (Database *, yyscan_t* scanner);
+int yylex_init_extra (ParseData *, yyscan_t* scanner);
 int yylex_destroy (yyscan_t yyscanner );
 void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
@@ -185,7 +185,7 @@ void DatabaseImpl::MakeReachesRelation(Relation & rel)
     {
         // Add the rule rel(_0,_1) :- r(_0, _1)
         std::vector<int> writeArgs = { 0, 1 };
-        auto write = std::make_shared<Writer>(rel, writeArgs);
+        auto write = std::make_shared<Writer>(rel, writeArgs, SourceLocation{});
         auto reader = std::make_shared<Join>(r, std::vector<int>{-1,-1}, std::move(writeArgs), write);
         auto baseRule = std::make_shared<RuleEvaluation>(2, reader);
         rel.AddRule(baseRule);
@@ -194,7 +194,7 @@ void DatabaseImpl::MakeReachesRelation(Relation & rel)
     {
         // Add the rule rel(_0, _1) :- rel(_0, _2), r(_2, _1).
         std::vector<int> writeArgs = { 0, 1 };
-        auto write = std::make_shared<Writer>(rel, writeArgs);
+        auto write = std::make_shared<Writer>(rel, writeArgs, SourceLocation{});
         auto join2 = std::make_shared<Join>(r, std::vector<int> {2, -1}, std::vector<int> { -1, 1 }, write);
         auto join1 = std::make_shared<Join>(rel, std::vector<int> {-1,-1}, std::vector<int> {0, 2}, join2);
         auto recursiveRule = std::make_shared<RuleEvaluation>(3, join1);
@@ -318,14 +318,17 @@ int Database::ReadFile(const char *filename)
     {
         yyscan_t scanner;
 
-        yylex_init_extra(this, &scanner);
+        auto filenameId = GetStringId(filename);
+        ParseData data { filenameId, *this };
+
+        yylex_init_extra(&data, &scanner);
 
         yyset_in(f, scanner);
         yyrestart(f, scanner);
         int p;
         try
         {
-            p = yyparse(scanner, *this);
+            p = yyparse(scanner, data );
         }
         catch(std::bad_alloc&)
         {
@@ -432,7 +435,7 @@ void DatabaseImpl::CreateProjection(const PredicateName &from, const PredicateNa
         projection[j+1] = i+1;
     }
     
-    auto writer = allocate_shared<Writer>(Storage(), *datastore->relations[to], projection);
+    auto writer = allocate_shared<Writer>(Storage(), *datastore->relations[to], projection, SourceLocation{});
     
     std::vector<int> inputs(cols);
     std::fill(inputs.begin(), inputs.end(), -1);

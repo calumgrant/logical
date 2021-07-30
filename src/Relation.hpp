@@ -71,6 +71,7 @@ public:
 
     // Insert a row into this table.
     virtual bool Add(const Entity * row) =0;
+    virtual bool Add(const SourceLocation & loc, const Entity * row);
 
     virtual ~Relation();
     

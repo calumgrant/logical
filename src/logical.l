@@ -5,7 +5,7 @@
 #include "tokens.tab.h"
 #include "Database.hpp"
 
-#define YY_EXTRA_TYPE Database*
+#define YY_EXTRA_TYPE ParseData*
 
 #define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno; \
     yylloc->first_column = yycolumn; yylloc->last_column = yycolumn + yyleng - 1; \
@@ -63,11 +63,11 @@ true    return tok_true;
 ]       return tok_close_square;
 
 _       return tok_underscore;
-{IDENTIFIER}|{IDENTIFIER}?(:{IDENTIFIER})+ { yylval->ival = yyextra->GetStringId(yytext); return tok_identifier; }
+{IDENTIFIER}|{IDENTIFIER}?(:{IDENTIFIER})+ { yylval->ival = yyextra->db.GetStringId(yytext); return tok_identifier; }
 
-@[a-zA-Z_\-0-9]*    { yylval->ival = yyextra->GetAtStringId(yytext+1); return tok_atstring; }
+@[a-zA-Z_\-0-9]*    { yylval->ival = yyextra->db.GetAtStringId(yytext+1); return tok_atstring; }
 [0-9]+            { yylval->ival = atoi(yytext); return tok_integer; }
-\"([^"\\]|\\.)*\"   { yylval->ival = yyextra->GetStringLiteral(yytext); return tok_string; }
+\"([^"\\]|\\.)*\"   { yylval->ival = yyextra->db.GetStringLiteral(yytext); return tok_string; }
 
 [0-9]*\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+  { yylval->fval = atof(yytext); return tok_float; }
 

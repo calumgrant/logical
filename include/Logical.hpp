@@ -68,6 +68,8 @@ namespace Logical
             ReportError();
             BuildError(args...);
         }
+        
+        void Import(const char* moduleName);
 
     protected:
         void ReportError();
@@ -115,7 +117,6 @@ namespace Logical
         void LoadModule(const char*);
         void ReportError(const char*);
         void LoadFile(const char*);
-        void Import(const char*);
         
         void SetExpectedResults(Int expected);
         void SetEvaluationStepLimit(Int limit);

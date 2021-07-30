@@ -419,7 +419,7 @@ public:
 class Writer : public WriterEvaluation
 {
 public:
-    Writer(Relation & relation, const std::vector<int> & slots);
+    Writer(Relation & relation, const std::vector<int> & slots, const SourceLocation & location);
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     void VisitVariables(const std::function<void(int&, VariableAccess)> &fn) override;
@@ -430,6 +430,7 @@ private:
     
     int slot;
     bool contiguous;  // Optimization
+    const SourceLocation location;
 };
 
 class Join : public ReaderEvaluation

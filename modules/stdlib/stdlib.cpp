@@ -81,7 +81,7 @@ static void import(Call & call)
     const char * name;
     if(call.Get(0, name))
     {
-        call.GetModule().Import(name);
+        call.Import(name);
     }
     else
     {

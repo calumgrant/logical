@@ -363,11 +363,12 @@ public:
     void OnRow(Row row) { }
 };
 
-bool ExternPredicate::Add(const Entity * row)
+bool ExternPredicate::Add(const SourceLocation & loc, const Entity * row)
 {
     if(writer.fn)
     {
         NullReceiver r;
+        r.location = loc;
         Columns allSet((1<<name.arity)-1);
         CallImpl call(database, name, allSet, (Entity*)row, r, writer.data);
         call.call(writer.fn);
@@ -536,8 +537,16 @@ void Logical::Call::ReportError()
     std::cerr << "Error at ...: ";
 }
 
-void Logical::Module::Import(const char * name)
+void Logical::Call::Import(const char * name)
 {
-    auto & db = ((ModuleImpl*)this)->database;
-    db.ReadFile((std::string(name) + ".dl").c_str());
+    auto & call = (CallImpl&)*this;
+    std::cout << "Import called from " << call.module.database.GetString(call.recv.location.filenameId) << std::endl;
+
+    call.module.database.ReadFile((std::string(name) + ".dl").c_str());
+}
+
+bool ExternPredicate::Add(const Entity * row)
+{
+    assert(0);
+    return false;
 }

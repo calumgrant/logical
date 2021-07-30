@@ -800,7 +800,7 @@ void Reader::Explain(Database &db, std::ostream &os, int indent) const
     next->Explain(db, os, indent + 4);
 }
 
-Writer::Writer(Relation &relation, const std::vector<int> &slots) : WriterEvaluation(relation), slots(slots)
+Writer::Writer(Relation &relation, const std::vector<int> &slots, const SourceLocation & loc) : WriterEvaluation(relation), slots(slots), location(loc)
 {
     if(slots.size()==0)
     {
@@ -822,7 +822,7 @@ Writer::Writer(Relation &relation, const std::vector<int> &slots) : WriterEvalua
 void Writer::OnRow(Entity *row)
 {
     if (contiguous)
-        relation->Add(row + slot);
+        relation->Add(location, row + slot);
     else
     {
         // Assemble the data into a vector
@@ -893,14 +893,12 @@ void Join::OnRow(Entity *locals)
             data[i] = locals[inputs[i]];
         }
 
-    auto tmp = useDelta;
     if (useDelta)
         relation->QueryDelta(&data[0], mask, visitor);
     else if(hasOutput)
         relation->Query(&data[0], mask, visitor);
     else if(relation->QueryExists(&data[0], mask))
         next->Evaluate(locals);
-    assert(tmp == useDelta);
 }
 
 void Evaluation::OutputVariable(std::ostream &os, int variable)
@@ -1437,7 +1435,7 @@ EvaluationPtr Reader::MakeClone() const
 
 EvaluationPtr Writer::MakeClone() const
 {
-    return std::make_shared<Writer>(*relation, slots);
+    return std::make_shared<Writer>(*relation, slots, location);
 }
 
 EvaluationPtr DeduplicationGuard::MakeClone() const

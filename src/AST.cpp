@@ -145,7 +145,7 @@ void AST::EntityClause::AssertEntity(Database &db, ::Entity e) const
         }
     }
 
-    relation.Add(&entities[0]);
+    relation.Add(location, &entities[0]);
 }
 
 
@@ -344,7 +344,7 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
         }
     }
 
-    db.GetRelation(name).Add(row.data());
+    db.GetRelation(name).Add(location, row.data());
 }
 
 AST::NotImplementedEntity::NotImplementedEntity(const SourceLocation & loc, AST::Node *n1, AST::Node *n2) : ArithmeticEntity(loc)
