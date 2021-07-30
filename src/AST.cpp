@@ -6,33 +6,33 @@ AST::Node::~Node()
 {
 }
 
-AST::NamedVariable::NamedVariable(int nameId, int line, int column) : Variable(line, column), nameId(nameId)
+AST::NamedVariable::NamedVariable(const SourceLocation & loc, int nameId) : Variable(loc), nameId(nameId)
 {
 }
 
-AST::Value::Value(const ::Entity &v) : value(v)
+AST::Value::Value(const SourceLocation & loc, const ::Entity &v) : Entity(loc), value(v)
 {
 }
 
-AST::UnnamedVariable::UnnamedVariable(int line, int column) : Variable(line, column)
+AST::UnnamedVariable::UnnamedVariable(const SourceLocation &loc) : Variable(loc)
 {
 }
 
-AST::Variable::Variable(int line, int column) : line(line), column(column)
+AST::Variable::Variable(const SourceLocation & loc) : Entity(loc)
 {
 }
 
-AST::EntityClause::EntityClause(Entity* entity, UnaryPredicateList* list, UnaryPredicateList * isList, AttributeList * attributes, IsType is, HasType has)
-    : entity(entity), is(is), has(has), predicates(list), isPredicates(isList), attributes(attributes)
+AST::EntityClause::EntityClause(const SourceLocation & loc, Entity* entity, UnaryPredicateList* list, UnaryPredicateList * isList, AttributeList * attributes, IsType is, HasType has)
+    : Clause(loc), entity(entity), is(is), has(has), predicates(list), isPredicates(isList), attributes(attributes)
 {
 }
 
-AST::EntityIs::EntityIs(Entity * entity, UnaryPredicateList * list, IsType is) : EntityClause(entity, list, nullptr, nullptr, is)
+AST::EntityIs::EntityIs(const SourceLocation & loc, Entity * entity, UnaryPredicateList * list, IsType is) : EntityClause(loc, entity, list, nullptr, nullptr, is)
 {
 }
 
-AST::EntityIsPredicate::EntityIsPredicate(Entity* entity, UnaryPredicateList* list, UnaryPredicateList *p) :
-    EntityClause(entity, list,p)
+AST::EntityIsPredicate::EntityIsPredicate(const SourceLocation & loc, Entity* entity, UnaryPredicateList* list, UnaryPredicateList *p) :
+    EntityClause(loc, entity, list,p)
 {
 }
 
@@ -149,7 +149,7 @@ void AST::EntityClause::AssertEntity(Database &db, ::Entity e) const
 }
 
 
-AST::NotImplementedClause::NotImplementedClause(Node *a, Node *b, Node *c, Node *d)
+AST::NotImplementedClause::NotImplementedClause(const SourceLocation & loc, Node *a, Node *b, Node *c, Node *d) : Clause(loc)
 {
     delete a;
     delete b;
@@ -180,7 +180,7 @@ const AST::Value * AST::Value::IsValue() const { return this; }
 
 const AST::Variable * AST::Variable::IsVariable() const { return this; }
 
-AST::And::And(Clause *lhs, Clause *rhs) : lhs(lhs), rhs(rhs)
+AST::And::And(const SourceLocation & loc, Clause *lhs, Clause *rhs) : Clause(loc), lhs(lhs), rhs(rhs)
 {
 }
 
@@ -195,8 +195,8 @@ AST::AttributeList::AttributeList(BinaryPredicate * predicate, Entity * entityOp
     Add(predicate, entityOpt);
 }
 
-AST::EntityHasAttributes::EntityHasAttributes(UnaryPredicateList * unaryPredicatesOpt, Entity * entity, AttributeList * attributes, HasType has) :
-    EntityClause(entity, unaryPredicatesOpt, nullptr, attributes, IsType::is, has)
+AST::EntityHasAttributes::EntityHasAttributes(const SourceLocation & loc, UnaryPredicateList * unaryPredicatesOpt, Entity * entity, AttributeList * attributes, HasType has) :
+    EntityClause(loc, entity, unaryPredicatesOpt, nullptr, attributes, IsType::is, has)
 {
 }
 
@@ -210,8 +210,8 @@ void AST::EntityList::Add(Entity *e)
     entities.push_back(std::unique_ptr<Entity>(e));
 }
 
-AST::DatalogPredicate::DatalogPredicate(Predicate * predicate, EntityList * entityListOpt) :
-    predicate(predicate), entitiesOpt(entityListOpt)
+AST::DatalogPredicate::DatalogPredicate(const SourceLocation & loc, Predicate * predicate, EntityList * entityListOpt) :
+    Clause(loc), predicate(predicate), entitiesOpt(entityListOpt)
 {
 }
 
@@ -347,7 +347,7 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     db.GetRelation(name).Add(row.data());
 }
 
-AST::NotImplementedEntity::NotImplementedEntity(AST::Node *n1, AST::Node *n2)
+AST::NotImplementedEntity::NotImplementedEntity(const SourceLocation & loc, AST::Node *n1, AST::Node *n2) : ArithmeticEntity(loc)
 {
     std::unique_ptr<Node> node1(n1), node2(n2);
 }
@@ -462,7 +462,7 @@ void AST::Rule::Visit(Visitor&v) const
     rhs->Visit(v);
 }
 
-AST::Clause::Clause() : next(nullptr)
+AST::Clause::Clause(const SourceLocation & loc) : location(loc), next(nullptr)
 {
 }
 
@@ -471,11 +471,11 @@ void AST::Clause::SetNext(Clause & n)
     next = &n;
 }
 
-AST::Or::Or(Clause * l, Clause *r) : lhs(l), rhs(r)
+AST::Or::Or(const SourceLocation & loc, Clause * l, Clause *r) : Clause(loc), lhs(l), rhs(r)
 {
 }
 
-AST::Not::Not(Clause *c) : clause(c)
+AST::Not::Not(const SourceLocation & loc, Clause *c) : Clause(loc), clause(c)
 {
 }
 
@@ -525,7 +525,7 @@ void AST::Not::SetNext(Clause &c)
     clause->SetNext(*this);
 }
 
-AST::Comparator::Comparator(Entity * lhs, ComparatorType type, Entity * rhs) : lhs(lhs), type(type), rhs(rhs)
+AST::Comparator::Comparator(const SourceLocation & loc, Entity * lhs, ComparatorType type, Entity * rhs) : Clause(loc), lhs(lhs), type(type), rhs(rhs)
 {
 }
 
@@ -540,7 +540,7 @@ void AST::Comparator::Visit(Visitor&visitor) const
     rhs->Visit(visitor);
 }
 
-AST::Range::Range(Entity * lb, ComparatorType cmp1, Entity *e, ComparatorType cmp2, Entity * ub) :
+AST::Range::Range(const SourceLocation & loc, Entity * lb, ComparatorType cmp1, Entity *e, ComparatorType cmp2, Entity * ub) : Clause(loc),
     lowerBound(lb), cmp1(cmp1), entity(e), cmp2(cmp2), upperBound(ub)
 {
 }
@@ -588,31 +588,31 @@ std::ostream & operator<<(std::ostream & os, ComparatorType t)
     return os;
 }
 
-AST::NegateEntity::NegateEntity(Entity * e) : entity(e)
+AST::NegateEntity::NegateEntity(const SourceLocation & loc, Entity * e) : ArithmeticEntity(loc), entity(e)
 {
 }
 
-AST::BinaryArithmeticEntity::BinaryArithmeticEntity(Entity *l, Entity *r) : lhs(l), rhs(r)
+AST::BinaryArithmeticEntity::BinaryArithmeticEntity(const SourceLocation & loc, Entity *l, Entity *r) : ArithmeticEntity(loc), lhs(l), rhs(r)
 {
 }
 
-AST::AddEntity::AddEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
+AST::AddEntity::AddEntity(const SourceLocation & loc, Entity *l, Entity *r) : BinaryArithmeticEntity(loc, l, r)
 {
 }
 
-AST::SubEntity::SubEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
+AST::SubEntity::SubEntity(const SourceLocation & loc, Entity *l, Entity *r) : BinaryArithmeticEntity(loc, l, r)
 {
 }
 
-AST::MulEntity::MulEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
+AST::MulEntity::MulEntity(const SourceLocation & loc, Entity *l, Entity *r) : BinaryArithmeticEntity(loc, l, r)
 {
 }
 
-AST::DivEntity::DivEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
+AST::DivEntity::DivEntity(const SourceLocation & loc, Entity *l, Entity *r) : BinaryArithmeticEntity(loc, l, r)
 {
 }
 
-AST::ModEntity::ModEntity(Entity *l, Entity *r) : BinaryArithmeticEntity(l, r)
+AST::ModEntity::ModEntity(const SourceLocation & loc, Entity *l, Entity *r) : BinaryArithmeticEntity(loc, l, r)
 {
 }
 
@@ -634,7 +634,7 @@ void AST::NegateEntity::Visit(Visitor &v) const
     entity->Visit(v);
 }
 
-AST::Count::Count(Entity *e, Clause *c) : Aggregate(e, nullptr, c)
+AST::Count::Count(const SourceLocation & loc, Entity *e, Clause *c) : Aggregate(loc, e, nullptr, c)
 {
 }
 
@@ -644,31 +644,31 @@ void AST::Aggregate::Visit(Visitor &v) const
     clause->Visit(v);
 }
 
-AST::Aggregate::Aggregate(Entity *e, Entity * v, Clause *c) : entity(e), value(v), clause(c)
+AST::Aggregate::Aggregate(const SourceLocation & loc, Entity *e, Entity * v, Clause *c) : ArithmeticEntity(loc), entity(e), value(v), clause(c)
 {
 }
 
 void AST::NamedVariable::UnboundError(Database &db) const
 {
-    db.UnboundError(db.GetString(nameId), line, column);
+    db.UnboundError(db.GetString(nameId), location);
 }
 
 void AST::UnnamedVariable::UnboundError(Database &db) const
 {
-    db.UnboundError("_", line, column);
+    db.UnboundError("_", location);
 }
 
 void AST::ArithmeticEntity::UnboundError(Database &db) const
 {
-    db.UnboundError("arithmetic_expression", 0, 0);
+    db.UnboundError("arithmetic_expression", location);
 }
 
 void AST::Value::UnboundError(Database &db) const
 {
-    db.UnboundError("??", 0, 0);  // Shouldn't really get here
+    db.UnboundError("??", location);  // Shouldn't really get here
 }
 
-AST::Sum::Sum(Entity * entity, Entity * value, Clause * clause) : Aggregate(entity, value, clause)
+AST::Sum::Sum(const SourceLocation & loc, Entity * entity, Entity * value, Clause * clause) : Aggregate(loc, entity, value, clause)
 {
 }
 
@@ -699,7 +699,7 @@ CompoundName AST::AttributeList::GetCompoundName() const
     return CompoundName(std::move(name));
 }
 
-AST::NewEntity::NewEntity(UnaryPredicate * predicate, AttributeList * attributes) : EntityClause(nullptr, new UnaryPredicateList(predicate), nullptr, attributes)
+AST::NewEntity::NewEntity(const SourceLocation & loc, UnaryPredicate * predicate, AttributeList * attributes) : EntityClause(loc, nullptr, new UnaryPredicateList(predicate), nullptr, attributes)
 {
 }
 
@@ -725,4 +725,18 @@ void AST::Rule::SetPragma(PragmaList * p)
 void AST::Clause::SetPragma(PragmaList * p)
 {
     pragmas = std::unique_ptr<PragmaList>(p);
+}
+
+AST::ArithmeticEntity::ArithmeticEntity(const SourceLocation & loc) : Entity(loc)
+{
+}
+
+AST::Entity::Entity(const SourceLocation & loc) : location(loc)
+{
+}
+
+SourceLocation operator+(const SourceLocation & l1, const SourceLocation & l2)
+{
+    assert(l1.filenameId == l2.filenameId);
+    return SourceLocation { l1.filenameId, l1.line, l1.column };
 }

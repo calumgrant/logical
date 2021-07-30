@@ -57,9 +57,9 @@ int yylex_destroy (yyscan_t yyscanner );
 void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
 
-void Database::UnboundError(const char *name, int line, int column)
+void Database::UnboundError(const char *name, const SourceLocation & loc)
 {
-    std::cerr << "Error at (" << line << ":" << column << "): " << name << " is unbound.\n";
+    std::cerr << "Error at (" << loc.line << ":" << loc.column << "): " << name << " is unbound.\n";
 }
 
 DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB) :

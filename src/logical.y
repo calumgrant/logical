@@ -63,6 +63,8 @@ typedef void * yyscan_t;
   {
     std::cerr << message << " at line " << yyllocp->first_line << ":" << yyllocp->first_column << std::endl;
   }
+    
+#define LOCATION(L1,L2) SourceLocation{0, L1.first_line, L1.first_column}
 
 %}
 
@@ -118,11 +120,11 @@ datalog:
 datalog_predicate:
     predicate tok_open tok_close
     {
-        $$ = new AST::DatalogPredicate($1, nullptr);
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@3), $1, nullptr);
     }
 |   predicate tok_open entitylist tok_close
     {
-        $$ = new AST::DatalogPredicate($1, $3);
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@4), $1, $3);
     }
 ;
 
@@ -142,13 +144,13 @@ datalog_base_clause:
     datalog_predicate
 |   entity_expression comparator entity_expression 
     {
-        $$ = new AST::Comparator($1, $2, $3);
+        $$ = new AST::Comparator(LOCATION(@1,@3), $1, $2, $3);
     }
 |   entity_expression comparator entity_expression comparator entity_expression
     {
         // Technically this is too broad but anyway
         // This would allow 1>=X>=2 which we don't really want.
-        $$ = new AST::Range($1, $2, $3, $4, $5);
+        $$ = new AST::Range(LOCATION(@1,@5), $1, $2, $3, $4, $5);
     }
 |   tok_open datalog_clause tok_close { $$ = $2; }
 ;
@@ -164,23 +166,23 @@ comparator:
 
 datalog_unary_clause:
     datalog_base_clause
-|   tok_not datalog_base_clause { $$ = new AST::Not($2); }
+|   tok_not datalog_base_clause { $$ = new AST::Not(LOCATION(@1,@1), $2); }
 ;
 
 datalog_and_clause:
     datalog_unary_clause
-|   datalog_and_clause tok_and datalog_unary_clause { $$ = new AST::And($1, $3); }
-|   datalog_and_clause tok_comma datalog_unary_clause { $$ = new AST::And($1, $3); }
+|   datalog_and_clause tok_and datalog_unary_clause { $$ = new AST::And(LOCATION(@1,@3), $1, $3); }
+|   datalog_and_clause tok_comma datalog_unary_clause { $$ = new AST::And(LOCATION(@1,@3), $1, $3); }
 ;
 
 datalog_clause:
     datalog_clause tok_or datalog_and_clause
     {
-        $$ = new AST::Or($1, $3);
+        $$ = new AST::Or(LOCATION(@1, @3), $1, $3);
     }
 |   datalog_clause tok_semicolon datalog_and_clause 
     {
-        $$ = new AST::Or($1, $3);
+        $$ = new AST::Or(LOCATION(@1, @3), $1, $3);
     }
 |   datalog_and_clause
 ;
@@ -204,27 +206,27 @@ query:
 querybaseclause:
     unarypredicatelist entity
     {
-        $$ = new AST::EntityIs($2, $1, IsType::is);
+        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, $1, IsType::is);
     }
 |   unarypredicatelist entity has_a attributes
     {
-        $$ = new AST::EntityHasAttributes($1, $2, $4, $3);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), $1, $2, $4, $3);
     }
 |   unarypredicatelist entity reaches binarypredicate entity_expression
     {
-        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4,$5), $3);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @5), $1, $2, new AST::AttributeList($4,$5), $3);
     }
 |   unarypredicatelist entity tok_comma attributes
     { 
-        $$ = new AST::EntityHasAttributes($1, $2, $4, HasType::has);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), $1, $2, $4, HasType::has);
     }
 |   entity has_a attributes
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, $3, $2);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, $3, $2);
     }
 |   entity reaches binarypredicate entity_expression
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3,$4), $2);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, new AST::AttributeList($3,$4), $2);
     }
 ;
 
@@ -261,53 +263,53 @@ rule:
 ;
 
 baseclause:
-    entity is_a unarypredicatelist { $$ = new AST::EntityIs($1, $3, $2); }
-|   entity is_a value { $$ = new AST::NotImplementedClause($1, $3); }
-|   unarypredicatelist entity is_a unarypredicatelist { $$ = new AST::EntityIsPredicate($2, $1, $4); }
+    entity is_a unarypredicatelist { $$ = new AST::EntityIs(LOCATION(@1, @3), $1, $3, $2); }
+|   entity is_a value { $$ = new AST::NotImplementedClause(LOCATION(@1, @3), $1, $3); }
+|   unarypredicatelist entity is_a unarypredicatelist { $$ = new AST::EntityIsPredicate(LOCATION(@1, @4), $2, $1, $4); }
 |   entity_expression comparator entity_expression 
     {
-        $$ = new AST::Comparator($1, $2, $3);
+        $$ = new AST::Comparator(LOCATION(@1, @3), $1, $2, $3);
     }
 |   entity_expression comparator entity_expression comparator entity_expression
     {
         // Technically this is too broad but anyway
         // This would allow 1>=X>=2 which we don't really want.
-        $$ = new AST::Range($1, $2, $3, $4, $5);
+        $$ = new AST::Range(LOCATION(@1, @5), $1, $2, $3, $4, $5);
     }
-|   unarypredicatelist entity { $$ = new AST::EntityIs($2, $1, IsType::is); }
-|   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr), $2); }
+|   unarypredicatelist entity { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, $1, IsType::is); }
+|   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, new AST::AttributeList($3, nullptr), $2); }
 |   entity tok_comma binarypredicate
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3, nullptr), HasType::has);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, new AST::AttributeList($3, nullptr), HasType::has);
     }
 |   unarypredicatelist entity has_a attributes
     { 
-        $$ = new AST::EntityHasAttributes($1, $2, $4, $3);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), $1, $2, $4, $3);
     }
 |   unarypredicatelist entity reaches binarypredicate entity_expression
     { 
-        $$ = new AST::EntityHasAttributes($1, $2, new AST::AttributeList($4,$5), $3);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @5), $1, $2, new AST::AttributeList($4,$5), $3);
     }
 |   unarypredicatelist entity tok_comma attributes 
     { 
-        $$ = new AST::EntityHasAttributes($1, $2, $4, HasType::has);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), $1, $2, $4, HasType::has);
     }
 |   entity has_a attributes
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, $3, $2);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, $3, $2);
     }
 |   entity reaches binarypredicate entity_expression
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, new AST::AttributeList($3,$4), $2);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), nullptr, $1, new AST::AttributeList($3,$4), $2);
     }
 |   entity tok_comma attributes
     {
-        $$ = new AST::EntityHasAttributes(nullptr, $1, $3, HasType::has);
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, $3, HasType::has);
     }
 |   tok_open clause tok_close { $$=$2; }
 |   tok_new unarypredicate tok_has attributes
     {
-        $$ = new AST::NewEntity($2, $4);
+        $$ = new AST::NewEntity(LOCATION(@1, @4), $2, $4);
     }
 ;
 
@@ -354,17 +356,17 @@ allclause:
 
 notclause:
     allclause
-|   tok_not allclause { $$ = new AST::Not($2); }
+|   tok_not allclause { $$ = new AST::Not(LOCATION(@1, @1), $2); }
 ;
 
 andclause:
     notclause
-|   andclause tok_and notclause { $$ = new AST::And($1, $3); }
+|   andclause tok_and notclause { $$ = new AST::And(LOCATION(@1, @3), $1, $3); }
 ;
 
 orclause:
     andclause
-|   orclause tok_or andclause { $$ = new AST::Or($1, $3); }
+|   orclause tok_or andclause { $$ = new AST::Or(LOCATION(@1, @3), $1, $3); }
 ;
 
 clause: orclause;
@@ -385,8 +387,8 @@ unarypredicate: tok_identifier { $$ = new AST::UnaryPredicate($1); }
 binarypredicate: tok_identifier { $$ = new AST::BinaryPredicate($1); }
 
 variable:
-    tok_identifier { $$ = new AST::NamedVariable($1, @1.first_line, @1.first_column); }
-|   tok_underscore { $$ = new AST::UnnamedVariable(@1.first_line, @1.first_column); }
+    tok_identifier { $$ = new AST::NamedVariable(LOCATION(@1, @1), $1); }
+|   tok_underscore { $$ = new AST::UnnamedVariable(LOCATION(@1, @1)); }
 ;
 
 entity:
@@ -400,20 +402,20 @@ baseentity:
 
 unaryentity:
     baseentity
-|   tok_minus baseentity { $$ = new AST::NegateEntity($2); }
+|   tok_minus baseentity { $$ = new AST::NegateEntity(LOCATION(@1, @2), $2); }
 ;
 
 mulentity:
     unaryentity
-|   mulentity tok_times unaryentity { $$ = new AST::MulEntity($1,$3); }
-|   mulentity tok_div unaryentity { $$ = new AST::DivEntity($1,$3); }
-|   mulentity tok_mod unaryentity { $$ = new AST::ModEntity($1,$3); }
+|   mulentity tok_times unaryentity { $$ = new AST::MulEntity(LOCATION(@1, @3), $1,$3); }
+|   mulentity tok_div unaryentity { $$ = new AST::DivEntity(LOCATION(@1, @3), $1,$3); }
+|   mulentity tok_mod unaryentity { $$ = new AST::ModEntity(LOCATION(@1, @3), $1,$3); }
 ;
 
 plusentity:
     mulentity
-|   plusentity tok_plus mulentity { $$ = new AST::AddEntity($1,$3); }
-|   plusentity tok_minus mulentity { $$ = new AST::SubEntity($1,$3); }
+|   plusentity tok_plus mulentity { $$ = new AST::AddEntity(LOCATION(@1, @3), $1,$3); }
+|   plusentity tok_minus mulentity { $$ = new AST::SubEntity(LOCATION(@1, @3), $1,$3); }
 ;
 
 sumentity:
@@ -421,18 +423,18 @@ sumentity:
 |   tok_sum variable tok_identifier variable tok_in tok_open clause tok_close
     {
         // A contextual keyword, where tok_identifier should be "over".
-        $$ = new AST::Sum($4, $2, $7);
+        $$ = new AST::Sum(LOCATION(@1, @7), $4, $2, $7);
         if ($3 != db.GetStringId("over"))
             yyerror(&yylloc, scanner, db, "Expecting 'over'");
     }
 |   tok_sum variable tok_in tok_open clause tok_close
     {
-        $$ = new AST::Sum(nullptr, $2, $5);
+        $$ = new AST::Sum(LOCATION(@1, @5), nullptr, $2, $5);
     }
-|   tok_count entity_expression tok_in tok_open clause tok_close { $$ = new AST::Count($2, $5); }
-|   tok_count tok_open entity_expression tok_comma datalog_clause tok_close { $$ = new AST::Count($3, $5); }
-|   tok_sum tok_open variable tok_comma datalog_clause tok_close { $$ = new AST::Sum(nullptr, $3, $5); }
-|   tok_sum tok_open variable tok_comma variable tok_comma datalog_clause tok_close { $$ = new AST::Sum($3, $5, $7); }
+|   tok_count entity_expression tok_in tok_open clause tok_close { $$ = new AST::Count(LOCATION(@1, @5), $2, $5); }
+|   tok_count tok_open entity_expression tok_comma datalog_clause tok_close { $$ = new AST::Count(LOCATION(@1, @5), $3, $5); }
+|   tok_sum tok_open variable tok_comma datalog_clause tok_close { $$ = new AST::Sum(LOCATION(@1, @5), nullptr, $3, $5); }
+|   tok_sum tok_open variable tok_comma variable tok_comma datalog_clause tok_close { $$ = new AST::Sum(LOCATION(@1, @7), $3, $5, $7); }
 ;
 
 entity_expression: sumentity;
@@ -440,13 +442,13 @@ entity_expression: sumentity;
 value: 
     tok_string
     {
-        $$ = new AST::Value(Entity(EntityType::String, $1));
+        $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::String, $1));
     }
-|   tok_atstring { $$ = new AST::Value(Entity(EntityType::AtString, $1)); }
-|   tok_integer { $$ = new AST::Value(Entity(EntityType::Integer, $1)); }
-|   tok_float   { $$ = new AST::Value(Entity(EntityType::Float, $1)); }
-|   tok_true    { $$ = new AST::Value(Entity(EntityType::Boolean, 1)); }
-|   tok_false   { $$ = new AST::Value(Entity(EntityType::Boolean, 0)); }
+|   tok_atstring { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::AtString, $1)); }
+|   tok_integer { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Integer, $1)); }
+|   tok_float   { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Float, $1)); }
+|   tok_true    { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Boolean, 1)); }
+|   tok_false   { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Boolean, 0)); }
 ;
 
 pragmaopt: { $$ = nullptr; } | pragma;

@@ -41,6 +41,8 @@ add_library(logiccore SHARED
     Table.cpp Table.hpp TableImpl.hpp
     Evaluation.cpp Evaluation.hpp EvaluationImpl.hpp
     Compiler.cpp Compiler.hpp
+    SourceLocation.hpp
+    PredicateName.hpp
     Relation.cpp Relation.hpp RelationImpl.hpp
     Allocator.cpp Allocator.hpp
     ${BISON_MyParser_OUTPUTS}

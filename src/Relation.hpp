@@ -4,6 +4,7 @@
 #include "Entity.hpp"
 #include "CompoundName.hpp"
 #include "Columns.hpp"
+#include "SourceLocation.hpp"
 
 // A receiver "receives" rows (tuples) and is used in an evaluation pipeline
 // or to receive the results of a query.
@@ -13,6 +14,7 @@
 class Receiver
 {
 public:
+    SourceLocation location;
     virtual void OnRow(Row row)=0;
 };
 

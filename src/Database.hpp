@@ -4,18 +4,6 @@
 #include "Relation.hpp"
 #include "Colours.hpp"
 
-class SourceLocation
-{
-    int lineNumber;
-};
-
-// ?? 
-class Error
-{
-
-};
-
-
 class Database
 {
 public:
@@ -46,7 +34,7 @@ public:
     void SyntaxError(const SourceLocation&);
 
     // Variable "name" is not bound to a value
-    void UnboundError(const char *name, int line, int column);
+    void UnboundError(const char *name, const SourceLocation & loc);
 
     void NotImplementedError(const SourceLocation&);
     
@@ -106,4 +94,10 @@ public:
     virtual Relation & GetExtern(const PredicateName & cn) =0;
     virtual void Addvarargs(RelationId name, Logical::Extern fn, void * data) =0;
     virtual void SetMemoryLimit(std::size_t) =0;
+};
+
+struct ParseData
+{
+    int file;
+    Database * db;
 };

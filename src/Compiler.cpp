@@ -11,7 +11,7 @@
 class TableWriterClause : public AST::Clause
 {
 public:
-    TableWriterClause(AST::Clause & lhs) : lhs(lhs)
+    TableWriterClause(const SourceLocation & loc, AST::Clause & lhs) : AST::Clause(loc), lhs(lhs)
     {
     }
     
@@ -42,7 +42,7 @@ void AST::Rule::Compile(Database &db)
 {
     Compilation compilation;
     
-    TableWriterClause writer(*lhs);
+    TableWriterClause writer(lhs->location, *lhs);
     rhs->SetNext(writer);
 
     auto evaluation = rhs->Compile(db, compilation);
@@ -287,7 +287,7 @@ class NotHandler : public AST::Clause
 public:
     std::shared_ptr<NotTerminator> terminator;
     
-    explicit NotHandler(const std::shared_ptr<NotTerminator> & terminator) : terminator(terminator)
+    explicit NotHandler(const SourceLocation & loc, const std::shared_ptr<NotTerminator> & terminator) : AST::Clause(loc), terminator(terminator)
     {
     }
     
@@ -329,7 +329,7 @@ std::shared_ptr<Evaluation> AST::Not::Compile(Database &db, Compilation & compil
     auto nextEval = next->Compile(db, compilation);
     compilation.Branch(branch);
 
-    NotHandler handler(terminator);
+    NotHandler handler(location, terminator);
     clause->SetNext(handler);
     auto bodyEval = clause->Compile(db, compilation);
 
@@ -646,7 +646,7 @@ private:
 class ResultsPrinter : public AST::Clause
 {
 public:
-    ResultsPrinter(Database &db) : database(db)
+    ResultsPrinter(const SourceLocation & loc, Database &db) : AST::Clause(loc), database(db)
     {
     }
     
@@ -676,7 +676,7 @@ private:
 void AST::Clause::Find(Database &db)
 {
     Compilation c;
-    ResultsPrinter p(db);
+    ResultsPrinter p(location, db);
     SetNext(p);
     auto eval = Compile(db, c);
     
@@ -813,6 +813,8 @@ std::shared_ptr<Evaluation> AST::ModEntity::Compile(Database &db, Compilation&c,
 class DummyClause : public AST::Clause
 {
 public:
+    DummyClause() : AST::Clause(SourceLocation{}) {}
+    
     std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override
     {
         return std::make_shared<NoneEvaluation>();
@@ -875,7 +877,7 @@ int AST::Aggregate::BindVariables(Database & db, Compilation &c, bool & bound)
 
 AST::Clause * AST::MakeAll(Clause * ifPart, Clause * thenPart)
 {
-    return new AST::Not(new AST::And(ifPart, new AST::Not(thenPart)));
+    return new AST::Not(ifPart->location + thenPart->location, new AST::And(ifPart->location + thenPart->location, ifPart, new AST::Not(thenPart->location, thenPart)));
 }
 
 class SumTerminatorClause : public DummyClause

@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "Entity.hpp"
+#include "SourceLocation.hpp"
 
 enum class ComparatorType { lt, lteq, gt, gteq, eq, neq };
 
@@ -42,7 +43,7 @@ namespace AST
     class Clause : public Node
     {
     public:
-        Clause();
+        Clause(const SourceLocation & loc);
 
         Clause * next;
 
@@ -58,12 +59,14 @@ namespace AST
         
         void SetPragma(PragmaList * pragmas);
         std::unique_ptr<PragmaList> pragmas;
+        
+        const SourceLocation location;
     };
 
     class NotImplementedClause : public Clause
     {
     public:
-        NotImplementedClause(Node * =nullptr, Node* =nullptr, Node* =nullptr, Node* =nullptr);
+        NotImplementedClause(const SourceLocation & loc, Node * =nullptr, Node* =nullptr, Node* =nullptr, Node* =nullptr);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
@@ -74,6 +77,8 @@ namespace AST
     class Entity : public Node
     {
     public:
+        Entity(const SourceLocation & loc);
+
         virtual const Variable * IsVariable() const =0;
         virtual const Value * IsValue() const =0;
         
@@ -93,23 +98,23 @@ namespace AST
             If evaluation is required, then the `next` node is used as the next node in the evaluation chain.
          */
         virtual std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const;
+        
+        const SourceLocation location;
     };
 
     class Variable : public Entity
     {
     public:
-        Variable(int line, int column);
+        Variable(const SourceLocation & location);
         const Variable * IsVariable() const override;
         virtual const NamedVariable * IsNamedVariable() const =0;
         const Value * IsValue() const override;
-
-        const int line, column;
     };
 
     class NamedVariable : public Variable
     {
     public:
-        NamedVariable(int nameId, int line, int column);
+        NamedVariable(const SourceLocation & loc, int nameId);
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
@@ -121,7 +126,7 @@ namespace AST
     class UnnamedVariable : public Variable
     {
     public:
-        UnnamedVariable(int line, int column);
+        UnnamedVariable(const SourceLocation & loc);
         void Visit(Visitor&) const override;
         const NamedVariable * IsNamedVariable() const override;
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
@@ -131,7 +136,7 @@ namespace AST
     class Value : public Entity
     {
     public:
-        Value(const ::Entity & entity);
+        Value(const SourceLocation & loc, const ::Entity & entity);
         const Variable * IsVariable() const override;
         const Value * IsValue() const override;
         const ::Entity &GetValue() const;
@@ -147,6 +152,7 @@ namespace AST
     class ArithmeticEntity : public Entity
     {
     public:
+        ArithmeticEntity(const SourceLocation & loc);
         const Variable * IsVariable() const override;
         const Value * IsValue() const override;
         void UnboundError(Database & db) const override;
@@ -155,7 +161,7 @@ namespace AST
     class NotImplementedEntity : public ArithmeticEntity
     {
     public:
-        NotImplementedEntity(Node *e1=nullptr, Node *e2=nullptr);
+        NotImplementedEntity(const SourceLocation & loc, Node *e1=nullptr, Node *e2=nullptr);
         const Variable * IsVariable() const override;
         const Value * IsValue() const override;
         void Visit(Visitor&) const override;
@@ -165,7 +171,7 @@ namespace AST
     class And : public Clause
     {
     public:
-        And(Clause *lhs, Clause *rhs);
+        And(const SourceLocation & loc, Clause *lhs, Clause *rhs);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
@@ -178,7 +184,7 @@ namespace AST
     class Or : public Clause
     {
     public:
-        Or(Clause *lhs, Clause *rhs);
+        Or(const SourceLocation & loc, Clause *lhs, Clause *rhs);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
@@ -191,8 +197,8 @@ namespace AST
     class Not : public Clause
     {
     public:
-        Not(Clause * c);
-        Not(const std::shared_ptr<Clause> & clause);
+        Not(const SourceLocation & loc, Clause * c);
+        Not(const std::shared_ptr<Clause> & clause);  // Is this used?
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
@@ -208,7 +214,7 @@ namespace AST
     class Comparator : public Clause
     {
     public:
-        Comparator(Entity * lhs, ComparatorType cmp, Entity * rhs);
+        Comparator(const SourceLocation & loc, Entity * lhs, ComparatorType cmp, Entity * rhs);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
@@ -222,7 +228,7 @@ namespace AST
     class Range : public Clause
     {
     public:
-        Range(Entity * lowerBound, ComparatorType cmp1, Entity * entity, ComparatorType cmp2, Entity * upperBound);
+        Range(const SourceLocation & loc, Entity * lowerBound, ComparatorType cmp1, Entity * entity, ComparatorType cmp2, Entity * upperBound);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
@@ -298,7 +304,7 @@ namespace AST
     class EntityClause : public Clause
     {
     public:
-        EntityClause(Entity* entity, UnaryPredicateList* predicates, UnaryPredicateList *isPredicates = nullptr, AttributeList * attributes = nullptr, IsType is = IsType::is, HasType has=HasType::has);
+        EntityClause(const SourceLocation & loc, Entity* entity, UnaryPredicateList* predicates, UnaryPredicateList *isPredicates = nullptr, AttributeList * attributes = nullptr, IsType is = IsType::is, HasType has=HasType::has);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
@@ -306,7 +312,7 @@ namespace AST
         void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
     private:
         std::shared_ptr<Evaluation> WritePredicates(Database &db, Compilation &c, int slot);
-
+        
         const IsType is;
         const HasType has;
         std::unique_ptr<Entity> entity;
@@ -324,25 +330,25 @@ namespace AST
     class EntityIs : public EntityClause
     {
     public:
-        EntityIs(Entity* entity, UnaryPredicateList* list, IsType is);
+        EntityIs(const SourceLocation & loc, Entity* entity, UnaryPredicateList* list, IsType is);
     };
 
     class EntityIsPredicate : public EntityClause
     {
     public:
-        EntityIsPredicate(Entity* entity, UnaryPredicateList* list, UnaryPredicateList * p);
+        EntityIsPredicate(const SourceLocation & loc, Entity* entity, UnaryPredicateList* list, UnaryPredicateList * p);
     };
 
     class EntityHasAttributes : public EntityClause
     {
     public:
-        EntityHasAttributes(UnaryPredicateList * unarypredicatesOpt, Entity*entity, AttributeList*attributes, HasType has);
+        EntityHasAttributes(const SourceLocation & loc, UnaryPredicateList * unarypredicatesOpt, Entity*entity, AttributeList*attributes, HasType has);
     };
 
     class NewEntity : public EntityClause
     {
     public:
-        NewEntity(UnaryPredicate * pred, AttributeList * attributes);
+        NewEntity(const SourceLocation & loc, UnaryPredicate * pred, AttributeList * attributes);
     };
 
     class EntityList : public Node
@@ -357,7 +363,7 @@ namespace AST
     class DatalogPredicate : public Clause
     {
     public:
-        DatalogPredicate(Predicate * predicate, EntityList * entityListOpt);
+        DatalogPredicate(const SourceLocation & loc, Predicate * predicate, EntityList * entityListOpt);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
@@ -385,7 +391,7 @@ namespace AST
     class BinaryArithmeticEntity : public ArithmeticEntity
     {
     protected:
-        BinaryArithmeticEntity(Entity * lhs, Entity * rhs);
+        BinaryArithmeticEntity(const SourceLocation & loc, Entity * lhs, Entity * rhs);
         
         int BindVariables(Database & db, Compilation &c, bool & bound) override;
         void Visit(Visitor &v) const override;
@@ -397,42 +403,42 @@ namespace AST
     class AddEntity : public BinaryArithmeticEntity
     {
     public:
-        AddEntity(Entity * lhs, Entity * rhs);
+        AddEntity(const SourceLocation & loc, Entity * lhs, Entity * rhs);
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class SubEntity : public BinaryArithmeticEntity
     {
     public:
-        SubEntity(Entity * lhs, Entity * rhs);
+        SubEntity(const SourceLocation & loc, Entity * lhs, Entity * rhs);
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class MulEntity : public BinaryArithmeticEntity
     {
     public:
-        MulEntity(Entity * lhs, Entity * rhs);
+        MulEntity(const SourceLocation & loc, Entity * lhs, Entity * rhs);
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class DivEntity : public BinaryArithmeticEntity
     {
     public:
-        DivEntity(Entity * lhs, Entity * rhs);
+        DivEntity(const SourceLocation & loc, Entity * lhs, Entity * rhs);
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation &, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class ModEntity : public BinaryArithmeticEntity
     {
     public:
-        ModEntity(Entity * lhs, Entity * rhs);
+        ModEntity(const SourceLocation & loc, Entity * lhs, Entity * rhs);
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation&, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class NegateEntity : public ArithmeticEntity
     {
     public:
-        NegateEntity(Entity * e);
+        NegateEntity(const SourceLocation & loc, Entity * e);
         
         const Variable * IsVariable() const override;
         const Value * IsValue() const override;
@@ -448,7 +454,7 @@ namespace AST
     class Aggregate : public ArithmeticEntity
     {
     protected:
-        Aggregate(Entity *e, Entity * value, Clause *c);
+        Aggregate(const SourceLocation & loc, Entity *e, Entity * value, Clause *c);
         std::unique_ptr<Entity> entity, value;
         std::unique_ptr<Clause> clause;
         
@@ -461,14 +467,14 @@ namespace AST
     class Count : public Aggregate
     {
     public:
-        Count(Entity *e, Clause *c);
+        Count(const SourceLocation & loc, Entity *e, Clause *c);
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation &c, const std::shared_ptr<Evaluation> & next) const override;
     };
 
     class Sum : public Aggregate
     {
     public:
-        Sum(Entity * entity, Entity * value, Clause * clause);
+        Sum(const SourceLocation & loc, Entity * entity, Entity * value, Clause * clause);
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation &c, const std::shared_ptr<Evaluation> & next) const override;
     };
 
