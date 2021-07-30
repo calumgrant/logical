@@ -185,7 +185,7 @@ void Logical::Call::YieldResult()
     auto & call = (CallImpl&)*this;
 
     if(!call.setColumns.IsFullyBound(call.name.arity))
-        call.module.ReportError("Cannot call YieldResult until all columns are set");
+        call.Error("Cannot call YieldResult until all columns are set");
     call.recv.OnRow(call.row);
 }
 
@@ -263,7 +263,7 @@ void Logical::Call::Set(int index, const char * value)
     
     if(index>=call.name.arity)
     {
-        call.module.ReportError("Invalid argument");
+        call.Error("Invalid argument");
         return;
     }
     
@@ -399,7 +399,7 @@ const char * Logical::Call::ArgName(int i) const
     auto & call = (CallImpl&)*this;
     if(i>=call.name.arity)
     {
-        call.module.ReportError("Invalid argument");
+        call.Error("Invalid argument");
         return "<error>";
     }
     

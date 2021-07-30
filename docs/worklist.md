@@ -1,18 +1,12 @@
 Currently working on:
-- `imports`
-  - Recursive imports
-  - Double imports -- avoid
-  - Relative to current file
 - Better error reporting.
   - Make it red again
   - Require a location
   - Filename in message
   - Allow varargs.
   - Allow colours.
-  - Perhaps a stream
   - Test error outputs
   - `expected-errors 10.`
-  - Calls have locations. `call.Report(Level, ...)`
 - Search paths: LOGICAL_PATH=... (search path for imports and modules). ":" separated.
 - `-p ...`
 - Get build running in VSCode.
