@@ -1,22 +1,12 @@
 Currently working on:
 - Better error reporting.
-  - Make it red again
   - Require a location
   - Filename in message
-  - Allow varargs.
-  - Allow colours.
   - Test error outputs
   - `expected-errors 10.`
 - Search paths: LOGICAL_PATH=... (search path for imports and modules). ":" separated.
 - `-p ...`
 - Get build running in VSCode.
-
-```
-Module.Report(Level, location, ...)
-
-Gets compiled into
-output << "Error at "
-```
 
 ```
 bool BoundLess(Binding, ...)
@@ -44,7 +34,6 @@ Next steps:
 - Import other languages and make `parsers` extensible.
 - parser calling Finalize isn't quite right.
 
-- Module system: `import` statement
 - Rename `ShortIndex` to `Index` and `Int` to `Value`.
 - Report peak memory usage
 - Discard predicate results when finished

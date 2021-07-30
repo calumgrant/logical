@@ -1,0 +1,17 @@
+print "Imported module report-summary!".
+
+query "Lines of code" has result 1.
+
+java:number-of-files n if n = count f in (java:file f).
+
+java:statement s if java:node s has type "statement".
+
+t is a java:nodetype if java:node _ has type t.
+
+query "Number of files" has result n if n is java:number-of-files.
+
+query "Node types" has nodetype t, nodecount c if
+    t is a java:nodetype and 
+    c = count m in (java:node m has type t).
+
+

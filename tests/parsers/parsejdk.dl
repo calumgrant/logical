@@ -1,24 +1,9 @@
 load-module parsers.
-// memory-limit-mb 6000.
-memory-limit-mb 10000.
+import report-summary.
 
+memory-limit-mb 7000.
 
-// Limit to the src directory for now.
 java:parse-directory "/Users/calum/projects/jdk/src".
-// java:parse-directory "/Users/calum/projects/jdk/src/java.compiler".
 
-files n if n = count f in (java:file f).
-
-error "Missing results" if files n and n < 13000.
-
-t is a nodetype2 if java:node _ has type t.
-
-nodetype t has Count c if 
-    t is a nodetype2 and 
-    c = count m in (java:node m has type t).
-
-find nodetype _ has Count _.
-
-query "Number of files" has files n if files n.
-
+error "Missing results" if java:number-of-files n and n < 13000.
 
