@@ -417,15 +417,22 @@ namespace Logical
         An index over a set of columns.
         There is no need to index the entire table as this is already indexed.
      */
-    template<typename Arity, typename Binding, typename Alloc=std::allocator<Int> >
+    template<typename Arity, typename Binding, typename Alloc=std::allocator<Int>, typename Alloc2=Alloc>
     class OpenHashColumns
     {
     public:
-        OpenHashColumns(const Table<Arity, Alloc> & source, Binding binding) :
-            source(source), binding(binding), index(source.values.size(), source.values.get_allocator())
+        OpenHashColumns(const Table<Arity, Alloc2> & source, Binding binding, Alloc allocator) :
+            source(source), binding(binding), index(source.values.size(), allocator)
         {
             NextIteration();
         }
+
+        template<typename Alloc3>
+        OpenHashColumns(const OpenHashColumns<Arity, Binding, Alloc3, Alloc2> & source, Alloc allocator) :
+            source(source.source), binding(source.binding), index(source.index, allocator)
+        {
+        }
+
         
         void NextIteration()
         {
@@ -481,8 +488,7 @@ namespace Logical
             return false;
         }
 
-    private:
-        const Table<Arity, Alloc> & source;
+        const Table<Arity, Alloc2> & source;
         Binding binding;
         Internal::OpenHashIndex<Alloc> index;
     };
@@ -554,7 +560,7 @@ namespace Logical
         template<typename Binding>
         OpenHashColumns<Arity, Binding, Alloc> MakeIndex(Binding b)
         {
-            return OpenHashColumns<Arity, Binding, Alloc>(*this, b);
+            return OpenHashColumns<Arity, Binding, Alloc>(*this, b, this->values.get_allocator());
         }
         
         /*
@@ -614,7 +620,8 @@ namespace Logical
         DeltaHashTable(Arity a, Alloc alloc = Alloc()) : OpenHashTable<Arity, Alloc>(a, alloc) { }
         
         template<typename Alloc2>
-        DeltaHashTable(const DeltaHashTable<Arity, Alloc2> & src, Alloc alloc = Alloc()) : OpenHashTable<Arity, Alloc>(src, alloc)
+        DeltaHashTable(const DeltaHashTable<Arity, Alloc2> & src, Alloc alloc = Alloc()) :
+            OpenHashTable<Arity, Alloc>(src, alloc), deltaStart(src.deltaStart), deltaEnd(src.deltaEnd)
         {
         }
 
@@ -657,7 +664,6 @@ namespace Logical
         
         void clear() { this->values.clear(); deltaStart = deltaEnd = 0; }
 
-    private:
         Internal::ShortIndex deltaStart = 0, deltaEnd = 0;
     };
 

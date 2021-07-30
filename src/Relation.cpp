@@ -117,6 +117,8 @@ void Predicate::RunRules()
 
     assert(loop);
     loop->RunRules();
+    
+    Finalize();
 }
 
 bool Predicate::HasRules() const
@@ -892,7 +894,11 @@ int PredicateName::MapArgument(int arg) const
 
 void Predicate::Finalize()
 {
-    table->Finalize(database, table);
+    if(!finalized)
+    {
+        table->Finalize(database, table);
+        finalized = true;
+    }
 }
 
 void SemiNaiveQuery::Finalize()

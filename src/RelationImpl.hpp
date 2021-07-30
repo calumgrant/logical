@@ -78,6 +78,7 @@ public:
     void Finalize() override;
 private:
     bool rulesRun = false;
+    bool finalized = false;
 
     RuleSet rules;
 protected:

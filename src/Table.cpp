@@ -296,7 +296,16 @@ typename TableImpl2<Arity, Alloc>::column_index & TableImpl2<Arity, Alloc>::GetI
     auto i = indexes.find(binding);
     if(i == indexes.end())
     {
+#if 1
         indexes.insert(std::make_pair(binding, hashtable.MakeIndex(binding)));
+#else
+        // This little hack is used to create the index in memory first, then move it to
+        // disk memory. Because disk memory can have performance problems (write-through) on macOS.
+        Logical::OpenHashColumns<Arity, Logical::DynamicBinding, std::allocator<Logical::Int>, Alloc>
+            index2(hashtable, binding, std::allocator<Logical::Int>());
+        
+        indexes.insert(std::make_pair(binding, column_index(index2, hashtable.values.get_allocator())));
+#endif
     }
     i = indexes.find(binding);
     return i->second;
@@ -509,9 +518,10 @@ void Table::Finalize(Database & db, std::shared_ptr<Table> & table)
 template<typename Arity, typename Alloc>
 void TableImpl2<Arity, Alloc>::Finalize(Database & db, std::shared_ptr<Table> & table)
 {
-    // return;
+    return;
+
     // Move the data to disk-memory.
+    // This is disabled as there are performance problems on macOS.
     table =
         allocate_shared<TableImpl2<Arity, persist::allocator<Logical::Int>>>(db.Storage(), db.SharedMemory(), *this);
 }
-

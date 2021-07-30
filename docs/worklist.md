@@ -1,13 +1,54 @@
+```
+bool BoundLess(Binding, ...)
+int BoundCompare(Binding, ...)
+```
+32 million rows
+5 entries.
+Base memory usage = 32 * 5 * 8 = 1.2GB
+Indexing: 8 bytes per entry = 256MB
+
+More efficient encoding:
+
+
 Next steps:
-- Instability in the parser - what's going on?
-- Strange token types - also a bug perhaps?
+- Secondary indexes should just be sorted lists. No need for a hash table unless it's recursive.
+- Allow secondary indexes to index arbitrary columns in sorted order.
+- Show breakdown of predicates in verbose mode
+  - Number of steps
+  - Time to execute.
+- Progress bar: Number of predicates to evaluate
+- Profiler output
+
 - Total lines of code metrics as a test.
-- Rename `ShortIndex` to `Index` and `Int` to `Value`.
-
-
-
+- Finalize other predicates after evaluation.
+- Import other languages and make `parsers` extensible.
+- parser calling Finalize isn't quite right.
 
 - Module system: `import` statement
+- Rename `ShortIndex` to `Index` and `Int` to `Value`.
+- Report peak memory usage
+- Discard predicate results when finished
+
+# Plan for this week
+
+- Carry on investigating pathological performance problems with disk-memory
+- Carry on invesigating memory usage
+  - Avoid hash indexes, and just use sorted indexes (Bound by columns)
+  - BoundCompare using binding, not arity
+- `import` statement without prefixes.
+- Parser work
+  - more languages
+  - library: lines of code metrics
+  - list of tokens.
+  - max predicate. `find max x in ()`
+- Think about sub-queries using brackets?
+- Execute as a graph, not recursively.
+- Desugar `foo bar x has baz y` into `foo x and bar x and x has baz y`
+
+
+# Performance explorer
+
+
 
 # Improving memory efficiency
 
@@ -37,12 +78,6 @@ Option 1:
 - Use boost::unordered_map?
 - Try to use linear probing anyway?
   Have a special indicator that points to the end of the list??
-
-1. Look up H(0) to tell you the length of the chain. Then compute n = pow(length)
-2. Use an open hashing scheme, whereby you just keep a singly-linked list in each cell.
-3. Use an open hashing scheme, whereby one cell is the index of the next thingy in the chain.
-
-
 
 Compressed entity data:
 Type: int, objectid, float, string, atstring, bool (3 bits).
