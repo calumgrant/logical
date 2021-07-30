@@ -61,8 +61,26 @@ namespace Logical
         const char * ArgName(int index) const;
         
         void Finalize();
+        
+        template<typename...Args>
+        void Error(Args... args)
+        {
+            ReportError();
+            BuildError(args...);
+        }
 
     protected:
+        void ReportError();
+        void BuildError();
+        void ErrorInsert(const char*);
+        
+        template<typename Arg, typename...Args>
+        void BuildError(Arg a, Args... b)
+        {
+            ErrorInsert(a);
+            BuildError(b...);
+        }
+        
         Call();
         virtual ~Call();
         Call(const Call&) = delete;
@@ -97,6 +115,7 @@ namespace Logical
         void LoadModule(const char*);
         void ReportError(const char*);
         void LoadFile(const char*);
+        void Import(const char*);
         
         void SetExpectedResults(Int expected);
         void SetEvaluationStepLimit(Int limit);

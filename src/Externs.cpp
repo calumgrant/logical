@@ -518,3 +518,26 @@ void Logical::Call::Finalize()
 }
 
 Logical::Call::~Call() { }
+
+void Logical::Call::ErrorInsert(const char * msg)
+{
+    std::cerr << msg;
+}
+
+void Logical::Call::BuildError()
+{
+    std::cerr << "\n";
+}
+
+void Logical::Call::ReportError()
+{
+    auto & call = (CallImpl&)*this;
+    call.module.database.ReportUserError();
+    std::cerr << "Error at ...: ";
+}
+
+void Logical::Module::Import(const char * name)
+{
+    auto & db = ((ModuleImpl*)this)->database;
+    db.ReadFile((std::string(name) + ".dl").c_str());
+}

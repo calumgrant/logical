@@ -76,6 +76,19 @@ static void memorylimitmb(Call & call)
     }
 }
 
+static void import(Call & call)
+{
+    const char * name;
+    if(call.Get(0, name))
+    {
+        call.GetModule().Import(name);
+    }
+    else
+    {
+        call.Error("Import must be a string.");
+    }
+}
+
 void RegisterFunctions(Module & module)
 {
     module.AddCommand(print, {"print"});
@@ -95,6 +108,7 @@ void RegisterFunctions(Module & module)
     module.AddCommand(writecontents, {"file", "contents"});
     module.AddCommand(writelines, {"file", "line", "text"});
     module.AddCommand(loadmodule, {"load-module"});
+    module.AddCommand(import, {"import"});
     
     module.AddFunction(regexmatch, {"regex", "match"}, {In, In});
     module.AddFunction(regexmatchgroup, {"regex", "match", "group", "value"}, {In, In, Out, Out});
