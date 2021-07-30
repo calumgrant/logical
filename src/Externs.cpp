@@ -5,6 +5,7 @@
 
 #include <dlfcn.h>
 #include <iostream>
+#include <filesystem>
 
 class ModuleImpl : public Logical::Module
 {
@@ -527,22 +528,38 @@ void Logical::Call::ErrorInsert(const char * msg)
 
 void Logical::Call::BuildError()
 {
-    std::cerr << "\n";
+    std::cerr << "\n" << Colours::Normal;
 }
 
 void Logical::Call::ReportError()
 {
     auto & call = (CallImpl&)*this;
     call.module.database.ReportUserError();
-    std::cerr << "Error at ...: ";
+    auto & loc = call.recv.location;
+    std::cerr << Colours::Error << "Error in call from " << call.module.database.GetString(loc.filenameId)
+        << ":" << loc.line << ":" << loc.column << ": ";
 }
 
 void Logical::Call::Import(const char * name)
 {
     auto & call = (CallImpl&)*this;
-    std::cout << "Import called from " << call.module.database.GetString(call.recv.location.filenameId) << std::endl;
 
-    call.module.database.ReadFile((std::string(name) + ".dl").c_str());
+    std::string filename = name;
+    filename += ".dl";
+    
+    if(0 == call.module.database.ReadFile(filename.c_str()))
+        return;
+
+    std::filesystem::path callingFile = call.module.database.GetString(call.recv.location.filenameId);
+    callingFile.remove_filename();
+    std::filesystem::path p = name;
+    p+=".dl";
+    auto module = callingFile / p;
+    
+    if(0 == call.module.database.ReadFile(module.c_str()))
+        return;
+
+    call.Error("Failed to import ", name);
 }
 
 bool ExternPredicate::Add(const Entity * row)

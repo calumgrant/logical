@@ -101,3 +101,4 @@ add_test(NAME Datalog8 COMMAND logical ../tests/programs/datalog8.dl)
 add_test(NAME Datalog9 COMMAND logical ../tests/programs/datalog9.dl)
 
 add_test(NAME Modules1 COMMAND logical modules1.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/programs)
+add_test(NAME Modules2 COMMAND logical ${CMAKE_CURRENT_SOURCE_DIR}/tests/programs/modules1.dl)
