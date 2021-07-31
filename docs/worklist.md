@@ -4,6 +4,7 @@ Parsers
 - rename predicates
 - remove legacy code
 - refactor into h/cpp file
+- add language to node types??
 
 Currently working on:
 - Better error reporting.

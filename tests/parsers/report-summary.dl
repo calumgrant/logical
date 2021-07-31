@@ -2,19 +2,19 @@ print "Imported module report-summary!".
 
 query "Lines of code" has result 1.
 
-java:number-of-files n if n = count f in (java:file f).
+parsers:number-of-files n if n = count f in (parsers:file f).
 
-java:statement s if java:node s has type "statement".
+java:statement s if parsers:node s has type "statement".
 
-java:file _.
-java:node _ has type _.  // Declaration
+parsers:file _.
+parsers:node _ has type _.  // Declaration
 
-t is a java:nodetype if java:node _ has type t.
+t is a nodetype if parsers:node _ has type t.
 
-query "Number of files" has result n if n is java:number-of-files.
+query "Number of files" has result n if n is parsers:number-of-files.
 
 query "Node types" has nodetype t, nodecount c if
-    t is a java:nodetype and 
-    c = count m in (java:node m has type t).
+    t is a nodetype and 
+    c = count m in (parsers:node m has type t).
 
 

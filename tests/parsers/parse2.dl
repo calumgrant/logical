@@ -2,5 +2,5 @@ load-module parsers.
 
 parsers:parse ".".
 
-error "File1" if not java:file _ has filename "./Test.java".
-error "File2" if not java:file _ has filename "./AllInOne8.java".
+error "File1" if not parsers:file _ has filename "./Test.java".
+error "File2" if not parsers:file _ has filename "./AllInOne8.java".

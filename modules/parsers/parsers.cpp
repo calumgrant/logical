@@ -10,28 +10,28 @@
 struct Predicates
 {
     Predicates(Logical::Module & module) :
-        javafile_filename(module.GetPredicate({"java:file","filename"})),
-        javafile_errormessage(module.GetPredicate({"java:file", "errormessage"})),
-        javatoken_text(module.GetPredicate({"java:token","text"})),
-        javanode_type_parent_index_location(module.GetPredicate({"java:node","type","parent","index","location"})),
-        location_filename_startrow_startcol_endrow_endcol(module.GetPredicate({"location","filename","startrow","startcol","endrow","endcol"}))
+        file_filename(module.GetPredicate({"parsers:file","filename"})),
+        file_errormessage(module.GetPredicate({"parsers:file", "errormessage"})),
+        token_text(module.GetPredicate({"parsers:token","text"})),
+        node_type_parent_index_location(module.GetPredicate({"parsers:node","type","parent","index","location"})),
+        location_filename_startrow_startcol_endrow_endcol(module.GetPredicate({"parsers:location","filename","startrow","startcol","endrow","endcol"}))
     {
     }
     
     void Finalize()
     {
-        javafile_filename.Finalize();
-        javafile_errormessage.Finalize();
-        javatoken_text.Finalize();
-        javanode_type_parent_index_location.Finalize();
-        javanode_type_parent_index_location.Finalize();
+        file_filename.Finalize();
+        file_errormessage.Finalize();
+        token_text.Finalize();
+        node_type_parent_index_location.Finalize();
+        node_type_parent_index_location.Finalize();
         location_filename_startrow_startcol_endrow_endcol.Finalize();
     }
 
-    Logical::Call & javafile_filename;
-    Logical::Call & javafile_errormessage;
-    Logical::Call & javatoken_text;
-    Logical::Call & javanode_type_parent_index_location;
+    Logical::Call & file_filename;
+    Logical::Call & file_errormessage;
+    Logical::Call & token_text;
+    Logical::Call & node_type_parent_index_location;
     Logical::Call & location_filename_startrow_startcol_endrow_endcol;
 };
 
@@ -53,9 +53,9 @@ public:
         predicates(predicates)
     {
         auto file = module.NewObject();
-        predicates.javafile_filename.Set(0, file);
-        predicates.javafile_filename.Set(1, filename);
-        predicates.javafile_filename.YieldResult();
+        predicates.file_filename.Set(0, file);
+        predicates.file_filename.Set(1, filename);
+        predicates.file_filename.YieldResult();
 
         lexer.removeErrorListeners();
         parser.removeErrorListeners();
@@ -71,16 +71,16 @@ public:
             else
             {
                 // TODO: Log more diagnosrtics
-                predicates.javafile_errormessage.Set(0, file);
-                predicates.javafile_errormessage.Set(1, "Parse error");
-                predicates.javafile_errormessage.YieldResult();
+                predicates.file_errormessage.Set(0, file);
+                predicates.file_errormessage.Set(1, "Parse error");
+                predicates.file_errormessage.YieldResult();
             }
         }
         else
         {
-            predicates.javafile_errormessage.Set(0, file);
-            predicates.javafile_errormessage.Set(1, "Failed to open file");
-            predicates.javafile_errormessage.YieldResult();
+            predicates.file_errormessage.Set(0, file);
+            predicates.file_errormessage.Set(1, "Failed to open file");
+            predicates.file_errormessage.YieldResult();
         }
     }
 
@@ -109,16 +109,16 @@ public:
         predicates.location_filename_startrow_startcol_endrow_endcol.Set(5, (Logical::Int)(col+text.size()));
         predicates.location_filename_startrow_startcol_endrow_endcol.YieldResult();
         
-        predicates.javanode_type_parent_index_location.Set(0, node);
-        predicates.javanode_type_parent_index_location.Set(1, name);
-        predicates.javanode_type_parent_index_location.Set(2, parent);
-        predicates.javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
-        predicates.javanode_type_parent_index_location.Set(4, node);
-        predicates.javanode_type_parent_index_location.YieldResult();
+        predicates.node_type_parent_index_location.Set(0, node);
+        predicates.node_type_parent_index_location.Set(1, name);
+        predicates.node_type_parent_index_location.Set(2, parent);
+        predicates.node_type_parent_index_location.Set(3, (Logical::Int)childIndex);
+        predicates.node_type_parent_index_location.Set(4, node);
+        predicates.node_type_parent_index_location.YieldResult();
         
-        predicates.javatoken_text.Set(0, node);
-        predicates.javatoken_text.Set(1, r->getText().c_str());
-        predicates.javatoken_text.YieldResult();
+        predicates.token_text.Set(0, node);
+        predicates.token_text.Set(1, r->getText().c_str());
+        predicates.token_text.YieldResult();
 #endif
     }
 
@@ -145,12 +145,12 @@ public:
         predicates.location_filename_startrow_startcol_endrow_endcol.Set(5, (Logical::Int)stop->getCharPositionInLine());
         predicates.location_filename_startrow_startcol_endrow_endcol.YieldResult();
         
-        predicates.javanode_type_parent_index_location.Set(0, node);
-        predicates.javanode_type_parent_index_location.Set(1, rule);
-        predicates.javanode_type_parent_index_location.Set(2, parent);
-        predicates.javanode_type_parent_index_location.Set(3, (Logical::Int)childIndex);
-        predicates.javanode_type_parent_index_location.Set(4, node);
-        predicates.javanode_type_parent_index_location.YieldResult();
+        predicates.node_type_parent_index_location.Set(0, node);
+        predicates.node_type_parent_index_location.Set(1, rule);
+        predicates.node_type_parent_index_location.Set(2, parent);
+        predicates.node_type_parent_index_location.Set(3, (Logical::Int)childIndex);
+        predicates.node_type_parent_index_location.Set(4, node);
+        predicates.node_type_parent_index_location.YieldResult();
 #else
         Logical::Entity node;
 #endif

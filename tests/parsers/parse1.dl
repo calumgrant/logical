@@ -3,14 +3,14 @@ import report-summary.
 
 parsers:parse "AllInOne8.java".
 
-error e if java:file _ has errormessage e.
-error "Failed to register file" if not java:file _.
+error e if parsers:file _ has errormessage e.
+error "Failed to register file" if not parsers:file _.
 
-java:node n has children c if n is a java:node and c = count child in (java:node child has parent n).
+parsers:node n has children c if n is a parsers:node and c = count child in (parsers:node child has parent n).
 
 nodetype t has Count c if 
-    java:node _ has type t and 
-    c = count m in (java:node m has type t).
+    parsers:node _ has type t and 
+    c = count m in (parsers:node m has type t).
 
 expected-results 117.
 
