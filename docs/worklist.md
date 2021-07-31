@@ -6,6 +6,13 @@ Parsers
 - refactor into h/cpp file
 - add language to node types??
 
+- [ ] Command to output results in md format.
+```
+generate-markdown "foo.md" has name n, age a if ....
+```
+
+- `rank` command. Also change aggregate syntax to define arbitrary names and allow implementation in externs.
+
 Currently working on:
 - Better error reporting.
   - Require a location

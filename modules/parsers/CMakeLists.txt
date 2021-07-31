@@ -42,8 +42,6 @@ antlr_target(JavaScriptParser JavaScriptParser.g4 PARSER
 
 include_directories(${ANTLR_JavaScriptLexer_OUTPUT_DIR} ${ANTLR_JavaScriptParser_OUTPUT_DIR})
 
-
-
 enable_testing()
 
 add_library(parsers SHARED parsers.cpp ${ANTLR_JavaLexer_CXX_OUTPUTS} 
@@ -66,6 +64,5 @@ add_test(NAME Java1 COMMAND logical java1.dl WORKING_DIRECTORY ${CMAKE_CURRENT_S
 add_test(NAME Java2 COMMAND logical java2.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
 add_test(NAME Js1 COMMAND logical javascript1.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
 add_test(NAME Js2 COMMAND logical javascript2.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
-
 
 add_custom_command(TARGET parsers POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:parsers> $<TARGET_FILE_DIR:logical>)

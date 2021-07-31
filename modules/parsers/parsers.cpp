@@ -10,28 +10,28 @@
 struct Predicates
 {
     Predicates(Logical::Module & module) :
-        file_filename(module.GetPredicate({"parsers:file","filename"})),
+        file_filename_language(module.GetPredicate({"parsers:file","filename","language"})),
         file_errormessage(module.GetPredicate({"parsers:file", "errormessage"})),
         token_text(module.GetPredicate({"parsers:token","text"})),
-        node_type_parent_index_location(module.GetPredicate({"parsers:node","type","parent","index","location"})),
+        node_type_parent_index_location_language(module.GetPredicate({"parsers:node","type","parent","index","location","language"})),
         location_filename_startrow_startcol_endrow_endcol(module.GetPredicate({"parsers:location","filename","startrow","startcol","endrow","endcol"}))
     {
     }
     
     void Finalize()
     {
-        file_filename.Finalize();
+        file_filename_language.Finalize();
         file_errormessage.Finalize();
         token_text.Finalize();
-        node_type_parent_index_location.Finalize();
-        node_type_parent_index_location.Finalize();
+        node_type_parent_index_location_language.Finalize();
+        node_type_parent_index_location_language.Finalize();
         location_filename_startrow_startcol_endrow_endcol.Finalize();
     }
 
-    Logical::Call & file_filename;
+    Logical::Call & file_filename_language;
     Logical::Call & file_errormessage;
     Logical::Call & token_text;
-    Logical::Call & node_type_parent_index_location;
+    Logical::Call & node_type_parent_index_location_language;
     Logical::Call & location_filename_startrow_startcol_endrow_endcol;
 };
 
@@ -40,7 +40,7 @@ template<typename AntlrLexer, typename AntlrParser>
 class Parser
 {
 public:
-    Parser(Logical::Module & module, const char * filename, Predicates & predicates) :
+    Parser(Logical::Module & module, const char * filename, Predicates & predicates, const char * language) :
         module(module),
         filename(filename),
         stream(filename),
@@ -53,9 +53,12 @@ public:
         predicates(predicates)
     {
         auto file = module.NewObject();
-        predicates.file_filename.Set(0, file);
-        predicates.file_filename.Set(1, filename);
-        predicates.file_filename.YieldResult();
+        predicates.file_filename_language.Set(0, file);
+        predicates.file_filename_language.Set(1, filename);
+        predicates.file_filename_language.Set(2, language);
+        predicates.file_filename_language.YieldResult();
+        
+        predicates.node_type_parent_index_location_language.Set(5, language);
 
         lexer.removeErrorListeners();
         parser.removeErrorListeners();
@@ -109,12 +112,12 @@ public:
         predicates.location_filename_startrow_startcol_endrow_endcol.Set(5, (Logical::Int)(col+text.size()));
         predicates.location_filename_startrow_startcol_endrow_endcol.YieldResult();
         
-        predicates.node_type_parent_index_location.Set(0, node);
-        predicates.node_type_parent_index_location.Set(1, name);
-        predicates.node_type_parent_index_location.Set(2, parent);
-        predicates.node_type_parent_index_location.Set(3, (Logical::Int)childIndex);
-        predicates.node_type_parent_index_location.Set(4, node);
-        predicates.node_type_parent_index_location.YieldResult();
+        predicates.node_type_parent_index_location_language.Set(0, node);
+        predicates.node_type_parent_index_location_language.Set(1, name);
+        predicates.node_type_parent_index_location_language.Set(2, parent);
+        predicates.node_type_parent_index_location_language.Set(3, (Logical::Int)childIndex);
+        predicates.node_type_parent_index_location_language.Set(4, node);
+        predicates.node_type_parent_index_location_language.YieldResult();
         
         predicates.token_text.Set(0, node);
         predicates.token_text.Set(1, r->getText().c_str());
@@ -145,12 +148,12 @@ public:
         predicates.location_filename_startrow_startcol_endrow_endcol.Set(5, (Logical::Int)stop->getCharPositionInLine());
         predicates.location_filename_startrow_startcol_endrow_endcol.YieldResult();
         
-        predicates.node_type_parent_index_location.Set(0, node);
-        predicates.node_type_parent_index_location.Set(1, rule);
-        predicates.node_type_parent_index_location.Set(2, parent);
-        predicates.node_type_parent_index_location.Set(3, (Logical::Int)childIndex);
-        predicates.node_type_parent_index_location.Set(4, node);
-        predicates.node_type_parent_index_location.YieldResult();
+        predicates.node_type_parent_index_location_language.Set(0, node);
+        predicates.node_type_parent_index_location_language.Set(1, rule);
+        predicates.node_type_parent_index_location_language.Set(2, parent);
+        predicates.node_type_parent_index_location_language.Set(3, (Logical::Int)childIndex);
+        predicates.node_type_parent_index_location_language.Set(4, node);
+        predicates.node_type_parent_index_location_language.YieldResult();
 #else
         Logical::Entity node;
 #endif
@@ -192,7 +195,7 @@ class Language
 public:
     virtual ~Language();
     virtual void ParseFile(const char * filename, Logical::Module & module) const =0;
-    virtual bool CanParse(const std::filesystem::path & p) const =0;
+    virtual bool CanParse(const std::filesystem::path & p, const char * language) const =0;
     virtual const char * Type() const =0;
 };
 
@@ -207,14 +210,14 @@ public:
     virtual void ParseFile(const char * filename, Logical::Module & module) const override
     {
         Predicates predicates(module);
-        ::Parser<Lexer, Parser> parser(module, filename, predicates);
+        ::Parser<Lexer, Parser> parser(module, filename, predicates, name.c_str());
     }
     
     const char * Type() const override { return name.c_str(); }
 
-    bool CanParse(const std::filesystem::path & p) const override
+    bool CanParse(const std::filesystem::path & p, const char * language) const override
     {
-        return p.extension() == extension;
+        return p.extension() == extension && (!language || name == language);
     }
     
 private:
@@ -245,7 +248,6 @@ void ParserModule::Parse(Logical::Call & call, const char * filename, const char
     if(std::filesystem::is_regular_file(p))
     {
         ParseFile(call, filename, language);
-        // Check the type
     }
     else if(std::filesystem::is_directory(p))
     {
@@ -257,7 +259,7 @@ void ParserModule::Parse(Logical::Call & call, const char * filename, const char
             auto p = it->path();
             for(auto & lang : languages)
             {
-                if(lang->CanParse(*it))
+                if(lang->CanParse(*it, language))
                 {
                     filesToParse.push_back(p);
                     size += it->file_size();
@@ -288,7 +290,7 @@ void ParserModule::Parse(Logical::Call & call, const char * filename, const char
             {
                 for(auto & lang : languages)
                 {
-                    if(lang->CanParse(j))
+                    if(lang->CanParse(j, language))
                         lang->ParseFile(j.c_str(), call.GetModule());
                 }
             }
@@ -316,7 +318,7 @@ void ParserModule::ParseFile(Logical::Call & call, const char * filename, const 
 {
     for(auto & lang : languages)
     {
-        if(lang->CanParse(filename))
+        if(lang->CanParse(filename, language))
             lang->ParseFile(filename, call.GetModule());
     }
 }
