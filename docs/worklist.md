@@ -1,5 +1,6 @@
 Parsers
 - test JavaScript
+- test language filter
 - rename predicates
 - remove legacy code
 - refactor into h/cpp file

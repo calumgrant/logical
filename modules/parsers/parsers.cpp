@@ -321,96 +321,6 @@ void ParserModule::ParseFile(Logical::Call & call, const char * filename, const 
     }
 }
 
-static void parsejavafile(Logical::Call & call)
-{
-    Predicates predicates(call.GetModule());
-    
-    const char * filename;
-    if(call.Get(0, filename))
-    {
-        JavaParser p(call.GetModule(), filename, predicates);
-    }
-    else
-    {
-        call.GetModule().ReportError("Supplied argument to java:parse is not a string");
-    }
-}
-
-void WalkDirectory(Logical::Module & module, std::string path)
-{
-    std::filesystem::path p(path);
-    std::vector<std::filesystem::path> javafiles;
-    std::size_t size=0;
-    
-    Predicates predicates(module);
-    
-    if(std::filesystem::is_directory(path))
-    {
-        for(auto it = std::filesystem::recursive_directory_iterator(p); it != std::filesystem::recursive_directory_iterator(); ++it)
-        {
-            auto p = it->path();
-            if(it->is_regular_file() && p.extension() == ".java")
-            {
-                javafiles.push_back(p);
-                size += it->file_size();
-            }
-        }
-    }
-    
-    std::cout << "Parsing " << javafiles.size() << " files in " << path << ", " << size << " bytes total\n";
-
-    int count=0;
-    int step = javafiles.size()/100;
-    if(step<1) step=1;
-    std::cout << "[";
-    for(int i=0; i<javafiles.size(); i+=step)
-        std::cout << "-";
-    std::cout << "]\n[";
-    
-    for(auto & j : javafiles)
-    {
-        //std::cout << j << std::endl;
-        if(count%step == 0)
-        {
-            std::cout << ">" << std::flush;
-        }
-        ++count;
-        try
-        {
-            JavaParser(module, j.c_str(), predicates);
-        }
-        catch(std::bad_alloc&)
-        {
-            module.ReportError("Memory limit exceeded");
-            throw;
-        }
-        catch(std::exception &ex)
-        {
-            module.ReportError(ex.what());
-        }
-        catch(...)
-        {
-            module.ReportError("Uncaught exception when parsing");
-        }
-    }
-    predicates.Finalize();
-    std::cout << "]\n";
-}
-
-static void parsejavadirectory(Logical::Call & call)
-{
-    const char * pathname;
-    if(call.Get(0, pathname))
-    {
-        WalkDirectory(call.GetModule(), pathname);
-    }
-    else
-    {
-        call.GetModule().ReportError("Supplied argument to java:parse is not a string");
-    }
-
-}
-
 static ParserModule parserModule;
 
 static void parse(Logical::Call & call)
@@ -439,17 +349,13 @@ static void parse_language(Logical::Call & call)
     {
         call.Error("The supplied argument was not a string");
     }
-
 }
 
 void RegisterFunctions(Logical::Module & module)
 {
     parserModule.AddLanguage(std::make_unique<AntlrLanguage<java::JavaLexer, java::JavaParser>>("Java", ".java"));
     parserModule.AddLanguage(std::make_unique<AntlrLanguage<javascript::JavaScriptLexer, javascript::JavaScriptParser>>("JavaScript", ".js"));
-
-    module.AddCommand(parsejavafile, {"java:parse"});
-    module.AddCommand(parsejavadirectory, {"java:parse-directory"});
     
-    module.AddCommand(parse_language, {"parser:parse", "language"}, &parserModule);
-    module.AddCommand(parse, {"parser:parse"}, &parserModule);
+    module.AddCommand(parse_language, {"parsers:parse", "language"}, &parserModule);
+    module.AddCommand(parse, {"parsers:parse"}, &parserModule);
 }
