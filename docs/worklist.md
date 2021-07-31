@@ -1,3 +1,9 @@
+Parsers
+- test JavaScript
+- rename predicates
+- remove legacy code
+- refactor into h/cpp file
+
 Currently working on:
 - Better error reporting.
   - Require a location

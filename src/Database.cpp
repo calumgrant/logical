@@ -320,13 +320,12 @@ int DatabaseImpl::ReadFile(const char *filename)
 
     if(datastore->imports.find(filenameId) != datastore->imports.end())
         return 0; // Loaded already, so just ignore
-
-    datastore->imports.insert(filenameId);
     
     FILE * f = fopen(filename, "r");
 
     if(f)
     {
+        datastore->imports.insert(filenameId);
         yyscan_t scanner;
 
         auto filenameId = GetStringId(filename);
