@@ -62,8 +62,8 @@ set_target_properties(parsers PROPERTIES
 target_link_libraries(parsers logiccore antlr4_static)
 
 add_test(NAME LoadModule COMMAND logical ../../../tests/parsers/loadmodule.dl)
-add_test(NAME Parse1 COMMAND logical parse1.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
-add_test(NAME Parse2 COMMAND logical parse2.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
+add_test(NAME Java1 COMMAND logical java1.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
+add_test(NAME Java2 COMMAND logical java2.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
 add_test(NAME Js1 COMMAND logical javascript1.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
 add_test(NAME Js2 COMMAND logical javascript2.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
 
