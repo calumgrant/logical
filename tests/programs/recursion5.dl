@@ -4,7 +4,7 @@ fish "Wanda".
 
 fish X if fish X and not fish X.
 
-find fish.
+std:query "Fish" has result F if fish F.
 
-evaluation-step-limit 9.
+evaluation-step-limit 13.
 expected-results 1.

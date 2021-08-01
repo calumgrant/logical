@@ -94,7 +94,7 @@ void Predicate::AddRule(const std::shared_ptr<Evaluation> &rule)
     if(sealed)
     {
         // database.Error("Adding a rule to a sealed predicate");
-        std::cout << "Warning: adding a rule to a sealed predicate\n";
+        database.Error("Adding a rule to a sealed predicate");
         return;
     }
     assert(!sealed);

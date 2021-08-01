@@ -108,22 +108,24 @@ int main(int argc, char**argv)
         
         auto endTime = std::chrono::system_clock::now();
         
-        if(verbosity>0)
+        db.CheckErrors();
+
+        if(verbosity>1)
         {
             std::cout << "Results found    = " << db.NumberOfResults() << std::endl;
             std::cout << "Evaluation steps = " << Database::GlobalCallCount() << std::endl;
-            std::cout << "Disk used        = " << db.SharedMemory().size() << " bytes\n";
+            // std::cout << "Disk used        = " << db.SharedMemory().size() << " bytes\n";
             std::cout << "Memory used      = " << db.Storage().size() << " bytes\n";
             std::cout << "Evaluation time  = " << std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count() << " µs\n";
             
-            db.CheckErrors();
 
-            if(db.UserErrorReported())
-                std::cout << Colours::Error << "Evaluation completed with " << db.NumberOfErrors() << " errors\n" << Colours::Normal;
-            else
+            if(!db.UserErrorReported())
                 std::cout << Colours::Success << "Evaluation completed successfully\n" << Colours::Normal;
         }
         
+        if(db.UserErrorReported())
+            std::cout << Colours::Error << "Evaluation completed with " << db.NumberOfErrors() << " errors\n" << Colours::Normal;
+
         if(db.UserErrorReported())
             return (int)ErrorCode::ReportedError;
 

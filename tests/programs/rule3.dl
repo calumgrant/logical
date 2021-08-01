@@ -7,6 +7,9 @@ X is h if
 
 i X if f X or g X.
 
-find h. // 3 rows
-find i. // 3 rows
+expected-results 4.
+
+std:query x if x is an h.
+std:query x if x is an i.
+
 print "Rule 3 test passed".

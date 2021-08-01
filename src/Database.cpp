@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <iostream>
+#include <sstream>
 
 struct HashHelper
 {
@@ -59,7 +60,9 @@ void yyset_in  (FILE * in_str ,yyscan_t yyscanner );
 
 void Database::UnboundError(const char *name, const SourceLocation & loc)
 {
-    std::cerr << "Error at (" << loc.line << ":" << loc.column << "): " << name << " is unbound.\n";
+    std::stringstream ss;
+    ss << "Variable '" << name << "' is unbound";
+    Error(loc, ss.str().c_str());
 }
 
 DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB) :
@@ -505,6 +508,12 @@ void Database::Error(const char * msg)
 {
     ReportUserError();
     std::cerr << Colours::Error << "Error: " << msg << Colours::Normal << std::endl;
+}
+
+void Database::Error(const SourceLocation & loc, const char * msg)
+{
+    ReportUserError();
+    std::cerr << Colours::Error << "Error at " << GetString(loc.filenameId) << ":" << loc.line << ":" << loc.column << ": " << msg << Colours::Normal << std::endl;
 }
 
 void Database::SetEvaluationLimit(std::size_t limit)

@@ -3,16 +3,18 @@ expected-results 0.
 number X if 0<=X<=10.
 
 X has square Y if number X and Y = X*X.
-std:query "square" if not 5 has square 25.
 
 X has half Y if number X and Y = X/2.0.
+
+number X has negative Y if number X and Y = -X.
+
+std:query "square" if not 5 has square 25.
+
 std:query "half" if not 2 has half 1.0.
 
 std:query "div" if _ = 3/0.
 std:query "div2" if not _ = 3/1.
 
 std:query "neq" if 1!=1.
-
-number X has negative Y if number X and Y = -X.
 
 std:query "negative" if not (5 has negative X and X=-5).

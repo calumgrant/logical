@@ -4,12 +4,12 @@
 3 has succ 4, pred 2.
 
 print "Expect 4 results:".
-find X has succ Y.
+std:query X has Successor Y if X has succ Y.
 
 X has succ2 Y if X has succ Z and Z has succ Y.
 
 print "Expect 3 results:".
-find X has succ2 Y.
+std:query X has Successor2 Y if X has succ2 Y.
 
 test X if _ has succ2 X.
 test2 X if X has succ2 _.
@@ -24,6 +24,10 @@ error "Failed FF" if not _ has succ _.
 error "Failed succ2" if not 1 has succ2 3.
 
 print "Expect 3 results:".
-find test.
+std:query X if test X.
+
 print "Expect 3 results:".
-find test2.
+std:query X if test2 X.
+
+expected-results 13.
+

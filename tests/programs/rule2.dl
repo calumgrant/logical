@@ -3,6 +3,8 @@ f 2.
 f 3.
 
 g X if f X and f X.
-find g.  // Should be 3 rows
+
+expeted-results 3.
+std:query x if g x.
 
 print "Rule2 test passed".

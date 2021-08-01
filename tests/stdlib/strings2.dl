@@ -6,6 +6,9 @@ error "lc1" if not string "ABC" has lowercase "abc".
 error "uc2" if not string "abc" has uppercase x and x="ABC".
 error "lc2" if not string "ABC" has lowercase x and x="abc".
 
-expected-results 2.
-find string "ABCabc123" has lowercase _.
-find string "ABCabc123" has uppercase _.
+expected-results 1.
+
+std:query Str has Lowercase L, Uppercase U if
+    Str = "ABCabc123" and
+    string Str has lowercase L and
+    string Str has uppercase U.

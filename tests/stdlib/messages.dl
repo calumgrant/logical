@@ -1,2 +1,1 @@
-
-find messages.
+std:query M if messages M.

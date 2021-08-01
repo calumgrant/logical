@@ -1,9 +1,12 @@
 f 1.
 f 2.
 f 3.
-find f.
+
+std:query x if f x.
 
 g X if f X.
-find g.
+
+expected-results 6.
+std:query x if g x.
 
 print "Rule 1 test finished".

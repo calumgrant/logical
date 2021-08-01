@@ -27,4 +27,5 @@ if
 then
     print X.
 
-find 3 has ancestor _.
+std:query "Ancestors of 3" has ancestor Y if
+    3 has ancestor Y.

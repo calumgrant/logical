@@ -6,4 +6,5 @@ new person has name "Jane", gender @f.
 
 new woman has name n if person _ has name n, gender @f.
 
-find woman _ has name _.
+std:query W has Name N if
+    woman W has name N.

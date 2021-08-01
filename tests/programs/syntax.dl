@@ -103,6 +103,7 @@ X has coins count C in (X has cash C) if person X.
 X is rich if person X and sum V over C in (X has cash C and C has value V) > 100.
 
 person X is rich if 
+    person X and 
     all (rich X) in X has parent P and rich P.
 
 // This states two facts: rich P and person P.
@@ -119,7 +120,7 @@ money(X,M) :- rich(X), person(X), foo(X), eq(M,1000).
 
 
 // rich person @p2 has name "Frank".
-person P is orphan if not P has parent. 
+P is orphan if person P and not P has parent. 
 
 // Declare an empty relation
 g _.
@@ -154,27 +155,13 @@ delete person P if P has surname "Smith".
 // evaluation-step-limit 251.
 
 [noopt, extern]
-expected-results 9.
+expected-results 2.
 expected-errors 0.
 
 // Queries
 // find person.
 
 1 has radius 2, diameter 3.
-//find person P.
-//find person.
-find circle C, radius R.
-find C has radius R.
-find C has radius R, diameter D.
-find C has radius R, diameter D if D>10.
-find circle C and person P.
-find circle C and person P if 
-    P has age A and C has diameter A.
-find circle C and person P, surname S if 
-    P has age A and C has diameter A.
-
-// Query using a variable list
-find P in person P.
-find P, S in person P, surname S.
+std:query "Radius" has circle C, radius R if circle C, radius R.
 
 print "Syntax test passed".

@@ -6,8 +6,8 @@ short n if name n and string n has length l and l<5.
 long n if name n and not short n.
 
 expected-results 2.
-find short _.
-find long _.
+std:query "Short" has Result R if short R.
+std:query "Long" has Result R if long R.
 
 error "strlen1" if not string "" has length 0.
 error "strlen2" if not string "abc" has length 3.

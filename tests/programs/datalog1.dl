@@ -3,12 +3,10 @@ foo(1).
 foo(2,3).
 foo(2,3,4).
 
-find foo.
-
-find foo _.
+std:query F if foo F.
 
 ?- foo(X).
 ?- foo(_,_).
 ?- foo(_,_,_).
 
-expected-results 5.
+expected-results 4.

@@ -2,7 +2,7 @@ f 1.
 
 g "Hello" if f X.
 
-find g.
+std:query X if g X.
 
 error "Test failed" if not g "Hello".
 

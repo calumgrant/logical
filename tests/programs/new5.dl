@@ -2,5 +2,5 @@ expected-results 10.
 
 new person has name "Person "+n if 1<=n<=5 or 1<=n<=5.
 
-find person.
-find person has name _.
+std:query "Person" has Person P if person P.
+std:query "Person" has Person P, Name N if person P has name N.

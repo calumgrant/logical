@@ -36,15 +36,18 @@ void Logical::TableWriterImpl::EndTable()
     // Compute the widths
     ComputeWidths(header);
     
-    
     for(auto & i : rowBuffer)
         ComputeWidths(i);
     
     // Print it all out
     PrintSeparator(config.topBorder, config.topBorderPrefix, config.topBorderSeparator, config.topBorderSuffix);
-    PrintRow(header);
-    PrintSeparator(config.headerSeparator, config.headerSeparatorPrefix, config.headerSeparatorSeparator, config.headerSeparatorSuffix);
-
+    
+    if(widths.size()!=1 || header[0] !="")
+    {
+        PrintRow(header);
+        PrintSeparator(config.headerSeparator, config.headerSeparatorPrefix, config.headerSeparatorSeparator, config.headerSeparatorSuffix);
+    }
+    
     for(auto & i : rowBuffer)
         PrintRow(i);
 

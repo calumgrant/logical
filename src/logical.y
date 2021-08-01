@@ -33,7 +33,7 @@
     AST::PragmaList* pragmas;
 }
 
-%type<clause> clause queryclause querybaseclause andclause orclause notclause allclause datalog_predicate baseclause datalog_clause datalog_base_clause datalog_and_clause datalog_unary_clause
+%type<clause> clause andclause orclause notclause allclause datalog_predicate baseclause datalog_clause datalog_base_clause datalog_and_clause datalog_unary_clause
 %type<entities> entitylist
 %type<unarypredicatelist> unarypredicatelist
 %type<entity> entity entity_expression value variable baseentity sumentity plusentity mulentity unaryentity
@@ -58,13 +58,15 @@
 
 typedef void * yyscan_t;
 
-  int yylex(YYSTYPE* yylvalp, YYLTYPE* yyllocp, yyscan_t scanner);
-  void yyerror(YYLTYPE* yyllocp, yyscan_t unused, ParseData data, const char* message)
-  {
-    std::cerr << message << " at line " << yyllocp->first_line << ":" << yyllocp->first_column << std::endl;
-  }
-    
-#define LOCATION(L1,L2) SourceLocation{data.filenameId, L1.first_line, L1.first_column}
+int yylex(YYSTYPE* yylvalp, YYLTYPE* yyllocp, yyscan_t scanner);
+
+#define LOCATION(L1,L2) SourceLocation{data.filenameId, (L1).first_line, (L1).first_column}
+
+void yyerror(YYLTYPE* yyllocp, yyscan_t unused, ParseData data, const char* message)
+{
+    auto loc = LOCATION(*yyllocp, *yyllocp);
+    data.db.Error(loc, message);
+}
 
 %}
 
@@ -93,7 +95,6 @@ statement:
         rule->Compile(data.db);
     }
 |   datalog
-|   query
 ;
 
 datalog:
@@ -185,59 +186,6 @@ datalog_clause:
         $$ = new AST::Or(LOCATION(@1, @3), $1, $3);
     }
 |   datalog_and_clause
-;
-
-query:
-    tok_find queryclause tok_dot
-    {
-        std::unique_ptr<AST::Clause> query($2);
-        query->Find(data.db);
-    }
-|   tok_find predicate tok_dot
-    {
-        std::unique_ptr<AST::Predicate> predicate($2);
-        data.db.Find(PredicateName(1, predicate->nameId));
-    }
-|   tok_find queryclause tok_if clause tok_dot
-|   tok_find variablelist tok_in clause tok_dot
-;
-
-// Different syntax to distinguish them from variable lists A, B, C
-querybaseclause:
-    unarypredicatelist entity
-    {
-        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, $1, IsType::is);
-    }
-|   unarypredicatelist entity has_a attributes
-    {
-        $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), $1, $2, $4, $3);
-    }
-|   unarypredicatelist entity reaches binarypredicate entity_expression
-    {
-        $$ = new AST::EntityHasAttributes(LOCATION(@1, @5), $1, $2, new AST::AttributeList($4,$5), $3);
-    }
-|   unarypredicatelist entity tok_comma attributes
-    { 
-        $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), $1, $2, $4, HasType::has);
-    }
-|   entity has_a attributes
-    {
-        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, $3, $2);
-    }
-|   entity reaches binarypredicate entity_expression
-    {
-        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, new AST::AttributeList($3,$4), $2);
-    }
-;
-
-queryclause:
-    querybaseclause
-|   queryclause tok_and querybaseclause
-;
-
-variablelist:
-    variable
-|   variablelist tok_comma variable
 ;
 
 fact: 

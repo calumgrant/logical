@@ -3,5 +3,5 @@ expected-results 11.
 new number has value 0.
 new number has value n+1 if number _ has value n and n<10.
 
-find number _ has value _.
-
+std:query N has Value V if
+    number N has value V.

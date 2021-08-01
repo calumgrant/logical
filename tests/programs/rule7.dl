@@ -16,7 +16,9 @@ N has square N*N, successor N+1 if
 succeeded N if N has square _, successor _.
 error "Failed 1" if not (succeeded 0 and succeeded 10).
 
-find _ has successor _, square _.
+expected-results 11.
+std:query "", Number n, Successor s, Square sqr if
+    n has successor s, square sqr.
 
 // This does not work because it thinks that N is bound in N*N
 //succeeded2 N if N has square N*N, successor N+1.

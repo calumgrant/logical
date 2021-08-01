@@ -115,4 +115,5 @@ if
     potentiallyDangerousFunction target has message message.
 
 
-find potentiallyDangerousFunction.
+std:query "Potentially dangerous function", message m if
+    potentiallyDangerousFunction m.

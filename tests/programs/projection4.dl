@@ -9,4 +9,5 @@ evaluation-step-limit 29.  // 23
 
 error "foo 1" if not 1 has seq 2.
 error "foo 2" if not 2 has seq 3.
-find _ has seq _.
+
+std:query x has seq y if x has seq y.

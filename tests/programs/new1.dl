@@ -2,4 +2,5 @@
 new person has name "Fred", gender @m.
 new person has name "Mary", gender @f.
 
-find person _ has name _, gender _.
+expected-results 2.
+std:query P has name N, gender G if P has name N, gender G.

@@ -5,4 +5,5 @@ new number has value n+1 if _ has value n and n<10.
 
 new std:query has Value v if v = count n in (number n).
 
-find number _ has value _.
+std:query N has Value V if
+    number N has value V.

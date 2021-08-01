@@ -27,27 +27,22 @@ person "Mary".
 
 // here is a query to find everyone who is a person.
 
-find person.
-
-// Here is a query with a condition
-
-find person P if P is "Mary".
-
 large person "John".
 "John" is a large person.
 
-find large "John".
+std:query p if person p.
+
+// Here is a query with a condition
+
+std:query p if person p and p="Mary".
+
+std:query j if large j and j="John".
 
 // is X person?
 
 // Finds all P if P is a person and P is large
 
-find large person P.
-
-// same as
-
-find P in large P and person P.
-
+std:query P if large P and person P.
 
 P is a woman if P is "Mary".
 

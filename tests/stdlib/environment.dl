@@ -1,8 +1,9 @@
 
-find environment _ has value _.
+std:query E has Value V if
+    environment E has value V.
 
 user X if environment "USER" has value X.
 
 error "User not found" if not user _.
 
-find user.
+std:query "Username" has value U if user U.

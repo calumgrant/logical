@@ -2,5 +2,7 @@ f 1.
 g 2.
 
 h X if f X or (g 2 and g X).
-find h.
+
+expected-results 2.
+std:query X if h X.
 

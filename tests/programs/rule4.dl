@@ -3,4 +3,6 @@
 f 1.
 g "two" if f 1.
 
-find g.
+error "Failed" if not g "two".
+
+std:query g if g g.

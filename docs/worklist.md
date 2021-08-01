@@ -11,9 +11,17 @@ find "Hello" has name "bar".
 query "Foo" has result r.
 ```
 
+- Relation.cpp:97: Report the source location and the predicate name correctly.
+- Unbound variable error: Report the variable name.
+
+- Try out `std:query person p has name r` to give the first column a heading
+
 - Need to signal the last result to the call.
 
 - [ ] Remove `find` predicates, and special case of `query` predicate?
+
+- [ ] Set user-defined column headings in table output.
+- Rename `std:query` to something else.
 
 - External aggregates.
 - `rank` command. Also change aggregate syntax to define arbitrary names and allow implementation in externs.
@@ -23,6 +31,11 @@ query "Foo" has result r.
 - Example to compose HTML/ concat strings.
 - Order by examples.
 - Don't output blurb (e.g. evaluation time) by default.
+
+- Parse arguments `std:arg x`, followed by 
+- Query formats: `markdown`, `md`, `csv`, `html`
+- Query output file:
+- `-v` does not output predicate bodies.
 
 Currently working on:
 - Better error reporting.

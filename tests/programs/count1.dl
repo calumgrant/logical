@@ -4,7 +4,7 @@ error "count" if not f 19.
 
 X has fewer Y if 1<=X<=10 and Y = count Z in (0<Z<X).
 
-find _ has fewer _.
+std:query X has Fewer Y if X has fewer Y.
 
 error "count 2" if not 2 = count X in (X=1 or X=2).
 

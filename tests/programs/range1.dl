@@ -8,8 +8,8 @@ error "Large 1000" if not large 1000.
 error "Large 1" if not large 1.
 error "Large 100000" if not large 100000.
 
-find data.
-find data2.
+std:query x if x is data.
+std:query x if x is data2.
 
 // A cartesian product of size 100
 X has pair Y if 1<=X<=10 and 1<=Y<=10.
@@ -21,8 +21,8 @@ small X if 1<=X<=10.
 
 numbers X if 1<=X<=10 or 10<=X<=20 and 12<=X<18.
 
-find small.
-find numbers.
+std:query x if x is small.
+std:query x if x is numbers.
 
 error "Failed 1" if not 1<=2<=10.
 error "Failed 2" if 1<10<2.
