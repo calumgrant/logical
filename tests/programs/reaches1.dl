@@ -11,5 +11,5 @@ error "Inconsistency 1" if
 error "Inconsistency 2" if
     x reaches child y and not x has descendent y.    
 
-query "Reaches" has result x if 5 reaches child x.
+std:query "Reaches" has result x if 5 reaches child x.
 

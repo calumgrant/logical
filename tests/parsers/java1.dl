@@ -1,5 +1,4 @@
 load-module parsers.
-import report-summary.
 
 parsers:parse "AllInOne8.java".
 
@@ -13,5 +12,6 @@ nodetype t has Count c if
     c = count m in (parsers:node m has type t).
 
 expected-results 117.
+import report-summary.
 
 error "Statements" if not count s in (java:statement s)=19.

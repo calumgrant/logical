@@ -9,5 +9,5 @@ x has reachable y if
     x has successor y or
     x has reachable z and z has successor y.
 
-query "Reachable" has Reachable n if 95 has reachable n.
+std:query "Reachable" has Reachable n if 95 has reachable n.
 

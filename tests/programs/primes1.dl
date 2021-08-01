@@ -15,4 +15,4 @@ error "primes" if
     or
     prime2 N and not prime N.
 
-query "Prime numbers < 50" has result P if prime P and P<50.
+std:query "Prime numbers < 50" has result P if prime P and P<50.

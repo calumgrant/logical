@@ -3,6 +3,6 @@ expected-results 12.
 new number has value 0.
 new number has value n+1 if _ has value n and n<10.
 
-new query has Value v if v = count n in (number n).
+new std:query has Value v if v = count n in (number n).
 
 find number _ has value _.

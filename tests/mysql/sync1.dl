@@ -10,15 +10,15 @@ mysql:execute "CREATE TABLE Test2 ( id int, name varchar(40) )".
 
 mysql sync.
 
-expected-results 12.
-
-query "Tables" has table-name t if
-    t is a mysql:table.
-
 // find mysql:table.
 
 2 has mysql:Test2:name "fred".
 x has mysql:Test1:name "calum"+x if 1<=x<=10.
 
-query "Database query" has id I, name N if
+expected-results 12.
+
+std:query "Tables" has table-name t if
+    t is a mysql:table.
+
+std:query "Database query" has id I, name N if
     I has mysql:Test1:name N.

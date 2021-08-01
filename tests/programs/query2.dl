@@ -1,6 +1,6 @@
-query "Duplicates" has value N if 1<N<5 or 1<N<5.
+std:query "Duplicates" has value N if 1<N<5 or 1<N<5.
 
-query "String add" has message M if M = "String addition " + "works!".
+std:query "String add" has message M if M = "String addition " + "works!".
 
 person 1 has name "Frank", age 20.
 person 2 has name "Joe", age 45.

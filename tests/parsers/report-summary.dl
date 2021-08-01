@@ -1,6 +1,6 @@
 print "Imported module report-summary!".
 
-query "Lines of code" has result 1.
+std:query "Lines of code" has result 1.
 
 parsers:number-of-files n if n = count f in (parsers:file f).
 
@@ -11,9 +11,9 @@ parsers:node _ has type _.  // Declaration
 
 t is a nodetype if parsers:node _ has type t.
 
-query "Number of files" has result n if n is parsers:number-of-files.
+std:query "Number of files" has result n if n is parsers:number-of-files.
 
-query "Node types" has nodetype t, nodecount c if
+std:query "Node types" has nodetype t, nodecount c if
     t is a nodetype and 
     c = count m in (parsers:node m has type t).
 
