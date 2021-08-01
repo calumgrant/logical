@@ -93,8 +93,12 @@ void Predicate::AddRule(const std::shared_ptr<Evaluation> &rule)
 {
     if(sealed)
     {
-        // database.Error("Adding a rule to a sealed predicate");
-        database.Error("Adding a rule to a sealed predicate");
+        std::stringstream ss;
+        ss << "Adding a rule to sealed predicate '";
+        name.Write(database, ss);
+        ss << "'";
+//        database.Error(rule->location, ss.str().c_str());
+        std::cerr << ss.str() << std::endl;
         return;
     }
     assert(!sealed);
