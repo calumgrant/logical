@@ -127,7 +127,9 @@ public:
     
     void LogRow(std::ostream & os, const Entity * row) const;
     virtual void Finalize() =0;
-    
+    virtual void OnStartRunningRules();
+    virtual void OnStopRunningRules();
+
 protected:
     // Returns the number of rows.
     virtual std::size_t Count() =0;

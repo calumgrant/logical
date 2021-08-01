@@ -829,7 +829,7 @@ void Writer::OnRow(Entity *row)
         std::vector<Entity> data(slots.size());
         for (int i = 0; i < slots.size(); ++i)
             data[i] = row[slots[i]];
-        relation->Add(&data[0]);
+        relation->Add(location, &data[0]);
     }
 }
 

@@ -1,17 +1,25 @@
-Parsers
-- test JavaScript
-- test language filter
-- rename predicates
-- remove legacy code
-- refactor into h/cpp file
-- add language to node types??
 
 - [ ] Command to output results in md format.
+
 ```
 generate-markdown "foo.md" has name n, age a if ....
+
+find "Hello" has name "bar".
+query "Foo" has result r.
 ```
 
+- Need to signal the last result to the call.
+
+- [ ] Remove `find` predicates, and special case of `query` predicate?
+
+- External aggregates.
 - `rank` command. Also change aggregate syntax to define arbitrary names and allow implementation in externs.
+- Unicode support / utf8 in the lexer.
+- Count size of tree. (e.g. number of tokens in symbol), as a test.
+- Max depth of tree
+- Example to compose HTML/ concat strings.
+- Order by examples.
+- Don't output blurb (e.g. evaluation time) by default.
 
 Currently working on:
 - Better error reporting.
@@ -23,35 +31,12 @@ Currently working on:
 - `-p ...`
 - Get build running in VSCode.
 
-```
-bool BoundLess(Binding, ...)
-int BoundCompare(Binding, ...)
-```
-32 million rows
-5 entries.
-Base memory usage = 32 * 5 * 8 = 1.2GB
-Indexing: 8 bytes per entry = 256MB
-
-More efficient encoding:
-
-
-Next steps:
-- Secondary indexes should just be sorted lists. No need for a hash table unless it's recursive.
-- Allow secondary indexes to index arbitrary columns in sorted order.
-- Show breakdown of predicates in verbose mode
-  - Number of steps
-  - Time to execute.
 - Progress bar: Number of predicates to evaluate
 - Profiler output
 
 - Total lines of code metrics as a test.
-- Finalize other predicates after evaluation.
-- Import other languages and make `parsers` extensible.
-- parser calling Finalize isn't quite right.
 
 - Rename `ShortIndex` to `Index` and `Int` to `Value`.
-- Report peak memory usage
-- Discard predicate results when finished
 
 # Plan for this week
 
@@ -65,11 +50,16 @@ Next steps:
   - library: lines of code metrics
   - list of tokens.
   - max predicate. `find max x in ()`
-- Think about sub-queries using brackets?
-- Execute as a graph, not recursively.
 - Desugar `foo bar x has baz y` into `foo x and bar x and x has baz y`
 
 # Improving memory efficiency
+
+- Report peak memory usage
+- Discard predicate results when finished
+
+- Think about sub-queries using brackets?
+- Execute as a graph, not recursively.
+
 
 1. Use 32-bits for each cell
   - Top bit 0 = integer, 1 = value-id.

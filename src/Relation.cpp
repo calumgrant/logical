@@ -116,7 +116,9 @@ void Predicate::RunRules()
     AnalysePredicate(database, *this);
 
     assert(loop);
+    OnStartRunningRules();
     loop->RunRules();
+    OnStopRunningRules();
     
     Finalize();
 }
@@ -912,4 +914,12 @@ void SemiNaivePredicate::Finalize()
 bool Relation::Add(const SourceLocation & loc, const Entity * row)
 {
     return Add(row);
+}
+
+void Relation::OnStartRunningRules()
+{
+}
+
+void Relation::OnStopRunningRules()
+{
 }

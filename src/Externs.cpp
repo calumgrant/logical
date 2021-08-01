@@ -146,6 +146,7 @@ public:
     Row row;
     Receiver & recv;
     void * data;
+    bool first = false, last = false;
     
     CallImpl(Database &db, const PredicateName & name, Columns columns, Row row, Receiver & r, void * data) : module(db), name(name), columns(columns), setColumns(columns), recv(r), row(row), data(data)
     {
@@ -450,6 +451,8 @@ void ExternPredicate::AddVarargs(Logical::Extern fn, void * data)
 {
     varargs.fn = fn;
     varargs.data = data;
+    writer.fn = fn;
+    writer.data = data;
 }
 
 Logical::Call & Logical::Module::GetPredicate(const std::initializer_list<const char*> & name)
@@ -570,4 +573,38 @@ bool ExternPredicate::Add(const Entity * row)
 {
     assert(0);
     return false;
+}
+
+void ExternPredicate::OnStartRunningRules()
+{
+    if(varargs.fn)
+    {
+        NullReceiver recv;
+        CallImpl call(database, name, {0}, nullptr, recv, varargs.data);
+        call.first = true;
+        varargs.fn(call);
+    }
+}
+
+void ExternPredicate::OnStopRunningRules()
+{
+    if(varargs.fn)
+    {
+        NullReceiver recv;
+        CallImpl call(database, name, {0}, nullptr, recv, varargs.data);
+        call.last = true;
+        varargs.fn(call);
+    }
+}
+
+bool Logical::Call::First() const
+{
+    auto & call = (CallImpl&)*this;
+    return call.first;
+}
+
+bool Logical::Call::Last() const
+{
+    auto & call = (CallImpl&)*this;
+    return call.last;
 }

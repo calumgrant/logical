@@ -145,7 +145,9 @@ void AST::EntityClause::AssertEntity(Database &db, ::Entity e) const
         }
     }
 
+    relation.OnStartRunningRules();
     relation.Add(location, &entities[0]);
+    relation.OnStopRunningRules();
 }
 
 
@@ -343,8 +345,10 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
             return; // Skip this row.
         }
     }
-
-    db.GetRelation(name).Add(location, row.data());
+    
+    relation.OnStartRunningRules();
+    relation.Add(location, row.data());
+    relation.OnStopRunningRules();
 }
 
 AST::NotImplementedEntity::NotImplementedEntity(const SourceLocation & loc, AST::Node *n1, AST::Node *n2) : ArithmeticEntity(loc)

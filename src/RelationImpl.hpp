@@ -182,6 +182,8 @@ public:
     bool Add(const SourceLocation & location, const Entity * row) override;
     bool Add(const Entity * row) override;
     void AddVarargs(Logical::Extern ex, void * data);
+    void OnStartRunningRules() override;
+    void OnStopRunningRules() override;
 private:
     struct ExternFn
     {

@@ -1,0 +1,14 @@
+load-module externs-test.
+
+print "Hello".
+
+test:table "ID".
+test:table "ID" has name "Name".
+test:table("ID").
+test:table:name("ID", "Name").
+
+
+test:table id has name name if
+    id=1 and name="Fred" or
+    id=2 and name="Bloggs".
+

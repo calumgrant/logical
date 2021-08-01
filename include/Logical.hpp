@@ -70,6 +70,9 @@ namespace Logical
         }
         
         void Import(const char* moduleName);
+        
+        bool First() const;
+        bool Last() const;
 
     protected:
         void ReportError();
