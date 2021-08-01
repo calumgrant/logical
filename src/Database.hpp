@@ -66,7 +66,8 @@ public:
     void WarningEmptyRelation(Relation&);
     
     virtual void AddResult(const Entity * row, int arity, bool displayFirstColumn) =0;
-    
+    virtual void AddResult() =0;
+
     // Gets the ANSI colour sequence for the given highlight, if appropriate for the platform.
     // Otherwise returns the empty string.
     const char * Highlight(Colours::TextHighlight highlight);

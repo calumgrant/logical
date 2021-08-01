@@ -73,6 +73,7 @@ namespace Logical
         
         bool First() const;
         bool Last() const;
+        void CountResult();
 
     protected:
         void ReportError();

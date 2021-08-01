@@ -32,6 +32,7 @@ public:
     void Find(const PredicateName & unaryPredicateName) override;
     void SetVerbosity(int v) override;
     void AddResult(const Entity * row, int arity, bool displayFirstColumn) override;
+    void AddResult() override;
     int GetVerbosity() const override;
     
     void RunQueries();

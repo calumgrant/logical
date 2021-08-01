@@ -85,13 +85,13 @@ struct TableWriterConfig
     const char * newline = "\n";
     
     // Text at the beginning of each row
-    const char * rowPrefix = "|";
+    const char * rowPrefix = "┃";
     
     // Text to separate columns
-    const char * columnSeparator = "|";
+    const char * columnSeparator = "│";
     
     // Text at the end of each row
-    const char * rowSuffix = "|";
+    const char * rowSuffix = "┃";
 
     // Text to put in front of each value
     const char * paddingPrefix = " ";
@@ -100,15 +100,21 @@ struct TableWriterConfig
     const char * paddingSuffix = " ";
     
     // The character to use in the top border, or "" to disable
-    const char * topBorder = nullptr;
-    const char * topBorderSeparator = "|";
+    const char * topBorder = "━";
+    const char * topBorderPrefix = "┏";
+    const char * topBorderSuffix = "┓";
+    const char * topBorderSeparator = "┯";
     
-    const char * headerSeparator = "-";
-    const char * headerSeparatorSeparator = "|";
+    const char * headerSeparator = "━";
+    const char * headerSeparatorPrefix = "┣";
+    const char * headerSeparatorSuffix = "┫";
+    const char * headerSeparatorSeparator = "┿";
     
     // The character to use in the bottom border, or null/"" to disable
-    const char * bottomBorder = nullptr;
-    const char * bottomBorderSeparator = "|";
+    const char * bottomBorder = "━";
+    const char * bottomBorderPrefix = "┗";
+    const char * bottomBorderSuffix = "┛";
+    const char * bottomBorderSeparator = "┷";
 
     // If rows are unequal in length, what is the padding value to use for missing values
     const char * padValue = "";
@@ -165,7 +171,7 @@ public:
 private:
     void PrintRow(Row&);
     void ComputeWidths(const Row&);
-    void PrintSeparator(const char * str, const char * sep);
+    void PrintSeparator(const char * str, const char * prefix, const char * sep, const char * suffix);
 
     TableWriterConfig config;
     std::ostream & output;
@@ -205,14 +211,14 @@ void TableWriterImpl::EndTable()
         ComputeWidths(i);
     
     // Print it all out
-    PrintSeparator(config.topBorder, config.topBorderSeparator);
+    PrintSeparator(config.topBorder, config.topBorderPrefix, config.topBorderSeparator, config.topBorderSuffix);
     PrintRow(header);
-    PrintSeparator(config.headerSeparator, config.headerSeparatorSeparator);
+    PrintSeparator(config.headerSeparator, config.headerSeparatorPrefix, config.headerSeparatorSeparator, config.headerSeparatorSuffix);
 
     for(auto & i : rowBuffer)
         PrintRow(i);
 
-    PrintSeparator(config.bottomBorder, config.bottomBorderSeparator);
+    PrintSeparator(config.bottomBorder, config.bottomBorderPrefix, config.bottomBorderSeparator, config.bottomBorderSuffix);
 
     header.clear();
     rowBuffer.clear();
@@ -231,17 +237,22 @@ void TableWriterImpl::ComputeWidths(const Row & row)
     }
 }
 
-void TableWriterImpl::PrintSeparator(const char *str, const char *sep)
+void TableWriterImpl::PrintSeparator(const char *str, const char * prefix, const char *sep, const char * suffix)
 {
-    if(!str || !sep) return;
+    if(!str || !sep || !prefix || !suffix) return;
     
+    output << prefix;
+    bool first = true;
     for(auto & i : widths)
     {
-        output << sep;
+        if(first)
+            first = false;
+        else
+            output << sep;
         for(int j=0; j<i + strlen(config.paddingPrefix) + strlen(config.paddingSuffix); ++j)
             output << str;
     }
-    output << sep << config.newline;
+    output << suffix << config.newline;
 }
 
 void TableWriterImpl::PrintRow(Row & row)
@@ -289,6 +300,7 @@ static void outputTable(Call & call)
     if(call.Last())
     {
         writer.EndTable();
+        std::cout << std::endl;
         return;
     }
     
@@ -311,6 +323,7 @@ static void outputTable(Call & call)
                 row.push_back("?");
         }
     }
+    call.CountResult();
     writer.AddRow(std::move(row));
 }
 
@@ -323,5 +336,6 @@ void RegisterFunctions(Module & module)
     module.AddFunction(concat, {"test:concat"}, {Varargs});
     module.AddCommand(setdata, {"test:setdata"});
 
-    module.AddFunction(outputTable, {"test:table"}, {Varargs}, new TableWriterImpl(std::cout, TableWriterConfig()));
+    auto tablewriter = new TableWriterImpl(std::cout, TableWriterConfig());
+    module.AddFunction(outputTable, {"test:table"}, {Varargs}, tablewriter);
 }

@@ -608,3 +608,9 @@ bool Logical::Call::Last() const
     auto & call = (CallImpl&)*this;
     return call.last;
 }
+
+void Logical::Call::CountResult()
+{
+    auto & call = (CallImpl&)*this;
+    call.module.database.AddResult();
+}

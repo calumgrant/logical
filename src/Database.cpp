@@ -537,7 +537,7 @@ void DatabaseImpl::RunQueries()
 
 void DatabaseImpl::AddResult(const Entity * row, int arity, bool displayFirstColumn)
 {
-    ++resultCount;
+    AddResult();
     
     std::cout << "\t";
     bool isFirst = true;
@@ -552,6 +552,11 @@ void DatabaseImpl::AddResult(const Entity * row, int arity, bool displayFirstCol
         std::cout << Colours::Normal;
     }
     std::cout << std::endl;
+}
+
+void DatabaseImpl::AddResult()
+{
+    ++resultCount;
 }
 
 bool DatabaseImpl::AnsiHighlightingEnabled() const

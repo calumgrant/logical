@@ -1,14 +1,12 @@
 load-module externs-test.
 
-print "Hello".
+test:table "ID1".
+test:table "ID2" has name "Name".
+test:table("ID3").
+test:table:name("ID4", "Name").
 
-test:table "ID".
-test:table "ID" has name "Name".
-test:table("ID").
-test:table:name("ID", "Name").
-
-
-test:table id has name name if
+test:table id has Name name if
     id=1 and name="Fred" or
     id=2 and name="Bloggs".
 
+expected-results 6.
