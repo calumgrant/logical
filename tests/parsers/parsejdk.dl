@@ -1,9 +1,9 @@
 load-module parsers.
-import report-summary.
 
 memory-limit-mb 7000.
 
-java:parse-directory "/Users/calum/projects/jdk/src".
+parsers:parse "/Users/calum/projects/jdk/src".
 
-error "Missing results" if java:number-of-files n and n < 13000.
+import report-summary.
+error "Missing results" if parsers:number-of-files n and n < 13000.
 
