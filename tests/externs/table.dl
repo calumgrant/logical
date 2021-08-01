@@ -5,8 +5,7 @@ test:table "ID2" has name "Name".
 test:table("ID3").
 test:table:name("ID4", "Name").
 
-test:table id has Name name if
-    id=1 and name="Fred" or
-    id=2 and name="Bloggs".
+test:table id has Name name+"-" + id, Surname surname+"-"+id if
+    1<=id<=10 and (name="Fred" and surname="Bloggs").
 
-expected-results 6.
+expected-results 14.

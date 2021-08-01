@@ -45,6 +45,8 @@ add_library(logiccore SHARED
     PredicateName.hpp
     Relation.cpp Relation.hpp RelationImpl.hpp
     Allocator.cpp Allocator.hpp
+    ../include/TableWriter.hpp
+    TableWriter.cpp
     ${BISON_MyParser_OUTPUTS}
     ${FLEX_MyScanner_OUTPUTS})
 

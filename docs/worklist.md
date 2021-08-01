@@ -1,6 +1,9 @@
 
 - [ ] Command to output results in md format.
 
+- Remove the "query" predicate, and also remove the "Find" keyword.
+
+
 ```
 generate-markdown "foo.md" has name n, age a if ....
 
