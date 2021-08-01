@@ -1,6 +1,9 @@
 #include "functions.hpp"
+#include <TableWriter.hpp>
 #include <cstring>
 #include <string>
+#include <sstream>
+#include <iostream>
 
 static void expectedresults(Call & call)
 {
@@ -89,6 +92,56 @@ static void import(Call & call)
     }
 }
 
+static void outputTable(Call & call)
+{
+    int args = call.ArgCount();
+    auto & writer = *(TableWriter*)(call.GetData());
+
+    if(call.First())
+    {
+        std::vector<std::string> row;
+        row.push_back("");
+
+        for(int i=1; i<args; ++i)
+        {
+            row.push_back(call.ArgName(i));
+        }
+        
+        writer.Header(std::move(row));
+        return;
+    }
+    
+    if(call.Last())
+    {
+        writer.EndTable();
+        std::cout << std::endl;
+        return;
+    }
+    
+    std::vector<std::string> row;
+    for(int i=0; i<args; ++i)
+    {
+        if(call.GetMode(i) == In)
+        {
+            const char * v;
+            Int iv;
+            if(call.Get(i, v))
+                row.push_back(v);
+            else if(call.Get(i, iv))
+            {
+                std::stringstream ss;
+                ss << iv;
+                row.push_back(ss.str());
+            }
+            else
+                row.push_back("?");
+        }
+    }
+    call.CountResult();
+    writer.AddRow(std::move(row));
+}
+
+
 void RegisterFunctions(Module & module)
 {
     module.AddCommand(print, {"print"});
@@ -126,6 +179,9 @@ void RegisterFunctions(Module & module)
     // TODO: Make a table
     module.AddFunction(environment, {"environment", "value"}, {Out, Out});
     
-    // Directory listing functions
+    // TODO: Directory listing functions
     module.AddCommand(readcsv, {"csv:read"});
+    
+    auto tablewriter = new TableWriterImpl(std::cout, TableWriterConfig());
+    module.AddFunction(outputTable, {"std:query"}, { Varargs }, tablewriter);
 }

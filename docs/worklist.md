@@ -2,7 +2,7 @@
 - [ ] Command to output results in md format.
 
 - Remove the "query" predicate, and also remove the "Find" keyword.
-
+- [ ] Do not parse multiple files on the command line. Instead, treat them as "argv/argc"
 
 ```
 generate-markdown "foo.md" has name n, age a if ....

@@ -78,7 +78,6 @@ static void setdata(Call & call)
     }
 }
 
-
 static void outputTable(Call & call)
 {
     int args = call.ArgCount();
