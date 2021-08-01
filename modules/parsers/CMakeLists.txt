@@ -44,8 +44,9 @@ include_directories(${ANTLR_JavaScriptLexer_OUTPUT_DIR} ${ANTLR_JavaScriptParser
 
 enable_testing()
 
-add_library(parsers SHARED parsers.cpp ${ANTLR_JavaLexer_CXX_OUTPUTS} 
-    ${ANTLR_JavaParser_CXX_OUTPUTS} 
+add_library(parsers SHARED parsers.cpp Parser.hpp Parser.cpp Language.cpp Language.hpp ParserModule.cpp ParserModule.hpp
+    Predicates.cpp Predicates.hpp
+    ${ANTLR_JavaLexer_CXX_OUTPUTS} ${ANTLR_JavaParser_CXX_OUTPUTS} 
     ${ANTLR_JavaScriptLexer_CXX_OUTPUTS} ${ANTLR_JavaScriptParser_CXX_OUTPUTS} JavaScriptParserBase.cpp JavaScriptLexerBase.cpp )
 
 #find_library(ANTLR4_LIB NAMES "libantlr4-runtime.a" HINTS "/opt/homebrew/lib")

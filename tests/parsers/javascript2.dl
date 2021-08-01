@@ -1,4 +1,4 @@
 load-module parsers.
 import report-summary.
 parsers:parse "javascript-examples".
-expected-results 107.
+expected-results 147.
