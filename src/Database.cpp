@@ -44,10 +44,6 @@ public:
 
     // List of imports so we don't import anything twice
     unordered_set_helper<StringId>::set_type imports;
-
-    
-    RelationId queryId;
-    Relation * queryPredicate;
     
     std::atomic<std::int64_t> entityCounter = 0;
     
@@ -75,10 +71,6 @@ DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB
 
     if(!datastore->initialized)
     {
-        datastore->queryId = GetStringId("query");
-        PredicateName query(1, datastore->queryId);
-        datastore->queryPredicate = &GetRelation(query);
-        datastore->queryPredicate->allowEmpty = true;
         datastore->initialized = true;
     }
     
@@ -469,70 +461,10 @@ int DatabaseImpl::NumberOfResults() const
 
 void Database::WarningEmptyRelation(Relation & relation)
 {
-    if(&relation != &GetQueryRelation())
-    {
-        std::cerr << Colours::Error << "Error: Querying undefined relation '";
-        relation.name.Write(*this, std::cerr);
-        std::cerr << "/" << relation.Arity() << "'\n" << Colours::Normal;
-        ReportUserError();
-    }
-}
-
-void DatabaseImpl::RunQueries()
-{
-    class QueryVisitor : public Receiver
-    {
-    public:
-        QueryVisitor(DatabaseImpl & db, int arity, const PredicateName & name) : database(db), arity(arity), name(name), sortedRow(arity) {}
-        
-        void OnRow(Entity * row) override
-        {
-            sortedRow[0] = row[0];
-            for(int i=1; i<arity; ++i)
-                sortedRow[i] = row[name.attributes.mapFromInputToOutput[i-1]+1];
-            database.AddResult(sortedRow.data(), arity, false);
-        }
-        DatabaseImpl & database;
-        
-        const int arity;
-        const PredicateName & name;
-        std::vector<Entity> sortedRow;
-    };
-        
-    class Visitor : public Receiver
-    {
-    public:
-        Visitor(DatabaseImpl & db) : database(db) {}
-        std::size_t queries = 0;
-        DatabaseImpl & database;
-
-        void OnRow(Entity * data) override
-        {
-            ++queries;
-            std::cout << Colours::Relation;
-            database.Print(data[0], std::cout);
-            std::cout << Colours::Normal << " has results:\n";
-            //Entity queryName = data[0];
-
-            // Join with all attributes in the
-            
-            auto r = database.datastore->nameParts.equal_range(database.datastore->queryId);
-            auto & qn = database.datastore->queryPredicate->name;
-            for(auto i=r.first; i!=r.second; ++i)
-            {
-                if (qn < i->second)
-                {
-                    auto &r = *database.datastore->relations[i->second];
-                    QueryVisitor qv(database, r.Arity(), r.name);
-                    std::vector<Entity> row(r.Arity());
-                    row[0] = data[0];
-                    r.Query(&row[0], 1, qv);
-                }
-            }
-        }
-    } visitor(*this);
-    
-    datastore->queryPredicate->Query(nullptr, 0, visitor);
+    std::cerr << Colours::Error << "Error: Querying undefined relation '";
+    relation.name.Write(*this, std::cerr);
+    std::cerr << "/" << relation.Arity() << "'\n" << Colours::Normal;
+    ReportUserError();
 }
 
 void DatabaseImpl::AddResult(const Entity * row, int arity, bool displayFirstColumn)
@@ -601,11 +533,6 @@ void Database::ParityError(Relation & relation)
     std::cerr << Colours::Error << "Error: predicate ";
     Evaluation::OutputRelation(std::cerr, *this, relation);
     std::cerr << Colours::Error << " has negative recursion\n" << Colours::Normal;
-}
-
-Relation & DatabaseImpl::GetQueryRelation() const
-{
-    return *datastore->queryPredicate;
 }
 
 void DatabaseImpl::SetAnsiColours(bool enabled)

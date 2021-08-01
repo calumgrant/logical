@@ -35,7 +35,6 @@ public:
     void AddResult() override;
     int GetVerbosity() const override;
     
-    void RunQueries();
     int NumberOfErrors() const override;
     int NumberOfResults() const;
     void ReportUserError() override;
@@ -48,9 +47,7 @@ public:
     Optimizer & GetOptimizer() const override;
     
     void SetAnsiColours(bool);
-    
-    Relation &GetQueryRelation() const override;
-    
+        
     AllocatorData & Storage() override;
     persist::shared_memory & SharedMemory() override;
     

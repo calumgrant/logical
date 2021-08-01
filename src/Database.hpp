@@ -86,8 +86,6 @@ public:
     
     virtual Optimizer & GetOptimizer() const =0;
 
-    virtual Relation & GetQueryRelation() const = 0;
-
     virtual AllocatorData & Storage() =0;
     virtual persist::shared_memory & SharedMemory() =0;
 
