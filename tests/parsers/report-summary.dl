@@ -13,7 +13,7 @@ t is a nodetype if parsers:node _ has type t.
 
 query "Number of files" has result n if n is parsers:number-of-files.
 
-query "Node types" has nodetype t, nodecount c if
+query "Node types" has "Node type" t, "Node count" c if
     t is a nodetype and 
     c = find count m in (parsers:node m has type t).
 
