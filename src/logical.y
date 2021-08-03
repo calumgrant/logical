@@ -368,21 +368,21 @@ plusentity:
 
 sumentity:
     plusentity
-|   tok_sum variable tok_identifier variable tok_in tok_open clause tok_close
+|   tok_find tok_sum variable tok_identifier variable tok_in tok_open clause tok_close
     {
         // A contextual keyword, where tok_identifier should be "over".
-        $$ = new AST::Sum(LOCATION(@1, @7), $4, $2, $7);
-        if ($3 != data.db.GetStringId("over"))
+        $$ = new AST::Sum(LOCATION(@1, @8), $5, $3, $8);
+        if ($4 != data.db.GetStringId("over"))
             yyerror(&yylloc, scanner, data, "Expecting 'over'");
     }
-|   tok_sum variable tok_in tok_open clause tok_close
+|   tok_find tok_sum variable tok_in tok_open clause tok_close
     {
-        $$ = new AST::Sum(LOCATION(@1, @5), nullptr, $2, $5);
+        $$ = new AST::Sum(LOCATION(@1, @6), nullptr, $3, $6);
     }
-|   tok_count entity_expression tok_in tok_open clause tok_close { $$ = new AST::Count(LOCATION(@1, @5), $2, $5); }
-|   tok_count tok_open entity_expression tok_comma datalog_clause tok_close { $$ = new AST::Count(LOCATION(@1, @5), $3, $5); }
-|   tok_sum tok_open variable tok_comma datalog_clause tok_close { $$ = new AST::Sum(LOCATION(@1, @5), nullptr, $3, $5); }
-|   tok_sum tok_open variable tok_comma variable tok_comma datalog_clause tok_close { $$ = new AST::Sum(LOCATION(@1, @7), $3, $5, $7); }
+|   tok_find tok_count entity_expression tok_in tok_open clause tok_close { $$ = new AST::Count(LOCATION(@1, @6), $3, $6); }
+|   tok_find tok_count tok_open entity_expression tok_comma datalog_clause tok_close { $$ = new AST::Count(LOCATION(@1, @6), $4, $6); }
+|   tok_find tok_sum tok_open variable tok_comma datalog_clause tok_close { $$ = new AST::Sum(LOCATION(@1, @6), nullptr, $4, $6); }
+|   tok_find tok_sum tok_open variable tok_comma variable tok_comma datalog_clause tok_close { $$ = new AST::Sum(LOCATION(@1, @8), $4, $6, $8); }
 ;
 
 entity_expression: sumentity;

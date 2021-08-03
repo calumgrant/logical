@@ -1,7 +1,7 @@
 value 1.
 value 2.
 
-total X if X = sum V in (value V).
+total X if X = find sum V in (value V).
 
 error "sum 1" if not total 3.
 
@@ -12,8 +12,8 @@ money @m1 has value 10.
 money @m2 has value 10.
 money @m3 has value 20.
 
-error "error 1" if not sum V in (_ has value V) = 30.
-error "error 2" if not sum V over M in (M has value V) = 40.
+error "error 1" if not find sum V in (_ has value V) = 30.
+error "error 2" if not find sum V over M in (M has value V) = 40.
 
-error "poly" if not 1.5 = sum X in (X=1 or X=0.5).
+error "poly" if not 1.5 = find sum X in (X=1 or X=0.5).
 

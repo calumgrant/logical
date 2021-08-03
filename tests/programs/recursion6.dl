@@ -6,8 +6,8 @@ n has left-child 2*n if item n.
 n has right-child m+1 if n has left-child m.
 n has child m if n has left-child m or n has right-child m.
 
-std:query "Number of children" has Count c if c = count n in (_ has child n and item n).
-std:query "Number of descendents" has Count c if c = count n in (_ reaches child n).
+std:query "Number of children" has Count c if c = find count n in (_ has child n and item n).
+std:query "Number of descendents" has Count c if c = find count n in (_ reaches child n).
 
 n has D m if n has child m or
     n has D x and x has D m.

@@ -1,16 +1,16 @@
-f X if X = count Y in (1<=Y<=10 or 11<Y<=20 or Y=15).
+f X if X = find count Y in (1<=Y<=10 or 11<Y<=20 or Y=15).
 
 error "count" if not f 19.
 
-X has fewer Y if 1<=X<=10 and Y = count Z in (0<Z<X).
+X has fewer Y if 1<=X<=10 and Y = find count Z in (0<Z<X).
 
 std:query X has Fewer Y if X has fewer Y.
 
-error "count 2" if not 2 = count X in (X=1 or X=2).
+error "count 2" if not 2 = find count X in (X=1 or X=2).
 
 prime N if 2<=N<1000 and not (2<=M<N and N%M=0).
 
-error "Primes" if not 168 = count N in (prime N).
+error "Primes" if not 168 = find count N in (prime N).
 
 // find count N if prime N.
 

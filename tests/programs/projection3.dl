@@ -28,4 +28,4 @@ succeeded 2 if 5 has square 25.
 succeeded 3 if 5 has successor 6, square 25.
 succeeded 4 if 5 has square 25, successor 6.
 
-error 11 if not count S in (succeeded S) = 4.
+error 11 if not find count S in (succeeded S) = 4.

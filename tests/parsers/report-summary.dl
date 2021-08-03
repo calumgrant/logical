@@ -2,7 +2,7 @@ print "Imported module report-summary!".
 
 query "Lines of code" has result 1.
 
-parsers:number-of-files n if n = count f in (parsers:file f).
+parsers:number-of-files n if n = find count f in (parsers:file f).
 
 java:statement s if parsers:node s has type "statement".
 
@@ -15,7 +15,7 @@ query "Number of files" has result n if n is parsers:number-of-files.
 
 query "Node types" has nodetype t, nodecount c if
     t is a nodetype and 
-    c = count m in (parsers:node m has type t).
+    c = find count m in (parsers:node m has type t).
 
 root m if parsers:node m has parent p and not parsers:node p.
 leaf m if parsers:node m and not parsers:node c has parent m.
@@ -24,7 +24,7 @@ leaf m if parsers:node m and not parsers:node c has parent m.
 
 if 
     parsers:node Node and
-    N = count Child in (parsers:node Child has parent Node)
+    N = find count Child in (parsers:node Child has parent Node)
 then
     node Node has children N.
 

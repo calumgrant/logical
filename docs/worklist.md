@@ -8,6 +8,7 @@
   - `find rank 10 of x in (...)`
   - `find sum m over x in (...)`
   - `find count x, y in (...)`
+- test varargs with datalog.
 
 # Attributes
 
@@ -42,7 +43,6 @@ X, colour Y, name Z
 large brown horse X, colour Y, name Z
 X has colour Y with name Z
 X has colour Y at name Z
-
 ```
 
 ## Newtypes

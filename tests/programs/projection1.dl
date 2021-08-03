@@ -5,5 +5,5 @@
 2 has successor 3, predecessor 1.
 3 has predecessor 2.
 
-error "p1" if count X in (X has a successor) != 3.
-error "p2" if count X in (X has a predecessor) != 3.
+error "p1" if find count X in (X has a successor) != 3.
+error "p2" if find count X in (X has a predecessor) != 3.

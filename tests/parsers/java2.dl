@@ -4,4 +4,4 @@ parsers:parse ".", language "Java".
 
 error "File1" if not parsers:file _ has filename "./Test.java".
 error "File2" if not parsers:file _ has filename "./AllInOne8.java".
-error "Too many files" if count f in (parsers:file f) !=2.
+error "Too many files" if find count f in (parsers:file f) !=2.

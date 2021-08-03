@@ -20,7 +20,7 @@ error "differences" if
     or
     X has ancestor2 Y and not X has ancestor Y.
 
-error "count" if not count X in (3 has ancestor X) = 5.
+error "count" if not find count X in (3 has ancestor X) = 5.
 
 if 
     3 has ancestor2 X
