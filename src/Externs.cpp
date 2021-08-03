@@ -154,8 +154,9 @@ public:
     
     int IndexMap(int index) const
     {
-        if(index<0 || index > name.attributes.mapFromInputToOutput.size())
+        if(index<0 || index >= name.arity)
             throw std::logic_error("Invalid argument position");
+        if(index > name.attributes.mapFromInputToOutput.size()) return index;
         return index==0 ? 0 : 1 + name.attributes.mapFromInputToOutput[index-1];
     }
     
@@ -406,6 +407,8 @@ const char * Logical::Call::ArgName(int i) const
     
     i = call.name.MapArgument(i);
     assert(call.name.objects.parts.size()==1);
+    
+    if(i>call.name.attributes.parts.size()) return "";
     int id = i==0 ? call.name.objects.parts[0] : call.name.attributes.parts[i-1];
     return call.module.database.GetString(id);
 }

@@ -1,0 +1,5 @@
+query("Hello").
+query:World("Hello", "world!").
+query("Hello", "world!").
+
+expected-results 3.
