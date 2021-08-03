@@ -8,8 +8,7 @@ enum class ComparatorType { lt, lteq, gt, gteq, eq, neq };
 
 enum class IsType { is, isnot };
 
-enum class HasType { has, hasnot, reaches, reachesno };
-
+enum class HasType { has, hasnot, reaches, reachesno, comma };
 
 std::ostream & operator<<(std::ostream &os, ComparatorType t);
 

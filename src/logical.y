@@ -226,10 +226,6 @@ baseclause:
     }
 |   unarypredicatelist entity { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, $1, IsType::is); }
 |   entity has_a binarypredicate { $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, new AST::AttributeList($3, nullptr), $2); }
-|   entity tok_comma binarypredicate
-    {
-        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, new AST::AttributeList($3, nullptr), HasType::has);
-    }
 |   unarypredicatelist entity has_a attributes
     { 
         $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), $1, $2, $4, $3);
@@ -238,10 +234,6 @@ baseclause:
     { 
         $$ = new AST::EntityHasAttributes(LOCATION(@1, @5), $1, $2, new AST::AttributeList($4,$5), $3);
     }
-|   unarypredicatelist entity tok_comma attributes 
-    { 
-        $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), $1, $2, $4, HasType::has);
-    }
 |   entity has_a attributes
     {
         $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, $3, $2);
@@ -249,10 +241,6 @@ baseclause:
 |   entity reaches binarypredicate entity_expression
     {
         $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), nullptr, $1, new AST::AttributeList($3,$4), $2);
-    }
-|   entity tok_comma attributes
-    {
-        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, $3, HasType::has);
     }
 |   tok_open clause tok_close { $$=$2; }
 |   tok_new unarypredicate tok_has attributes
@@ -271,6 +259,7 @@ has_a:
 |   tok_has tok_a { $$ = HasType::has; }
 |   tok_has tok_an { $$ = HasType::has; }
 |   tok_has tok_no { $$ = HasType::hasnot; }
+|   tok_comma { $$ = HasType::comma; }
 ;
 
 is_a:
