@@ -1,40 +1,98 @@
+# Short term plan
 
-- [ ] Command to output results in md format.
+- Tidy up the attributes explanation
+- Implement the attribute changes
+- String syntax for attributes and varargs
+- Change aggregate syntax to add the `find` keyword and remove unused keywords (`max`, `min`, `sum`, `count`, `with`)
+  - `max` predicate. `find max x in ()` `find count x,y in ()`
+  - `find rank 10 of x in (...)`
+  - `find sum m over x in (...)`
+  - `find count x, y in (...)`
 
-- Remove the "query" predicate, and also remove the "Find" keyword.
-- [ ] Do not parse multiple files on the command line. Instead, treat them as "argv/argc"
+# Attributes
+
+Entities can have /attributes/, for example `large horse H has colour C, name N`. This is equivalent to `large H and horse H and H has colour C and H has name N`. Notice that these are only unary and binary predicates.
+
+n-ary predicates are created by omitting the `has`, for example `H, colour C, name N`. These behave fundamentally differently to the `has` case as they are all bound in a single tuple. They automatically project to the individual unary and binary predicates, but not to arbitrary combinations.
+
+Other syntax variations are possible, for example `H has colour X with name Y` or `H has size S at position P`. The `with` and `at` keywords simply serve to create the ternary tuple.
+
+It's also possible to write `and has` instead of a `,` for the second and subsequent attributes.
+
+Valid examples include
 
 ```
-generate-markdown "foo.md" has name n, age a if ....
+X is a horse
+X is an otter
+horse X
+large horse X
+large brown horse X
+X has colour Y
+X, colour Y
+horse X has colour Y
+horse X, colour Y
+large brown horse X has colour Y
+large brown horse X, colour Y
+X has colour Y, name Z
+X has colour Y and has name Z // ??
+large brown horse X has colour Y, name Z
+large brown horse X has colour Y and has name Z
+X, colour Y, name Z
+(horse S, colour Y, name Z)  // Makes it a bit clearer
+large brown horse X, colour Y, name Z
+X has colour Y with name Z
+X has colour Y at name Z
 
-find "Hello" has name "bar".
-query "Foo" has result r.
 ```
 
-- Relation.cpp:97: Report the source location and the predicate name correctly.
-- Unbound variable error: Report the variable name.
+## Newtypes
+
+New types create new entities - one for each unique combination. They project to binary predicates.
+
+`new cell has file F, line L, column C`
+
+`new location has file f, startline l1, endline l2`
+
+`location _ has startline l1, endline l2` ensures that l1 and l2 only come in suitable pairs.
+
+## Externs
+
+If the first entity is recognised as an extern, then the entire clause is treated as an extern, and is not desugared in the same way. It is as if the `has` was omitted.
+
+It is possible to specify one additional name for the first argument, which can be used to name the first argument, for example `query thing X has name Y`.
+
+It is also possible to have string attributes, for example
+
+`query "Large thing" X has "First name" Y.`
+
+If the extern is varargs, then it is passed verbatim to the extern, which treats the "arguments" as named inserts, as a function or command.
+
+If the extern is not varargs, then the most appropriate binding is selected, or the call fails with an error if a suitable extern could not be found. An extern clause consists of a single extern, thus, `std:string s has uppercase u, lowercase l` does not work as it's not decomposed into. (Could be supported in a future version though).
+
+`std:regex r has match m, position p`.
+
+
+# Results formatting
 
 - Try out `std:query person p has name r` to give the first column a heading
+  - [ ] Set user-defined column headings in table output.
+- Deduplicate
+- Sort
+- Output more datatypes (floats, etc etc.)
+- Query formats: `markdown`, `md`, `csv`, `html`
+- Query output file
 
-- Need to signal the last result to the call.
-
-- [ ] Remove `find` predicates, and special case of `query` predicate?
-
-- [ ] Set user-defined column headings in table output.
-- Rename `std:query` to something else.
-
+- [ ] Do not parse multiple files on the command line. Instead, treat them as "argv/argc"
+- Relation.cpp:97: Report the source location and the predicate name correctly.
 - External aggregates.
 - `rank` command. Also change aggregate syntax to define arbitrary names and allow implementation in externs.
+  - `find rank 1 of x in`
+  - `find sum s of y in`
 - Unicode support / utf8 in the lexer.
 - Count size of tree. (e.g. number of tokens in symbol), as a test.
 - Max depth of tree
 - Example to compose HTML/ concat strings.
-- Order by examples.
-- Don't output blurb (e.g. evaluation time) by default.
-
 - Parse arguments `std:arg x`, followed by 
-- Query formats: `markdown`, `md`, `csv`, `html`
-- Query output file:
 - `-v` does not output predicate bodies.
 
 Currently working on:
@@ -60,7 +118,6 @@ Currently working on:
 - Carry on invesigating memory usage
   - Avoid hash indexes, and just use sorted indexes (Bound by columns)
   - BoundCompare using binding, not arity
-- `import` statement without prefixes.
 - Parser work
   - more languages
   - library: lines of code metrics

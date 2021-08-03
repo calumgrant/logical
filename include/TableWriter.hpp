@@ -41,12 +41,14 @@ namespace Logical
         const char * bottomBorderPrefix = "┗";
         const char * bottomBorderSuffix = "┛";
         const char * bottomBorderSeparator = "┷";
+        
+        const char * ellipsis = "...";
 
         // If rows are unequal in length, what is the padding value to use for missing values
         const char * padValue = "";
         
         // The maximum width of any column, or 0 for no maximum value
-        std::size_t maxWidth = 0;
+        std::size_t maxWidth = 20;
         
         // Truncate long strings instead of flowing them into the next line
         bool truncate = false;
@@ -94,7 +96,7 @@ namespace Logical
 
     private:
         void PrintRow(Row&);
-        void ComputeWidths(const Row&);
+        void ComputeWidths(Row&);
         void PrintSeparator(const char * str, const char * prefix, const char * sep, const char * suffix);
 
         TableWriterConfig config;

@@ -22,13 +22,40 @@ void Logical::TableWriterImpl::AddRow(Row &&row)
         if(rowBuffer.size()==config.maxRows)
         {
             for(auto & r : row)
-                r = "...";
+                r = config.ellipsis;
             rowBuffer.push_back(std::move(row));
         }
         return;
     }
     
-    rowBuffer.push_back(std::move(row));
+    
+    if(!config.truncate)
+    {
+        bool overflows;
+        do
+        {
+            std::vector<std::string> nextRow;
+            overflows = false;
+            for(auto &i : row)
+            {
+                if(i.size() <= config.maxWidth)
+                    nextRow.push_back("");
+                else
+                {
+                    overflows = true;
+                    nextRow.push_back(i.substr(config.maxWidth, i.size()-config.maxWidth));
+                    i.erase(i.begin() + config.maxWidth, i.end());
+                }
+            }
+            rowBuffer.push_back(std::move(row));
+            row = std::move(nextRow);
+        }
+        while(overflows);
+    }
+    else
+    {
+        rowBuffer.push_back(std::move(row));
+    }
 }
 
 void Logical::TableWriterImpl::EndTable()
@@ -58,13 +85,18 @@ void Logical::TableWriterImpl::EndTable()
     widths.clear();
 }
 
-void Logical::TableWriterImpl::ComputeWidths(const Row & row)
+void Logical::TableWriterImpl::ComputeWidths(Row & row)
 {
     if(widths.size() < row.size())
         widths.resize(row.size());
     
     for(int i=0; i<row.size(); ++i)
     {
+        if(row[i].size() > config.maxWidth)
+        {
+            row[i].resize(config.maxWidth-strlen(config.ellipsis));
+            row[i] += config.ellipsis;
+        }
         if(widths[i] < row[i].size())
             widths[i] = row[i].size();
     }

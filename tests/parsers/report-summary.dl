@@ -1,6 +1,6 @@
 print "Imported module report-summary!".
 
-std:query "Lines of code" has result 1.
+query "Lines of code" has result 1.
 
 parsers:number-of-files n if n = count f in (parsers:file f).
 
@@ -11,10 +11,28 @@ parsers:node _ has type _.  // Declaration
 
 t is a nodetype if parsers:node _ has type t.
 
-std:query "Number of files" has result n if n is parsers:number-of-files.
+query "Number of files" has result n if n is parsers:number-of-files.
 
-std:query "Node types" has nodetype t, nodecount c if
+query "Node types" has nodetype t, nodecount c if
     t is a nodetype and 
     c = count m in (parsers:node m has type t).
 
+root m if parsers:node m has parent p and not parsers:node p.
+leaf m if parsers:node m and not parsers:node c has parent m.
 
+// query "Root node" has node n if root n.
+
+if 
+    parsers:node Node and
+    N = count Child in (parsers:node Child has parent Node)
+then
+    node Node has children N.
+
+enable_leaves _.
+
+// enable_leaves 1.
+
+query "Leaf node" has node n, type Type, text t, children c if 
+    enable_leaves _ and
+    leaf n and parsers:token n has text t and parsers:node n has type Type and
+    node n has children c.

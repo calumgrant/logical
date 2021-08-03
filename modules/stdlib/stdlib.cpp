@@ -184,4 +184,5 @@ void RegisterFunctions(Module & module)
     
     auto tablewriter = new TableWriterImpl(std::cout, TableWriterConfig());
     module.AddFunction(outputTable, {"std:query"}, { Varargs }, tablewriter);
+    module.AddFunction(outputTable, {"query"}, { Varargs }, tablewriter);
 }
