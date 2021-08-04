@@ -59,6 +59,7 @@ public:
     Relation & GetExtern(const PredicateName & pn) override;
     void Addvarargs(RelationId name, Logical::Extern fn, void * data) override;
     void SetMemoryLimit(std::size_t) override;
+    bool IsExtern(StringId name) const override;
 
 private:
     Optimizer & optimizer;

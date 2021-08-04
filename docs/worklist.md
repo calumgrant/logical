@@ -1,30 +1,40 @@
 # Short term plan
 
+Reimplementing attributes:
+- Detect if we "decompose" an entity clause or not.
+- `Database::IsExtern(int PredicateName)`
+- `Compile`
+- `CompileLHS`
+
 - Tidy up the attributes explanation
 - Implement the attribute changes
-- String syntax for attributes and varargs
 - Change aggregate syntax to add the `find` keyword and remove unused keywords (`max`, `min`, `sum`, `count`, `with`)
   - `max` predicate. `find max x in ()` `find count x,y in ()`
   - `find rank 10 of x in (...)`
   - `find sum m over x in (...)`
   - `find count x, y in (...)`
-- test varargs with datalog.
+- parser reports errors better
+- In a query, the first column is the query name not data.
 
 # Attributes
 
-Entities can have /attributes/, for example `large horse H has colour C, name N`. This is equivalent to `large H and horse H and H has colour C and H has name N`. Notice that these are only unary and binary predicates.
+Entities can have /attributes/. At its simplest, the keyword `has` introduces a binary relation, for example `X has length Y`, which would be written as `length(X,Y)` in standard Datalog syntax.
 
-n-ary predicates are created by omitting the `has`, for example `H, colour C, name N`. These behave fundamentally differently to the `has` case as they are all bound in a single tuple. They automatically project to the individual unary and binary predicates, but not to arbitrary combinations.
+The `has` syntax can be composed into lists, for example `X has length Y, colour Z`, which is actually a shorthand for `X has length Y and X has colour Z`. Note that this is *not* equivalent to the Datalog syntax `p(X,Y,Z)`.
+
+The object can also be qualified with a unary predicate type, for example `large horse H has colour C, name N` is equivalent to `large H and horse H and H has colour C and H has name N`. Notice that with regular `has` syntax, only unary and binary predicates are used.
+
+n-ary predicates are created by omitting the `has`, for example `H, colour C, name N`. These behave fundamentally differently to the `has` case as they are all bound in a single tuple. They automatically project to the individual unary and binary predicates, but not to arbitrary combinations. `horse H, colour C, name N` is equivalent to `horse H and H, colour C, name N`.
 
 Other syntax variations are possible, for example `H has colour X with name Y` or `H has size S at position P`. The `with` and `at` keywords simply serve to create the ternary tuple.
 
-It's also possible to write `and has` instead of a `,` for the second and subsequent attributes.
-
-Valid examples include
+Valid examples include (TODO: Show decomposed version)
 
 ```
+X is horse
 X is a horse
 X is an otter
+X is an horse
 horse X
 large horse X
 large brown horse X
@@ -35,7 +45,6 @@ horse X, colour Y
 large brown horse X has colour Y
 large brown horse X, colour Y
 X has colour Y, name Z
-X has colour Y and has name Z // ??
 large brown horse X has colour Y, name Z
 large brown horse X has colour Y and has name Z
 X, colour Y, name Z
@@ -69,8 +78,7 @@ If the extern is varargs, then it is passed verbatim to the extern, which treats
 
 If the extern is not varargs, then the most appropriate binding is selected, or the call fails with an error if a suitable extern could not be found. An extern clause consists of a single extern, thus, `std:string s has uppercase u, lowercase l` does not work as it's not decomposed into. (Could be supported in a future version though).
 
-`std:regex r has match m, position p`.
-
+`std:regex r with match m, position p`.
 
 # Results formatting
 

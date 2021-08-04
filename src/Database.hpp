@@ -94,6 +94,7 @@ public:
     virtual Relation & GetExtern(const PredicateName & cn) =0;
     virtual void Addvarargs(RelationId name, Logical::Extern fn, void * data) =0;
     virtual void SetMemoryLimit(std::size_t) =0;
+    virtual bool IsExtern(StringId name) const =0;
 };
 
 struct ParseData

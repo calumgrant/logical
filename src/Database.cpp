@@ -45,7 +45,9 @@ public:
 
     // List of imports so we don't import anything twice
     unordered_set_helper<StringId>::set_type imports;
-    
+
+    unordered_set_helper<StringId>::set_type externPredicateNames;
+
     std::atomic<std::int64_t> entityCounter = 0;
     
     bool initialized = false;
@@ -587,7 +589,8 @@ DataStore::DataStore(persist::shared_memory & mem, AllocatorData & alloc) :
     nameParts({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc),
     externs({}, PredicateName::Hash(), std::equal_to<PredicateName>(), alloc),
     variadicExterns({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc),
-    imports({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc)
+    imports({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc),
+    externPredicateNames({}, std::hash<StringId>(), std::equal_to<StringId>(), alloc)
 {
 }
 
@@ -622,10 +625,16 @@ Relation &DatabaseImpl::GetExtern(const PredicateName & pn)
     if(!rel)
     {
         rel = allocate_shared<ExternPredicate>(Storage(), *this, pn);
+        datastore->externPredicateNames.insert(pn.objects.parts[0]);
         AddRelation(rel);
     }
-    
+
     return *rel;
+}
+
+bool DatabaseImpl::IsExtern(StringId name) const
+{
+    return datastore->externPredicateNames.find(name) != datastore->externPredicateNames.end();
 }
 
 void DatabaseImpl::Addvarargs(RelationId name, Logical::Extern fn, void * data)
