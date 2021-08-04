@@ -5,11 +5,7 @@ parsers:parse "AllInOne8.java".
 error e if parsers:file _ has errormessage e.
 error "Failed to register file" if not parsers:file _.
 
-parsers:node n has children c if n is a parsers:node and c = find count child in (parsers:node child has parent n).
-
-nodetype t has Count c if 
-    parsers:node _ has type t and 
-    c = find count m in (parsers:node m has type t).
+// parsers:node n has children c if n is a parsers:node and c = find count child in (parsers:node child has parent n).
 
 expected-results 117.
 import report-summary.

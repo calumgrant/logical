@@ -25,7 +25,7 @@ expected-results 40.
 ?- csv:file:row:col:text(_,_,_,_).
 
 std:query f, Row r, Column c, Text t if
-    csv:file f has row r, col c, text t.
+    csv:file f, row r, col c, text t.
 
 error Message if
     check F has row R, col C, text T and

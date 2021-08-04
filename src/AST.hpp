@@ -324,6 +324,11 @@ namespace AST
         void AssertEntity(Database &db, ::Entity e) const;
         
         PredicateName GetPredicateName() const;
+        
+        // Holds if this predicate should be "decomposed"
+        // (i.e. `X has foo Y, bar Z` becomes `X has foo Y and X has bar Z`)
+        bool Decompose(const Database & db) const;
+        EvaluationPtr CompileDecomposed(Database & db, Compilation & compilation, int slot, bool lhsBound);
     };
 
     class EntityIs : public EntityClause

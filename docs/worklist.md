@@ -15,6 +15,18 @@ Reimplementing attributes:
   - `find count x, y in (...)`
 - parser reports errors better
 - In a query, the first column is the query name not data.
+- All evaluations to have locations?
+- Test unbound versions of `foo X+1` where X is unbound, so needs to query `foo`.
+
+- User-defined aggregates:
+
+```
+count 0 has item _, value 0.
+count n has item _, value m+1 if count n-1 has value m.
+sum 1 has item n, value n.
+sum n has item n, value m+n if sum n-1 has value m.
+rank n has item n, value n.
+```
 
 # Attributes
 

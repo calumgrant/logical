@@ -446,7 +446,15 @@ void AnalyseRule(Database & database, EvaluationPtr & rule)
 {
     if(rule->analysed) return;
     rule->analysed = true;
-    database.GetOptimizer().Optimize(rule);
+    try
+    {
+        database.GetOptimizer().Optimize(rule);
+    }
+    catch(std::logic_error &e)
+    {
+        database.Error(e.what());
+        rule->Explain(database, std::cout, 0);
+    }
 }
 
 void OptimizerImpl::Visit(const std::function<void(Optimization&)> &v)
@@ -517,7 +525,8 @@ public:
             {
                 case Evaluation::VariableAccess::Read:
                 case Evaluation::VariableAccess::ReadWrite:
-                    assert(boundVars.IsBound(variable));
+                    if(!boundVars.IsBound(variable))
+                        throw std::logic_error("Unbound read");
                     break;
                 case Evaluation::VariableAccess::Write:
                     boundVars.Bind(variable);
@@ -553,8 +562,8 @@ public:
         eval.VisitVariables([&](int & variable, Evaluation::VariableAccess access) {
             if(access == Evaluation::VariableAccess::Write)
             {
-                if(!loadNone)
-                    assert(!boundVars.IsBound(variable));
+                if(!loadNone && boundVars.IsBound(variable))
+                    throw std::logic_error("Double write");
                 boundVars.Bind(variable);
             }
         });

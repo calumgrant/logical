@@ -639,6 +639,7 @@ bool DatabaseImpl::IsExtern(StringId name) const
 
 void DatabaseImpl::Addvarargs(RelationId name, Logical::Extern fn, void * data)
 {
+    datastore->externPredicateNames.insert(name);
     datastore->variadicExterns[name] = VariadicExtern { fn, data };
 }
 

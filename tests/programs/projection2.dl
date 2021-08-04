@@ -7,4 +7,3 @@ item @1 has successor N+1, predecessor N-1 if 1<=N<=10.
 error "item" if not item @1.
 error "successor" if not item @1 has successor 5.
 error "predecessor" if not item @1 has successor 5.
-error "projection error" if item @1 has successor 5, predecessor 5.

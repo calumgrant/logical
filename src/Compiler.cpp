@@ -112,6 +112,102 @@ std::shared_ptr<Evaluation> AST::And::Compile(Database &db, Compilation &c)
     return lhs->Compile(db, c);
 }
 
+bool AST::EntityClause::Decompose(const Database & db) const
+{
+    bool decompose = has != HasType::comma;
+    
+    if(predicates && db.IsExtern(predicates->list[0]->nameId))
+        decompose = false;
+    
+    if(is == IsType::isnot) return false;
+
+    return decompose;
+}
+
+EvaluationPtr AST::EntityClause::CompileDecomposed(Database &db, Compilation &compilation, int slot, bool lhsBound)
+{
+    auto eval = next->Compile(db, compilation);
+    
+    if(attributes)
+    {
+        for(int i=attributes->attributes.size()-1; i>=0; --i)
+        {
+            auto & attribute = attributes->attributes[i];
+            PredicateName attributeName;
+            attributeName.arity = 2;
+            attributeName.attributes.parts.push_back(attribute.predicate->nameId);
+            
+            if(has == HasType::reaches)
+                attributeName.reaches = true;
+            
+            auto & relation = db.GetRelation(attributeName);
+            
+            std::vector<int> inputs(2), outputs(2);
+            if(i>0 || predicates || lhsBound)
+            {
+                inputs[0] = slot;
+                outputs[0] = -1;
+            }
+            else
+            {
+                inputs[0] = -1;
+                outputs[0] = slot;
+            }
+            
+            int slot2 = attributes->attributes[i].slot;
+            
+            if(attribute.bound)
+            {
+                inputs[1] = slot2;
+                outputs[1] = -1;
+            }
+            else
+            {
+                inputs[1] = -1;
+                outputs[1] = slot2;
+            }
+            
+            eval = std::make_shared<Join>(relation, inputs, outputs, eval);
+
+            if(attribute.entityOpt)
+            {
+                eval = attribute.entityOpt->Compile(db, compilation, eval);
+            }
+        }
+    }
+    
+    if(predicates)
+    {
+        for(int i=predicates->list.size()-1; i>=0; --i)
+        {
+            PredicateName predicateName;
+            predicateName.arity = 1;
+            predicateName.objects.parts.push_back(predicates->list[i]->nameId);
+            auto & relation = db.GetRelation(predicateName);
+            
+            std::vector<int> inputs(1), outputs(1);
+            if(i==0 && !lhsBound)
+            {
+                inputs[0] = -1;
+                outputs[0] = slot;
+            }
+            else
+            {
+                inputs[0] = slot;
+                outputs[0] = -1;
+            }
+            eval = std::make_shared<Join>(relation, inputs, outputs, eval);
+        }
+    }
+    
+    if(entity)
+    {
+        eval = entity->Compile(db, compilation, eval);
+    }
+    
+    return eval;
+}
+
 std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation &compilation)
 {
     bool lhsBound = false;
@@ -123,11 +219,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
         entity->UnboundError(db);
         return std::make_shared<NoneEvaluation>();
     }
-    
-    PredicateName name = GetPredicateName();
-    
-    auto & relation = db.GetRelation(name);
-    
+
     if(attributes)
     {
         for(auto &a : attributes->attributes)
@@ -143,7 +235,16 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
             }
         }
     }
-        
+    
+    if(Decompose(db))
+    {
+        return CompileDecomposed(db, compilation, slot, lhsBound);
+    }
+
+    PredicateName name = GetPredicateName();
+    
+    auto & relation = db.GetRelation(name);
+    
     assert(next);
     auto eval = next->Compile(db, compilation);
 

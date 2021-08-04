@@ -15,7 +15,7 @@ query "Number of files" has result n if n is parsers:number-of-files.
 
 query "Node types" has "Node type" t, "Node count" c if
     t is a nodetype and 
-    c = find count m in (parsers:node m has type t).
+    c = find count m in (m has type t).
 
 root m if parsers:node m has parent p and not parsers:node p.
 leaf m if parsers:node m and not parsers:node c has parent m.
@@ -24,9 +24,9 @@ leaf m if parsers:node m and not parsers:node c has parent m.
 
 if 
     parsers:node Node and
-    N = find count Child in (parsers:node Child has parent Node)
+    N = find count Child in (Child has parent Node)
 then
-    node Node has children N.
+    Node has children N.
 
 enable_leaves _.
 
@@ -34,5 +34,5 @@ enable_leaves _.
 
 query "Leaf node" has node n, type Type, text t, children c if 
     enable_leaves _ and
-    leaf n and parsers:token n has text t and parsers:node n has type Type and
+    leaf n and parsers:token n has text t and n has type Type and
     node n has children c.
