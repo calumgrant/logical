@@ -5,7 +5,7 @@ class Columns
 public:
     Columns(std::uint64_t mask) : mask(mask) { }
     
-    bool IsBound(int col) const { return mask & (1<<col); }
+    bool IsBound(int col) const { return mask & (1UL<<col); }
     
     bool IsUnbound() const { return mask == 0; }
     

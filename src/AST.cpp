@@ -692,7 +692,23 @@ const ::Entity & AST::Value::GetValue() const
 
 void AST::AttributeList::Add(BinaryPredicate * p, Entity *e)
 {
-    attributes.push_back(Attribute {std::unique_ptr<BinaryPredicate>(p), std::unique_ptr<Entity>(e)});
+    attributes.push_back(Attribute(p,e));
+}
+
+AST::AttributeList::AttributeList(Attribute *a)
+{
+    Add(a);
+}
+
+AST::Attribute::Attribute(BinaryPredicate *p, Entity *e) :
+    predicate(p), entityOpt(e)
+{
+}
+
+void AST::AttributeList::Add(Attribute *a)
+{
+    std::unique_ptr<Attribute> ap(a);
+    attributes.push_back(Attribute(std::move(*ap)));
 }
 
 CompoundName AST::AttributeList::GetCompoundName() const

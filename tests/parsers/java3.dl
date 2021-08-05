@@ -6,7 +6,6 @@ parsers:parse "AllInOne8.java".
 error e if parsers:file _ has errormessage e.
 error "Failed to register file" if not parsers:file _.
 
-expected-results 117.
 import report-summary.
 
 error "Statements" if not find count s in (java:statement s)=19.
@@ -48,12 +47,6 @@ query "Literal" has node J, string S if literal J has string S.
 query "Class declaration" has node Decl, name N if 
     java:classdecl Decl has name N.
 
-describe-node N if N has type "methodDeclaration".
-
-query "Node description" has Node N, Type T, Child I, Index I2, ChildType T2 if
-    describe-node N and
-    N has type T and
-    I has parent N, index I2, type T2.
 
 //query "Strings", Node N, Type T, String S, Error E if N has safe-string S, type T and
 //    (N has string and E="" or not N has string and E="***").
@@ -69,3 +62,24 @@ query "Methods" has Node N, name M, rt RTS if
     method-declaration _ has string N, name M, return-type RT and RT has string RTS.
 
 query "Void methods" has Node M, string S if method-returning-void M has string S.
+
+describe-node N if N is a parameter.
+
+parameter P has variable-declarator-id Id if 
+    java:node P has type "formalParameter" and
+    java:node Id has parent P, type "variableDeclaratorId".
+ 
+query "Node description" has Node N, Type T, Child I, Index I2, ChildType T2 if
+    describe-node N and
+    N has type T and
+    I has parent N, index I2, type T2.
+
+X has URL url, description S, html HTML if
+    parsers:node X has location L and
+    L has filename filename, startrow startrow, startcol startcol
+    and (X has string S or not X has string and X has type S) and
+    url = "file://" + filename + ":" + startrow + ":" + startcol and
+    HTML = "<a href='" + url + "'>" + S + "</a>".
+
+//query "URL" has url url, description desc, html HTML if
+//    _ has URL url, description desc, html HTML.

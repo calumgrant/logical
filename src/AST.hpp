@@ -274,6 +274,7 @@ namespace AST
 
     struct Attribute
     {
+        Attribute(BinaryPredicate *predicate, Entity *entityOpt);
         std::unique_ptr<BinaryPredicate> predicate;
         std::unique_ptr<Entity> entityOpt;
         int slot;
@@ -283,9 +284,11 @@ namespace AST
     class AttributeList : public Node
     {
     public:
+        AttributeList(Attribute * attribute);
         AttributeList(BinaryPredicate * predicate, Entity * entityOpt);
         
         void Add(BinaryPredicate * predicate, Entity * entityOpt);
+        void Add(Attribute*);
         
         std::vector<Attribute> attributes;
         void Visit(Visitor&) const override;

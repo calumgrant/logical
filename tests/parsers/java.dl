@@ -60,4 +60,5 @@ method-declaration M has name N, string N+"(...)", return-type T if
     TV has type "typeTypeOrVoid", index 0, parent M, child T.
 
 M is a method-returning-void if
-    M has return-type Void and Void is a void.
+    method-declaration M has return-type Void and
+    Void is a void.

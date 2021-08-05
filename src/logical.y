@@ -31,6 +31,7 @@
     float fval;
     AST::Rule * rule;
     AST::PragmaList* pragmas;
+    AST::Attribute* attribute;
 }
 
 %type<clause> clause andclause orclause notclause allclause datalog_predicate baseclause datalog_clause datalog_base_clause datalog_and_clause datalog_unary_clause
@@ -48,6 +49,7 @@
 %type<is> is_a
 %type<has> has_a reaches
 %type<pragmas> pragma pragma_list pragmaopt
+%type<attribute> attribute
 
 %{
 #include <Database.hpp>
@@ -74,7 +76,7 @@ void yyerror(YYLTYPE* yyllocp, yyscan_t unused, ParseData data, const char* mess
 %token tok_if tok_and tok_has tok_or tok_not tok_a tok_an tok_no tok_is tok_dot tok_then tok_find tok_sum tok_in tok_all
 %token tok_open tok_close tok_comma tok_colondash tok_semicolon tok_equals tok_notequals tok_questiondash tok_lt tok_gt tok_lteq tok_gteq
 %token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count tok_reaches tok_new
-%token tok_open_square tok_close_square
+%token tok_open_square tok_close_square tok_with tok_experimental
 
 %%
 
@@ -95,6 +97,7 @@ statement:
         rule->Compile(data.db);
     }
 |   datalog
+|   experimental_statement
 ;
 
 datalog:
@@ -310,11 +313,13 @@ clause: orclause;
 
 // Example: person x has name y, surname z
 
+attribute: binarypredicate entity_expression { $$ = new AST::Attribute($1,$2); }
+
 attributes:
-    binarypredicate entity_expression { $$ = new AST::AttributeList($1, $2); }
-|   attributes tok_comma binarypredicate entity_expression
+    attribute { $$ = new AST::AttributeList($1); }
+|   attributes tok_comma attribute
     {
-        $1->Add($3, $4);
+        $1->Add($3);
         $$ = $1;
     }
 ;
@@ -395,6 +400,71 @@ pragma: tok_open_square pragma_list tok_close_square { $$=$2; }
 pragma_list:
     tok_identifier { $$ = new AST::PragmaList($1); }
 |   pragma_list tok_comma tok_identifier { $$ = $1; $$->Add($3); }
+;
+
+experimental_statement:
+    tok_experimental experimental_clause tok_dot
+|   tok_experimental tok_if experimental_clause tok_then experimental_clause tok_dot
+|   tok_experimental experimental_clause tok_if experimental_clause tok_dot
+;
+
+experimental_entity_base:
+    tok_identifier experimental_entity
+|   tok_string experimental_entity
+|   tok_identifier experimental_entity_base
+;
+
+experimental_entity_clause:
+    experimental_entity_base
+|   experimental_entity_base has_a experimental_attribute_list
+|   experimental_entity has_a experimental_attribute_list
+;
+
+experimental_attribute_list:
+    experimental_attribute
+|   experimental_attribute_list tok_comma experimental_attribute
+;
+
+experimental_base_clause:
+    tok_open experimental_clause tok_close
+|   experimental_entity_clause
+|   pragma experimental_base_clause
+|   tok_not experimental_base_clause
+|   experimental_entity is_a tok_identifier
+|   experimental_entity comparator experimental_entity
+|   experimental_entity comparator experimental_entity comparator experimental_entity
+;
+
+experimental_entity:
+    tok_identifier | tok_string | tok_atstring | tok_integer | tok_true | tok_false | tok_float |
+    tok_open experimental_entity_expression tok_close
+;
+
+experimental_entity_expression:
+    experimental_entity
+|   tok_minus experimental_entity_expression
+//|   tok_open experimental_entity_expression tok_close
+ ;
+
+experimental_attribute:
+    experimental_binpred experimental_entity
+|   experimental_binpred experimental_attribute
+;
+
+experimental_binpred: tok_identifier | tok_string;
+
+experimental_and_clause:
+    experimental_base_clause
+|   experimental_and_clause tok_and experimental_base_clause
+;
+
+experimental_or_clause:
+    experimental_and_clause
+|   experimental_or_clause tok_or experimental_and_clause
+;
+
+experimental_clause:
+    experimental_or_clause
 ;
 
 %%

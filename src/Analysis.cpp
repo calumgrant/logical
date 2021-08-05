@@ -6,6 +6,7 @@
 #include "RelationImpl.hpp"
 
 #include <iostream>
+#include <sstream>
 
 class Recursion : public Optimization
 {
@@ -563,7 +564,11 @@ public:
             if(access == Evaluation::VariableAccess::Write)
             {
                 if(!loadNone && boundVars.IsBound(variable))
-                    throw std::logic_error("Double write");
+                {
+                    std::stringstream ss;
+                    ss << "Double write of _" << variable;
+                    throw std::logic_error(ss.str().c_str());
+                }
                 boundVars.Bind(variable);
             }
         });

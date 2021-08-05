@@ -15,16 +15,23 @@ Reimplementing attributes:
 - All evaluations to have locations?
 - Test unbound versions of `foo X+1` where X is unbound, so needs to query `foo`.
 
+- HTML cleaning predicate
+- Report all errors first, and don't run if any errors encountered.
+- Full filepath in the link.
+- expression syntax `(url = ...)` to introduce a new variable
+- `X has string S else X has type S`
+
 - Try more advanced syntax:
 ```
 M is a method-returning-void if
     M has return-type void Void.
 
-
 M is a method-returning-void if
     M has return-type void Void with name "Fred".
 
+M has return-type (void Void).
 ```
+- All expression entites must be wrapped in brackets.
 
 
 - User-defined aggregates:

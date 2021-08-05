@@ -38,6 +38,8 @@ reaches return tok_reaches;
 sum     return tok_sum;
 then    return tok_then;
 true    return tok_true;
+with    return tok_with;
+\[experimental\]  return tok_experimental;
 
 \.      return tok_dot;
 \(      return tok_open;
