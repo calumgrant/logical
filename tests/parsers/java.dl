@@ -1,0 +1,63 @@
+load-module parsers.
+
+// Data model:
+token _ has text _.
+
+enable-language "Java".
+
+N is a java:node if N has language "Java".
+
+N is a java:root if java:node root N.
+
+java:statement s if parsers:node s has type "statement".
+
+java:compilation-unit C has string "compilation-unit" if java:node C has type "compilationUnit".
+
+java:classdecl Decl has string "class " + Name, name Name if 
+    java:node Decl has type "classDeclaration" and
+    identifier I has parent Decl, name Name.
+
+null literal expression Null has string "null" if
+    java:node Null has type "'null'".
+
+string literal expression Str has string S if
+    java:node Str has text S, type "STRING_LITERAL".
+
+decimal int literal expression E has string S if
+    java:node E has text S, type "DECIMAL_LITERAL".
+
+identifier E has string S, name S if
+    java:node E has text S, type "IDENTIFIER".
+
+// query N if java:node N.
+
+X has safe-string S if 
+    X has string S or X has type S and not X has string.  // This is wrong if the and args are swapped :-(
+
+X has string S if parsers:token X has text S.
+
+java:token T if java:node parsers:token T.
+
+instanceof-token T if java:token T has type "'instanceof'".
+
+type T if java:node T has type "typeType".
+
+simpletype T has name N if
+    type T has child C and
+    C has type "classOrInterfaceType", child Id and
+    Id has name N.
+
+void type Void has string "void" if java:node Void has type "'void'".
+
+instanceof expression E has expr E2, type T, string "... instanceof ..." if
+    E2 has index 0, parent E and
+    instanceof-token _ has index 1, parent E and
+    T has parent E, index 2.
+
+method-declaration M has name N, string N+"(...)", return-type T if
+    java:node M has type "methodDeclaration" and
+    identifier _ has parent M, name N and
+    TV has type "typeTypeOrVoid", index 0, parent M, child T.
+
+M is a method-returning-void if
+    M has return-type Void and Void is a void.

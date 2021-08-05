@@ -35,4 +35,4 @@ enable_leaves _.
 query "Leaf node" has node n, type Type, text t, children c if 
     enable_leaves _ and
     leaf n and parsers:token n has text t and n has type Type and
-    node n has children c.
+    n has children c.

@@ -1,10 +1,6 @@
 # Short term plan
 
 Reimplementing attributes:
-- Detect if we "decompose" an entity clause or not.
-- `Database::IsExtern(int PredicateName)`
-- `Compile`
-- `CompileLHS`
 
 - Tidy up the attributes explanation
 - Implement the attribute changes
@@ -13,10 +9,23 @@ Reimplementing attributes:
   - `find rank 10 of x in (...)`
   - `find sum m over x in (...)`
   - `find count x, y in (...)`
+- Remove keywords for `sum`, `concat` and `count` - they are contextual keywords instead.
 - parser reports errors better
 - In a query, the first column is the query name not data.
 - All evaluations to have locations?
 - Test unbound versions of `foo X+1` where X is unbound, so needs to query `foo`.
+
+- Try more advanced syntax:
+```
+M is a method-returning-void if
+    M has return-type void Void.
+
+
+M is a method-returning-void if
+    M has return-type void Void with name "Fred".
+
+```
+
 
 - User-defined aggregates:
 

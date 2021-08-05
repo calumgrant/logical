@@ -1,0 +1,71 @@
+// load-module parsers.
+import java.
+
+parsers:parse "AllInOne8.java".
+
+error e if parsers:file _ has errormessage e.
+error "Failed to register file" if not parsers:file _.
+
+expected-results 117.
+import report-summary.
+
+error "Statements" if not find count s in (java:statement s)=19.
+
+query "Root nodes", "Root node" R if
+    java:root R.
+
+X has child Y if Y has parent X.
+
+java:expression expression E if java:node E has type "expression".
+
+java:expression expression parexpr N has expr E if 
+    java:node N has type "parExpression", child E and expression E.
+
+N has string "(...)" if parexpr N.
+
+exprstmt N has expr E if 
+    java:node N has type "stmt" and
+    E has type "expression", parent N.
+
+query "Parexpr", node N, string S, expr E if parexpr N has string S, expr E.
+
+// query "Expressions", node E if expression E.
+
+query "Statement", "Statement" s, Line Line, ChildType CT if
+    java:statement s and
+    s has location Loc and
+    Loc has startrow Line and
+    s has child Child and
+    Child has type CT.
+
+query "CUs" has node CU, string S if java:compilation-unit CU has string S.
+
+query "Identifier" has node I, string S, name N if
+    identifier I has string S, name N.
+
+query "Literal" has node J, string S if literal J has string S.
+
+query "Class declaration" has node Decl, name N if 
+    java:classdecl Decl has name N.
+
+describe-node N if N has type "methodDeclaration".
+
+query "Node description" has Node N, Type T, Child I, Index I2, ChildType T2 if
+    describe-node N and
+    N has type T and
+    I has parent N, index I2, type T2.
+
+//query "Strings", Node N, Type T, String S, Error E if N has safe-string S, type T and
+//    (N has string and E="" or not N has string and E="***").
+
+query "Instanceof", Node N, string S, expr E, expr-string EString, type-string TStr if
+    instanceof expression N has string S, expr E, type Type and
+    E has safe-string EString and
+    Type has safe-string TStr.
+
+query "Simpletype" has Node N, name Name if simpletype N has name Name.
+
+query "Methods" has Node N, name M, rt RTS if
+    method-declaration _ has string N, name M, return-type RT and RT has string RTS.
+
+query "Void methods" has Node M, string S if method-returning-void M has string S.
