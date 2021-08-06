@@ -30,6 +30,12 @@ M is a method-returning-void if
     M has return-type void Void with name "Fred".
 
 M has return-type (void Void).
+
+a b - c.  // This should be a (b-c).
+// Problem: What about a b (c-d)
+// Problem is that this is interpreted as Datalog
+
+
 ```
 - All expression entites must be wrapped in brackets.
 

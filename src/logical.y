@@ -97,7 +97,7 @@ statement:
         rule->Compile(data.db);
     }
 |   datalog
-|   experimental_statement
+|   tok_experimental experimental_statement
 ;
 
 datalog:
@@ -403,15 +403,26 @@ pragma_list:
 ;
 
 experimental_statement:
-    tok_experimental experimental_clause tok_dot
-|   tok_experimental tok_if experimental_clause tok_then experimental_clause tok_dot
-|   tok_experimental experimental_clause tok_if experimental_clause tok_dot
+    experimental_clause tok_dot
+|   tok_if experimental_clause tok_then experimental_clause tok_dot
+|   experimental_clause tok_if experimental_clause tok_dot
+|   experimental_base_clause tok_colondash experimental_clause tok_dot
+|   tok_questiondash experimental_clause tok_dot
+;
+
+experimental_entity_base0:
+    tok_identifier experimental_entity
+|   tok_identifier tok_open experimental_entity_expression tok_close
+|   tok_string experimental_entity
+|   tok_string tok_open experimental_entity_expression tok_close
+|   tok_identifier experimental_entity_base0
 ;
 
 experimental_entity_base:
-    tok_identifier experimental_entity
-|   tok_string experimental_entity
-|   tok_identifier experimental_entity_base
+    tok_string experimental_entity
+|   tok_identifier experimental_entity
+|   tok_identifier experimental_entity_base0
+|   tok_identifier tok_open experimental_entity_expression tok_close
 ;
 
 experimental_entity_clause:
@@ -431,23 +442,65 @@ experimental_base_clause:
 |   pragma experimental_base_clause
 |   tok_not experimental_base_clause
 |   experimental_entity is_a tok_identifier
-|   experimental_entity comparator experimental_entity
-|   experimental_entity comparator experimental_entity comparator experimental_entity
+|   experimental_entity comparator experimental_entity_expression
+|   experimental_entity comparator experimental_entity_expression comparator experimental_entity_expression
+|   tok_identifier tok_open tok_close
+|   tok_identifier tok_open experimental_entity_expression tok_comma experimental_entity_expression_list tok_close
 ;
 
+experimental_entity0:
+    tok_identifier
+|   tok_string
+|   tok_atstring
+|   tok_integer
+|   tok_true
+|   tok_false
+|   tok_float
+|   tok_find tok_identifier experimental_entity_expression_list tok_in tok_open experimental_clause tok_close
+;
+
+experimental_entity_expression0:
+    experimental_entity0
+|   tok_open experimental_entity_expression tok_close
+|   tok_plus experimental_entity_expression0
+|   tok_minus experimental_entity_expression0
+;
+
+experimental_entity_expression1:
+    experimental_entity_expression0
+|   experimental_entity_expression1 tok_times experimental_entity_expression0
+|   experimental_entity_expression1 tok_div experimental_entity_expression0
+|   experimental_entity_expression1 tok_mod experimental_entity_expression0
+;
+
+experimental_entity1:
+    experimental_entity0
+|   experimental_entity1 tok_times experimental_entity_expression0
+|   experimental_entity1 tok_div experimental_entity_expression0
+|   experimental_entity1 tok_mod experimental_entity_expression0
+;
+
+// A simple entity such as number or simple arithmetic expressions
 experimental_entity:
-    tok_identifier | tok_string | tok_atstring | tok_integer | tok_true | tok_false | tok_float |
-    tok_open experimental_entity_expression tok_close
+    experimental_entity1
+|   experimental_entity tok_plus experimental_entity_expression1
+|   experimental_entity tok_minus experimental_entity_expression1
 ;
 
 experimental_entity_expression:
-    experimental_entity
-|   tok_minus experimental_entity_expression
-//|   tok_open experimental_entity_expression tok_close
- ;
+    experimental_entity_expression1
+|   experimental_entity_expression tok_plus experimental_entity_expression1
+|   experimental_entity_expression tok_minus experimental_entity_expression1
+;
+
+ experimental_entity_expression_list:
+    experimental_entity_expression
+|   experimental_entity_expression_list tok_comma experimental_entity_expression
+;
 
 experimental_attribute:
     experimental_binpred experimental_entity
+|   experimental_binpred tok_open experimental_entity_expression tok_close
 |   experimental_binpred experimental_attribute
 ;
 

@@ -1,2 +1,16 @@
 
-[experimental] "My Predicate" 1 has bar "baz" 2.
+[experimental] predicate "My Predicate" x+y has bar fu 2+2.
+
+[experimental] bar 1.
+[experimental] bar @1.
+[experimental] bar true.
+[experimental] bar false.
+[experimental] fu bar 1.
+[experimental] fu bar x.
+[experimental] fu(1,2,3).
+//[experimental] fu y if y = find x in (fu x).
+[experimental] fu, bar b, baz z.
+
+
+
+
