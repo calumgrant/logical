@@ -97,10 +97,10 @@ X is young if person X and not X is old.
 
 1 has cash 2.
 2 has value 3.
-X has money M if person X and M = find sum V over C in (X has cash C and C has value V).
-X has money find sum V over C in (X has cash C and C has amount V) if person X.
+// X has money M if person X and M = find sum V over C in (X has cash C and C has value V).
+// X has money find sum V over C in (X has cash C and C has amount V) if person X.
 X has coins find count C in (X has cash C) if person X.
-X is rich if person X and find sum V over C in (X has cash C and C has value V) > 100.
+// X is rich if person X and find sum V over C in (X has cash C and C has value V) > 100.
 
 person X is rich if 
     person X and 

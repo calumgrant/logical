@@ -73,9 +73,9 @@ void yyerror(YYLTYPE* yyllocp, yyscan_t unused, ParseData data, const char* mess
 %}
 
 %token tok_identifier tok_atstring tok_string tok_integer tok_float tok_underscore
-%token tok_if tok_and tok_has tok_or tok_not tok_a tok_an tok_no tok_is tok_dot tok_then tok_find tok_sum tok_in tok_all
+%token tok_if tok_and tok_has tok_or tok_not tok_a tok_an tok_no tok_is tok_dot tok_then tok_find tok_in tok_all
 %token tok_open tok_close tok_comma tok_colondash tok_semicolon tok_equals tok_notequals tok_questiondash tok_lt tok_gt tok_lteq tok_gteq
-%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_count tok_reaches tok_new
+%token tok_times tok_plus tok_minus tok_div tok_mod tok_true tok_false tok_reaches tok_new
 %token tok_open_square tok_close_square tok_with tok_experimental
 
 %%
@@ -362,21 +362,42 @@ plusentity:
 
 sumentity:
     plusentity
-|   tok_find tok_sum variable tok_identifier variable tok_in tok_open clause tok_close
+|   tok_find tok_identifier entity_expression tok_in tok_open clause tok_close
     {
-        // A contextual keyword, where tok_identifier should be "over".
-        $$ = new AST::Sum(LOCATION(@1, @8), $5, $3, $8);
-        if ($4 != data.db.GetStringId("over"))
-            yyerror(&yylloc, scanner, data, "Expecting 'over'");
+        if( $2 == data.db.GetStringId("sum"))
+            $$ = new AST::Sum(LOCATION(@1, @6), nullptr, $3, $6);
+        else if( $2 == data.db.GetStringId("count"))
+            $$ = new AST::Count(LOCATION(@1, @6), $3, $6);
+        else
+            yyerror(&@2, scanner, data, "Unrecognised quantifier");
     }
-|   tok_find tok_sum variable tok_in tok_open clause tok_close
+|   tok_find tok_identifier tok_open entity_expression tok_comma datalog_clause tok_close
     {
-        $$ = new AST::Sum(LOCATION(@1, @6), nullptr, $3, $6);
+        if( $2 == data.db.GetStringId("sum"))
+            $$ = new AST::Sum(LOCATION(@1, @6), nullptr, $4, $6);
+        else if( $2 == data.db.GetStringId("count"))
+            $$ = new AST::Count(LOCATION(@1, @6), $4, $6);
+        else
+            yyerror(&@2, scanner, data, "Unrecognised quantifier");
     }
-|   tok_find tok_count entity_expression tok_in tok_open clause tok_close { $$ = new AST::Count(LOCATION(@1, @6), $3, $6); }
-|   tok_find tok_count tok_open entity_expression tok_comma datalog_clause tok_close { $$ = new AST::Count(LOCATION(@1, @6), $4, $6); }
-|   tok_find tok_sum tok_open variable tok_comma datalog_clause tok_close { $$ = new AST::Sum(LOCATION(@1, @6), nullptr, $4, $6); }
-|   tok_find tok_sum tok_open variable tok_comma variable tok_comma datalog_clause tok_close { $$ = new AST::Sum(LOCATION(@1, @8), $4, $6, $8); }
+|   tok_find tok_identifier tok_open entity_expression tok_comma entity_expression tok_comma datalog_clause tok_close
+    {
+        if( $2 == data.db.GetStringId("sum"))
+            $$ = new AST::Sum(LOCATION(@1, @8), $4, $6, $8);
+        //else if( $2 == data.db.GetStringId("count"))
+        //    $$ = new AST::Count(LOCATION(@1, @8), $4, $6, $8);
+        else
+            yyerror(&@2, scanner, data, "Unrecognised quantifier");
+    }
+|   tok_find tok_identifier entity_expression tok_comma entity_expression tok_in tok_open clause tok_close
+    {
+        if( $2 == data.db.GetStringId("sum"))
+            $$ = new AST::Sum(LOCATION(@1, @8), $3, $5, $8);
+        //else if( $2 == data.db.GetStringId("count"))
+        //    $$ = new AST::Count(LOCATION(@1, @8), $3, $5, $8);
+        else
+            yyerror(&@2, scanner, data, "Unrecognised quantifier");
+    }
 ;
 
 entity_expression: sumentity;
