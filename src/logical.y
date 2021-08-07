@@ -51,6 +51,9 @@
 %type<pragmas> pragma pragma_list pragmaopt
 %type<attribute> attribute
 
+%type<ival> experimental_binpred
+%type<entity> experimental_entity0 experimental_entity_expression0 experimental_entity_expression1 experimental_entity1 experimental_entity experimental_entity_expression
+
 %{
 #include <Database.hpp>
 
@@ -525,53 +528,52 @@ experimental_datalog_base_clause:
 ;
 
 experimental_entity0:
-    tok_identifier
-|   tok_string
-|   tok_atstring
-|   tok_integer
-|   tok_true
-|   tok_false
-|   tok_float
-|   tok_underscore
+    tok_identifier { $$ = new AST::NamedVariable(LOCATION(@1, @1), $1); }
+|   tok_string { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::String, $1)); }
+|   tok_atstring { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::AtString, $1)); }
+|   tok_integer { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Integer, $1)); }
+|   tok_true     { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Boolean, 1)); }
+|   tok_false   { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Boolean, 0)); }
+|   tok_float   { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Float, $1)); }
+|   tok_underscore { $$ = new AST::UnnamedVariable(LOCATION(@1, @1)); }
 |   tok_find tok_identifier experimental_entity_expression_list tok_in tok_open experimental_clause tok_close
 |   tok_find tok_identifier tok_open experimental_entity_expression_list tok_semicolon experimental_datalog_clause tok_close
-|   tok_a   // Contextual keywords
-|   tok_an
-|   tok_no
+|   tok_a  { $$ = new AST::NamedVariable(LOCATION(@1, @1), data.db.GetStringId("a")); }
+|   tok_an { $$ = new AST::NamedVariable(LOCATION(@1, @1), data.db.GetStringId("an")); }
+|   tok_no { $$ = new AST::NamedVariable(LOCATION(@1, @1), data.db.GetStringId("no")); }
 ;
 
 experimental_entity_expression0:
     experimental_entity0
-|   tok_open experimental_entity_expression tok_close
-|   tok_plus experimental_entity_expression0
-|   tok_minus experimental_entity_expression0
+|   tok_open experimental_entity_expression tok_close { $$=$2; }
+|   tok_minus experimental_entity_expression0 { $$ = new AST::NegateEntity(LOCATION(@1, @2), $2); }
 ;
 
 experimental_entity_expression1:
     experimental_entity_expression0
-|   experimental_entity_expression1 tok_times experimental_entity_expression0
-|   experimental_entity_expression1 tok_div experimental_entity_expression0
-|   experimental_entity_expression1 tok_mod experimental_entity_expression0
+|   experimental_entity_expression1 tok_times experimental_entity_expression0 { $$ = new AST::MulEntity(LOCATION(@1, @3), $1,$3); }
+|   experimental_entity_expression1 tok_div experimental_entity_expression0 { $$ = new AST::DivEntity(LOCATION(@1, @3), $1,$3); }
+|   experimental_entity_expression1 tok_mod experimental_entity_expression0 { $$ = new AST::ModEntity(LOCATION(@1, @3), $1,$3); }
 ;
 
 experimental_entity1:
     experimental_entity0
-|   experimental_entity1 tok_times experimental_entity_expression0
-|   experimental_entity1 tok_div experimental_entity_expression0
-|   experimental_entity1 tok_mod experimental_entity_expression0
+|   experimental_entity1 tok_times experimental_entity_expression0 { $$ = new AST::MulEntity(LOCATION(@1, @3), $1,$3); }
+|   experimental_entity1 tok_div experimental_entity_expression0 { $$ = new AST::DivEntity(LOCATION(@1, @3), $1,$3); }
+|   experimental_entity1 tok_mod experimental_entity_expression0 { $$ = new AST::ModEntity(LOCATION(@1, @3), $1,$3); }
 ;
 
 // A simple entity such as number or simple arithmetic expressions
 experimental_entity:
     experimental_entity1
-|   experimental_entity tok_plus experimental_entity_expression1
-|   experimental_entity tok_minus experimental_entity_expression1
+|   experimental_entity tok_plus experimental_entity_expression1 { $$ = new AST::AddEntity(LOCATION(@1, @3), $1,$3); }
+|   experimental_entity tok_minus experimental_entity_expression1 { $$ = new AST::SubEntity(LOCATION(@1, @3), $1,$3); }
 ;
 
 experimental_entity_expression:
     experimental_entity_expression1
-|   experimental_entity_expression tok_plus experimental_entity_expression1
-|   experimental_entity_expression tok_minus experimental_entity_expression1
+|   experimental_entity_expression tok_plus experimental_entity_expression1 { $$ = new AST::AddEntity(LOCATION(@1, @3), $1,$3); }
+|   experimental_entity_expression tok_minus experimental_entity_expression1 { $$ = new AST::SubEntity(LOCATION(@1, @3), $1,$3); }
 ;
 
  experimental_entity_expression_list:
