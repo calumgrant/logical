@@ -15,11 +15,13 @@ Reimplementing attributes:
 - All evaluations to have locations?
 - Test unbound versions of `foo X+1` where X is unbound, so needs to query `foo`.
 
+- Create a simple syntax highlighter that covers basic keywords (a, an, has, is, if, then)
+
 - HTML cleaning predicate
 - Report all errors first, and don't run if any errors encountered.
 - Full filepath in the link.
 - expression syntax `(url = ...)` to introduce a new variable
-- `X has string S else X has type S`
+- `X has string S else X has type S` `A else B` becomes `A or not A and B`
 
 - Try more advanced syntax:
 ```

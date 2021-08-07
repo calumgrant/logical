@@ -31,9 +31,42 @@
 [experimental] f g "h" 1.
 [experimental] "f" 1.
 [experimental] "f" 1.
-[experimental] f g ().
 [experimental] f g (1+2).
 
+// experimental_entity_clause:
+[experimental] f has a g.
+[experimental] f has a g _.
+[experimental] foo _ has a g _.
+[experimental] foo _ reaches a g _.
+[experimental] _ reaches a g _.
+[experimental] 1+2 reaches a g _.
+[experimental] foo (1+2) reaches a g _.
+[experimental] foo _ reaches a g _ with child.
+[experimental] foo _ reaches a g _ with large child.
+[experimental] foo _ reaches a g _ with large child _.
+[experimental] foo _ reaches a large bear _ with large child _.
+[experimental] foo _ has a g _ with child.
+[experimental] foo _ has a g _ with large child.
+[experimental] foo _ has g _ with large child _.
+[experimental] foo _, large bear _ with large child _.
+
+// experimental_with_attribute:
+[experimental] _ has parent with no parent.
+[experimental] _ has parent p with no parent.
+[experimental] node _ has parent with no "parent".
+[experimental] node has parent with a parent.
+[experimental] node has parent with a large parent p.
+
+// experimental_attributes
+[experimental] a has bagder, fox, name, age a, length 12.
+[experimental] a, bagder, fox, name, age a, length 12.
+[experimental] small porcupine p, bagder, fox, name, age a, length 12.
+[experimental] small porcupine p has a bagder, a fox, a name, an age a, length 12.
+
+// nonary predicates:
+[experimental] f.
+[experimental] f if g and h.
+[experimental] f if g and h().
 
 
 

@@ -451,7 +451,9 @@ experimental_entity_clause:
     experimental_entity_base
 |   experimental_entity_base has_a experimental_attributes
 |   experimental_entity has_a experimental_attributes
+|   experimental_entity_base reaches experimental_attribute
 |   experimental_entity reaches experimental_attribute
+|   experimental_entity_base reaches experimental_with_attribute
 |   experimental_entity reaches experimental_with_attribute
 ;
 
@@ -499,6 +501,7 @@ experimental_base_clause:
 |   experimental_entity comparator experimental_entity_expression comparator experimental_entity_expression
 |   tok_identifier tok_open tok_close
 |   tok_identifier tok_open experimental_entity_expression tok_comma experimental_entity_expression_list tok_close
+|   tok_identifier  // Nonary clause
 ;
 
 experimental_predicate_list:
