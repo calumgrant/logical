@@ -505,6 +505,7 @@ experimental_base_clause:
 |   tok_identifier tok_open tok_close
 |   tok_identifier tok_open experimental_entity_expression tok_comma experimental_entity_expression_list tok_close
 |   tok_identifier  // Nonary clause
+|   tok_all tok_open experimental_clause tok_close tok_in tok_open experimental_clause tok_close
 ;
 
 experimental_predicate_list:
@@ -520,6 +521,7 @@ experimental_datalog_base_clause:
 |   experimental_entity_expression comparator experimental_entity_expression comparator experimental_entity_expression
 |   tok_identifier tok_open tok_close
 |   tok_identifier tok_open experimental_entity_expression_list tok_close
+|   tok_all tok_open experimental_datalog_base_clause tok_semicolon experimental_datalog_clause tok_close
 ;
 
 experimental_entity0:
@@ -532,6 +534,7 @@ experimental_entity0:
 |   tok_float
 |   tok_underscore
 |   tok_find tok_identifier experimental_entity_expression_list tok_in tok_open experimental_clause tok_close
+|   tok_find tok_identifier tok_open experimental_entity_expression_list tok_semicolon experimental_datalog_clause tok_close
 |   tok_a   // Contextual keywords
 |   tok_an
 |   tok_no

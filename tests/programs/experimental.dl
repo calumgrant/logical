@@ -77,6 +77,7 @@
 [experimental] f() if enable-feature-flag("optimize").
 [experimental] x is f if 1+2 < x < 2+3.
 [experimental] x is f if 1+2 < (x) <= 100.
+[experimental] condition if all (x=2) in (x=1).
 
 // experimental_datalog_clause:
 [experimental] f() :- g().
@@ -87,16 +88,34 @@
 [experimental] f() :- g(x), (1+2) = (x-2).
 [experimental] f() :- f(x,y,z).
 [experimental] f(x,y) :- g(x,y); h(x,y).
+[experimental] f(x,y) :- all(x=1; x=1).
 
 // experimental_entity_expression:
-
+[experimental] f x.
+[experimental] f "".
+[experimental] f @123.
+[experimental] f 123.
+[experimental] f 123.456.
+[experimental] f 123.456e+12.
+[experimental] f a if g a.
+[experimental] f a if g _ and a=12.
+[experimental] f no if g _ and no=12.
+[experimental] f an if g _ and an=12.
+[experimental] f if f (12).
+[experimental] f if f (1+2).
+[experimental] f if f (a+b/2*3).
+[experimental] f if x = a+b/(2*3).
+[experimental] f if x = -y.
+[experimental] f find count x in (x=2 or x=3).
+[experimental] f find count x+1,y in (x=2 or x=3).
+[experimental] f find count (x+1), -2 in (x=2 or x=3).
+[experimental] f find count(x,y,z; g(x,y,z)).
+[experimental] f find count(x; g(x,y,z)).
 
 // nonary predicates:
 [experimental] f.
 [experimental] f if g and h.
 [experimental] f if g and h().
-
-
 
 // Expressions
 [experimental] f 1+2 if x=1+2.
@@ -115,8 +134,6 @@
 [experimental] f(x,y) :- g(); h().
 [experimental] f(x,y) :- (g(); h()), i(x,y).
 [experimental] f(x,y) :- (g(); h(); x=a+b), i(x,y); x=1+2.
-
-// Datalog aggregates & quantifiers
 
 // Error recovery
 //[experimental] 1 1 1 1.
