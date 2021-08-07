@@ -442,7 +442,8 @@ void AST::AttributeList::Visit(Visitor &v) const
 {
     for(auto & a : attributes)
     {
-        a.predicate->Visit(v);
+        for(auto & p : a.predicates)
+            p->Visit(v);
         if(a.entityOpt) a.entityOpt->Visit(v);
     }
 }
@@ -701,8 +702,14 @@ AST::AttributeList::AttributeList(Attribute *a)
 }
 
 AST::Attribute::Attribute(BinaryPredicate *p, Entity *e) :
-    predicate(p), entityOpt(e)
+    entityOpt(e)
 {
+    AddFirst(p);
+}
+
+void AST::Attribute::AddFirst(BinaryPredicate * p)
+{
+    predicates.insert(predicates.begin(), std::unique_ptr<BinaryPredicate>(p));
 }
 
 void AST::AttributeList::Add(Attribute *a)
@@ -715,7 +722,7 @@ CompoundName AST::AttributeList::GetCompoundName() const
 {
     std::vector<int> name;
     name.reserve(attributes.size());
-    for(auto &a : attributes) name.push_back(a.predicate->nameId);
+    for(auto &a : attributes) name.push_back(a.predicates[0]->nameId);
     return CompoundName(std::move(name));
 }
 
@@ -759,4 +766,9 @@ SourceLocation operator+(const SourceLocation & l1, const SourceLocation & l2)
 {
     assert(l1.filenameId == l2.filenameId);
     return SourceLocation { l1.filenameId, l1.line, l1.column };
+}
+
+void AST::EntityClause::AddFirst(AST::UnaryPredicate * pred)
+{
+    predicates->list.insert(predicates->list.begin(), std::unique_ptr<AST::UnaryPredicate>(pred));
 }

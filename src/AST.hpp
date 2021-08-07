@@ -275,10 +275,12 @@ namespace AST
     struct Attribute
     {
         Attribute(BinaryPredicate *predicate, Entity *entityOpt);
-        std::unique_ptr<BinaryPredicate> predicate;
+        std::vector<std::unique_ptr<BinaryPredicate>> predicates;
         std::unique_ptr<Entity> entityOpt;
         int slot;
         bool bound;
+        
+        void AddFirst(BinaryPredicate * pred);
     };
 
     class AttributeList : public Node
@@ -312,6 +314,7 @@ namespace AST
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
         void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
+        void AddFirst(UnaryPredicate*);
     private:
         std::shared_ptr<Evaluation> WritePredicates(Database &db, Compilation &c, int slot);
         

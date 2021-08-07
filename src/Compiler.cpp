@@ -135,7 +135,7 @@ EvaluationPtr AST::EntityClause::CompileDecomposed(Database &db, Compilation &co
             auto & attribute = attributes->attributes[i];
             PredicateName attributeName;
             attributeName.arity = 2;
-            attributeName.attributes.parts.push_back(attribute.predicate->nameId);
+            attributeName.attributes.parts.push_back(attribute.predicates[0]->nameId);
             
             if(has == HasType::reaches)
                 attributeName.reaches = true;

@@ -20,6 +20,7 @@
     AST::UnaryPredicateList* unarypredicatelist;
     AST::Predicate* predicate;
     AST::Entity* entity;
+    AST::EntityClause * entityClause;
     AST::UnaryPredicate* unarypredicate;
     AST::BinaryPredicate* binarypredicate;
     ComparatorType comparator;
@@ -51,8 +52,11 @@
 %type<pragmas> pragma pragma_list pragmaopt
 %type<attribute> attribute
 
-%type<ival> experimental_binpred
+%type<binarypredicate> experimental_binpred
 %type<entity> experimental_entity0 experimental_entity_expression0 experimental_entity_expression1 experimental_entity1 experimental_entity experimental_entity_expression
+%type<entityClause> experimental_entity_base0 experimental_entity_base
+%type<attributes> experimental_attributes experimental_attribute_list
+%type<attribute> experimental_attribute experimental_with_attribute experimental_attribute0
 
 %{
 #include <Database.hpp>
@@ -436,18 +440,18 @@ experimental_statement:
 ;
 
 experimental_entity_base0:
-    tok_identifier experimental_entity
-|   tok_identifier tok_open experimental_entity_expression tok_close
-|   tok_string experimental_entity
-|   tok_string tok_open experimental_entity_expression tok_close
-|   tok_identifier experimental_entity_base0
+    tok_identifier experimental_entity  { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
+|   tok_identifier tok_open experimental_entity_expression tok_close  { $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
+|   tok_string experimental_entity { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
+|   tok_string tok_open experimental_entity_expression tok_close  { $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
+|   tok_identifier experimental_entity_base0 { $$=$2; $$->AddFirst(new AST::UnaryPredicate($1)); }
 ;
 
 experimental_entity_base:
-    tok_string experimental_entity
-|   tok_identifier experimental_entity
-|   tok_identifier experimental_entity_base0
-|   tok_identifier tok_open experimental_entity_expression tok_close
+    tok_string experimental_entity  { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
+|   tok_identifier experimental_entity { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
+|   tok_identifier experimental_entity_base0 { $$=$2; $$->AddFirst(new AST::UnaryPredicate($1)); }
+|   tok_identifier tok_open experimental_entity_expression tok_close { $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
 ;
 
 experimental_entity_clause:
@@ -470,13 +474,17 @@ experimental_with_attribute:
 ;
 
 experimental_attributes:
-    experimental_with_attribute
+    experimental_with_attribute { $$ = new AST::AttributeList($1); }
 |   experimental_attribute_list
 ;
 
 experimental_attribute_list:
-    experimental_attribute
+    experimental_attribute { $$ = new AST::AttributeList($1); }
 |   experimental_attribute_list tok_comma experimental_attribute
+    {
+        $$ = $1;
+        $$->Add($3);
+    }
 ;
 
 experimental_attribute0:
@@ -486,8 +494,12 @@ experimental_attribute0:
 ;
 
 experimental_attribute:
-    a_opt experimental_binpred
+    a_opt experimental_binpred { $$ = new AST::Attribute($2, nullptr); }
 |   a_opt experimental_binpred experimental_attribute0
+    {
+        $$ = $3;
+        $$->AddFirst($2);
+    }
 ;
 
 a_opt:
@@ -495,7 +507,10 @@ a_opt:
 |   tok_an
 ;
 
-experimental_binpred: tok_identifier | tok_string;
+experimental_binpred:
+    tok_identifier { $$ = new AST::BinaryPredicate($1); }
+|   tok_string { $$ = new AST::BinaryPredicate($1); }
+;
 
 experimental_base_clause:
     tok_open experimental_clause tok_close
