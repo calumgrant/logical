@@ -56,12 +56,40 @@
 [experimental] node _ has parent with no "parent".
 [experimental] node has parent with a parent.
 [experimental] node has parent with a large parent p.
+[experimental] node has parent with large parent p-2.
+[experimental] node has parent with an parent (p-2).
 
 // experimental_attributes
 [experimental] a has bagder, fox, name, age a, length 12.
 [experimental] a, bagder, fox, name, age a, length 12.
 [experimental] small porcupine p, bagder, fox, name, age a, length 12.
 [experimental] small porcupine p has a bagder, a fox, a name, an age a, length 12.
+[experimental] p has a bagder, a fox, a name _, an age (y-(12+_)), length y+12.
+[experimental] _ has a "Fish called" "Wanda".
+[experimental] _ has "Fish called" "Wanda".
+
+// experimental_base_clause
+[experimental] (A and B).
+[experimental] f if g and (h or i).
+[experimental] [inline] f if g and ([bindlast, noinline] h or i).
+[experimental] f if g and not h.
+[experimental] f if 1<2 and 1>2 and enable-feature-flag.
+[experimental] f() if enable-feature-flag("optimize").
+[experimental] x is f if 1+2 < x < 2+3.
+[experimental] x is f if 1+2 < (x) <= 100.
+
+// experimental_datalog_clause:
+[experimental] f() :- g().
+[experimental] f() :- (g()).
+[experimental] f() :- not g().
+[experimental] f() :- g(x), (1+2) <= (x-2) <= (20+5).
+[experimental] f() :- g(x), 1+2 <= x-2 <= 20+5.
+[experimental] f() :- g(x), (1+2) = (x-2).
+[experimental] f() :- f(x,y,z).
+[experimental] f(x,y) :- g(x,y); h(x,y).
+
+// experimental_entity_expression:
+
 
 // nonary predicates:
 [experimental] f.

@@ -478,7 +478,7 @@ experimental_attribute_list:
 
 experimental_attribute0:
     experimental_entity
-|   experimental_binpred tok_open experimental_entity_expression tok_close
+|   tok_open experimental_entity_expression tok_close
 |   experimental_binpred experimental_attribute0
 ;
 
