@@ -494,11 +494,16 @@ experimental_base_clause:
 |   experimental_entity_clause
 |   pragma experimental_base_clause
 |   tok_not experimental_base_clause
-|   experimental_entity is_a tok_identifier
+|   experimental_entity is_a experimental_predicate_list
 |   experimental_entity comparator experimental_entity_expression
 |   experimental_entity comparator experimental_entity_expression comparator experimental_entity_expression
 |   tok_identifier tok_open tok_close
 |   tok_identifier tok_open experimental_entity_expression tok_comma experimental_entity_expression_list tok_close
+;
+
+experimental_predicate_list:
+    tok_identifier
+|   experimental_predicate_list tok_identifier
 ;
 
 experimental_datalog_base_clause:
@@ -521,8 +526,9 @@ experimental_entity0:
 |   tok_float
 |   tok_underscore
 |   tok_find tok_identifier experimental_entity_expression_list tok_in tok_open experimental_clause tok_close
-|   tok_a
+|   tok_a   // Contextual keywords
 |   tok_an
+|   tok_no
 ;
 
 experimental_entity_expression0:

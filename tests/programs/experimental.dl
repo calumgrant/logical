@@ -17,6 +17,31 @@
 [experimental] fu has a child with a child with a child _.
 [experimental] fu has a child with a child with a child.
 
+// Testing experimental_statement:
+[experimental] f 1.
+[experimental] if f 1 then f 2.
+[experimental] 2 is even if 1 is odd.
+[experimental] f().
+[experimental] f(1) :- f(2).
+
+// Testing experimental_entity_base:
+[experimental] f g 1.
+[experimental] f g h 1.
+[experimental] f g h (1).
+[experimental] f g "h" 1.
+[experimental] "f" 1.
+[experimental] "f" 1.
+[experimental] f g ().
+[experimental] f g (1+2).
+
+
+
+
+// Expressions
+[experimental] f 1+2 if x=1+2.
+[experimental] f (1+2) if x=(1+p).
+[experimental] n is small in-range if 1<=n<=10.
+
 // Datalog syntax
 
 [experimental] f().
@@ -28,11 +53,9 @@
 [experimental] f(x,y) :- g(), h().
 [experimental] f(x,y) :- g(); h().
 [experimental] f(x,y) :- (g(); h()), i(x,y).
-[experimental] f(x,y) :- (g(); h(); x=_a+b), i(x,y); x=1+2.
+[experimental] f(x,y) :- (g(); h(); x=a+b), i(x,y); x=1+2.
 
-[experimental] f 1+2 if x=1+2.
-[experimental] f (1+2) if x=(1 + p).
-
+// Datalog aggregates & quantifiers
 
 // Error recovery
 //[experimental] 1 1 1 1.
