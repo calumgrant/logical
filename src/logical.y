@@ -449,23 +449,21 @@ experimental_entity_base:
 
 experimental_entity_clause:
     experimental_entity_base
-|   experimental_entity_base has_a experimental_attributes
-|   experimental_entity has_a experimental_attributes
-|   experimental_entity_base reaches experimental_attribute
-|   experimental_entity reaches experimental_attribute
-|   experimental_entity_base reaches experimental_with_attribute
-|   experimental_entity reaches experimental_with_attribute
+|   experimental_entity_base tok_has experimental_attributes
+|   experimental_entity tok_has experimental_attributes
+|   experimental_entity tok_has tok_no experimental_attribute
+|   experimental_entity_base tok_comma experimental_attributes
+|   experimental_entity tok_comma experimental_attributes
+|   experimental_entity_base tok_reaches experimental_attribute
+|   experimental_entity tok_reaches experimental_attribute
+|   experimental_entity_base tok_reaches experimental_with_attribute
+|   experimental_entity tok_reaches experimental_with_attribute
 ;
 
 experimental_with_attribute:
     experimental_attribute tok_with tok_no experimental_binpred
-|   experimental_attribute with_a experimental_attribute
-|   experimental_attribute with_a experimental_with_attribute
-;
-
-with_a:
-    tok_with
-|   tok_with tok_a
+|   experimental_attribute tok_with experimental_attribute
+|   experimental_attribute tok_with experimental_with_attribute
 ;
 
 experimental_attributes:
@@ -485,8 +483,13 @@ experimental_attribute0:
 ;
 
 experimental_attribute:
-    experimental_binpred
-|   experimental_binpred experimental_attribute0
+    a_opt experimental_binpred
+|   a_opt experimental_binpred experimental_attribute0
+;
+
+a_opt:
+|   tok_a
+|   tok_an
 ;
 
 experimental_binpred: tok_identifier | tok_string;
