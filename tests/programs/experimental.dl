@@ -10,6 +10,19 @@
 [experimental] fu(1,2,3).
 [experimental] fu y if y = find count x in (fu x).
 [experimental] fu, bar b, baz z.
+[experimental] fu has no bar.
+[experimental] fu reaches bar b.
+[experimental] fu has bar _ with bar _.
+[experimental] fu has child _ with child _ with child _.
+[experimental] fu has a child with a child with a child _.
+[experimental] fu has a child with a child with a child.
+
+// Datalog syntax
+
+[experimental] f().
+[experimental] f(x).
+[experimental] f(x,y).
+[experimental] f(x) :- g(x).
 
 
 

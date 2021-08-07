@@ -448,14 +448,45 @@ experimental_entity_base:
 
 experimental_entity_clause:
     experimental_entity_base
-|   experimental_entity_base has_a experimental_attribute_list
-|   experimental_entity has_a experimental_attribute_list
+|   experimental_entity_base has_a experimental_attributes
+|   experimental_entity has_a experimental_attributes
+|   experimental_entity reaches experimental_attribute
+|   experimental_entity reaches experimental_with_attribute
+;
+
+experimental_with_attribute:
+    experimental_attribute with_a tok_no experimental_binpred
+|   experimental_attribute with_a experimental_attribute
+|   experimental_attribute with_a experimental_with_attribute
+;
+
+with_a:
+    tok_with
+|   tok_with tok_a
+;
+
+experimental_attributes:
+    experimental_with_attribute
+|   experimental_attribute_list
 ;
 
 experimental_attribute_list:
     experimental_attribute
 |   experimental_attribute_list tok_comma experimental_attribute
 ;
+
+experimental_attribute0:
+    experimental_entity
+|   experimental_binpred tok_open experimental_entity_expression tok_close
+|   experimental_binpred experimental_attribute0
+;
+
+experimental_attribute:
+    experimental_binpred
+|   experimental_binpred experimental_attribute0
+;
+
+experimental_binpred: tok_identifier | tok_string;
 
 experimental_base_clause:
     tok_open experimental_clause tok_close
@@ -477,6 +508,7 @@ experimental_entity0:
 |   tok_true
 |   tok_false
 |   tok_float
+|   tok_underscore
 |   tok_find tok_identifier experimental_entity_expression_list tok_in tok_open experimental_clause tok_close
 ;
 
@@ -518,14 +550,6 @@ experimental_entity_expression:
     experimental_entity_expression
 |   experimental_entity_expression_list tok_comma experimental_entity_expression
 ;
-
-experimental_attribute:
-    experimental_binpred experimental_entity
-|   experimental_binpred tok_open experimental_entity_expression tok_close
-|   experimental_binpred experimental_attribute
-;
-
-experimental_binpred: tok_identifier | tok_string;
 
 experimental_and_clause:
     experimental_base_clause
