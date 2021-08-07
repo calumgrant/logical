@@ -23,6 +23,20 @@
 [experimental] f(x).
 [experimental] f(x,y).
 [experimental] f(x) :- g(x).
+[experimental] f(x,y) :- g(y,x).
+[experimental] f(x,y) :- not g().
+[experimental] f(x,y) :- g(), h().
+[experimental] f(x,y) :- g(); h().
+[experimental] f(x,y) :- (g(); h()), i(x,y).
+[experimental] f(x,y) :- (g(); h(); x=_a+b), i(x,y); x=1+2.
+
+[experimental] f 1+2 if x=1+2.
+[experimental] f (1+2) if x=(1 + p).
+
+
+// Error recovery
+//[experimental] 1 1 1 1.
+//[experimental] 1 1.
 
 
 

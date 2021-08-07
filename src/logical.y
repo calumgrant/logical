@@ -427,8 +427,9 @@ experimental_statement:
     experimental_clause tok_dot
 |   tok_if experimental_clause tok_then experimental_clause tok_dot
 |   experimental_clause tok_if experimental_clause tok_dot
-|   experimental_base_clause tok_colondash experimental_clause tok_dot
+|   experimental_base_clause tok_colondash experimental_datalog_clause tok_dot
 |   tok_questiondash experimental_clause tok_dot
+|   error tok_dot
 ;
 
 experimental_entity_base0:
@@ -455,7 +456,7 @@ experimental_entity_clause:
 ;
 
 experimental_with_attribute:
-    experimental_attribute with_a tok_no experimental_binpred
+    experimental_attribute tok_with tok_no experimental_binpred
 |   experimental_attribute with_a experimental_attribute
 |   experimental_attribute with_a experimental_with_attribute
 ;
@@ -500,6 +501,16 @@ experimental_base_clause:
 |   tok_identifier tok_open experimental_entity_expression tok_comma experimental_entity_expression_list tok_close
 ;
 
+experimental_datalog_base_clause:
+    tok_open experimental_datalog_clause tok_close
+|   pragma experimental_datalog_base_clause
+|   tok_not experimental_datalog_base_clause
+|   experimental_entity_expression comparator experimental_entity_expression
+|   experimental_entity_expression comparator experimental_entity_expression comparator experimental_entity_expression
+|   tok_identifier tok_open tok_close
+|   tok_identifier tok_open experimental_entity_expression_list tok_close
+;
+
 experimental_entity0:
     tok_identifier
 |   tok_string
@@ -510,6 +521,8 @@ experimental_entity0:
 |   tok_float
 |   tok_underscore
 |   tok_find tok_identifier experimental_entity_expression_list tok_in tok_open experimental_clause tok_close
+|   tok_a
+|   tok_an
 ;
 
 experimental_entity_expression0:
@@ -556,13 +569,31 @@ experimental_and_clause:
 |   experimental_and_clause tok_and experimental_base_clause
 ;
 
+experimental_datalog_and_clause:
+    experimental_datalog_base_clause
+|   experimental_datalog_and_clause tok_and experimental_datalog_base_clause
+|   experimental_datalog_and_clause tok_comma experimental_datalog_base_clause
+;
+
 experimental_or_clause:
     experimental_and_clause
 |   experimental_or_clause tok_or experimental_and_clause
 ;
 
+experimental_datalog_or_clause:
+    experimental_datalog_and_clause
+|   experimental_datalog_or_clause tok_or experimental_datalog_and_clause
+|   experimental_datalog_or_clause tok_semicolon experimental_datalog_and_clause
+;
+
 experimental_clause:
     experimental_or_clause
+;    
+
+// The difference between Datalog clauses and regular clauses is that commas
+// mean "and"
+experimental_datalog_clause:
+    experimental_datalog_or_clause
 ;
 
 %%
