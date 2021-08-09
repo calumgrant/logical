@@ -18,6 +18,7 @@ namespace AST
     class Value;
     class NamedVariable;
     class PragmaList;
+    class EntityClause;
 
     class Visitor
     {
@@ -275,8 +276,17 @@ namespace AST
     struct Attribute
     {
         Attribute(BinaryPredicate *predicate, Entity *entityOpt);
+        Attribute(Entity *entityOpt);
+        Attribute(EntityClause * ec);
+        
         std::vector<std::unique_ptr<BinaryPredicate>> predicates;
         std::unique_ptr<Entity> entityOpt;
+        std::unique_ptr<EntityClause> entityClauseOpt;
+        std::unique_ptr<Attribute> withOpt;
+        HasType withType;
+        
+        void SetWith(Attribute * with, HasType withType);
+        
         int slot;
         bool bound;
         
@@ -308,21 +318,21 @@ namespace AST
     class EntityClause : public Clause
     {
     public:
-        EntityClause(const SourceLocation & loc, Entity* entity, UnaryPredicateList* predicates, UnaryPredicateList *isPredicates = nullptr, AttributeList * attributes = nullptr, IsType is = IsType::is, HasType has=HasType::has);
+        EntityClause(const SourceLocation & loc, Entity* entity, UnaryPredicateList* predicates, AttributeList * attributes = nullptr, IsType is = IsType::is, HasType has=HasType::has);
         void AssertFacts(Database &db) const override;
         void Visit(Visitor&) const override;
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation & compilation) override;
         std::shared_ptr<Evaluation> CompileLhs(Database &db, Compilation &compilation) override;
         void AddRule(Database &db, const std::shared_ptr<Evaluation>&) override;
         void AddFirst(UnaryPredicate*);
+        void SetAttributes(AttributeList*, HasType has);
     private:
         std::shared_ptr<Evaluation> WritePredicates(Database &db, Compilation &c, int slot);
         
         const IsType is;
-        const HasType has;
+        HasType has;
         std::unique_ptr<Entity> entity;
         std::unique_ptr<UnaryPredicateList> predicates;
-        std::unique_ptr<UnaryPredicateList> isPredicates;
         std::unique_ptr<AttributeList> attributes;
         
         std::shared_ptr<Table> newEntityTable;
@@ -346,7 +356,7 @@ namespace AST
     class EntityIsPredicate : public EntityClause
     {
     public:
-        EntityIsPredicate(const SourceLocation & loc, Entity* entity, UnaryPredicateList* list, UnaryPredicateList * p);
+        EntityIsPredicate(const SourceLocation & loc, Entity* entity, UnaryPredicateList* list);
     };
 
     class EntityHasAttributes : public EntityClause
@@ -366,6 +376,7 @@ namespace AST
     public:
         EntityList(Entity*);
         void Add(Entity*);
+        void AddFirst(Entity*);
         void Visit(Visitor&) const override;
         std::vector< std::unique_ptr<Entity> > entities;
     };

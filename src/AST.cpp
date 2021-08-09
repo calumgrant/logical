@@ -22,17 +22,17 @@ AST::Variable::Variable(const SourceLocation & loc) : Entity(loc)
 {
 }
 
-AST::EntityClause::EntityClause(const SourceLocation & loc, Entity* entity, UnaryPredicateList* list, UnaryPredicateList * isList, AttributeList * attributes, IsType is, HasType has)
-    : Clause(loc), entity(entity), is(is), has(has), predicates(list), isPredicates(isList), attributes(attributes)
+AST::EntityClause::EntityClause(const SourceLocation & loc, Entity* entity, UnaryPredicateList* list, AttributeList * attributes, IsType is, HasType has)
+    : Clause(loc), entity(entity), is(is), has(has), predicates(list), /* isPredicates(isList), */ attributes(attributes)
 {
 }
 
-AST::EntityIs::EntityIs(const SourceLocation & loc, Entity * entity, UnaryPredicateList * list, IsType is) : EntityClause(loc, entity, list, nullptr, nullptr, is)
+AST::EntityIs::EntityIs(const SourceLocation & loc, Entity * entity, UnaryPredicateList * list, IsType is) : EntityClause(loc, entity, list, nullptr, is)
 {
 }
 
-AST::EntityIsPredicate::EntityIsPredicate(const SourceLocation & loc, Entity* entity, UnaryPredicateList* list, UnaryPredicateList *p) :
-    EntityClause(loc, entity, list,p)
+AST::EntityIsPredicate::EntityIsPredicate(const SourceLocation & loc, Entity* entity, UnaryPredicateList* list) :
+    EntityClause(loc, entity, list)
 {
 }
 
@@ -198,7 +198,7 @@ AST::AttributeList::AttributeList(BinaryPredicate * predicate, Entity * entityOp
 }
 
 AST::EntityHasAttributes::EntityHasAttributes(const SourceLocation & loc, UnaryPredicateList * unaryPredicatesOpt, Entity * entity, AttributeList * attributes, HasType has) :
-    EntityClause(loc, entity, unaryPredicatesOpt, nullptr, attributes, IsType::is, has)
+    EntityClause(loc, entity, unaryPredicatesOpt, attributes, IsType::is, has)
 {
 }
 
@@ -399,11 +399,16 @@ void AST::Visitor::OnUnnamedVariable()
 {
 }
 
+void AST::EntityClause::SetAttributes(AttributeList * a, HasType has)
+{
+    attributes = std::unique_ptr<AttributeList>(a);
+    this->has = has;
+}
+
 void AST::EntityClause::Visit(Visitor&v) const
 {
     if(entity) entity->Visit(v);
     if(predicates) predicates->Visit(v);
-    if(isPredicates) isPredicates->Visit(v);
     if(attributes) attributes->Visit(v);
 }
 
@@ -707,6 +712,17 @@ AST::Attribute::Attribute(BinaryPredicate *p, Entity *e) :
     AddFirst(p);
 }
 
+AST::Attribute::Attribute(Entity *e) :
+    entityOpt(e)
+{
+}
+
+void AST::Attribute::SetWith(Attribute * with, HasType withType)
+{
+    withOpt = std::unique_ptr<Attribute>(with);
+    this->withType = withType;
+}
+
 void AST::Attribute::AddFirst(BinaryPredicate * p)
 {
     predicates.insert(predicates.begin(), std::unique_ptr<BinaryPredicate>(p));
@@ -726,7 +742,7 @@ CompoundName AST::AttributeList::GetCompoundName() const
     return CompoundName(std::move(name));
 }
 
-AST::NewEntity::NewEntity(const SourceLocation & loc, UnaryPredicate * predicate, AttributeList * attributes) : EntityClause(loc, nullptr, new UnaryPredicateList(predicate), nullptr, attributes)
+AST::NewEntity::NewEntity(const SourceLocation & loc, UnaryPredicate * predicate, AttributeList * attributes) : EntityClause(loc, nullptr, new UnaryPredicateList(predicate), attributes)
 {
 }
 
@@ -771,4 +787,14 @@ SourceLocation operator+(const SourceLocation & l1, const SourceLocation & l2)
 void AST::EntityClause::AddFirst(AST::UnaryPredicate * pred)
 {
     predicates->list.insert(predicates->list.begin(), std::unique_ptr<AST::UnaryPredicate>(pred));
+}
+
+void AST::EntityList::AddFirst(AST::Entity * e)
+{
+    entities.insert(entities.begin(), std::unique_ptr<Entity>(e));
+}
+
+AST::Attribute::Attribute(EntityClause * ec)
+{
+    entityClauseOpt = std::unique_ptr<EntityClause>(ec);
 }

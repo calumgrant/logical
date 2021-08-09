@@ -54,9 +54,12 @@
 
 %type<binarypredicate> experimental_binpred
 %type<entity> experimental_entity0 experimental_entity_expression0 experimental_entity_expression1 experimental_entity1 experimental_entity experimental_entity_expression
-%type<entityClause> experimental_entity_base0 experimental_entity_base
+%type<entityClause> experimental_entity_base0 experimental_entity_base experimental_entity_clause
 %type<attributes> experimental_attributes experimental_attribute_list
 %type<attribute> experimental_attribute experimental_with_attribute experimental_attribute0
+%type<unarypredicatelist> experimental_predicate_list
+%type<clause> experimental_clause experimental_or_clause experimental_and_clause experimental_base_clause
+%type<entities> experimental_entity_expression_list
 
 %{
 #include <Database.hpp>
@@ -223,7 +226,7 @@ rule:
 baseclause:
     entity is_a unarypredicatelist { $$ = new AST::EntityIs(LOCATION(@1, @3), $1, $3, $2); }
 |   entity is_a value { $$ = new AST::NotImplementedClause(LOCATION(@1, @3), $1, $3); }
-|   unarypredicatelist entity is_a unarypredicatelist { $$ = new AST::EntityIsPredicate(LOCATION(@1, @4), $2, $1, $4); }
+|   unarypredicatelist entity is_a unarypredicatelist { $$ = new AST::EntityIsPredicate(LOCATION(@1, @4), $2, $1); }
 |   entity_expression comparator entity_expression 
     {
         $$ = new AST::Comparator(LOCATION(@1, @3), $1, $2, $3);
@@ -452,25 +455,73 @@ experimental_entity_base:
 |   tok_identifier experimental_entity { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
 |   tok_identifier experimental_entity_base0 { $$=$2; $$->AddFirst(new AST::UnaryPredicate($1)); }
 |   tok_identifier tok_open experimental_entity_expression tok_close { $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
+|   tok_identifier tok_open experimental_entity_base tok_close
+    {
+        $$ = $3;
+        $3->AddFirst(new AST::UnaryPredicate($1));
+    }
 ;
 
 experimental_entity_clause:
-    experimental_entity_base
+    experimental_entity_base { $$=$1; }
 |   experimental_entity_base tok_has experimental_attributes
+    {
+        $$ = $1;
+        $1->SetAttributes($3, HasType::has);
+    }
 |   experimental_entity tok_has experimental_attributes
+    {
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, $3, HasType::has);
+    }
 |   experimental_entity tok_has tok_no experimental_attribute
+    {
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @4), nullptr, $1, new AST::AttributeList($4), HasType::hasnot);
+    }
 |   experimental_entity_base tok_comma experimental_attributes
+    {
+        $$ = $1;
+        $1->SetAttributes($3, HasType::comma);
+    }
 |   experimental_entity tok_comma experimental_attributes
+    {
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, $3, HasType::comma);
+    }
 |   experimental_entity_base tok_reaches experimental_attribute
+    {
+        $$ = $1;
+        $1->SetAttributes(new AST::AttributeList($3), HasType::reaches);
+    }
 |   experimental_entity tok_reaches experimental_attribute
+    {
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, new AST::AttributeList($3), HasType::reaches);
+    }
 |   experimental_entity_base tok_reaches experimental_with_attribute
+    {
+        $$ = $1;
+        $1->SetAttributes(new AST::AttributeList($3), HasType::reaches);
+    }
 |   experimental_entity tok_reaches experimental_with_attribute
+    {
+        $$ = new AST::EntityHasAttributes(LOCATION(@1, @3), nullptr, $1, new AST::AttributeList($3), HasType::reaches);
+    }
 ;
 
 experimental_with_attribute:
     experimental_attribute tok_with tok_no experimental_binpred
+    {
+        $$ = $1;
+        $$->SetWith(new AST::Attribute($4, nullptr), HasType::hasnot);
+    }
 |   experimental_attribute tok_with experimental_attribute
+    {
+        $$ = $1;
+        $$->SetWith($3, HasType::has);
+    }
 |   experimental_attribute tok_with experimental_with_attribute
+    {
+        $$ = $1;
+        $$->SetWith($3, HasType::has);
+    }
 ;
 
 experimental_attributes:
@@ -488,9 +539,10 @@ experimental_attribute_list:
 ;
 
 experimental_attribute0:
-    experimental_entity
-|   tok_open experimental_entity_expression tok_close
-|   experimental_binpred experimental_attribute0
+    experimental_entity { $$ = new AST::Attribute($1); }
+|   tok_open experimental_entity_expression tok_close { $$ = new AST::Attribute($2); }
+|   tok_open experimental_entity_base tok_close { $$ = new AST::Attribute($2); }
+|   experimental_binpred experimental_attribute0 { $$ = $2; $$->AddFirst($1); }
 ;
 
 experimental_attribute:
@@ -513,22 +565,54 @@ experimental_binpred:
 ;
 
 experimental_base_clause:
-    tok_open experimental_clause tok_close
-|   experimental_entity_clause
+    tok_open experimental_clause tok_close { $$= $2; }
+|   experimental_entity_clause { $$ = $1; }
 |   pragma experimental_base_clause
+    {
+        $$ = $2;
+        $$->SetPragma($1);
+    }
 |   tok_not experimental_base_clause
+    {
+        $$ = new AST::Not(LOCATION(@1,@2), $2);
+    }
 |   experimental_entity is_a experimental_predicate_list
+    {
+        $$ = new AST::EntityIs(LOCATION(@1, @3), $1, $3, $2);
+    }
 |   experimental_entity comparator experimental_entity_expression
+    {
+        $$ = new AST::Comparator(LOCATION(@1, @3), $1, $2, $3);
+    }
 |   experimental_entity comparator experimental_entity_expression comparator experimental_entity_expression
+    {
+        // Technically this is too broad but anyway
+        // This would allow 1>=X>=2 which we don't really want.
+        $$ = new AST::Range(LOCATION(@1, @5), $1, $2, $3, $4, $5);
+    }
 |   tok_identifier tok_open tok_close
+    {
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@3), new AST::Predicate($1), nullptr);
+    }
 |   tok_identifier tok_open experimental_entity_expression tok_comma experimental_entity_expression_list tok_close
-|   tok_identifier  // Nonary clause
+    {
+        $5->AddFirst($3);
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@6), new AST::Predicate($1), $5);
+    }
+|   tok_identifier
+    {
+        // Nonary clause
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@1), new AST::Predicate($1), nullptr);
+    }  
 |   tok_all tok_open experimental_clause tok_close tok_in tok_open experimental_clause tok_close
+    {
+
+    }
 ;
 
 experimental_predicate_list:
-    tok_identifier
-|   experimental_predicate_list tok_identifier
+    tok_identifier { $$ = new AST::UnaryPredicateList(new AST::UnaryPredicate($1)); }
+|   experimental_predicate_list tok_identifier { $$ = $1; $$->Append(new AST::UnaryPredicate($2)); }
 ;
 
 experimental_datalog_base_clause:
@@ -593,7 +677,14 @@ experimental_entity_expression:
 
  experimental_entity_expression_list:
     experimental_entity_expression
+    {
+        $$ = new AST::EntityList($1);
+    }
 |   experimental_entity_expression_list tok_comma experimental_entity_expression
+    {
+        $1->Add($3);
+        $$ = $1;
+    }
 ;
 
 experimental_and_clause:

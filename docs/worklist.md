@@ -23,6 +23,13 @@ Reimplementing attributes:
 - expression syntax `(url = ...)` to introduce a new variable
 - `X has string S else X has type S` `A else B` becomes `A or not A and B`
 
+- Idea: True object-orientation in QL.
+The "result" is a pointer to an object. "Methods" on the object can be virtual and are multi-value.
+object->begin_F()
+object->next_F()
+
+
+
 - Try more advanced syntax:
 ```
 M is a method-returning-void if
