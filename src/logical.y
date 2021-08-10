@@ -53,7 +53,7 @@
 %type<attribute> attribute
 
 %type<binarypredicate> experimental_binpred
-%type<entity> experimental_entity0 experimental_entity_expression0 experimental_entity_expression1 experimental_entity1 experimental_entity experimental_entity_expression
+%type<entity> experimental_entity0 experimental_entity_expression0 experimental_entity_expression1 experimental_entity1 experimental_entity experimental_entity_expression experimental_literal experimental_variable
 %type<entityClause> experimental_entity_base0 experimental_entity_base experimental_entity_clause
 %type<attributes> experimental_attributes experimental_attribute_list
 %type<attribute> experimental_attribute experimental_with_attribute experimental_attribute0
@@ -443,18 +443,46 @@ experimental_statement:
 ;
 
 experimental_entity_base0:
-    tok_identifier experimental_entity  { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
-|   tok_identifier tok_open experimental_entity_expression tok_close  { $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
-|   tok_string experimental_entity { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
-|   tok_string tok_open experimental_entity_expression tok_close  { $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
-|   tok_identifier experimental_entity_base0 { $$=$2; $$->AddFirst(new AST::UnaryPredicate($1)); }
+    tok_identifier experimental_entity
+    {
+        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+    }
+|   tok_identifier tok_open experimental_entity_expression tok_close
+    {
+        $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+    }
+|   tok_string experimental_entity
+    {
+        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+    }
+|   tok_string tok_open experimental_entity_expression tok_close
+    {
+        $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+    }
+|   tok_identifier experimental_entity_base0
+    {
+        $$=$2; $$->AddFirst(new AST::UnaryPredicate($1));
+    }
 ;
 
 experimental_entity_base:
-    tok_string experimental_entity  { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
-|   tok_identifier experimental_entity { $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
-|   tok_identifier experimental_entity_base0 { $$=$2; $$->AddFirst(new AST::UnaryPredicate($1)); }
-|   tok_identifier tok_open experimental_entity_expression tok_close { $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is); }
+    tok_string experimental_entity
+    {
+        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+    }
+|   tok_identifier experimental_entity
+    {
+        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+    }
+|   tok_identifier experimental_entity_base0
+    {
+        $$=$2;
+        $$->AddFirst(new AST::UnaryPredicate($1));
+    }
+|   tok_identifier tok_open experimental_entity_expression tok_close
+    {
+        $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+    }
 |   tok_identifier tok_open experimental_entity_base tok_close
     {
         $$ = $3;
@@ -463,7 +491,10 @@ experimental_entity_base:
 ;
 
 experimental_entity_clause:
-    experimental_entity_base { $$=$1; }
+    experimental_entity_base
+    {
+        $$=$1;
+    }
 |   experimental_entity_base tok_has experimental_attributes
     {
         $$ = $1;
@@ -626,20 +657,28 @@ experimental_datalog_base_clause:
 |   tok_all tok_open experimental_datalog_base_clause tok_semicolon experimental_datalog_clause tok_close
 ;
 
-experimental_entity0:
-    tok_identifier { $$ = new AST::NamedVariable(LOCATION(@1, @1), $1); }
-|   tok_string { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::String, $1)); }
+experimental_literal:
+    tok_string { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::String, $1)); }
 |   tok_atstring { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::AtString, $1)); }
 |   tok_integer { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Integer, $1)); }
 |   tok_true     { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Boolean, 1)); }
 |   tok_false   { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Boolean, 0)); }
 |   tok_float   { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Float, $1)); }
+;
+
+experimental_variable:
+    tok_identifier { $$ = new AST::NamedVariable(LOCATION(@1, @1), $1); }
 |   tok_underscore { $$ = new AST::UnnamedVariable(LOCATION(@1, @1)); }
-|   tok_find tok_identifier experimental_entity_expression_list tok_in tok_open experimental_clause tok_close
-|   tok_find tok_identifier tok_open experimental_entity_expression_list tok_semicolon experimental_datalog_clause tok_close
 |   tok_a  { $$ = new AST::NamedVariable(LOCATION(@1, @1), data.db.GetStringId("a")); }
 |   tok_an { $$ = new AST::NamedVariable(LOCATION(@1, @1), data.db.GetStringId("an")); }
 |   tok_no { $$ = new AST::NamedVariable(LOCATION(@1, @1), data.db.GetStringId("no")); }
+;
+
+experimental_entity0:
+    experimental_variable
+|   experimental_literal
+|   tok_find tok_identifier experimental_entity_expression_list tok_in tok_open experimental_clause tok_close
+|   tok_find tok_identifier tok_open experimental_entity_expression_list tok_semicolon experimental_datalog_clause tok_close
 ;
 
 experimental_entity_expression0:
