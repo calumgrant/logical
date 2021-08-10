@@ -37,7 +37,7 @@ variable_access expression _, name "x", variable @m1-0, location @l0, parent @e1
 
 plus expression @e1, parent @s1.
 
-expression e is arithmetic_expression if 
+e is arithmetic_expression if 
     plus e or
     minus e or
     times e or

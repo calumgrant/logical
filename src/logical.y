@@ -193,6 +193,10 @@ experimental_entity_base:
         $$ = $3;
         $3->AddFirst(new AST::UnaryPredicate($1));
     }
+|   tok_new tok_identifier
+    {
+        $$ = new AST::EntityIs(LOCATION(@1, @2), nullptr, new AST::UnaryPredicateList(new AST::UnaryPredicate($2)), IsType::is);
+    }
 ;
 
 experimental_entity_clause:

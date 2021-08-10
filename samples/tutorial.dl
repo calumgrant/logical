@@ -44,6 +44,6 @@ std:query j if large j and j="John".
 
 std:query P if large P and person P.
 
-P is a woman if P is "Mary".
+P is a woman if P = "Mary".
 
 // print "This is the end of the tutorial".

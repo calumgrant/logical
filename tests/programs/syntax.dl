@@ -27,7 +27,8 @@ large fish 1234.
 
 // These are the equivalent:
 large fish @f1 and small fish @f2.
-fish @f1 is large and fish @f2 is small.
+@f1 is a large fish.
+@f2 is a small fish.
 
 // In Datalog:
 fish(@f1).
@@ -86,7 +87,7 @@ P is orphan if P has no parent.
 P is orphan if P has no parent _.
 
 // This defines the relation `retired`, not the relation `person`.
-person P is retired if 
+P is a retired person if 
     P has age A and (P is male and A>=65 or P is female and A>=60).
 
 X is old if X has age A and A>=80.
@@ -102,9 +103,9 @@ X is young if person X and not X is old.
 X has coins find count C in (X has cash C) if person X.
 // X is rich if person X and find sum V over C in (X has cash C and C has value V) > 100.
 
-person X is rich if 
+X is a rich person if 
     person X and 
-    all (rich X) in X has parent P and rich P.
+    all (rich X) in (X has parent P) and rich P.
 
 // This states two facts: rich P and person P.
 rich person @p1.

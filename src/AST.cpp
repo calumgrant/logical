@@ -696,6 +696,8 @@ AST::Sum::Sum(const SourceLocation & loc, Entity * entity, Entity * value, Claus
 
 AST::Sum::Sum(const SourceLocation & loc, AST::EntityList * e, AST::Clause *c) : Aggregate(loc, e, c)
 {
+    if(!value)
+        std::swap(value, entity);
 }
 
 AST::Count::Count(const SourceLocation & loc, AST::EntityList * e, AST::Clause *c) : Aggregate(loc, e, c)

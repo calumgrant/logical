@@ -8,7 +8,7 @@ prime N if
 prime2 N if 
     primes_count Max and
     2<=N<=Max and
-    all (N%M!=0) in 2<=M<N.
+    all (N%M!=0) in (2<=M<N).
 
 error "primes" if 
     prime N and not prime2 N

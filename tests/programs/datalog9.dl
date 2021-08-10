@@ -7,12 +7,12 @@ expected-results 4.
 
 ?- y = 10.
 ?- y = find count x in (foo x).
-?- y = find count(x, foo(x)).
-?- y = find sum(x, foo(x)).
+?- y = find count(x; foo(x)).
+?- y = find sum(x; foo(x)).
 
 money(@1, 10).
 money(@2, 10).
 
-error("Count") :- find count(x, money(x,_))!=2.
-error("Sum 1") :- find sum(x, money(_,x)) != 10.
-error("Sum 2") :- find sum(x, y, money(x,y)) != 20.
+error("Count") :- find count(x; money(x,_))!=2.
+error("Sum 1") :- find sum(x; money(_,x)) != 10.
+error("Sum 2") :- find sum(x, y; money(x,y)) != 20.
