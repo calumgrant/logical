@@ -476,6 +476,7 @@ namespace AST
     {
     protected:
         Aggregate(const SourceLocation & loc, Entity *e, Entity * value, Clause *c);
+        Aggregate(const SourceLocation & loc, EntityList *e, Clause *c);
         std::unique_ptr<Entity> entity, value;
         std::unique_ptr<Clause> clause;
         
@@ -489,6 +490,7 @@ namespace AST
     {
     public:
         Count(const SourceLocation & loc, Entity *e, Clause *c);
+        Count(const SourceLocation & loc, EntityList *e, Clause *c);
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation &c, const std::shared_ptr<Evaluation> & next) const override;
     };
 
@@ -496,6 +498,7 @@ namespace AST
     {
     public:
         Sum(const SourceLocation & loc, Entity * entity, Entity * value, Clause * clause);
+        Sum(const SourceLocation & loc, EntityList *e, Clause *c);
         std::shared_ptr<Evaluation> Compile(Database &db, Compilation &c, const std::shared_ptr<Evaluation> & next) const override;
     };
 

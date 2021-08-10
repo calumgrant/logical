@@ -55,10 +55,10 @@
 %type<binarypredicate> experimental_binpred
 %type<entity> experimental_entity0 experimental_entity_expression0 experimental_entity_expression1 experimental_entity1 experimental_entity experimental_entity_expression experimental_literal experimental_variable
 %type<entityClause> experimental_entity_base0 experimental_entity_base experimental_entity_clause
-%type<attributes> experimental_attributes experimental_attribute_list
-%type<attribute> experimental_attribute experimental_with_attribute experimental_attribute0
+%type<attributes> experimental_attributes
+%type<attribute> experimental_attribute experimental_with_attribute experimental_attribute0 experimental_attribute1
 %type<unarypredicatelist> experimental_predicate_list
-%type<clause> experimental_clause experimental_or_clause experimental_and_clause experimental_base_clause
+%type<clause> experimental_clause experimental_or_clause experimental_and_clause experimental_base_clause experimental_datalog_and_clause experimental_datalog_or_clause experimental_datalog_base_clause experimental_datalog_clause
 %type<entities> experimental_entity_expression_list
 
 %{
@@ -556,13 +556,11 @@ experimental_with_attribute:
 ;
 
 experimental_attributes:
-    experimental_with_attribute { $$ = new AST::AttributeList($1); }
-|   experimental_attribute_list
-;
-
-experimental_attribute_list:
-    experimental_attribute { $$ = new AST::AttributeList($1); }
-|   experimental_attribute_list tok_comma experimental_attribute
+    experimental_attribute1
+    {
+        $$ = new AST::AttributeList($1);
+    }
+|   experimental_attributes tok_comma experimental_attribute1
     {
         $$ = $1;
         $$->Add($3);
@@ -570,14 +568,35 @@ experimental_attribute_list:
 ;
 
 experimental_attribute0:
-    experimental_entity { $$ = new AST::Attribute($1); }
-|   tok_open experimental_entity_expression tok_close { $$ = new AST::Attribute($2); }
-|   tok_open experimental_entity_base tok_close { $$ = new AST::Attribute($2); }
-|   experimental_binpred experimental_attribute0 { $$ = $2; $$->AddFirst($1); }
+    experimental_entity
+    {
+        $$ = new AST::Attribute($1);
+    }
+|   tok_open experimental_entity_expression tok_close
+    {
+        $$ = new AST::Attribute($2);
+    }
+|   tok_open experimental_entity_base tok_close
+    {
+        $$ = new AST::Attribute($2);
+    }
+|   experimental_binpred experimental_attribute0
+    {
+        $$ = $2;
+        $$->AddFirst($1);
+    }
+;
+
+experimental_attribute1:
+    experimental_attribute
+|   experimental_with_attribute
 ;
 
 experimental_attribute:
-    a_opt experimental_binpred { $$ = new AST::Attribute($2, nullptr); }
+    a_opt experimental_binpred
+    {
+        $$ = new AST::Attribute($2, nullptr);
+    }
 |   a_opt experimental_binpred experimental_attribute0
     {
         $$ = $3;
@@ -591,8 +610,14 @@ a_opt:
 ;
 
 experimental_binpred:
-    tok_identifier { $$ = new AST::BinaryPredicate($1); }
-|   tok_string { $$ = new AST::BinaryPredicate($1); }
+    tok_identifier
+    {
+        $$ = new AST::BinaryPredicate($1);
+    }
+|   tok_string
+    {
+        $$ = new AST::BinaryPredicate($1);
+    }
 ;
 
 experimental_base_clause:
@@ -637,35 +662,69 @@ experimental_base_clause:
     }  
 |   tok_all tok_open experimental_clause tok_close tok_in tok_open experimental_clause tok_close
     {
-
+        $$ = AST::MakeAll($7, $3);
     }
 ;
 
 experimental_predicate_list:
-    tok_identifier { $$ = new AST::UnaryPredicateList(new AST::UnaryPredicate($1)); }
-|   experimental_predicate_list tok_identifier { $$ = $1; $$->Append(new AST::UnaryPredicate($2)); }
+    tok_identifier
+    {
+        $$ = new AST::UnaryPredicateList(new AST::UnaryPredicate($1));
+    }
+|   experimental_predicate_list tok_identifier
+    {
+        $$ = $1; $$->Append(new AST::UnaryPredicate($2));
+    }
 ;
 
 experimental_datalog_base_clause:
     tok_open experimental_datalog_clause tok_close
+    {
+        $$ = $2;
+    }
 |   pragma experimental_datalog_base_clause
+    {
+        $$ = $2;
+        $$->SetPragma($1);
+    }
 |   tok_not experimental_datalog_base_clause
+    {
+        $$ = new AST::Not(LOCATION(@1, @1), $2);
+    }
 |   experimental_entity_expression comparator experimental_entity_expression
+    {
+        $$ = new AST::Comparator(LOCATION(@1,@3), $1, $2, $3);
+    }
 |   experimental_entity_expression comparator experimental_entity_expression comparator experimental_entity_expression
+    {
+        // Technically this is too broad but anyway
+        // This would allow 1>=X>=2 which we don't really want.
+        $$ = new AST::Range(LOCATION(@1,@5), $1, $2, $3, $4, $5);
+    }
 |   tok_identifier tok_open tok_close
+    {
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@3), new AST::Predicate($1), nullptr);
+    }
 |   tok_identifier tok_open experimental_entity_expression_list tok_close
+    {
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@4), new AST::Predicate($1), $3);
+    }
 |   tok_all tok_open experimental_datalog_base_clause tok_semicolon experimental_datalog_clause tok_close
+    {
+        $$ = AST::MakeAll($5, $3);
+    }
 ;
 
 experimental_literal:
-    tok_string { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::String, $1)); }
+    tok_string   { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::String, $1)); }
 |   tok_atstring { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::AtString, $1)); }
-|   tok_integer { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Integer, $1)); }
+|   tok_integer  { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Integer, $1)); }
 |   tok_true     { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Boolean, 1)); }
-|   tok_false   { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Boolean, 0)); }
-|   tok_float   { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Float, $1)); }
+|   tok_false    { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Boolean, 0)); }
+|   tok_float    { $$ = new AST::Value(LOCATION(@1, @1), Entity(EntityType::Float, $1)); }
 ;
 
+// The keywords "a", "an" and "no" can be used as variables
 experimental_variable:
     tok_identifier { $$ = new AST::NamedVariable(LOCATION(@1, @1), $1); }
 |   tok_underscore { $$ = new AST::UnnamedVariable(LOCATION(@1, @1)); }
@@ -678,7 +737,23 @@ experimental_entity0:
     experimental_variable
 |   experimental_literal
 |   tok_find tok_identifier experimental_entity_expression_list tok_in tok_open experimental_clause tok_close
+    {
+        if( $2 == data.db.GetStringId("sum"))
+            $$ = new AST::Sum(LOCATION(@1, @7), $3, $6);
+        else if( $2 == data.db.GetStringId("count"))
+            $$ = new AST::Count(LOCATION(@1, @7), $3, $6);
+        else
+            yyerror(&@2, scanner, data, "Unrecognised quantifier");
+    }
 |   tok_find tok_identifier tok_open experimental_entity_expression_list tok_semicolon experimental_datalog_clause tok_close
+    {
+        if( $2 == data.db.GetStringId("sum"))
+            $$ = new AST::Sum(LOCATION(@1, @7), $4, $6);
+        else if( $2 == data.db.GetStringId("count"))
+            $$ = new AST::Count(LOCATION(@1, @7), $4, $6);
+        else
+            yyerror(&@2, scanner, data, "Unrecognised quantifier");
+    }
 ;
 
 experimental_entity_expression0:
@@ -690,8 +765,8 @@ experimental_entity_expression0:
 experimental_entity_expression1:
     experimental_entity_expression0
 |   experimental_entity_expression1 tok_times experimental_entity_expression0 { $$ = new AST::MulEntity(LOCATION(@1, @3), $1,$3); }
-|   experimental_entity_expression1 tok_div experimental_entity_expression0 { $$ = new AST::DivEntity(LOCATION(@1, @3), $1,$3); }
-|   experimental_entity_expression1 tok_mod experimental_entity_expression0 { $$ = new AST::ModEntity(LOCATION(@1, @3), $1,$3); }
+|   experimental_entity_expression1 tok_div experimental_entity_expression0   { $$ = new AST::DivEntity(LOCATION(@1, @3), $1,$3); }
+|   experimental_entity_expression1 tok_mod experimental_entity_expression0   { $$ = new AST::ModEntity(LOCATION(@1, @3), $1,$3); }
 ;
 
 experimental_entity1:
@@ -704,13 +779,13 @@ experimental_entity1:
 // A simple entity such as number or simple arithmetic expressions
 experimental_entity:
     experimental_entity1
-|   experimental_entity tok_plus experimental_entity_expression1 { $$ = new AST::AddEntity(LOCATION(@1, @3), $1,$3); }
+|   experimental_entity tok_plus experimental_entity_expression1  { $$ = new AST::AddEntity(LOCATION(@1, @3), $1,$3); }
 |   experimental_entity tok_minus experimental_entity_expression1 { $$ = new AST::SubEntity(LOCATION(@1, @3), $1,$3); }
 ;
 
 experimental_entity_expression:
     experimental_entity_expression1
-|   experimental_entity_expression tok_plus experimental_entity_expression1 { $$ = new AST::AddEntity(LOCATION(@1, @3), $1,$3); }
+|   experimental_entity_expression tok_plus experimental_entity_expression1  { $$ = new AST::AddEntity(LOCATION(@1, @3), $1,$3); }
 |   experimental_entity_expression tok_minus experimental_entity_expression1 { $$ = new AST::SubEntity(LOCATION(@1, @3), $1,$3); }
 ;
 
@@ -729,23 +804,41 @@ experimental_entity_expression:
 experimental_and_clause:
     experimental_base_clause
 |   experimental_and_clause tok_and experimental_base_clause
+    {
+        $$ = new AST::And(LOCATION(@1,@3), $1, $3);
+    }
 ;
 
 experimental_datalog_and_clause:
     experimental_datalog_base_clause
 |   experimental_datalog_and_clause tok_and experimental_datalog_base_clause
+    {
+        $$ = new AST::And(LOCATION(@1,@3), $1, $3);
+    }
 |   experimental_datalog_and_clause tok_comma experimental_datalog_base_clause
+    {
+        $$ = new AST::And(LOCATION(@1,@3), $1, $3);
+    }
 ;
 
 experimental_or_clause:
     experimental_and_clause
 |   experimental_or_clause tok_or experimental_and_clause
+    {
+        $$ = new AST::Or(LOCATION(@1,@3), $1, $3);
+    }
 ;
 
 experimental_datalog_or_clause:
     experimental_datalog_and_clause
 |   experimental_datalog_or_clause tok_or experimental_datalog_and_clause
+    {
+        $$ = new AST::Or(LOCATION(@1,@3), $1, $3);
+    }
 |   experimental_datalog_or_clause tok_semicolon experimental_datalog_and_clause
+    {
+        $$ = new AST::Or(LOCATION(@1,@3), $1, $3);
+    }
 ;
 
 experimental_clause:

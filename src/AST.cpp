@@ -654,9 +654,21 @@ void AST::Aggregate::Visit(Visitor &v) const
     clause->Visit(v);
 }
 
-AST::Aggregate::Aggregate(const SourceLocation & loc, Entity *e, Entity * v, Clause *c) : ArithmeticEntity(loc), entity(e), value(v), clause(c)
+AST::Aggregate::Aggregate(const SourceLocation & loc, Entity *e, Entity * v, Clause *c) :
+    ArithmeticEntity(loc), entity(e), value(v), clause(c)
 {
 }
+
+AST::Aggregate::Aggregate(const SourceLocation & loc, EntityList *e, Clause *c) :
+    ArithmeticEntity(loc), clause(c)
+{
+    if(e->entities.size()>0)
+        entity = std::move(e->entities[0]);
+    if(e->entities.size()>1)
+        value = std::move(e->entities[1]);
+    delete e;
+}
+
 
 void AST::NamedVariable::UnboundError(Database &db) const
 {
@@ -679,6 +691,14 @@ void AST::Value::UnboundError(Database &db) const
 }
 
 AST::Sum::Sum(const SourceLocation & loc, Entity * entity, Entity * value, Clause * clause) : Aggregate(loc, entity, value, clause)
+{
+}
+
+AST::Sum::Sum(const SourceLocation & loc, AST::EntityList * e, AST::Clause *c) : Aggregate(loc, e, c)
+{
+}
+
+AST::Count::Count(const SourceLocation & loc, AST::EntityList * e, AST::Clause *c) : Aggregate(loc, e, c)
 {
 }
 
@@ -762,6 +782,7 @@ void AST::PragmaList::Visit(Visitor&) const
 
 void AST::Rule::SetPragma(PragmaList * p)
 {
+    // TODO: Merge Pragma lists
     pragmas = std::unique_ptr<PragmaList>(p);
 }
 
@@ -798,3 +819,4 @@ AST::Attribute::Attribute(EntityClause * ec)
 {
     entityClauseOpt = std::unique_ptr<EntityClause>(ec);
 }
+
