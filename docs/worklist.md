@@ -29,6 +29,11 @@ object->begin_F()
 object->next_F()
 
 
+- Errors before execution
+  - Syntax errors
+  - Recursion
+  - Empty predicates
+
 
 - Try more advanced syntax:
 ```

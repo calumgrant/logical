@@ -1,5 +1,5 @@
 
-[experimental] predicate "My Predicate" x+y has bar fu 2+2.
+[experimental] predicate "My Predicate" x+y has bar fu 2+2 if x=1 and y=1.
 
 [experimental] bar 1.
 [experimental] bar @1.
@@ -12,8 +12,8 @@
 [experimental] fu, bar b, baz z.
 [experimental] fu has no bar.
 [experimental] fu reaches bar b.
-[experimental] fu has bar _ with bar _.
-[experimental] fu has child _ with child _ with child _.
+[experimental] bar if fu has bar _ with bar _.
+[experimental] fu has child @_ with child _ with child _.
 [experimental] fu has a child with a child with a child _.
 [experimental] fu has a child with a child with a child.
 
@@ -31,17 +31,17 @@
 [experimental] f g "h" 1.
 [experimental] "f" 1.
 [experimental] "f" 1.
-[experimental] f g (1+2).
+[experimental] f g (1+2) if 1=1.
 
 // experimental_entity_clause:
 [experimental] f has a g.
-[experimental] f has a g _.
+[experimental] f has a g @_.
 [experimental] foo _ has a g _.
 [experimental] foo _ reaches a g _.
 [experimental] _ reaches a g _.
-[experimental] 1+2 reaches a g _.
-[experimental] foo (1+2) reaches a g _.
-[experimental] foo _ reaches a g _ with child.
+[experimental] 1+2 reaches a g @_ if any.
+[experimental] foo (1+2) reaches a g @_ if any.
+[experimental] bar if foo _ reaches a g _ with child.
 [experimental] foo _ reaches a g _ with large child.
 [experimental] foo _ reaches a g _ with large child _.
 [experimental] foo _ reaches a large bear _ with large child _.
@@ -64,7 +64,7 @@
 [experimental] a, bagder, fox, name, age a, length 12.
 [experimental] small porcupine p, bagder, fox, name, age a, length 12.
 [experimental] small porcupine p has a bagder, a fox, a name, an age a, length 12.
-[experimental] p has a bagder, a fox, a name _, an age (y-(12+_)), length y+12.
+[experimental] bar if x=12 and y=12 and p has a bagder, a fox, a name _, an age (y-(12+@_)), length y+12.
 [experimental] _ has a "Fish called" "Wanda".
 [experimental] _ has "Fish called" "Wanda".
 
@@ -88,7 +88,7 @@
 [experimental] f() :- g(x), (1+2) = (x-2).
 [experimental] f() :- f(x,y,z).
 [experimental] f(x,y) :- g(x,y); h(x,y).
-[experimental] f(x,y) :- all(x=1; x=1).
+[experimental] f(@x,@y) :- all(x=1; x=1).
 
 // experimental_entity_expression:
 [experimental] f x.
@@ -103,14 +103,14 @@
 [experimental] f an if g _ and an=12.
 [experimental] f if f (12).
 [experimental] f if f (1+2).
-[experimental] f if f (a+b/2*3).
-[experimental] f if x = a+b/(2*3).
-[experimental] f if x = -y.
-[experimental] f find count x in (x=2 or x=3).
-[experimental] f find count x+1,y in (x=2 or x=3).
-[experimental] f find count (x+1), -2 in (x=2 or x=3).
-[experimental] f find count(x,y,z; g(x,y,z)).
-[experimental] f find count(x; g(x,y,z)).
+[experimental] f if a=1 and b=1 and f (a+b/2*3).
+[experimental] f if a=1 and b=1 and x = a+b/(2*3).
+[experimental] f if y=0 and x = -y.
+//[experimental] bar if f find count x in (x=2 or x=3).
+//[experimental] bar if f find count x+1,y in (x=2 or x=3).
+//[experimental] bar if f find count (x+1), -2 in (x=2 or x=3).
+//[experimental] bar if f find count(x,y,z; g(x,y,z)).
+[experimental] bar if f find count(x; g(x,y,z)).
 
 // nonary predicates:
 [experimental] f.
@@ -119,7 +119,7 @@
 
 // Expressions
 [experimental] f 1+2 if x=1+2.
-[experimental] f (1+2) if x=(1+p).
+[experimental] f (1+2) if p=1 and x=(1+p).
 [experimental] n is small in-range if 1<=n<=10.
 
 // Datalog syntax
@@ -129,11 +129,11 @@
 [experimental] f(x,y).
 [experimental] f(x) :- g(x).
 [experimental] f(x,y) :- g(y,x).
-[experimental] f(x,y) :- not g().
-[experimental] f(x,y) :- g(), h().
-[experimental] f(x,y) :- g(); h().
+[experimental] f(@x,@y) :- not g().
+[experimental] f(@x,@y) :- g(), h().
+[experimental] f(@x,@y) :- g(); h().
 [experimental] f(x,y) :- (g(); h()), i(x,y).
-[experimental] f(x,y) :- (g(); h(); x=a+b), i(x,y); x=1+2.
+[experimental] f(x,@y) :- (g(); h(); x=@a+@b), i(x,y); x=1+2.
 
 // Error recovery
 //[experimental] 1 1 1 1.

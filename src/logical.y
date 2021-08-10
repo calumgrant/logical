@@ -435,10 +435,30 @@ pragma_list:
 
 experimental_statement:
     experimental_clause tok_dot
+    {
+        std::unique_ptr<AST::Clause> clause($1);
+        clause->AssertFacts(data.db);
+    }
 |   tok_if experimental_clause tok_then experimental_clause tok_dot
+    {
+        std::unique_ptr<AST::Rule> rule(new AST::Rule($4, $2));
+        rule->Compile(data.db);
+    }
 |   experimental_clause tok_if experimental_clause tok_dot
+    {
+        std::unique_ptr<AST::Rule> rule(new AST::Rule($1, $3));
+        rule->Compile(data.db);
+    }
 |   experimental_base_clause tok_colondash experimental_datalog_clause tok_dot
+    {
+        std::unique_ptr<AST::Rule> rule(new AST::Rule($1, $3));
+        rule->Compile(data.db);
+    }
 |   tok_questiondash experimental_clause tok_dot
+    {
+        std::unique_ptr<AST::Clause> query($2);
+        query->Find(data.db);
+    }
 |   error tok_dot
 ;
 
@@ -621,8 +641,14 @@ experimental_binpred:
 ;
 
 experimental_base_clause:
-    tok_open experimental_clause tok_close { $$= $2; }
-|   experimental_entity_clause { $$ = $1; }
+    tok_open experimental_clause tok_close
+    {
+        $$= $2;
+    }
+|   experimental_entity_clause
+    {
+        $$ = $1;
+    }
 |   pragma experimental_base_clause
     {
         $$ = $2;
