@@ -17,3 +17,7 @@ assert-int 123.
 assert-bool true.
 assert-float 3.14.
 assert-at-string @123.
+
+error "bool 1" if not is-bool true.
+error "bool 2" if is-bool 1.
+error "bool 2" if is-bool x.

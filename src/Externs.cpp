@@ -357,7 +357,7 @@ void ExternPredicate::Query(Row row, Columns columns, Receiver & r)
         }
     }
 
-    database.Error("Cannot bind to extern");
+    database.Error(r.location, "Arguments to this extern must be bound");
 }
 
 class NullReceiver : public Receiver
