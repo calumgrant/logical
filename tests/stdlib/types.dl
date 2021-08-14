@@ -2,6 +2,7 @@ mixed 1.
 mixed true.
 mixed 3.14.
 mixed "abc".
+mixed @c.
 
 m has type "string" if mixed m and is-string m.
 m has type "int" if mixed m and is-int m.
@@ -14,10 +15,31 @@ error "Strings 5" if not "abc" has type "string".
 
 assert-string "abc".
 assert-int 123.
-assert-bool true.
 assert-float 3.14.
 assert-at-string @123.
 
+assert-bool true.
 error "bool 1" if not is-bool true.
 error "bool 2" if is-bool 1.
-error "bool 2" if is-bool x.
+error "bool 3" if not assert-bool true.
+error "bool 4" if not (mixed m and is-bool m).
+
+assert-int 2.
+error "int 1" if not is-int 1.
+error "int 2" if is-int @.
+error "int 3" if not assert-bool true.
+error "int 4" if not (mixed m and is-int m).
+
+assert-float 2.0.
+error "float 1" if not is-float 1.0.
+error "float 2" if is-float @.
+error "float 3" if not assert-float 3.1.
+error "float 4" if not (mixed m and is-float m).
+
+assert-at-string @foo.
+error "at 1" if not is-at-string @g.
+error "at 2" if is-at-string "a".
+error "at 3" if not assert-at-string @.
+error "at 4" if not (mixed m and is-at-string m).
+
+print "Test passed".
