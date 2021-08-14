@@ -72,11 +72,11 @@ private:
     int errorCount = 0;
     std::size_t resultCount = 0;
     
-    void CreateProjection(const PredicateName &from, const PredicateName & to);
+    void CreateProjection(const PredicateName &from, const PredicateName & to, const SourceLocation & loc);
 
     // -1 means there is no expected value.
     int expectedResults = -1;
     
-    void MakeReachesRelation(Relation & rel);
-    void MakeProjections(Relation & rel);
+    void MakeReachesRelation(Relation & rel, const SourceLocation & loc);
+    void MakeProjections(Relation & rel, const SourceLocation & loc);
 };

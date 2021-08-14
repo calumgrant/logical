@@ -379,7 +379,7 @@ bool ExternPredicate::Add(const SourceLocation & loc, const Entity * row)
     }
     else
     {
-        database.Error("This extern does not support writes");
+        database.Error(loc, "This extern does not support writes");
         return false;
     }
 }

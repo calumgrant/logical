@@ -71,6 +71,8 @@ public:
     
     // Holds true if a preceding (dominating) evaluation step is a recursive read/join.
     bool dependsOnRecursiveRead = false;  // Output flag: R
+    
+    SourceLocation location;
 
     virtual void VisitNext(const std::function<void(EvaluationPtr&, bool)> &fn);
     virtual void VisitReads(const std::function<void(Relation*&, Columns, const int*)> &fn);

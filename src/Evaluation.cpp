@@ -849,8 +849,9 @@ void Writer::Explain(Database &db, std::ostream &os, int indent) const
     os << std::endl;
 }
 
-Join::Join(Relation &relation, const std::vector<int> &inputs, const std::vector<int> &outputs, const std::shared_ptr<Evaluation> &next) : ReaderEvaluation(relation, next)
+Join::Join(Relation &relation, const std::vector<int> &inputs, const std::vector<int> &outputs, const std::shared_ptr<Evaluation> &next, const SourceLocation & loc) : ReaderEvaluation(relation, next)
 {
+    this->location = loc;
     this->inputs = inputs;
     this->outputs = outputs;
     assert(inputs.size() == outputs.size());
@@ -897,7 +898,7 @@ void Join::OnRow(Entity *locals)
         relation->QueryDelta(&data[0], mask, visitor);
     else if(hasOutput)
         relation->Query(&data[0], mask, visitor);
-    else if(relation->QueryExists(&data[0], mask))
+    else if(relation->QueryExists(&data[0], mask, location))
         next->Evaluate(locals);
 }
 
@@ -1345,7 +1346,7 @@ EvaluationPtr OrEvaluationForNot::MakeClone() const
 
 EvaluationPtr Join::MakeClone() const
 {
-    return std::make_shared<Join>(*relation, inputs, outputs, next->CloneInternal());
+    return std::make_shared<Join>(*relation, inputs, outputs, next->CloneInternal(), location);
 }
 
 EvaluationPtr LoadF::MakeClone() const

@@ -64,7 +64,7 @@ public:
     
     void Query(Row row, Columns columns, Receiver &r) override;
     void QueryDelta(Row row, Columns columns, Receiver &r) override;
-    bool QueryExists(Row row, Columns columns) override;
+    bool QueryExists(Row row, Columns columns, const SourceLocation & loc) override;
     bool Add(const Entity * data) override;
     Size Count() override;
     Database & GetDatabase() const override;
@@ -104,7 +104,7 @@ public:
 
     void Query(Row row, Columns c, Receiver &r) override;
     void QueryDelta(Row row, Columns c, Receiver &r) override;
-    bool QueryExists(Row row, Columns c) override;
+    bool QueryExists(Row row, Columns c, const SourceLocation&) override;
     void AddRule(const EvaluationPtr & rule) override;
     void RunRules() override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
@@ -131,7 +131,7 @@ public:
     
     void Query(Row row, Columns c, Receiver &r) override;
     void QueryDelta(Row row, Columns c, Receiver &r) override;
-    bool QueryExists(Row row, Columns c) override;
+    bool QueryExists(Row row, Columns c, const SourceLocation&) override;
     void AddRule(const EvaluationPtr & rule) override;
     void RunRules() override;
     void VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) override;
@@ -167,7 +167,7 @@ public:
     std::size_t Count() override;
     void Query(Entity *row, Columns columns, Receiver&v) override;
     void QueryDelta(Entity*row, Columns columns, Receiver&v) override;
-    bool QueryExists(Entity * row, Columns columns) override;
+    bool QueryExists(Entity * row, Columns columns, const SourceLocation&) override;
     bool IsSpecial() const override;
 };
 

@@ -141,6 +141,85 @@ static void outputTable(Call & call)
     writer.AddRow(std::move(row));
 }
 
+static void isString(Call & call)
+{
+    const char * str;
+    if (call.Get(0, str))
+        call.YieldResult();
+}
+
+static void assertString(Call & call)
+{
+    const char * str;
+    if (call.Get(0, str))
+        call.YieldResult();
+    else
+        call.Error("Assertion failed: string expected");
+}
+
+static void isAtString(Call & call)
+{
+    const char * str;
+    if (call.GetAtString(0, str))
+        call.YieldResult();
+}
+
+static void assertAtString(Call & call)
+{
+    const char * str;
+    if (call.GetAtString(0, str))
+        call.YieldResult();
+    else
+        call.Error("Assertion failed: @-string expected");
+}
+
+static void isInt(Call & call)
+{
+    Int i;
+    if (call.Get(0, i))
+        call.YieldResult();
+}
+
+static void assertInt(Call & call)
+{
+    Int i;
+    if (call.Get(0, i))
+        call.YieldResult();
+    else
+        call.Error("Integer expected");
+}
+
+static void isFloat(Call & call)
+{
+    double d;
+    if (call.Get(0, d))
+        call.YieldResult();
+}
+
+static void assertFloat(Call & call)
+{
+    double d;
+    if (call.Get(0, d))
+        call.YieldResult();
+    else
+        call.Error("Float expected");
+}
+
+static void isBool(Call & call)
+{
+    bool b;
+    if (call.Get(0, b))
+        call.YieldResult();
+}
+
+static void assertBool(Call & call)
+{
+    bool b;
+    if (call.Get(0, b))
+        call.YieldResult();
+    else
+        call.Error("Boolean expected");
+}
 
 void RegisterFunctions(Module & module)
 {
@@ -185,4 +264,19 @@ void RegisterFunctions(Module & module)
     auto tablewriter = new TableWriterImpl(std::cout, TableWriterConfig());
     module.AddFunction(outputTable, {"std:query"}, { Varargs }, tablewriter);
     module.AddFunction(outputTable, {"query"}, { Varargs }, tablewriter);
+    
+    // Type tests
+    module.AddFunction(isString, {"is-string"}, {In});
+    module.AddFunction(assertString, {"assert-string"}, {In});
+    module.AddFunction(isAtString, {"is-at-string"}, {In});
+    module.AddFunction(assertAtString, {"assert-at-string"}, {In});
+    module.AddFunction(isInt, {"is-int"}, {In});
+    module.AddFunction(assertInt, {"assert-int"}, {In});
+    
+    module.AddFunction(isFloat, {"is-float"}, {In});
+    module.AddFunction(assertFloat, {"assert-float"}, {In});
+    module.AddFunction(isBool, {"is-bool"}, {In});
+    module.AddFunction(assertBool, {"assert-bool"}, {In});
+
+    
 }

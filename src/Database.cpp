@@ -168,15 +168,15 @@ Relation& DatabaseImpl::GetRelation(const PredicateName & name)
         auto r = allocate_shared<Predicate>(Storage(), *this, name);
         datastore->relations.insert(std::make_pair(name, r));
         if(name.reaches)
-            MakeReachesRelation(*r);
-        MakeProjections(*r);
+            MakeReachesRelation(*r, SourceLocation{});
+        MakeProjections(*r, SourceLocation{});
         return *r;
     }
     else
         return *i->second;
 }
 
-void DatabaseImpl::MakeReachesRelation(Relation & rel)
+void DatabaseImpl::MakeReachesRelation(Relation & rel, const SourceLocation & loc)
 {
     auto underlyingRelationName = rel.name;
     assert(underlyingRelationName.reaches);
@@ -187,7 +187,7 @@ void DatabaseImpl::MakeReachesRelation(Relation & rel)
         // Add the rule rel(_0,_1) :- r(_0, _1)
         std::vector<int> writeArgs = { 0, 1 };
         auto write = std::make_shared<Writer>(rel, writeArgs, SourceLocation{});
-        auto reader = std::make_shared<Join>(r, std::vector<int>{-1,-1}, std::move(writeArgs), write);
+        auto reader = std::make_shared<Join>(r, std::vector<int>{-1,-1}, std::move(writeArgs), write, loc);
         auto baseRule = std::make_shared<RuleEvaluation>(2, reader);
         rel.AddRule(baseRule);
     }
@@ -196,8 +196,8 @@ void DatabaseImpl::MakeReachesRelation(Relation & rel)
         // Add the rule rel(_0, _1) :- rel(_0, _2), r(_2, _1).
         std::vector<int> writeArgs = { 0, 1 };
         auto write = std::make_shared<Writer>(rel, writeArgs, SourceLocation{});
-        auto join2 = std::make_shared<Join>(r, std::vector<int> {2, -1}, std::vector<int> { -1, 1 }, write);
-        auto join1 = std::make_shared<Join>(rel, std::vector<int> {-1,-1}, std::vector<int> {0, 2}, join2);
+        auto join2 = std::make_shared<Join>(r, std::vector<int> {2, -1}, std::vector<int> { -1, 1 }, write, loc);
+        auto join1 = std::make_shared<Join>(rel, std::vector<int> {-1,-1}, std::vector<int> {0, 2}, join2, loc);
         auto recursiveRule = std::make_shared<RuleEvaluation>(3, join1);
         rel.AddRule(recursiveRule);
     }
@@ -358,7 +358,7 @@ int DatabaseImpl::ReadFile(const char *filename)
     return 1;
 }
 
-void DatabaseImpl::MakeProjections(Relation &relation)
+void DatabaseImpl::MakeProjections(Relation &relation, const SourceLocation & loc)
 {
     // Find all tables that contain this one:
     /*
@@ -397,12 +397,12 @@ void DatabaseImpl::MakeProjections(Relation &relation)
     
     for(auto & superset : supersets)
     {
-        CreateProjection(superset, relation.name);
+        CreateProjection(superset, relation.name, loc);
     }
 
     for(auto & subset : subsets)
     {
-        CreateProjection(relation.name, subset);
+        CreateProjection(relation.name, subset, loc);
     }
     
     for(auto i : name.attributes.parts) datastore->nameParts.insert(std::make_pair(i, relation.name));
@@ -420,7 +420,7 @@ std::size_t Database::GlobalCallCountLimit()
 }
 
 
-void DatabaseImpl::CreateProjection(const PredicateName &from, const PredicateName &to)
+void DatabaseImpl::CreateProjection(const PredicateName &from, const PredicateName &to, const SourceLocation & loc)
 {
     /*
     std::cout << "Create a projection from ";
@@ -442,12 +442,12 @@ void DatabaseImpl::CreateProjection(const PredicateName &from, const PredicateNa
         projection[j+1] = i+1;
     }
     
-    auto writer = allocate_shared<Writer>(Storage(), *datastore->relations[to], projection, SourceLocation{});
+    auto writer = allocate_shared<Writer>(Storage(), *datastore->relations[to], projection, loc);
     
     std::vector<int> inputs(cols);
     std::fill(inputs.begin(), inputs.end(), -1);
     
-    auto reader = allocate_shared<Join>(Storage(), *datastore->relations[from], inputs, cols, writer);
+    auto reader = allocate_shared<Join>(Storage(), *datastore->relations[from], inputs, cols, writer, loc);
     
     auto eval = allocate_shared<RuleEvaluation>(Storage(), cols.size(), reader);
     

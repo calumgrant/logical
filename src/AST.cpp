@@ -37,11 +37,11 @@ AST::EntityIsPredicate::EntityIsPredicate(const SourceLocation & loc, Entity* en
 }
 
 
-AST::Predicate::Predicate(int nameId) : nameId(nameId) { }
+AST::Predicate::Predicate(const SourceLocation & loc, int nameId) : nameId(nameId), location(loc) { }
 
-AST::UnaryPredicate::UnaryPredicate(int nameId) : nameId(nameId) { }
+AST::UnaryPredicate::UnaryPredicate(const SourceLocation & loc, int nameId) : nameId(nameId), location(loc) { }
 
-AST::BinaryPredicate::BinaryPredicate(int nameId) : Predicate(nameId) { }
+AST::BinaryPredicate::BinaryPredicate(const SourceLocation & loc, int nameId) : Predicate(loc, nameId) { }
 
 AST::UnaryPredicateList::UnaryPredicateList(UnaryPredicate * p)
 {
@@ -720,7 +720,7 @@ const ::Entity & AST::Value::GetValue() const
 
 void AST::AttributeList::Add(BinaryPredicate * p, Entity *e)
 {
-    attributes.push_back(Attribute(p,e));
+    attributes.push_back(Attribute( p,e));
 }
 
 AST::AttributeList::AttributeList(Attribute *a)
@@ -729,12 +729,14 @@ AST::AttributeList::AttributeList(Attribute *a)
 }
 
 AST::Attribute::Attribute(BinaryPredicate *p, Entity *e) :
+    location(p->location),
     entityOpt(e)
 {
     AddFirst(p);
 }
 
 AST::Attribute::Attribute(Entity *e) :
+    location(e->location),
     entityOpt(e)
 {
 }
@@ -817,7 +819,7 @@ void AST::EntityList::AddFirst(AST::Entity * e)
     entities.insert(entities.begin(), std::unique_ptr<Entity>(e));
 }
 
-AST::Attribute::Attribute(EntityClause * ec)
+AST::Attribute::Attribute(EntityClause * ec) : location(ec->location)
 {
     entityClauseOpt = std::unique_ptr<EntityClause>(ec);
 }

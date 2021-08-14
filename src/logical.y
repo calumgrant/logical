@@ -146,52 +146,52 @@ statement:
 entity_base0:
     tok_identifier entity
     {
-        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate(LOCATION(@1,@1), $1)), IsType::is);
     }
 |   tok_identifier tok_open entity_expression tok_close
     {
-        $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+        $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate(LOCATION(@1,@1), $1)), IsType::is);
     }
 |   tok_string entity
     {
-        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate(LOCATION(@1,@1), $1)), IsType::is);
     }
 |   tok_string tok_open entity_expression tok_close
     {
-        $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+        $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate(LOCATION(@1,@1), $1)), IsType::is);
     }
 |   tok_identifier entity_base0
     {
-        $$=$2; $$->AddFirst(new AST::UnaryPredicate($1));
+        $$=$2; $$->AddFirst(new AST::UnaryPredicate(LOCATION(@1,@1), $1));
     }
 ;
 
 entity_base:
     tok_string entity
     {
-        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate(LOCATION(@1,@1), $1)), IsType::is);
     }
 |   tok_identifier entity
     {
-        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+        $$ = new AST::EntityIs(LOCATION(@1, @2), $2, new AST::UnaryPredicateList(new AST::UnaryPredicate(LOCATION(@1,@1), $1)), IsType::is);
     }
 |   tok_identifier entity_base0
     {
         $$=$2;
-        $$->AddFirst(new AST::UnaryPredicate($1));
+        $$->AddFirst(new AST::UnaryPredicate(LOCATION(@1,@1), $1));
     }
 |   tok_identifier tok_open entity_expression tok_close
     {
-        $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate($1)), IsType::is);
+        $$ = new AST::EntityIs(LOCATION(@1, @4), $3, new AST::UnaryPredicateList(new AST::UnaryPredicate(LOCATION(@1,@1), $1)), IsType::is);
     }
 |   tok_identifier tok_open entity_base tok_close
     {
         $$ = $3;
-        $3->AddFirst(new AST::UnaryPredicate($1));
+        $3->AddFirst(new AST::UnaryPredicate(LOCATION(@1,@1), $1));
     }
 |   tok_new tok_identifier
     {
-        $$ = new AST::EntityIs(LOCATION(@1, @2), nullptr, new AST::UnaryPredicateList(new AST::UnaryPredicate($2)), IsType::is);
+        $$ = new AST::EntityIs(LOCATION(@1, @2), nullptr, new AST::UnaryPredicateList(new AST::UnaryPredicate(LOCATION(@2,@2), $2)), IsType::is);
     }
 ;
 
@@ -317,11 +317,11 @@ a_opt:
 binpred:
     tok_identifier
     {
-        $$ = new AST::BinaryPredicate($1);
+        $$ = new AST::BinaryPredicate(LOCATION(@1,@1), $1);
     }
 |   tok_string
     {
-        $$ = new AST::BinaryPredicate($1);
+        $$ = new AST::BinaryPredicate(LOCATION(@1,@1), $1);
     }
 ;
 
@@ -359,17 +359,17 @@ base_clause:
     }
 |   tok_identifier tok_open tok_close
     {
-        $$ = new AST::DatalogPredicate(LOCATION(@1,@3), new AST::Predicate($1), nullptr);
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@3), new AST::Predicate(LOCATION(@1,@1), $1), nullptr);
     }
 |   tok_identifier tok_open entity_expression tok_comma entity_expression_list tok_close
     {
         $5->AddFirst($3);
-        $$ = new AST::DatalogPredicate(LOCATION(@1,@6), new AST::Predicate($1), $5);
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@6), new AST::Predicate(LOCATION(@1,@1), $1), $5);
     }
 |   tok_identifier
     {
         // Nonary clause
-        $$ = new AST::DatalogPredicate(LOCATION(@1,@1), new AST::Predicate($1), nullptr);
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@1), new AST::Predicate(LOCATION(@1,@1), $1), nullptr);
     }  
 |   tok_all tok_open clause tok_close tok_in tok_open clause tok_close
     {
@@ -380,11 +380,11 @@ base_clause:
 predicate_list:
     tok_identifier
     {
-        $$ = new AST::UnaryPredicateList(new AST::UnaryPredicate($1));
+        $$ = new AST::UnaryPredicateList(new AST::UnaryPredicate(LOCATION(@1,@1), $1));
     }
 |   predicate_list tok_identifier
     {
-        $$ = $1; $$->Append(new AST::UnaryPredicate($2));
+        $$ = $1; $$->Append(new AST::UnaryPredicate(LOCATION(@2,@2), $2));
     }
 ;
 
@@ -414,11 +414,11 @@ datalog_base_clause:
     }
 |   tok_identifier tok_open tok_close
     {
-        $$ = new AST::DatalogPredicate(LOCATION(@1,@3), new AST::Predicate($1), nullptr);
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@3), new AST::Predicate(LOCATION(@1,@1), $1), nullptr);
     }
 |   tok_identifier tok_open entity_expression_list tok_close
     {
-        $$ = new AST::DatalogPredicate(LOCATION(@1,@4), new AST::Predicate($1), $3);
+        $$ = new AST::DatalogPredicate(LOCATION(@1,@4), new AST::Predicate(LOCATION(@1,@1), $1), $3);
     }
 |   tok_all tok_open datalog_base_clause tok_semicolon datalog_clause tok_close
     {

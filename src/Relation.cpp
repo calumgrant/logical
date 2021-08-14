@@ -70,9 +70,10 @@ public:
     }
 };
 
-bool SpecialPredicate::QueryExists(Row row, Columns columns)
+bool SpecialPredicate::QueryExists(Row row, Columns columns, const SourceLocation & loc)
 {
     BoolReceiver receiver;
+    receiver.location = loc;
     Query(row, columns, receiver);
     return receiver.hasResult;
 }
@@ -167,7 +168,7 @@ void Predicate::QueryDelta(Entity *row, Columns columns, Receiver &r)
     table->QueryDelta(row, columns, r);
 }
 
-bool Predicate::QueryExists(Row row, Columns columns)
+bool Predicate::QueryExists(Row row, Columns columns, const SourceLocation & loc)
 {
     RunRules();
     return table->QueryExists(row, columns);
@@ -284,7 +285,7 @@ std::shared_ptr<Evaluation> MakeBoundRule(const std::shared_ptr<Evaluation> &rul
             re->VisitNext([&](EvaluationPtr & next, bool) {
                 for(int i=0; i<ba; ++i)
                     next->BindVariable(next, i);
-                next = std::make_shared<Join>(binding2, inputs, outputs, next);
+                next = std::make_shared<Join>(binding2, inputs, outputs, next, rule->location);
             });
         }
     });
@@ -669,7 +670,7 @@ EvaluationPtr SemiNaivePredicate::MakeBoundRule(const EvaluationPtr & r)
             rule->VisitNext([&](EvaluationPtr & next, bool) {
             for(auto &o : outputs)
                 next->BindVariable(next, o);
-            next = std::make_shared<Join>(*query, inputs, outputs, next);
+            next = std::make_shared<Join>(*query, inputs, outputs, next, r->location);
             next->useDelta = true;
             next->readDelta = true;
         });
@@ -745,7 +746,7 @@ void SemiNaivePredicate::QueryDelta(Row row, Columns c, Receiver &r)
     table->QueryDelta(row, c, r);
 }
 
-bool SemiNaivePredicate::QueryExists(Row row, Columns columns)
+bool SemiNaivePredicate::QueryExists(Row row, Columns columns, const SourceLocation&)
 {
     assert(columns == name.boundColumns);
     RunRules(row);
@@ -844,7 +845,7 @@ SemiNaiveQuery::SemiNaiveQuery(Relation & base, Columns c) : underlyingPredicate
 
 void SemiNaiveQuery::Query(Row row, Columns c, Receiver &r) { table->Query(row, c, r); }
 void SemiNaiveQuery::QueryDelta(Row row, Columns c, Receiver &r) { table->QueryDelta(row, c, r); }
-bool SemiNaiveQuery::QueryExists(Row row, Columns c) { return table->QueryExists(row, c); }
+bool SemiNaiveQuery::QueryExists(Row row, Columns c, const SourceLocation&) { return table->QueryExists(row, c); }
 void SemiNaiveQuery::AddRule(const EvaluationPtr & rule) { assert(0); }
 void SemiNaiveQuery::RunRules() {}
 void SemiNaiveQuery::VisitRules(const std::function<void(std::shared_ptr<Evaluation>&)> &) {}

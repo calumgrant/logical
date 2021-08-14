@@ -92,7 +92,7 @@ std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compila
 
         
     auto & relation = db.GetRelation(name);
-    result = std::make_shared<Join>(relation, inputs, outputs, result);
+    result = std::make_shared<Join>(relation, inputs, outputs, result, location);
 
     if(entitiesOpt)
     {
@@ -167,7 +167,7 @@ EvaluationPtr AST::EntityClause::CompileDecomposed(Database &db, Compilation &co
                 outputs[1] = slot2;
             }
             
-            eval = std::make_shared<Join>(relation, inputs, outputs, eval);
+            eval = std::make_shared<Join>(relation, inputs, outputs, eval, attribute.location);
 
             if(attribute.entityOpt)
             {
@@ -182,7 +182,8 @@ EvaluationPtr AST::EntityClause::CompileDecomposed(Database &db, Compilation &co
         {
             PredicateName predicateName;
             predicateName.arity = 1;
-            predicateName.objects.parts.push_back(predicates->list[i]->nameId);
+            auto & predicate = predicates->list[i];
+            predicateName.objects.parts.push_back(predicate->nameId);
             auto & relation = db.GetRelation(predicateName);
             
             std::vector<int> inputs(1), outputs(1);
@@ -196,7 +197,7 @@ EvaluationPtr AST::EntityClause::CompileDecomposed(Database &db, Compilation &co
                 inputs[0] = slot;
                 outputs[0] = -1;
             }
-            eval = std::make_shared<Join>(relation, inputs, outputs, eval);
+            eval = std::make_shared<Join>(relation, inputs, outputs, eval, predicate->location);
         }
     }
     
@@ -268,7 +269,7 @@ std::shared_ptr<Evaluation> AST::EntityClause::Compile(Database &db, Compilation
         }
     }
         
-    eval = std::make_shared<Join>(relation, std::move(inputs), std::move(outputs), eval);
+    eval = std::make_shared<Join>(relation, std::move(inputs), std::move(outputs), eval, location);
     
     if(attributes)
     {

@@ -437,7 +437,7 @@ class Join : public ReaderEvaluation
 {
 public:
     // -1 in an input or output means "unused"
-    Join(Relation & relation, const std::vector<int> & inputs, const std::vector<int> & outputs, const EvaluationPtr & next);
+    Join(Relation & relation, const std::vector<int> & inputs, const std::vector<int> & outputs, const EvaluationPtr & next, const SourceLocation & loc);
     void OnRow(Entity * row) override;
     void Explain(Database &db, std::ostream &os, int indent) const override;
     EvaluationPtr MakeClone() const override;

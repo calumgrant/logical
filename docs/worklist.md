@@ -1,21 +1,40 @@
 # Short term plan
 
+Document the new syntax
+
+Implement `with` syntax
+
+Check for errors before execution.
+
+- Think about `they`/`it` syntax - referring to the previous entity.
+
+`X is a person if they are male and they have age A or they are female and they have age A and A>60.`
+
+- Think about `X has age > 60`.  Not terribly useful.
+
+- `[sealed]` predicates that cannot be extended
+
+- `[extern]` to document extern usage
+
+- Predicates to validate data types
+  - `assert-string X`, `assert-int X`, `assert-float X`
+  - `is-string`, `is-int`, `is-float`, `is-bool`, `is-at-string`.
+
+- Nonary externs, e.g. `error if not is-string ""`.
+
+- Pragmas to assert types on variables???
+
+- Mark recursive predicates as `[recursive]`??
+
 Reimplementing attributes:
 
-- Tidy up the attributes explanation
-- Implement the attribute changes
-- Change aggregate syntax to add the `find` keyword and remove unused keywords (`max`, `min`, `sum`, `count`, `with`)
-  - `max` predicate. `find max x in ()` `find count x,y in ()`
-  - `find rank 10 of x in (...)`
-  - `find sum m over x in (...)`
-  - `find count x, y in (...)`
-- Remove keywords for `sum`, `concat` and `count` - they are contextual keywords instead.
 - parser reports errors better
 - In a query, the first column is the query name not data.
 - All evaluations to have locations?
 - Test unbound versions of `foo X+1` where X is unbound, so needs to query `foo`.
 
 - Create a simple syntax highlighter that covers basic keywords (a, an, has, is, if, then)
+- Create a deep syntax highlighter
 
 - HTML cleaning predicate
 - Report all errors first, and don't run if any errors encountered.

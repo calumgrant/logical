@@ -242,24 +242,26 @@ namespace AST
     class Predicate : public Node
     {
     public:
-        Predicate(int nameId);
+        Predicate(const SourceLocation & loc, int nameId);
         void Visit(Visitor&) const override;
         const int nameId;
+        const SourceLocation location;
     };
 
     class UnaryPredicate : public Node
     {
     public:
-        UnaryPredicate(int nameId);
+        UnaryPredicate(const SourceLocation & loc, int nameId);
         void Assert(Database &db, const ::Entity &e) const;
         void Visit(Visitor&) const override;
         const int nameId;
+        const SourceLocation location;
     };
 
     class BinaryPredicate : public Predicate
     {
     public:
-        BinaryPredicate(int nameId);
+        BinaryPredicate(const SourceLocation & loc, int nameId);
         void Visit(Visitor&) const override;
     };
 
@@ -289,6 +291,8 @@ namespace AST
         
         int slot;
         bool bound;
+        
+        const SourceLocation location;
         
         void AddFirst(BinaryPredicate * pred);
     };
