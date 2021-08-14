@@ -12,8 +12,8 @@ error "Strings 3" if not (mixed m and is-string m).
 error "Strings 4" if 1 != find count m in (mixed m and is-string m).
 error "Strings 5" if not "abc" has type "string".
 
-f if assert-string "abc".
-f if assert-string 123.
-
-// error "Something" if f.
-
+assert-string "abc".
+assert-int 123.
+assert-bool true.
+assert-float 3.14.
+assert-at-string @123.

@@ -268,15 +268,21 @@ void RegisterFunctions(Module & module)
     // Type tests
     module.AddFunction(isString, {"is-string"}, {In});
     module.AddFunction(assertString, {"assert-string"}, {In});
+    module.AddCommand(assertString, {"assert-string"});
+    
     module.AddFunction(isAtString, {"is-at-string"}, {In});
     module.AddFunction(assertAtString, {"assert-at-string"}, {In});
+    module.AddCommand(assertAtString, {"assert-at-string"});
+
     module.AddFunction(isInt, {"is-int"}, {In});
     module.AddFunction(assertInt, {"assert-int"}, {In});
+    module.AddCommand(assertInt, {"assert-int"});
     
     module.AddFunction(isFloat, {"is-float"}, {In});
     module.AddFunction(assertFloat, {"assert-float"}, {In});
+    module.AddCommand(assertFloat, {"assert-float"});
+
     module.AddFunction(isBool, {"is-bool"}, {In});
     module.AddFunction(assertBool, {"assert-bool"}, {In});
-
-    
+    module.AddCommand(assertBool, {"assert-bool"});
 }
