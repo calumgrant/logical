@@ -289,11 +289,14 @@ PredicateName AST::DatalogPredicate::GetPredicateName(Database & db) const
 void AST::DatalogPredicate::AssertFacts(Database &db) const
 {
     auto name = GetPredicateName(db);
-    
+    auto & relation = db.GetRelation(name);
+
     switch(name.arity)
     {
     case 0:
-        db.GetRelation(name).Add(nullptr);
+        relation.OnStartRunningRules();
+        relation.Add(location, nullptr);
+        relation.OnStopRunningRules();
         return;
             /*
     case 1:
@@ -326,7 +329,6 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
              */
     }
 
-    auto & relation = db.GetRelation(name);
     
     std::vector<::Entity> row(entitiesOpt->entities.size());
 

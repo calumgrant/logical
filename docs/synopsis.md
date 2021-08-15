@@ -193,7 +193,7 @@ person "Fred".
 
 ## Data types
 
-Logical is untyped, meaning that any predicate can store any data. Whilst this is more flexible, it means that you can make mistakes such as `"Fred" has age "22"` or `"Fred has name 22`.
+Logical is untyped, meaning that any predicate can store any data. Whilst this is more flexible, it means that you can make mistakes such as `"Fred" has age "22"` or `"Fred" has name 22`.
 
 The basic data types in Logical are: integers, floats, strings, at-strings and bools.
 
@@ -201,8 +201,27 @@ The basic data types in Logical are: integers, floats, strings, at-strings and b
 
 Rules allow predicates to be conditionally true, by defining relationships between predicates.
 
+## Structured entities
+
+
+
 
 # Queries
+
+Logical does not have a particular syntax for queries, but instead uses extern predicates that output the results to the console. The nice thing about this approach is that extern predicates can implement different ways to output data, for example to csv files, Markdown or database tables.
+
+The most basic query predicate is called `query` that outputs the results in a tabular form.  For example
+
+```
+query Person P has Name N, Age A if 
+    person P has name N, age A.
+```
+
+
+
+## Query format
+
+
 
 
 

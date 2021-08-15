@@ -406,10 +406,10 @@ const char * Logical::Call::ArgName(int i) const
     }
     
     i = call.name.MapArgument(i);
-    assert(call.name.objects.parts.size()==1);
-    
+    assert(call.name.objects.parts.size()>=1);
+        
     if(i>call.name.attributes.parts.size()) return "";
-    int id = i==0 ? call.name.objects.parts[0] : call.name.attributes.parts[i-1];
+    int id = i==0 ? call.name.objects.parts.back() : call.name.attributes.parts[i-1];
     return call.module.database.GetString(id);
 }
 

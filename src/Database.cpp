@@ -153,7 +153,7 @@ Relation& DatabaseImpl::GetRelation(const PredicateName & name)
 
     if (i == datastore->relations.end())
     {
-        if(name.objects.parts.size() == 1)
+        if(name.objects.parts.size() >= 1)
         {
             auto j = datastore->variadicExterns.find(name.objects.parts[0]);
             if(j != datastore->variadicExterns.end())

@@ -100,9 +100,8 @@ static void outputTable(Call & call)
     if(call.First())
     {
         std::vector<std::string> row;
-        row.push_back("");
 
-        for(int i=1; i<args; ++i)
+        for(int i=0; i<args; ++i)
         {
             row.push_back(call.ArgName(i));
         }
