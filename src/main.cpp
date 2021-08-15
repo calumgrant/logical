@@ -124,10 +124,10 @@ int main(int argc, char**argv)
         }
         
         if(db.UserErrorReported())
+        {
             std::cout << Colours::Error << "Evaluation completed with " << db.NumberOfErrors() << " errors\n" << Colours::Normal;
-
-        if(db.UserErrorReported())
             return (int)ErrorCode::ReportedError;
+        }
 
         return (int)ErrorCode::Ok;
 

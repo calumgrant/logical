@@ -456,7 +456,7 @@ void DatabaseImpl::CreateProjection(const PredicateName &from, const PredicateNa
 
 int DatabaseImpl::NumberOfErrors() const
 {
-    return errorCount;
+    return errorCount - expectedErrors;
 }
 
 int DatabaseImpl::NumberOfResults() const
@@ -504,6 +504,11 @@ bool DatabaseImpl::AnsiHighlightingEnabled() const
 void DatabaseImpl::SetExpectedResults(int count)
 {
     expectedResults = count;
+}
+
+void DatabaseImpl::SetExpectedErrors(int count)
+{
+    expectedErrors = count;
 }
 
 void Database::Error(const char * msg)

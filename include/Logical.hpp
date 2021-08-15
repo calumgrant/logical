@@ -123,6 +123,7 @@ namespace Logical
         void LoadFile(const char*);
         
         void SetExpectedResults(Int expected);
+        void SetExpectedErrors(Int expected);
         void SetEvaluationStepLimit(Int limit);
         void SetMemoryLimitMB(Int limit);
         Call & GetPredicate(const std::initializer_list<const char*> &);

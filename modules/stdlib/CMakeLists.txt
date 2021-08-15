@@ -21,6 +21,7 @@ add_test(NAME Strings1 COMMAND logical ../../../tests/stdlib/strings1.dl)
 add_test(NAME Strings2 COMMAND logical ../../../tests/stdlib/strings2.dl)
 
 add_test(NAME Types COMMAND logical ../../../tests/stdlib/types.dl)
+add_test(NAME Errors COMMAND logical ../../../tests/stdlib/error1.dl)
 
 add_test(NAME File1 COMMAND logical ../../../tests/stdlib/file1.dl)
 add_test(NAME File2 COMMAND logical ../../../tests/stdlib/file2.dl)

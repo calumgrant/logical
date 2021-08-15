@@ -18,6 +18,20 @@ static void expectedresults(Call & call)
     }
 }
 
+static void expectederrors(Call & call)
+{
+    Int value;
+    if(call.Get(0, value))
+    {
+        call.GetModule().SetExpectedErrors(value);
+    }
+    else
+    {
+        call.GetModule().ReportError("Invalid number format to expected-errors");
+    }
+}
+
+
 static void steplimit(Call & call)
 {
     Int value;
@@ -237,6 +251,7 @@ void RegisterFunctions(Module & module)
     module.AddCommand(expectedresults, {"expected-results"});
     module.AddCommand(steplimit, {"evaluation-step-limit"});
     module.AddCommand(memorylimitmb, {"memory-limit-mb"});
+    module.AddCommand(expectederrors, {"expected-errors"});
 
     module.AddFunction(pi, {"pi"}, {Out});
     module.AddFunction(strlen, {"string", "length"}, {In, Out});

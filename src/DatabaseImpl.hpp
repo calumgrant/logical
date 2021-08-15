@@ -41,7 +41,8 @@ public:
     bool AnsiHighlightingEnabled() const override;
     
     void SetExpectedResults(int count) override;
-    
+    void SetExpectedErrors(int count) override;
+
     void CheckErrors();
 
     Optimizer & GetOptimizer() const override;
@@ -76,6 +77,7 @@ private:
 
     // -1 means there is no expected value.
     int expectedResults = -1;
+    int expectedErrors = 0;
     
     void MakeReachesRelation(Relation & rel, const SourceLocation & loc);
     void MakeProjections(Relation & rel, const SourceLocation & loc);

@@ -441,6 +441,12 @@ void Logical::Module::SetExpectedResults(Int expected)
     db.SetExpectedResults(expected);
 }
 
+void Logical::Module::SetExpectedErrors(Int expected)
+{
+    auto & db = ((ModuleImpl*)this)->database;
+    db.SetExpectedErrors(expected);
+}
+
 void Logical::Module::SetMemoryLimitMB(Int expected)
 {
     auto & db = ((ModuleImpl*)this)->database;

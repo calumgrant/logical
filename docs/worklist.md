@@ -23,6 +23,7 @@ Check for errors before execution.
 - Nonary externs, e.g. `error if not is-string ""`.
 
 - Pragmas to assert types on variables???
+- Even better handling of sourcelocations: Force constructor maybe.
 
 - Mark recursive predicates as `[recursive]`??
 
