@@ -80,6 +80,7 @@ add_test(NAME Projection4 COMMAND logical ../tests/programs/projection4.dl)
 add_test(NAME Query1 COMMAND logical ../tests/programs/query1.dl)
 add_test(NAME Query2 COMMAND logical ../tests/programs/query2.dl)
 add_test(NAME Query3 COMMAND logical ../tests/programs/query3.dl)
+add_test(NAME Query4 COMMAND logical ../tests/programs/query4.dl)
 
 add_test(NAME New1 COMMAND logical ../tests/programs/new1.dl)
 add_test(NAME New2 COMMAND logical ../tests/programs/new2.dl)

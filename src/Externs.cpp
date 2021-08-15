@@ -48,14 +48,30 @@ void Logical::Module::AddFunction(Logical::Extern ex, const std::initializer_lis
         db.Error("Invalid number of parameters for extern");
         return;
     }
+    
+    auto pn = ::GetPredicate(db, name);
+
+    if(direction.size()==0)
+    {
+        if(name.size()!= 1)
+        {
+            db.Error("Invalid name/mode count extern");
+            return;
+        }
+
+        // Nonary predicate
+        pn.arity = 0;
+        auto & exfn = db.GetExtern(pn);
+        exfn.AddExtern({0}, ex, data);
+        exfn.AddExtern(ex, data); // Command
+        return;
+    }
 
     if(name.size()!= direction.size())
     {
         db.Error("Invalid name/mode count extern");
         return;
     }
-    
-    auto pn = ::GetPredicate(db, name);
         
     Columns columns(0);
     int i=0;
@@ -542,7 +558,7 @@ void Logical::Call::ReportError()
     auto & call = (CallImpl&)*this;
     call.module.database.ReportUserError();
     auto & loc = call.recv.location;
-    std::cerr << Colours::Error << "Error in call from " << call.module.database.GetString(loc.filenameId)
+    std::cerr << Colours::Error << "Error at " << call.module.database.GetString(loc.filenameId)
         << ":" << loc.line << ":" << loc.column << ": ";
 }
 

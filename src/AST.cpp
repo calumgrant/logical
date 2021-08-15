@@ -291,44 +291,13 @@ void AST::DatalogPredicate::AssertFacts(Database &db) const
     auto name = GetPredicateName(db);
     auto & relation = db.GetRelation(name);
 
-    switch(name.arity)
+    if(name.arity==0)
     {
-    case 0:
         relation.OnStartRunningRules();
         relation.Add(location, nullptr);
         relation.OnStopRunningRules();
         return;
-            /*
-    case 1:
-        {
-            auto v = entitiesOpt->entities[0]->IsValue();
-            if(v)
-            {
-                ::Entity e = v->GetValue();
-                db.GetRelation(name).Add(&e);
-            }
-            else
-                entitiesOpt->entities[0]->UnboundError(db);
-            return;
-        }
-    case 2:
-        {
-            auto v0 = entitiesOpt->entities[0]->IsValue();
-            auto v1 = entitiesOpt->entities[1]->IsValue();
-            if(!v0) entitiesOpt->entities[0]->UnboundError(db);
-            if(!v1) entitiesOpt->entities[1]->UnboundError(db);
-
-            if(v0 && v1)
-            {
-                ::Entity row[2] = { v0->GetValue(), v1->GetValue() };
-                db.GetRelation(name).Add(row);
-            }
-
-            return;
-        }
-             */
     }
-
     
     std::vector<::Entity> row(entitiesOpt->entities.size());
 

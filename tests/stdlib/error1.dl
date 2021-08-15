@@ -1,3 +1,9 @@
+expected-errors 5.
 
 error "Error 1".
 error "Error 2" if 1=1.
+error "Error 3" if any.
+
+error if 1=1.
+error.
+error if none.

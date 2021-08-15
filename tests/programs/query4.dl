@@ -6,4 +6,5 @@ query "Column 1" C1 has "Column 2" C2.
 query "Person" "Fred".
 query Fred has name n, age a.
 query.
-error.
+
+expected-results 4.

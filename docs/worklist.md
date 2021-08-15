@@ -26,6 +26,9 @@ Check for errors before execution.
 
 - Mark recursive predicates as `[recursive]`??
 
+- none and any (nonary functions)
+- error/0
+
 Reimplementing attributes:
 
 - parser reports errors better

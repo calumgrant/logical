@@ -31,11 +31,6 @@ static void steplimit(Call & call)
     }
 }
 
-static void none(Call & call)
-{
-    // Fails always
-}
-
 extern char ** environ;
 
 static void environment(Call & call)
@@ -220,10 +215,25 @@ static void assertBool(Call & call)
         call.Error("Boolean expected");
 }
 
+static void none(Call & call)
+{
+    // Fail
+}
+
+static void any(Call & call)
+{
+    call.YieldResult();
+}
+
 void RegisterFunctions(Module & module)
 {
     module.AddCommand(print, {"print"});
     module.AddCommand(error, {"error"});
+
+    module.AddFunction(errorVarargs, {"error"}, {});
+    module.AddFunction(none, {"none"}, {});
+    module.AddFunction(any, {"any"}, {});
+
     module.AddCommand(expectedresults, {"expected-results"});
     module.AddCommand(steplimit, {"evaluation-step-limit"});
     module.AddCommand(memorylimitmb, {"memory-limit-mb"});

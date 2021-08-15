@@ -4,6 +4,7 @@ using namespace Logical;
 
 void print(Call & call);
 void error(Call & call);
+void errorVarargs(Call & call);
 
 void pi(Call & call);
 void strlen(Call & call);

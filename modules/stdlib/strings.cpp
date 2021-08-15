@@ -38,7 +38,12 @@ void error(Call & call)
 {
     std::stringstream ss;
     print(call, ss);
-    call.GetModule().ReportError(ss.str().c_str());
+    call.Error(ss.str().c_str());
+}
+
+void errorVarargs(Call & call)
+{
+    call.Error("");
 }
 
 void strlen(Call & call)
