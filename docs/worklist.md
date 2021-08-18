@@ -1,5 +1,9 @@
 # Short term plan
 
+- Write up synopsis
+
+- Handle cases like `f if g(X,X)`
+
 Document the new syntax
 
 Implement `with` syntax
@@ -16,23 +20,14 @@ Check for errors before execution.
 
 - `[extern]` to document extern usage
 
-- Predicates to validate data types
-  - `assert-string X`, `assert-int X`, `assert-float X`
-  - `is-string`, `is-int`, `is-float`, `is-bool`, `is-at-string`.
-
-- Nonary externs, e.g. `error if not is-string ""`.
-
-- Pragmas to assert types on variables???
 - Even better handling of sourcelocations: Force constructor maybe.
 
 - Mark recursive predicates as `[recursive]`??
 
-- none and any (nonary functions)
-- error/0
+- Think about renaming `none` and `any` to `true` and `false`.
 
 Reimplementing attributes:
 
-- parser reports errors better
 - In a query, the first column is the query name not data.
 - All evaluations to have locations?
 - Test unbound versions of `foo X+1` where X is unbound, so needs to query `foo`.
@@ -42,20 +37,26 @@ Reimplementing attributes:
 
 - HTML cleaning predicate
 - Report all errors first, and don't run if any errors encountered.
-- Full filepath in the link.
+- Full filepath in the link
+- Report entities better (For example, be able to query to-string
+
 - expression syntax `(url = ...)` to introduce a new variable
+- Ability to write `a = b = c`
 - `X has string S else X has type S` `A else B` becomes `A or not A and B`
 
 - Idea: True object-orientation in QL.
-The "result" is a pointer to an object. "Methods" on the object can be virtual and are multi-value.
+  The "result" is a pointer to an object. "Methods" on the object can be virtual and are multi-value.
 object->begin_F()
 object->next_F()
-
 
 - Errors before execution
   - Syntax errors
   - Recursion
   - Empty predicates
+
+- New tests for:
+  - empty predicates
+  - Unbound variables
 
 
 - Try more advanced syntax:
@@ -69,23 +70,11 @@ M is a method-returning-void if
 M has return-type (void Void).
 
 a b - c.  // This should be a (b-c).
+
 // Problem: What about a b (c-d)
 // Problem is that this is interpreted as Datalog
 
-
-```
 - All expression entites must be wrapped in brackets.
-
-
-- User-defined aggregates:
-
-```
-count 0 has item _, value 0.
-count n has item _, value m+1 if count n-1 has value m.
-sum 1 has item n, value n.
-sum n has item n, value m+n if sum n-1 has value m.
-rank n has item n, value n.
-```
 
 # Attributes
 

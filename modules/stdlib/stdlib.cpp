@@ -288,7 +288,8 @@ void RegisterFunctions(Module & module)
     auto tablewriter = new TableWriterImpl(std::cout, TableWriterConfig());
     module.AddFunction(outputTable, {"std:query"}, { Varargs }, tablewriter);
     module.AddFunction(outputTable, {"query"}, { Varargs }, tablewriter);
-    
+    module.AddFunction(outputTable, {"select"}, { Varargs }, tablewriter);
+
     // Type tests
     module.AddFunction(isString, {"is-string"}, {In});
     module.AddFunction(assertString, {"assert-string"}, {In});
