@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <deque>
+#include <cstring>
 
 using namespace Logical;
 
@@ -36,7 +37,7 @@ static void listargs(Call & call)
         {
             const char * arg;
             call.Get(i, arg);
-            if(strcmp(arg, call.ArgName(i))!=0)
+            if(std::strcmp(arg, call.ArgName(i))!=0)
                 return;
         }
     }

@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.16)
 
 enable_testing()
 
+# FIND_LIBRARY(FL_LIBRARY NAMES libfl fl DOC "/opt/homebrew/opt/flex/lib")
+
 find_package(FLEX)
 find_package(BISON)
 
@@ -80,6 +82,6 @@ set_target_properties(logical-tests PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
 
-target_link_libraries(logiccore)
+target_link_libraries(logiccore dl)
 
 add_dependencies(logical mysql stdlib externs-test parsers)

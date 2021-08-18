@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <cstring>
 
 enum class ErrorCode : int
 {
@@ -91,7 +92,7 @@ int main(int argc, char**argv)
         for(int i=1; i<argc; ++i)
         {
             if(argv[i][0]=='-') continue;
-            if(strcmp(argv[i], "-v")==0)
+            if(std::strcmp(argv[i], "-v")==0)
             {
                 continue;
             }

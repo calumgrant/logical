@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <cstring>
 
 using namespace Logical;
 
@@ -116,7 +117,7 @@ void Write(std::ostream & os, Call &c, int i)
     
     if(c.Get(i, strval))
     {
-        int len = strlen(strval);
+        int len = std::strlen(strval);
         char escaped[len+1];
         mysql_escape_string(escaped, strval, len);
         os << "\"" << escaped << "\"";
