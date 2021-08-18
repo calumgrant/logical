@@ -7,4 +7,8 @@ query "Person" "Fred".
 query Fred has name n, age a.
 query.
 
-expected-results 4.
+select "First name" n, "Last name" s, "Age in years" a if
+    n = "Fred" and s = "Bloggs" and a = 22 or
+    n = "Joe" and s = "Bloggs" and a = 30.
+
+expected-results 6.
