@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <cassert>
 
 Relation::~Relation()
 {

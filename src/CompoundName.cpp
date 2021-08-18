@@ -1,4 +1,6 @@
 #include "CompoundName.hpp"
+#include <algorithm>
+#include <cassert>
 
 CompoundName::CompoundName(const std::vector<int> & list) : parts(list)
 {

@@ -176,7 +176,7 @@ namespace Logical
             e.j = Internal::UpperBound(arity, b, data, size, types, query...);
         }
         
-        const Int * NextRow(Enumerator &e) const
+        const Internal::ShortIndex * NextRow(Enumerator &e) const
         {
             if(e.i < e.j)
             {

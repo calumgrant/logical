@@ -2,6 +2,7 @@
 #include "Binary.hpp"
 
 #include <iostream>
+#include <iterator>
 
 enum class EntityOpCode : unsigned char
 {

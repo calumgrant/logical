@@ -1,6 +1,7 @@
 #include "AST.hpp"
 #include "Database.hpp"
 #include <iostream>
+#include <cassert>
 
 AST::Node::~Node()
 {

@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <atomic>
 
 #define MMAP_ALLOCATOR 0
 

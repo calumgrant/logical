@@ -1,4 +1,5 @@
 #include "StringTable.hpp"
+#include <cstring>
 
 StringTable::StringTable(AllocatorData & mem) :
     allocator(mem),

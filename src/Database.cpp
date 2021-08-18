@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 
 struct HashHelper
 {

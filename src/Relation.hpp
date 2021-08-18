@@ -6,6 +6,8 @@
 #include "Columns.hpp"
 #include "SourceLocation.hpp"
 
+#include <functional>
+
 // A receiver "receives" rows (tuples) and is used in an evaluation pipeline
 // or to receive the results of a query.
 // The meaning of the row is undefined, and it is up to the user to enforce safe

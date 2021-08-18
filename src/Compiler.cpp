@@ -6,7 +6,7 @@
 #include "Analysis.hpp"
 
 #include <iostream>
-
+#include <cassert>
 
 class TableWriterClause : public AST::Clause
 {

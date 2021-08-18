@@ -1,5 +1,6 @@
 #include <TableWriter.hpp>
 #include <iostream>
+#include <cstring>
 
 Logical::TableWriterImpl::TableWriterImpl(std::ostream & output, const TableWriterConfig & config) :
     output(output), config(config)
@@ -94,7 +95,7 @@ void Logical::TableWriterImpl::ComputeWidths(Row & row)
     {
         if(row[i].size() > config.maxWidth)
         {
-            row[i].resize(config.maxWidth-strlen(config.ellipsis));
+            row[i].resize(config.maxWidth-std::strlen(config.ellipsis));
             row[i] += config.ellipsis;
         }
         if(widths[i] < row[i].size())

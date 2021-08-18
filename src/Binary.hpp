@@ -1,6 +1,7 @@
 #pragma once
 
 #include <numeric>
+#include <iterator>
 
 class Entity;
 

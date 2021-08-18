@@ -1,5 +1,6 @@
 
 #include "Relation.hpp"
+#include <functional>
 
 enum class ComparatorType;
 

@@ -8,7 +8,7 @@ find_package(FLEX)
 find_package(BISON)
 
 LIST(APPEND CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-FIND_LIBRARY(FL_LIBRARY NAMES libfl fl DOC "/opt/homebrew/opt/flex/lib")
+# FIND_LIBRARY(FL_LIBRARY NAMES libfl fl DOC HINTS "/opt/homebrew/opt/flex/lib" )
 
 BISON_TARGET(MyParser logical.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/tokens.tab.h)
 FLEX_TARGET(MyScanner logical.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
@@ -80,6 +80,6 @@ set_target_properties(logical-tests PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF)
 
-target_link_libraries(logiccore ${FLEX_LIBRARIES})
+target_link_libraries(logiccore)
 
 add_dependencies(logical mysql stdlib externs-test parsers)
