@@ -14,7 +14,10 @@
 
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
-		"ms-vscode.cpptools"
+		"ms-vscode.cpptools",
+		"twxs.cmake",
+		"ms-vscode.cmake-tools",
+		"fredericbonnet.cmake-test-adapter"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
@@ -22,6 +25,7 @@
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "gcc -v",
+	"postCreateCommand": "apt install flex bison antlr4 mysql-client mysql-server",
 
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode"

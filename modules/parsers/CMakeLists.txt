@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -15,10 +15,8 @@ include(ExternalAntlr4Cpp)
 # add antrl4cpp artifacts to project environment
 include_directories(${ANTLR4_INCLUDE_DIRS})
 
-# set variable pointing to the antlr tool that supports C++
-# this is not required if the jar file can be found under PATH environment
-set(ANTLR_EXECUTABLE /opt/homebrew/opt/antlr/antlr-4.9.2-complete.jar)
-# add macros to generate ANTLR Cpp code from grammar
+set(ANTLR_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/antlr-4.9.2-complete.jar)
+
 find_package(ANTLR REQUIRED)
 
 # Call macro to add lexer and grammar to your build dependencies.
@@ -67,5 +65,3 @@ add_test(NAME Js1 COMMAND logical javascript1.dl WORKING_DIRECTORY ${CMAKE_CURRE
 
 # Disabled as this test is too slow
 # add_test(NAME Js2 COMMAND logical javascript2.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
-
-add_custom_command(TARGET parsers POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:parsers> $<TARGET_FILE_DIR:logical>)

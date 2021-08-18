@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 
 enable_testing()
 
@@ -11,8 +11,6 @@ set_target_properties(stdlib PROPERTIES
     CXX_EXTENSIONS OFF)
 
 target_link_libraries(stdlib logiccore)
-
-add_custom_command(TARGET stdlib POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:stdlib> $<TARGET_FILE_DIR:logical>)
 
 add_test(NAME Print1a COMMAND logical ../../../tests/stdlib/print1.dl)
 add_test(NAME Pi1 COMMAND logical ../../../tests/stdlib/pi1.dl)
