@@ -1,6 +1,6 @@
 
 project (logical)
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 
 enable_testing()
 
@@ -51,6 +51,11 @@ add_library(logiccore SHARED
     ${FLEX_MyScanner_OUTPUTS})
 
 add_executable(logical main.cpp)
+
+add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:stdlib> $<TARGET_FILE_DIR:logical>)
+add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:mysql> $<TARGET_FILE_DIR:logical>)
+add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:externs-test> $<TARGET_FILE_DIR:logical>)
+add_custom_command(TARGET logical POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:parsers> $<TARGET_FILE_DIR:logical>)
 
 add_executable(logical-tests ../tests/unittests/tests.cpp ../tests/unittests/tables.cpp)
 target_link_libraries(logical-tests logiccore)

@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 
 enable_testing()
 
 add_library(mysql SHARED mysql.cpp)
 
 find_library(MYSQLLIB mysqllib NAMES "mysqlclient" "mysqlclient_r")
-find_path( MYSQL_INCLUDE_DIR NAMES "mysql.h" HINTS "/opt/homebrew/include")
+find_path( MYSQL_INCLUDE_DIR NAMES "mysql.h" HINTS "/opt/homebrew/include" "/usr/include/mysql")
 
 include_directories(../../include ${MYSQL_INCLUDE_DIR})
 
@@ -19,6 +19,4 @@ add_test(NAME LoadMySqlModule COMMAND logical ../../../tests/mysql/loadmodule.dl
 add_test(NAME Connect COMMAND logical ../../../tests/mysql/connection1.dl)
 add_test(NAME Execute COMMAND logical ../../../tests/mysql/execute1.dl)
 add_test(NAME Sync COMMAND logical ../../../tests/mysql/sync1.dl)
-
-add_custom_command(TARGET mysql POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:mysql> $<TARGET_FILE_DIR:logical>)
 

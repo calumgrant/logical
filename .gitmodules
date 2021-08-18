@@ -1,3 +1,3 @@
 [submodule "external/persist"]
 	path = external/persist
-	url = git@github.com:calumgrant/persist.git
+	url = https://github.com/calumgrant/persist.git
