@@ -59,6 +59,9 @@ public:
         auto q = query("SHOW TABLES");
         
         MYSQL_RES *result = mysql_use_result(&mysql);
+
+        if(!result) return;
+        
         int count = mysql_field_count(&mysql);
         
         while(auto row = mysql_fetch_row(result))
