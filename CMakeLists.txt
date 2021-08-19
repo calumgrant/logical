@@ -89,7 +89,7 @@ add_test(NAME New4 COMMAND logical ../tests/programs/new4.dl)
 add_test(NAME New5 COMMAND logical ../tests/programs/new5.dl)
 
 add_test(NAME Strlen1 COMMAND logical ../tests/programs/strlen1.dl)
-add_test(NAME Strings1 COMMAND logical ../tests/programs/strings1.dl)
+add_test(NAME Strings1a COMMAND logical ../tests/programs/strings1.dl)
 
 add_test(NAME Reaches1 COMMAND logical ../tests/programs/reaches1.dl)
 

@@ -1,9 +1,9 @@
 expected-results 1.
-evaluation-step-limit 6000011.
+evaluation-step-limit 6000014.
 
 S is string if 1<=N<=1000000 and S = "" + N.
 
 C is Count if 
-    C = count S in (string S).
+    C = find count S in (string S).
 
-find Count.
+select c if c is Count.

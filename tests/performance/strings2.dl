@@ -1,9 +1,10 @@
 expected-results 1.
-//evaluation-step-limit 6996010.
+evaluation-step-limit 69960014.
+memory-limit-mb 2000.
 
 S is string if 1<=N<=10000 and 1<=M<1000 and S = N + "-" + M.
 
 C is Count if 
-    C = count S in (string S).
+    C = find count S in (string S).
 
-find Count.
+select c if Count c.

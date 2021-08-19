@@ -1,6 +1,6 @@
 // This query uses a lot of memory and I don't know why!
 
 new number has value 0.
-new number has value n+1 if  _ has value n and n<1000000.
+new number has value n+1 if  _ has value n and n<1000.
 
-new std:query has Value v if v = count n in (number n).
+select Value v if v = find count n in (number n).
