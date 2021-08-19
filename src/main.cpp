@@ -84,7 +84,7 @@ int main(int argc, char**argv)
     
     try
     {
-        DatabaseImpl db(optimizer, storageFile, limitMB);
+        DatabaseImpl db(argv[0], optimizer, storageFile, limitMB);
         db.SetVerbosity(verbosity);
         optimizer.SetLevel(optimizationLevel);
         db.SetAnsiColours(supportsTerminal);

@@ -1,6 +1,38 @@
 # Short term plan
 
+- Strategy for externs:
+  - Look in the module of the caller/loader
+  - How to find the path of the executable
+  - Look in the current directory
+
 - Write up synopsis
+
+- Think about higher order functions, or Python-like scripting.
+- Think about classes just for fun.
+- Think about higher order functions just for fun.
+- Think about structured values, just for fun.
+
+```
+class person
+{
+   this has name F if ... .
+}
+
+class boy if this is a male child
+{
+  this has imaginary-friend f if
+    this has friend f and f is not a person.
+}
+
+class number if
+  0<=number<=100
+{
+  this has succ this+1, pred this-1.
+}
+
+[function]
+X has succ Y if Y = X+1. 
+```
 
 - Handle cases like `f if g(X,X)`
 

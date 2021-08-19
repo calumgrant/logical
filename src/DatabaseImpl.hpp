@@ -17,7 +17,7 @@ struct RelationHash
 class DatabaseImpl : public Database
 {
 public:
-    DatabaseImpl(Optimizer & optimizer, const char * datafile, int limitMB);
+    DatabaseImpl(const char * exeName, Optimizer & optimizer, const char * datafile, int limitMB);
     ~DatabaseImpl();
 
     int ReadFile(const char * filename) override;
@@ -78,6 +78,8 @@ private:
     // -1 means there is no expected value.
     int expectedResults = -1;
     int expectedErrors = 0;
+
+    const char * exeName;
     
     void MakeReachesRelation(Relation & rel, const SourceLocation & loc);
     void MakeProjections(Relation & rel, const SourceLocation & loc);

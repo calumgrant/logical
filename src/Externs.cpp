@@ -114,13 +114,25 @@ void DatabaseImpl::LoadModule(const char*name)
         std::cout << "Loading module " << name << std::endl;
     }
 
-    // This is hacky and needs to change
-    std::string n = std::string("lib") + name + ".dylib";
-    auto h = dlopen(n.c_str(), RTLD_LOCAL|RTLD_NOW);
+#if __APPLE__
+    auto n = std::string("lib") + name + ".dylib";
+#elif __linux__
+    auto n = std::string("lib") + name + ".so";
+#elif  defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+    // Not tested this
+    auto n = name + std::string(".dll");
+#endif
+
+    std::filesystem::path p = exeName;
+    p = p.parent_path();
+
+    auto result = p / n;
+    
+    auto h = dlopen(result.c_str(), RTLD_LOCAL|RTLD_NOW);
     
     if(!h)
     {
-        Error("Failed to open shared library");
+        Error(dlerror());
         return;
     }
     

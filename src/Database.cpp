@@ -68,13 +68,13 @@ void Database::UnboundError(const char *name, const SourceLocation & loc)
     Error(loc, ss.str().c_str());
 }
 
-DatabaseImpl::DatabaseImpl(Optimizer & optimizer, const char * name, int limitMB) :
+DatabaseImpl::DatabaseImpl(const char * exeName, Optimizer & optimizer, const char * name, int limitMB) :
     datafile(name, 2, 2, 1, 16384, limitMB * 1000000ll, name ? 0 : persist::temp_heap),
     datastore(datafile.data(), datafile.data(), Storage()),
     optimizer(optimizer),
-    memoryCounter(limitMB * 1000000ll)
+    memoryCounter(limitMB * 1000000ll),
+    exeName(exeName)
 {
-
     if(!datastore->initialized)
     {
         datastore->initialized = true;

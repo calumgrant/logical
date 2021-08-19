@@ -119,10 +119,10 @@ public:
 } stt;
 
 
-int main()
+int main(int argc, char**argv)
 {
     OptimizerImpl opt;
-    DatabaseImpl db(opt, nullptr, 1000);
+    DatabaseImpl db(argv[0], opt, nullptr, 1000);
     auto e1 = db.CreateInt(0);
 
     PredicateName test(1, db.GetStringId("test"));
