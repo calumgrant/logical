@@ -1,12 +1,10 @@
 # Short term plan
 
-- Codespace
-  - Mysql tests
-  - Parallel tests
+- Macro for tests
+
 
 - Online playground
   - What technology???
-
 
 - Write up synopsis
 
@@ -14,6 +12,12 @@
 - Think about classes just for fun.
 - Think about higher order functions just for fun.
 - Think about structured values, just for fun.
+
+- Explain why something happened.
+  - back trace?
+
+123 <-
+
 
 x has left-operand y if
   y has child y at index 0.
@@ -32,17 +36,37 @@ class binary-expression if
 binary-expression y
 x is a binary-expression
 
-class boy if this is a male child
+// class boy
+if this is a boy then
 {
+  this is a boy if this is a male child.
+
   this has imaginary-friend f if
     this has friend f and f is not a person.
 }
+
+if this is a male child then
+(
+  this is a boy.
+
+
+)
 
 class number if
   0<=number<=100
 {
   this has succ this+1, pred this-1.
 }
+
+if 0<=N<=100 then
+(
+  N is a number.
+  
+  if N>50 then
+
+    N is large.
+
+)
 
 [function]
 X has succ Y if Y = X+1. 

@@ -40,16 +40,11 @@ antlr_target(JavaScriptParser JavaScriptParser.g4 PARSER
 
 include_directories(${ANTLR_JavaScriptLexer_OUTPUT_DIR} ${ANTLR_JavaScriptParser_OUTPUT_DIR})
 
-enable_testing()
-
 add_library(parsers SHARED parsers.cpp Parser.hpp Parser.cpp Language.cpp Language.hpp ParserModule.cpp ParserModule.hpp
     Predicates.cpp Predicates.hpp
     ${ANTLR_JavaLexer_CXX_OUTPUTS} ${ANTLR_JavaParser_CXX_OUTPUTS} 
     ${ANTLR_JavaScriptLexer_CXX_OUTPUTS} ${ANTLR_JavaScriptParser_CXX_OUTPUTS}
     JavaScriptParserBase.cpp JavaScriptLexerBase.cpp )
-
-#find_library(ANTLR4_LIB NAMES "libantlr4-runtime.a" HINTS "/opt/homebrew/lib")
-#find_path( ANTLR_INCLUDE_DIR NAMES "antlr4-runtime.h" HINTS "/opt/homebrew/include/antlr4-runtime")
 
 include_directories(../../include ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -58,11 +53,3 @@ set_target_properties(parsers PROPERTIES
     CXX_EXTENSIONS OFF)
 
 target_link_libraries(parsers logiccore antlr4_shared)
-
-add_test(NAME LoadModule COMMAND logical ../../../tests/parsers/loadmodule.dl)
-add_test(NAME Java1 COMMAND logical java1.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
-add_test(NAME Java2 COMMAND logical java2.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
-add_test(NAME Js1 COMMAND logical javascript1.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)
-
-# Disabled as this test is too slow
-# add_test(NAME Js2 COMMAND logical javascript2.dl WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tests/parsers)

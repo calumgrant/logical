@@ -4,3 +4,5 @@ launch.json
 .vscode/settings.json
 .DS_Store
 *.db
+*.csv
+tests/stdlib/test.txt

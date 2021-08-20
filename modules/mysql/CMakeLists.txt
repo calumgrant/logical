@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-enable_testing()
-
 add_library(mysql SHARED mysql.cpp)
 
 find_library(MYSQLLIB mysqllib NAMES "mysqlclient" "mysqlclient_r")
@@ -14,5 +12,3 @@ set_target_properties(mysql PROPERTIES
     CXX_EXTENSIONS OFF)
 
 target_link_libraries(mysql logiccore ${MYSQLLIB})
-
-add_test(NAME MySql COMMAND logical ../../../tests/mysql/mysql.dl)
