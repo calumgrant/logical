@@ -1,9 +1,12 @@
 # Short term plan
 
-- Strategy for externs:
-  - Look in the module of the caller/loader
-  - How to find the path of the executable
-  - Look in the current directory
+- Codespace
+  - Mysql tests
+  - Parallel tests
+
+- Online playground
+  - What technology???
+
 
 - Write up synopsis
 
@@ -12,11 +15,22 @@
 - Think about higher order functions just for fun.
 - Think about structured values, just for fun.
 
+x has left-operand y if
+  y has child y at index 0.
+
 ```
-class person
+class binary-expression if 
+  this is expression
 {
-   this has name F if ... .
+  this has left-operand x if
+    this has child x at index 0.
+
+  this has right-operand y if
+    this has child y at index 1.
 }
+
+binary-expression y
+x is a binary-expression
 
 class boy if this is a male child
 {

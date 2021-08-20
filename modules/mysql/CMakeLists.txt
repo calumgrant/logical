@@ -15,8 +15,4 @@ set_target_properties(mysql PROPERTIES
 
 target_link_libraries(mysql logiccore ${MYSQLLIB})
 
-add_test(NAME LoadMySqlModule COMMAND logical ../../../tests/mysql/loadmodule.dl)
-add_test(NAME Connect COMMAND logical ../../../tests/mysql/connection1.dl)
-add_test(NAME Execute COMMAND logical ../../../tests/mysql/execute1.dl)
-add_test(NAME Sync COMMAND logical ../../../tests/mysql/sync1.dl)
-
+add_test(NAME MySql COMMAND logical ../../../tests/mysql/mysql.dl)

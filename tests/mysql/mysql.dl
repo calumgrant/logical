@@ -1,0 +1,7 @@
+// Run all tests from one file
+// since these tests cannot be run in parallel.
+
+import loadmodule.
+import connection1.
+import sync1.
+import execute1.
