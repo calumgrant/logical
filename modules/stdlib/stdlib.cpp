@@ -324,4 +324,6 @@ void RegisterFunctions(Module & module)
     module.AddFunction(stringcharacterpositionBBF, {"string", "character", "position"}, {In,In,Out});
     module.AddFunction(stringcharacterpositionBFB, {"string", "character", "position"}, {In,Out,In});
     module.AddFunction(stringcharacterpositionBBB, {"string", "character", "position"}, {In,In,In});
+
+    module.AddFunction(stringtail, {"string","tail"}, {In,Out});
 }

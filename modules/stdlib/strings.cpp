@@ -398,3 +398,16 @@ void stringcharacterpositionBFB(Call & call)
         }
     }
 }
+
+void stringtail(Call & call)
+{
+    const char * str;
+    if(call.Get(0, str))
+    {
+        if(str[0])
+        {
+            call.Set(1, str+1);
+            call.YieldResult();
+        }
+    }
+}

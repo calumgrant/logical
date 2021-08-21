@@ -1,0 +1,5 @@
+error "String tail" if string "" has tail.
+error "String tail" if not string "a" has tail "".
+error "String tail" if not string "ab" has tail "b".
+error "String tail" if not string "abc" has tail "bc".
+error "String tail" if not string "abc" has tail _.

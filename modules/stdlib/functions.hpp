@@ -14,6 +14,7 @@ void stringcharacterpositionBFF(Call & call);
 void stringcharacterpositionBBB(Call & call);
 void stringcharacterpositionBBF(Call & call);
 void stringcharacterpositionBFB(Call & call);
+void stringtail(Call & call);
 
 void readcontents(Call & call);
 void readlines(Call & call);
