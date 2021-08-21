@@ -844,7 +844,7 @@ int AST::BinaryArithmeticEntity::BindVariables(Database &db, Compilation &c, boo
     lhsSlot = lhs->BindVariables(db, c, bound1);
     if(!bound1) lhs->UnboundError(db);
     rhsSlot = rhs->BindVariables(db, c, bound2);
-    if(!bound1) rhs->UnboundError(db);
+    if(!bound2) rhs->UnboundError(db);
 
     resultSlot = c.AddUnnamedVariable();
     
