@@ -76,6 +76,7 @@ public:
     void AddExtern(Logical::Extern ex, void * data) override;
     Relation & GetSemiNaive(Columns c) override;
     void Finalize() override;
+    bool IsUndefined() const override;
 private:
     bool rulesRun = false;
     bool finalized = false;
@@ -169,6 +170,7 @@ public:
     void QueryDelta(Entity*row, Columns columns, Receiver&v) override;
     bool QueryExists(Entity * row, Columns columns, const SourceLocation&) override;
     bool IsSpecial() const override;
+    bool IsUndefined() const override;
 };
 
 class ExternPredicate : public SpecialPredicate

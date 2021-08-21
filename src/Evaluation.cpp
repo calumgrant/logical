@@ -896,6 +896,11 @@ void Join::OnRow(Entity *locals)
             data[i] = locals[inputs[i]];
         }
 
+    if(relation->IsUndefined())
+    {
+        relation->GetDatabase().WarningEmptyRelation(*relation, location);
+    }
+
     if (useDelta)
         relation->QueryDelta(&data[0], mask, visitor);
     else if(hasOutput)

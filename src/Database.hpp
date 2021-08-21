@@ -53,6 +53,8 @@ public:
     // Variable "name" is not bound to a value
     void UnboundError(const char *name, const SourceLocation & loc);
 
+    void ErrorAt(const SourceLocation & loc);
+
     void NotImplementedError(const SourceLocation&);
     
     virtual Relation& GetRelation(const PredicateName &pn) =0;
@@ -80,7 +82,7 @@ public:
     static std::size_t GlobalCallCountLimit();
     static std::size_t GlobalCallCount();
 
-    void WarningEmptyRelation(Relation&);
+    void WarningEmptyRelation(Relation&, const SourceLocation & location);
     
     virtual void AddResult(const Entity * row, int arity, bool displayFirstColumn) =0;
     virtual void AddResult() =0;

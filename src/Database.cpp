@@ -465,9 +465,18 @@ int DatabaseImpl::NumberOfResults() const
     return resultCount;
 }
 
-void Database::WarningEmptyRelation(Relation & relation)
+void Database::ErrorAt(const SourceLocation & location)
 {
-    std::cerr << Colours::Error << "Error: Querying undefined relation '";
+    std::cerr << GetString(location.filenameId) << ":" << location.line << ":" << location.column << ": ";
+}
+
+void Database::WarningEmptyRelation(Relation & relation, const SourceLocation & location)
+{
+    std::cerr << Colours::Error;
+    ErrorAt(location);
+
+    std::cerr << "Querying undefined relation '";
+
     relation.name.Write(*this, std::cerr);
     std::cerr << "/" << relation.Arity() << "'\n" << Colours::Normal;
     ReportUserError();

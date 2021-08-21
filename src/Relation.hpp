@@ -132,6 +132,8 @@ public:
     virtual void OnStartRunningRules();
     virtual void OnStopRunningRules();
 
+    virtual bool IsUndefined() const;
+
 protected:
     // Returns the number of rows.
     virtual std::size_t Count() =0;

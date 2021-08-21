@@ -110,13 +110,23 @@ void Predicate::AddRule(const std::shared_ptr<Evaluation> &rule)
     assert(!sealed);
 }
 
+bool Relation::IsUndefined() const
+{
+    return false;
+}
+
+bool Predicate::IsUndefined() const
+{
+    return !sealed && table->Rows()==0 && rules.rules.empty() && !allowEmpty;
+}
+
+bool SpecialPredicate::IsUndefined() const
+{
+    return false;
+}
+
 void Predicate::RunRules()
 {
-    if(!sealed && table->Rows()==0 && rules.rules.empty() && !allowEmpty)
-    {
-        database.WarningEmptyRelation(*this);
-    }
-
     sealed = true;  // No more rules please.
     
     AnalysePredicate(database, *this);
