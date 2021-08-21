@@ -7,6 +7,12 @@
 
 - Make it impossible to output an error without a location
 
+- What about a "for" syntax
+
+```
+for(...) count ....
+```
+
 
 - Online playground
   - What technology???

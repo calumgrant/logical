@@ -1,8 +1,10 @@
 
-import "cpp".
-import "semmle.code.cpp.dataflow.EscapesTree".
-import "semmle.code.cpp.commons.Exclusions".
-import "semmle.code.cpp.models.interfaces.Alias".
+// import "cpp".
+// import "semmle.code.cpp.dataflow.EscapesTree".
+// import "semmle.code.cpp.commons.Exclusions".
+// import "semmle.code.cpp.models.interfaces.Alias".
+
+FunctionCall _.
 
 this is MemsetFunction if
     this is Function and
