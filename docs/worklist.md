@@ -1,6 +1,11 @@
 # Short term plan
 
-- Macro for tests
+- Fix up all tests
+  - Binding errors 
+
+- Error querying undefined relation: Give a location!
+
+- Make it impossible to output an error without a location
 
 
 - Online playground

@@ -11,15 +11,17 @@ program p has step i+1, counter c+1 if
     program p has step i, counter c and
     p has substring "+", position i, length 1.
 
+substr(_,_,_,_).
+strlen(_,_).
+torun("+++").
 progress(0,0,p) :- torun(p).
-progress(i+1,c+1,p) :- progress(i,c,p), "+"=substr(p,i,1).
-progress(i+1,c-1,p) :- progress(i,c,p), "-"=substr(p,i,1).
+progress(i+1,c+1,p) :- progress(i,c,p), substr(p,i,1,"+").
+progress(i+1,c-1,p) :- progress(i,c,p), substr(p,i,1,"-").
 progress(i+1,c,p) :-
     progress(i,c,p),
-    i < strlen(p),
-    "+" != substr(p,i,1),
-    "-" != substr(p,i,1).
+    strlen(p,sl),
+    i<sl,
+    not substr(p,i,1,"+"),
+    not substr(p,i,1,"-").
 
-.decl result(c : counter, p : program)
-result(c,p) :- progress(strlen(p),c,p).
-.output result
+select(c,p) :- progress(p,c,p).

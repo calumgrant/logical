@@ -6,7 +6,7 @@ enable_testing()
 
 function(test_program DIRECTORY TESTNAME)
   add_test(NAME ${TESTNAME} COMMAND logical ${CMAKE_CURRENT_SOURCE_DIR}/${DIRECTORY}/${TESTNAME}.dl)
-  add_test(NAME ${TESTNAME}-O0 COMMAND logical -O0 ${CMAKE_CURRENT_SOURCE_DIR}/${DIRECTORY}/${TESTNAME}.dl)
+  # add_test(NAME ${TESTNAME}-O0 COMMAND logical -O0 ${CMAKE_CURRENT_SOURCE_DIR}/${DIRECTORY}/${TESTNAME}.dl)
 endfunction()
 
 function(test_directory DIRECTORY)
