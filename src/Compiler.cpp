@@ -45,11 +45,18 @@ void AST::Rule::Compile(Database &db)
     TableWriterClause writer(lhs->location, *lhs);
     rhs->SetNext(writer);
 
-    auto evaluation = rhs->Compile(db, compilation);
-    
-    evaluation = std::make_shared<RuleEvaluation>(compilation.locals, evaluation);
-    
-    lhs->AddRule(db, evaluation);
+    try
+    {
+        auto evaluation = rhs->Compile(db, compilation);
+        
+        evaluation = std::make_shared<RuleEvaluation>(compilation.locals, evaluation);
+        
+        lhs->AddRule(db, evaluation);
+    }
+    catch(CompilationError &error)
+    {
+        error.ReportError(db);
+    }
 }
 
 std::shared_ptr<Evaluation> AST::DatalogPredicate::Compile(Database &db, Compilation &c)

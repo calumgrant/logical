@@ -1,6 +1,8 @@
-// X is unbound.
+expected-errors 2.
+
 foo X.
 foo _.
+_ has cash _.
 
 foo X has bar Y.
 foo @X has bar Y.
@@ -9,6 +11,7 @@ f X if 1=1.
 
 f Y if 1=1+Y.
 
-X is rich if sum V over C in (X has cash C and C has value V) > 100.
+X is rich if find sum C, V in (X has cash C and C has value V) > 100.
+rich _.
 
-find rich.
+select r if rich r.

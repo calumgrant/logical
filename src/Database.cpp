@@ -664,3 +664,20 @@ void DatabaseImpl::SetMemoryLimit(std::size_t size)
     datafile.data().limit(size);
     memoryCounter.limit(size);
 }
+
+CompilationError::CompilationError(const SourceLocation & loc, const char * message) :
+    std::runtime_error(message),
+    location(loc)
+{
+}
+
+UnboundError::UnboundError(const SourceLocation & loc, const char * variableName) :
+    CompilationError(loc, "Unbound variable"),
+    variableName(variableName)
+{
+}
+
+void UnboundError::ReportError(Database & database) const
+{
+    database.UnboundError(variableName, location);
+}

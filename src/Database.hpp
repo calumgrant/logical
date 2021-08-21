@@ -4,6 +4,23 @@
 #include "Relation.hpp"
 #include "Colours.hpp"
 
+class CompilationError : public std::runtime_error
+{
+public:
+    CompilationError(const SourceLocation & location, const char * message);
+    virtual void ReportError(Database & db) const =0;
+    const SourceLocation location;
+};
+
+class UnboundError : public CompilationError
+{
+public:
+    UnboundError(const SourceLocation & loc, const char * variableName);
+    void ReportError(Database & db) const override;
+private:
+    const char * const variableName;
+};
+
 class Database
 {
 public:

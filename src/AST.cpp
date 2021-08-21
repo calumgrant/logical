@@ -641,20 +641,19 @@ AST::Aggregate::Aggregate(const SourceLocation & loc, EntityList *e, Clause *c) 
     delete e;
 }
 
-
 void AST::NamedVariable::UnboundError(Database &db) const
 {
-    db.UnboundError(db.GetString(nameId), location);
+    throw ::UnboundError(location, db.GetString(nameId));
 }
 
 void AST::UnnamedVariable::UnboundError(Database &db) const
 {
-    db.UnboundError("_", location);
+    throw ::UnboundError(location, "_");
 }
 
 void AST::ArithmeticEntity::UnboundError(Database &db) const
 {
-    db.UnboundError("arithmetic_expression", location);
+    throw ::UnboundError(location, "arithmetic expression");
 }
 
 void AST::Value::UnboundError(Database &db) const
