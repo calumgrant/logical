@@ -411,3 +411,17 @@ void stringtail(Call & call)
         }
     }
 }
+
+void stringhead(Call & call)
+{
+    const char * str;
+    if(call.Get(0, str))
+    {
+        if(str[0])
+        {
+            char ch[] = {str[0], 0};
+            call.Set(1, ch);
+            call.YieldResult();
+        }
+    }
+}

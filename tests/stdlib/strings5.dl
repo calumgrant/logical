@@ -1,0 +1,12 @@
+error if string "" has head.
+error if not string "a" has head "a".
+error if not string "abc" has head "a".
+
+test "abc".
+test t if test t2 and string t2 has tail t.
+
+select Test s, Head h, Tail t if 
+    test s and
+    string s has head h and
+    string s has tail t.
+
