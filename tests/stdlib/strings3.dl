@@ -1,0 +1,25 @@
+
+test "abc".
+test "".
+test "aabb".
+
+select String s has Character ch, Position p if
+    test s and 
+    string s has character ch, position p.
+
+select String s has Character ch, "Position (bound)" p if
+    test s and 
+    0<=p<=10  and
+    string s has character ch, position p.
+
+select String s has "Character (bound)" ch, "Position" p if
+    test s and 
+    (ch = "a" or ch = "b") and
+    string s has character ch, position p.
+
+select String s has "Character (bound)" ch, "Position (bound)" p if
+    test s and 
+    string s has character ch, position p and
+    string s has character ch, position p.
+
+expected-results 27.

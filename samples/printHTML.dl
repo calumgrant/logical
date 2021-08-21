@@ -1,0 +1,32 @@
+// This example constructs some HTML pages.
+
+page @p1 has title "The & title", author "The author".
+
+page has html "<html>" + header + body + "</html>" if
+    page page has header header, body body.
+
+P has header "<title>" + Tesc + "</title>" if page P has title Tesc.
+
+html-char "&" has escape "&amp;".
+html-char "<" has escape "&lt;".
+html-char ">" has escape "&gt;".
+
+p has body "<body><h1>" + titleEsc + "</h1></body>" if 
+    page p has title title and
+    title has escaped-html titleEsc.
+
+title T if _ has title T.
+escape-html T if title T.
+
+T has escaped-html H if
+    escape-html T and
+    H = T.
+
+escape_html "".
+"" has escaped-html "".
+
+print "passed" if (string "abc", character "a", position 0).
+
+select HTML html if page _ has html html.
+
+print h if page _ has html h.

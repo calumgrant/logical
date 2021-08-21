@@ -10,6 +10,10 @@ void pi(Call & call);
 void strlen(Call & call);
 void lowercase(Call & call);
 void uppercase(Call & call);
+void stringcharacterpositionBFF(Call & call);
+void stringcharacterpositionBBB(Call & call);
+void stringcharacterpositionBBF(Call & call);
+void stringcharacterpositionBFB(Call & call);
 
 void readcontents(Call & call);
 void readlines(Call & call);

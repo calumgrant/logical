@@ -330,3 +330,71 @@ void readcsv(Call & call)
         }
     }
 }
+
+void stringcharacterpositionBFF(Call & call)
+{
+    const char * str;
+    if(call.Get(0, str))
+    {
+        auto len = std::strlen(str);
+
+        for(Int i=0; i<len; ++i)
+        {
+            char ch[2] = { str[i], 0 };
+            call.Set(1, ch);
+            call.Set(2, i);
+            call.YieldResult();
+        }
+    }
+}
+
+void stringcharacterpositionBBB(Call & call)
+{
+    const char * str, * ch;
+    Int position;
+    if(call.Get(0, str) && call.Get(1, ch) && call.Get(2, position))
+    {
+        auto len = std::strlen(str);
+        auto chlen = std::strlen(ch);
+
+        if(position>=0 && position < len && chlen == 1 && str[position] == ch[0])
+            call.YieldResult();
+    }
+}
+
+void stringcharacterpositionBBF(Call & call)
+{
+    const char * str, * ch;
+    if(call.Get(0, str) && call.Get(1, ch))
+    {
+        auto strL = std::strlen(str);
+        auto chL = std::strlen(ch);
+        if(chL==1)
+        {
+            for(Int position = 0; position<strL; ++position)
+            {
+                if(ch[0] == str[position])
+                {
+                    call.Set(2, position);
+                    call.YieldResult();
+                }
+            }
+        }
+    }
+}
+
+void stringcharacterpositionBFB(Call & call)
+{
+    const char * str;
+    Int position;
+    if(call.Get(0, str) && call.Get(2, position))
+    {
+        auto len = std::strlen(str);
+        if(position>=0 && position < len)
+        {
+            char ch[2] = { str[position], 0 };
+            call.Set(1, ch);
+            call.YieldResult();
+        }
+    }
+}

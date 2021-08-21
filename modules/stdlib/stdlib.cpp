@@ -318,4 +318,10 @@ void RegisterFunctions(Module & module)
     module.AddCommand(assertBool, {"assert-bool"});
 
     module.AddFunction(optimizationLevel, {"optimization-level"}, {Out});
+
+    // String character functions
+    module.AddFunction(stringcharacterpositionBFF, {"string", "character", "position"}, {In,Out,Out});
+    module.AddFunction(stringcharacterpositionBBF, {"string", "character", "position"}, {In,In,Out});
+    module.AddFunction(stringcharacterpositionBFB, {"string", "character", "position"}, {In,Out,In});
+    module.AddFunction(stringcharacterpositionBBB, {"string", "character", "position"}, {In,In,In});
 }
