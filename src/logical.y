@@ -125,6 +125,12 @@ statement:
         std::unique_ptr<AST::Rule> rule(new AST::Rule($4, $2));
         rule->Compile(data.db);
     }
+|   pragma tok_if clause tok_then clause tok_dot
+    {
+        $5->SetPragma($1);
+        std::unique_ptr<AST::Rule> rule(new AST::Rule($5, $3));
+        rule->Compile(data.db);
+    }
 |   clause tok_if clause tok_dot
     {
         std::unique_ptr<AST::Rule> rule(new AST::Rule($1, $3));
