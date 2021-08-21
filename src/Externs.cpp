@@ -95,7 +95,6 @@ void Logical::Module::AddFunction(Logical::Extern ex, const std::initializer_lis
     }
 }
 
-
 void Logical::Module::AddCommand(Extern ex, const std::initializer_list<const char*> & name, void * data)
 {
     auto & db = ((ModuleImpl*)this)->database;
@@ -650,4 +649,10 @@ void Logical::Call::CountResult()
 {
     auto & call = (CallImpl&)*this;
     call.module.database.AddResult();
+}
+
+Logical::Int Logical::Module::OptimizationLevel() const
+{
+  auto & db = ((ModuleImpl*)this)->database;
+    return db.GetOptimizer().GetLevel();
 }

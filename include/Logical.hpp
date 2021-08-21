@@ -130,6 +130,8 @@ namespace Logical
 
         Entity NewObject();
         Entity GetString(const char * string);
+
+        Int OptimizationLevel() const;
         
     protected:
         Module();

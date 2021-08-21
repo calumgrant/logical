@@ -239,6 +239,12 @@ static void any(Call & call)
     call.YieldResult();
 }
 
+static void optimizationLevel(Call & call)
+{
+    call.Set(0, call.GetModule().OptimizationLevel());
+    call.YieldResult();
+}
+
 void RegisterFunctions(Module & module)
 {
     module.AddCommand(print, {"print"});
@@ -310,4 +316,6 @@ void RegisterFunctions(Module & module)
     module.AddFunction(isBool, {"is-bool"}, {In});
     module.AddFunction(assertBool, {"assert-bool"}, {In});
     module.AddCommand(assertBool, {"assert-bool"});
+
+    module.AddFunction(optimizationLevel, {"optimization-level"}, {Out});
 }

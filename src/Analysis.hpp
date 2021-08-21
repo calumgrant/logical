@@ -35,5 +35,8 @@ public:
     void Enable(const char * name, bool enabled);
     bool IsEnabled(const char * name);
     void SetLevel(int level);
-};
+    int GetLevel() const;
 
+private:
+    int level = 1;
+};

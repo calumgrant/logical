@@ -9,8 +9,5 @@ if not i 1 or not i 2 then error "i".
 if not h 1 then error "h".
 if not g 1 then error "g".
 
-if error X then print X.
-if not error _ then print "Test passed".
-
 // Want to write
 // if error X then print X and exit 1 else print "Test passed" and exit 0.

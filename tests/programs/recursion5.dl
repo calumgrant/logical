@@ -6,6 +6,6 @@ fish X if fish X and not fish X.
 
 std:query "Fish" has result F if fish F.
 
-evaluation-step-limit 13 if optimization-level 1.
+evaluation-step-limit 18 if optimization-level 1.
 
 expected-results 1.

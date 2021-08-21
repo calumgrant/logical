@@ -465,12 +465,18 @@ void OptimizerImpl::Visit(const std::function<void(Optimization&)> &v)
         v(*i);
 }
 
-void Optimizer::SetLevel(int level)
+void Optimizer::SetLevel(int l)
 {
+    level = l;
     Visit([=](Optimization & opt) {
         opt.enabled = opt.level==0 || opt.level <= level;
     });
     UpdateActiveList();
+}
+
+int Optimizer::GetLevel() const
+{
+    return level;
 }
 
 void OptimizerImpl::RegisterOptimization(Optimization &opt)
